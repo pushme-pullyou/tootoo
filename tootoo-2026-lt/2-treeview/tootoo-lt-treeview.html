@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="revised" content="2026-04-08 14:30">
+  <title>TooToo LT</title>
+  <style>
+    /* ── Custom Properties ── */
+    :root {
+      --primary-bg: #f3f4f6;
+      --secondary-bg: #ffffff;
+      --text-color: #1f2937;
+      --border-color: #d1d5db;
+      --highlight-color: #2563eb;
+      --hover-bg: #e5e7eb;
+      --font-family: system-ui, -apple-system, sans-serif;
+      --sidebar-width: 300px;
+      --font-size: 16px;
+    }
+
+    /* ── Dark Mode Overrides ── */
+    body.dark-mode {
+      --primary-bg: #1f2937;
+      --secondary-bg: #111827;
+      --text-color: #f3f4f6;
+      --border-color: #374151;
+      --highlight-color: #3b82f6;
+      --hover-bg: #374151;
+    }
+
+    /* ── Font size on html so rem units scale ── */
+    html {
+      font-size: var(--font-size);
+    }
+
+    /* ── Reset ── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    /* ── Body ── */
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      font-family: var(--font-family);
+      color: var(--text-color);
+      background-color: var(--primary-bg);
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--primary-bg);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      z-index: 10;
+    }
+
+    #headerGitHub {
+      display: flex;
+      align-items: center;
+      color: var(--text-color);
+      text-decoration: none;
+    }
+
+    #headerTitle {
+      font-weight: bold;
+      font-size: 1.1rem;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    /* ── Header Utility Buttons ── */
+    .header-btn {
+      background: var(--secondary-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .header-btn:hover {
+      opacity: 0.88;
+      transform: translateY(-1px);
+    }
+
+    .header-btn:active {
+      transform: translateY(0);
+    }
+
+    .dark-mode-btn {
+      margin-left: auto;
+    }
+
+    /* ── Rate limit badge ── */
+    .rate-limit-badge {
+      display: none;
+      font-size: 0.8rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: var(--hover-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+    }
+
+    /* ── Main ── */
+    main {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-width);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--primary-bg);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    /* ── Panel Headers (shared) ── */
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--primary-bg);
+    }
+
+    .panel-header h3 {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    /* ── Content area sticky header ── */
+    .file-header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 0.5rem 1rem;
+      background: var(--primary-bg);
+    }
+
+    /* ── Filter wrap ── */
+    .filter-wrap {
+      position: relative;
+      margin: 0.4rem 0.5rem 0 0.5rem;
+    }
+
+    #treeFilter {
+      margin: 0;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.3rem 1.6rem 0.3rem 0.5rem;
+      font-size: 0.85rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--secondary-bg);
+      color: var(--text-color);
+      outline: none;
+    }
+
+    #treeFilter:focus {
+      border-color: var(--highlight-color);
+    }
+
+    #btnFilterClear {
+      position: absolute;
+      right: 0.3rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+      opacity: 0.5;
+      font-size: 0.9rem;
+      display: none;
+      padding: 0;
+    }
+
+    #btnFilterClear:hover {
+      opacity: 1;
+    }
+
+    /* ── Tree list ── */
+    #treeList {
+      padding: 0 0.5rem;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* ── Resizer ── */
+    .resizer {
+      width: 8px;
+      background: rgba(37, 99, 235, 0.7);
+      cursor: col-resize;
+      touch-action: none;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+
+    .resizer:hover,
+    .resizer.dragging {
+      background: var(--highlight-color);
+    }
+
+    /* ── Content Area ── */
+    .content-area {
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+      overflow-y: auto;
+      background: var(--secondary-bg);
+      position: relative;
+    }
+
+    #contentBody {
+      padding: 0 1rem 1rem 1rem;
+      background: var(--secondary-bg);
+    }
+
+    /* ── Action Buttons (primary / secondary) ── */
+    button.primary,
+    button.secondary {
+      background: var(--highlight-color);
+      color: #ffffff;
+      border: none;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button.primary:hover,
+    button.secondary:hover {
+      opacity: 0.88;
+      transform: translateY(-1px);
+    }
+
+    button.primary:active,
+    button.secondary:active {
+      transform: translateY(0);
+    }
+
+    /* ── Back to Top ── */
+    .back-to-top {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 20;
+      background-color: var(--highlight-color);
+      color: #ffffff;
+      border: none;
+      border-radius: 50%;
+      width: 2.5rem;
+      height: 2.5rem;
+      font-size: 1.2rem;
+      display: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Inline repo form ── */
+    .repo-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-width: 300px;
+      padding: 1rem;
+    }
+
+    .repo-form label {
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    .repo-form input {
+      padding: 0.4rem 0.5rem;
+      font-size: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--secondary-bg);
+      color: var(--text-color);
+      outline: none;
+    }
+
+    .repo-form input:focus {
+      border-color: var(--highlight-color);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 25% !important;
+      }
+
+      .resizer {
+        width: 4px;
+      }
+
+      .file-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+    }
+
+    /* ── Treeview ── */
+    .tree-folder {
+      display: flex;
+      align-items: center;
+      padding: 0.2rem 0.4rem;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      user-select: none;
+      list-style: none;
+    }
+
+    .tree-folder::-webkit-details-marker {
+      display: none;
+    }
+
+    .tree-folder:hover {
+      background: var(--hover-bg);
+    }
+
+    .tree-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.2rem 0.4rem 0.2rem 1.2rem;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+
+    .tree-item:hover {
+      background: var(--hover-bg);
+    }
+
+    .tree-item.active {
+      background: var(--highlight-color);
+      color: #fff;
+    }
+
+    .tree-item-size {
+      font-size: 0.75rem;
+      opacity: 0.6;
+      margin-left: 0.5rem;
+      white-space: nowrap;
+    }
+
+    details details {
+      padding-left: 0.8rem;
+    }
+
+    details {
+      padding-left: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <a id="headerGitHub" href="#" title="View on GitHub">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path
+          d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z">
+        </path>
+      </svg>
+    </a>
+
+    <a id="headerTitle" href="#" title="Reload">TooToo LT</a>
+
+    <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode">🌙</button>
+    <button id="btnFontDec" class="header-btn" title="Decrease Font Size">A−</button>
+    <button id="btnFontInc" class="header-btn" title="Increase Font Size">A+</button>
+    <button id="btnToken" class="header-btn" title="Set GitHub Personal Access Token">⚙️ Token</button>
+    <div id="rateBadge" class="rate-limit-badge" title="API Rate Limit" aria-live="polite"></div>
+  </header>
+
+  <main>
+
+    <div class="sidebar">
+      <div class="panel-header" title="Last updated: 2026-04-08 14:30">
+        <h3 id="hFiles">Files</h3>
+        <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders">Expand
+          All</button>
+      </div>
+      <div class="filter-wrap">
+        <input type="text" id="treeFilter" placeholder="Filter files…" title="Filter files by name">
+        <button id="btnFilterClear" title="Clear filter">✕</button>
+      </div>
+      <div id="treeList">
+        <!-- placeholder for future tree content -->
+      </div>
+    </div>
+
+    <div class="resizer" id="resizer" title="Drag to Resize Sidebar"></div>
+
+    <div class="content-area" id="contentArea">
+      <div class="panel-header file-header">
+        <h3 id="contentTitle">Content</h3>
+      </div>
+      <div id="contentBody">
+        <p>Awaiting repository detection...</p>
+      </div>
+
+      <button id="btnBackToTop" class="back-to-top" aria-label="Back to top" title="Back to Top">↑</button>
+    </div>
+
+  </main>
+
+  <script>
+    'use strict';
+
+    /* ── 1. Utility ── */
+    const escapeHTML = ( str ) => {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return String( str ).replace( /[&<>"']/g, ( c ) => map[ c ] );
+    };
+
+    /* ── 2. CONFIG & state ── */
+    const CONFIG = {
+      owner: 'theo-armour',
+      repo: 'sandbox',
+      branch: '',
+    };
+
+    const state = {
+      owner: '',
+      repo: '',
+      branch: '',
+      tree: null,
+      currentFilePath: '',
+    };
+
+    /* ── 3. Storage key helper ── */
+    const storageKey = ( suffix ) => `tootoo-lt:${ location.pathname }:${ suffix }`;
+
+    /* ── 4. updateHeaderFromConfig ── */
+    const updateHeaderFromConfig = () => {
+      const label = `${ state.owner } / ${ state.repo }`;
+      document.title = label;
+      document.getElementById( 'headerTitle' ).textContent = label;
+      document.getElementById( 'headerGitHub' ).href = `https://github.com/${ state.owner }/${ state.repo }`;
+    };
+
+    /* ── 5. detectRepo ── */
+    const detectRepo = async () => {
+      const params = new URLSearchParams( location.search );
+      if ( params.get( 'owner' ) ) CONFIG.owner = params.get( 'owner' );
+      if ( params.get( 'repo' ) ) CONFIG.repo = params.get( 'repo' );
+      if ( params.get( 'branch' ) ) CONFIG.branch = params.get( 'branch' );
+
+      if ( CONFIG.owner && CONFIG.repo ) return;
+
+      const cached = localStorage.getItem( storageKey( 'repo' ) );
+      if ( cached ) {
+        try {
+          const parsed = JSON.parse( cached );
+          if ( parsed.owner && parsed.repo ) {
+            CONFIG.owner = parsed.owner;
+            CONFIG.repo = parsed.repo;
+            return;
+          }
+        } catch ( _ ) { /* ignore malformed cache */ }
+      }
+
+      if ( location.protocol === 'http:' || location.protocol === 'https:' ) {
+        const prefixes = [ '', '../', '../../', '../../../', '../../../../' ];
+        for ( const prefix of prefixes ) {
+          try {
+            const res = await fetch( `${ prefix }.git/config` );
+            if ( !res.ok ) continue;
+            const text = await res.text();
+            const match = text.match( /github\.com[:/]([^/\n]+)\/([^.\n]+)(\.git)?/ );
+            if ( match ) {
+              CONFIG.owner = match[ 1 ];
+              CONFIG.repo = match[ 2 ];
+              localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
+              return;
+            }
+          } catch ( _ ) { /* network error — try next prefix */ }
+        }
+      }
+
+      return new Promise( ( resolve ) => {
+        const cb = document.getElementById( 'contentBody' );
+        cb.innerHTML = `
+          <div class="repo-form">
+            <p>Could not auto-detect the repository. Please enter the details below.</p>
+            <label for="inpOwner">GitHub Owner</label>
+            <input id="inpOwner" type="text" placeholder="e.g. octocat" autocomplete="off">
+            <label for="inpRepo">Repository</label>
+            <input id="inpRepo" type="text" placeholder="e.g. hello-world" autocomplete="off">
+            <button id="btnSetRepo" class="primary">Set Repository</button>
+          </div>
+        `;
+
+        document.getElementById( 'btnSetRepo' ).addEventListener( 'click', () => {
+          const owner = document.getElementById( 'inpOwner' ).value.trim();
+          const repo = document.getElementById( 'inpRepo' ).value.trim();
+          if ( !owner || !repo ) return;
+          CONFIG.owner = owner;
+          CONFIG.repo = repo;
+          localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner, repo } ) );
+          resolve();
+        } );
+      } );
+    };
+
+    /* ── 6. initAppearance ── */
+    const initAppearance = () => {
+      if ( localStorage.getItem( storageKey( 'darkMode' ) ) === 'true' ) {
+        document.body.classList.add( 'dark-mode' );
+        document.getElementById( 'btnDarkMode' ).textContent = '☀️';
+      }
+
+      const savedFontSize = localStorage.getItem( storageKey( 'fontSize' ) );
+      if ( savedFontSize ) {
+        document.documentElement.style.setProperty( '--font-size', savedFontSize );
+      }
+
+      const savedWidth = localStorage.getItem( storageKey( 'sidebarWidth' ) );
+      if ( savedWidth ) {
+        document.documentElement.style.setProperty( '--sidebar-width', savedWidth );
+      }
+    };
+
+    /* ── 7. setupListeners ── */
+    const setupListeners = () => {
+      const contentArea = document.getElementById( 'contentArea' );
+
+      // Dark mode toggle
+      document.getElementById( 'btnDarkMode' ).addEventListener( 'click', () => {
+        const isDark = document.body.classList.toggle( 'dark-mode' );
+        document.getElementById( 'btnDarkMode' ).textContent = isDark ? '☀️' : '🌙';
+        localStorage.setItem( storageKey( 'darkMode' ), isDark );
+      } );
+
+      // Font size
+      const getFontSize = () => {
+        const val = getComputedStyle( document.documentElement ).getPropertyValue( '--font-size' );
+        return parseInt( val, 10 ) || 16;
+      };
+
+      document.getElementById( 'btnFontInc' ).addEventListener( 'click', () => {
+        const sz = Math.min( getFontSize() + 2, 28 );
+        document.documentElement.style.setProperty( '--font-size', sz + 'px' );
+        localStorage.setItem( storageKey( 'fontSize' ), sz + 'px' );
+      } );
+
+      document.getElementById( 'btnFontDec' ).addEventListener( 'click', () => {
+        const sz = Math.max( getFontSize() - 2, 10 );
+        document.documentElement.style.setProperty( '--font-size', sz + 'px' );
+        localStorage.setItem( storageKey( 'fontSize' ), sz + 'px' );
+      } );
+
+      // Token prompt
+      document.getElementById( 'btnToken' ).addEventListener( 'click', () => {
+        const current = localStorage.getItem( 'githubToken' ) || '';
+        const result = prompt( 'Enter your GitHub Personal Access Token (leave blank to clear):', current );
+        if ( result !== null ) {
+          localStorage.setItem( 'githubToken', result );
+          location.reload();
+        }
+      } );
+
+      // Resizable sidebar
+      const resizer = document.getElementById( 'resizer' );
+      let isResizing = false;
+
+      resizer.addEventListener( 'pointerdown', ( e ) => {
+        isResizing = true;
+        resizer.setPointerCapture( e.pointerId );
+        resizer.classList.add( 'dragging' );
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+      } );
+
+      resizer.addEventListener( 'pointermove', ( e ) => {
+        if ( !resizer.hasPointerCapture( e.pointerId ) ) return;
+        const newWidth = Math.min( Math.max( e.clientX, 100 ), window.innerWidth - 100 );
+        document.documentElement.style.setProperty( '--sidebar-width', newWidth + 'px' );
+      } );
+
+      resizer.addEventListener( 'pointerup', ( e ) => {
+        if ( !isResizing ) return;
+        isResizing = false;
+        resizer.releasePointerCapture( e.pointerId );
+        resizer.classList.remove( 'dragging' );
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        const currentWidth = getComputedStyle( document.documentElement ).getPropertyValue( '--sidebar-width' ).trim();
+        localStorage.setItem( storageKey( 'sidebarWidth' ), currentWidth );
+      } );
+
+      // Back to top
+      const btnBackToTop = document.getElementById( 'btnBackToTop' );
+
+      contentArea.addEventListener( 'scroll', () => {
+        btnBackToTop.style.display = contentArea.scrollTop > 400 ? 'flex' : 'none';
+      } );
+
+      btnBackToTop.addEventListener( 'click', () => {
+        contentArea.scrollTo( { top: 0, behavior: 'smooth' } );
+      } );
+
+      // Header title reload
+      document.getElementById( 'headerTitle' ).addEventListener( 'click', ( e ) => {
+        e.preventDefault();
+        location.reload();
+      } );
+    };
+
+    /* ── 8. Auth helpers (Public API) ── */
+    const getToken = () => localStorage.getItem( 'githubToken' ) || '';
+
+    const getAuthHeaders = () => {
+      const headers = { Accept: 'application/vnd.github+json' };
+      const token = getToken();
+      if ( token ) headers.Authorization = `token ${ token }`;
+      return headers;
+    };
+
+    /* ── 9. Rate limit badge (Public API) ── */
+    const updateRateBadge = ( response ) => {
+      const remaining = response.headers.get( 'X-RateLimit-Remaining' );
+      const limit = response.headers.get( 'X-RateLimit-Limit' );
+      if ( remaining !== null && limit !== null ) {
+        const badge = document.getElementById( 'rateBadge' );
+        badge.style.display = 'inline';
+        badge.textContent = `${ remaining }/${ limit }`;
+      }
+    };
+
+    /* ── 10. AbortController (Public API) ── */
+    let currentAbortController = null;
+
+    /* ── 11. File type icons ── */
+    const getFileIcon = ( fileName ) => {
+      const ext = fileName.includes( '.' ) ? '.' + fileName.split( '.' ).pop().toLowerCase() : '';
+      const iconMap = {
+        '.md': '📝',
+        '.js': '🟨', '.mjs': '🟨', '.cjs': '🟨',
+        '.ts': '🟦', '.tsx': '🟦',
+        '.py': '🐍',
+        '.html': '🌐', '.htm': '🌐',
+        '.css': '🎨', '.scss': '🎨', '.less': '🎨',
+        '.png': '🖼️', '.jpg': '🖼️', '.jpeg': '🖼️', '.gif': '🖼️', '.webp': '🖼️', '.svg': '🖼️', '.ico': '🖼️',
+        '.mp3': '🎵', '.wav': '🎵', '.ogg': '🎵',
+        '.mp4': '🎬', '.webm': '🎬',
+        '.pdf': '📕',
+        '.xlsx': '📊', '.xls': '📊', '.csv': '📊', '.ods': '📊',
+        '.yaml': '⚙️', '.yml': '⚙️', '.toml': '⚙️',
+        '.zip': '📦', '.tar': '📦', '.gz': '📦', '.7z': '📦',
+        '.json': '{ }',
+      };
+      return iconMap[ ext ] ?? '📄';
+    };
+
+    /* ── 12. File size formatting ── */
+    const formatSize = ( bytes ) => {
+      if ( bytes < 1024 ) return `${ bytes } B`;
+      if ( bytes < 1024 * 1024 ) return `${ ( bytes / 1024 ).toFixed( 1 ) } KB`;
+      return `${ ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) } MB`;
+    };
+
+    /* ── 13. Build nested tree structure ── */
+    const buildNestedTree = ( flatTree ) => {
+      const root = { children: {} };
+
+      for ( const item of flatTree ) {
+        const parts = item.path.split( '/' );
+        // Skip items whose any path segment starts with '.'
+        if ( parts.some( ( p ) => p.startsWith( '.' ) ) ) continue;
+
+        let current = root;
+        for ( let i = 0; i < parts.length; i++ ) {
+          const part = parts[ i ];
+          if ( !current.children[ part ] ) {
+            current.children[ part ] = { children: {}, type: 'tree', path: parts.slice( 0, i + 1 ).join( '/' ) };
+          }
+          if ( i === parts.length - 1 ) {
+            current.children[ part ].type = item.type;
+            current.children[ part ].size = item.size;
+            current.children[ part ].path = item.path;
+          }
+          current = current.children[ part ];
+        }
+      }
+
+      return root;
+    };
+
+    /* ── 14. Sort tree children ── */
+    const sortedEntries = ( children ) =>
+      Object.entries( children ).sort( ( [ aName, aNode ], [ bName, bNode ] ) => {
+        const aIsFolder = Object.keys( aNode.children ).length > 0 || aNode.type === 'tree';
+        const bIsFolder = Object.keys( bNode.children ).length > 0 || bNode.type === 'tree';
+        if ( aIsFolder && !bIsFolder ) return -1;
+        if ( !aIsFolder && bIsFolder ) return 1;
+        return aName.toLowerCase().localeCompare( bName.toLowerCase() );
+      } );
+
+    /* ── 15. Render a single node to HTML ── */
+    const renderNode = ( name, node ) => {
+      const isFolder = Object.keys( node.children ).length > 0 || ( node.type === 'tree' && Object.keys( node.children ).length === 0 );
+
+      if ( isFolder ) {
+        const childHTML = sortedEntries( node.children )
+          .map( ( [ childName, childNode ] ) => renderNode( childName, childNode ) )
+          .join( '' );
+        return `<details data-folder-path="${ escapeHTML( node.path ) }">
+  <summary class="tree-folder" tabindex="0" title="${ escapeHTML( node.path ) }">📁 <span class="folder-name">${ escapeHTML( name ) }</span></summary>
+  ${ childHTML }
+</details>`;
+      }
+
+      const icon = getFileIcon( name );
+      const isReadme = /^readme/i.test( name );
+      const nameHTML = isReadme
+        ? `<strong>${ icon } ${ escapeHTML( name ) }</strong>`
+        : `${ icon } ${ escapeHTML( name ) }`;
+      const sizeHTML = node.size != null ? `<span class="tree-item-size">${ formatSize( node.size ) }</span>` : '';
+
+      return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeHTML( node.path ) }" title="${ escapeHTML( node.path ) }">
+  <span class="tree-item-name">${ nameHTML }</span>
+  ${ sizeHTML }
+</div>`;
+    };
+
+    /* ── 16. renderTree (batched) ── */
+    const renderTree = ( treeArray ) => {
+      const treeList = document.getElementById( 'treeList' );
+      treeList.innerHTML = '';
+
+      const nested = buildNestedTree( treeArray );
+      const rootEntries = sortedEntries( nested.children );
+      const BATCH_SIZE = 120;
+      const totalBatches = Math.ceil( rootEntries.length / BATCH_SIZE );
+
+      // Progress status
+      const statusEl = document.createElement( 'div' );
+      statusEl.id = 'treeRenderStatus';
+      statusEl.style.cssText = 'font-size:0.85rem;opacity:0.7;padding:0.3rem 0.5rem;';
+      statusEl.textContent = '0% rendered…';
+      treeList.appendChild( statusEl );
+
+      return new Promise( ( resolve ) => {
+        let batchIndex = 0;
+
+        const renderBatch = () => {
+          const start = batchIndex * BATCH_SIZE;
+          const end = Math.min( start + BATCH_SIZE, rootEntries.length );
+          const fragment = document.createDocumentFragment();
+          const temp = document.createElement( 'div' );
+
+          for ( let i = start; i < end; i++ ) {
+            const [ name, node ] = rootEntries[ i ];
+            temp.innerHTML = renderNode( name, node );
+            while ( temp.firstChild ) fragment.appendChild( temp.firstChild );
+          }
+
+          treeList.appendChild( fragment );
+          batchIndex++;
+
+          const pct = Math.round( ( end / rootEntries.length ) * 100 );
+          statusEl.textContent = `${ pct }% rendered…`;
+
+          if ( batchIndex < totalBatches ) {
+            setTimeout( renderBatch, 0 );
+          } else {
+            statusEl.remove();
+            resolve();
+          }
+        };
+
+        if ( rootEntries.length === 0 ) {
+          statusEl.remove();
+          treeList.innerHTML = '<p>No files found.</p>';
+          resolve();
+        } else {
+          setTimeout( renderBatch, 0 );
+        }
+      } );
+    };
+
+    /* ── 17. fetchTree (Public API) ── */
+    const fetchTree = async () => {
+      if ( currentAbortController ) currentAbortController.abort();
+      currentAbortController = new AbortController();
+      const signal = currentAbortController.signal;
+
+      const treeList = document.getElementById( 'treeList' );
+
+      try {
+        // Fetch default branch if needed
+        if ( !state.branch ) {
+          const repoRes = await fetch(
+            `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`,
+            { headers: getAuthHeaders(), signal }
+          );
+          updateRateBadge( repoRes );
+          if ( !repoRes.ok ) throw new Error( `Repo fetch failed: ${ repoRes.status }` );
+          const repoData = await repoRes.json();
+          state.branch = repoData.default_branch;
+        }
+
+        // Fetch recursive tree
+        const treeRes = await fetch(
+          `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/git/trees/${ encodeURIComponent( state.branch ) }?recursive=1`,
+          { headers: getAuthHeaders(), signal }
+        );
+        updateRateBadge( treeRes );
+
+        if ( treeRes.status === 403 ) {
+          treeList.innerHTML = '<p style="color:red;">Rate limited. Add a GitHub token for higher limits.</p>';
+          return;
+        }
+        if ( !treeRes.ok ) throw new Error( `Tree fetch failed: ${ treeRes.status }` );
+
+        const treeData = await treeRes.json();
+
+        // Truncation warning
+        if ( treeData.truncated ) {
+          const warning = document.createElement( 'div' );
+          warning.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;padding:0.5rem;border-radius:4px;margin-bottom:0.5rem;font-size:0.85rem;';
+          warning.textContent = '⚠️ Repository tree is truncated. Some files may not appear.';
+          treeList.innerHTML = '';
+          treeList.appendChild( warning );
+        }
+
+        state.tree = treeData.tree;
+        await renderTree( state.tree );
+
+      } catch ( err ) {
+        if ( err.name === 'AbortError' ) return;
+        treeList.innerHTML = `<p style="color:red;">${ escapeHTML( err.message ) }</p>`;
+      }
+    };
+
+    /* ── 18. Filter logic ── */
+    const runFilter = () => {
+      const query = document.getElementById( 'treeFilter' ).value.trim().toLowerCase();
+      const treeList = document.getElementById( 'treeList' );
+      const items = treeList.querySelectorAll( '.tree-item' );
+      const folders = treeList.querySelectorAll( 'details' );
+
+      if ( !query ) {
+        // Show everything, restore folder state
+        items.forEach( ( el ) => { el.style.display = ''; } );
+        folders.forEach( ( el ) => { el.style.display = ''; } );
+        return;
+      }
+
+      // First hide all items, then show matches
+      items.forEach( ( el ) => {
+        const path = ( el.dataset.path || '' ).toLowerCase();
+        el.style.display = path.includes( query ) ? '' : 'none';
+      } );
+
+      // For each folder: show & open if it has visible descendants, else hide
+      // Process deepest folders first
+      const folderArr = Array.from( folders ).reverse();
+      for ( const detail of folderArr ) {
+        const hasVisible = detail.querySelector( '.tree-item:not([style*="display: none"])' ) ||
+          detail.querySelector( 'details:not([style*="display: none"])' );
+        if ( hasVisible ) {
+          detail.style.display = '';
+          detail.open = true;
+        } else {
+          detail.style.display = 'none';
+        }
+      }
+    };
+
+    let filterTimeout = null;
+    const debouncedFilter = () => {
+      clearTimeout( filterTimeout );
+      filterTimeout = setTimeout( runFilter, 150 );
+    };
+
+    /* ── 19. setupTreeFilter ── */
+    const setupTreeFilter = () => {
+      const treeFilter = document.getElementById( 'treeFilter' );
+      const btnFilterClear = document.getElementById( 'btnFilterClear' );
+
+      treeFilter.addEventListener( 'input', () => {
+        btnFilterClear.style.display = treeFilter.value ? 'block' : 'none';
+        debouncedFilter();
+      } );
+
+      btnFilterClear.addEventListener( 'click', () => {
+        treeFilter.value = '';
+        btnFilterClear.style.display = 'none';
+        runFilter();
+        treeFilter.focus();
+      } );
+    };
+
+    /* ── 20. Expand All / Collapse All ── */
+    const setupExpandAll = () => {
+      const btn = document.getElementById( 'btnExpandAll' );
+      btn.style.display = '';
+      let expanded = false;
+
+      btn.addEventListener( 'click', () => {
+        const allDetails = document.getElementById( 'treeList' ).querySelectorAll( 'details' );
+        expanded = !expanded;
+        allDetails.forEach( ( d ) => { d.open = expanded; } );
+        btn.textContent = expanded ? 'Collapse All' : 'Expand All';
+      } );
+    };
+
+    /* ── 21. File selection (event delegation) ── */
+    const setupFileSelection = () => {
+      document.getElementById( 'treeList' ).addEventListener( 'click', ( e ) => {
+        const target = e.target.closest( '[data-action="select-file"]' );
+        if ( !target ) return;
+
+        const prev = document.querySelector( '.tree-item.active' );
+        if ( prev ) prev.classList.remove( 'active' );
+
+        target.classList.add( 'active' );
+        state.currentFilePath = target.dataset.path;
+
+        const fileName = state.currentFilePath.split( '/' ).pop();
+        document.getElementById( 'contentTitle' ).textContent = escapeHTML( fileName );
+        document.getElementById( 'contentBody' ).innerHTML = `<p>Selected: ${ escapeHTML( state.currentFilePath ) }</p>`;
+      } );
+    };
+
+    /* ── 22. Keyboard navigation ── */
+    const getVisibleTreeItems = () => {
+      const treeList = document.getElementById( 'treeList' );
+      const all = treeList.querySelectorAll( '.tree-folder, .tree-item' );
+      return Array.from( all ).filter( ( el ) => {
+        // Check the element itself is not hidden
+        if ( el.style.display === 'none' ) return false;
+
+        // For .tree-folder (<summary>), start checking from the grandparent
+        // (skip its own <details> parent since the summary is always visible when the <details> is shown)
+        // But if the <details> itself has display:none (from filter), exclude it
+        const isSummary = el.classList.contains( 'tree-folder' );
+        const ownDetails = isSummary ? el.parentElement : null;
+        if ( isSummary && ownDetails?.style.display === 'none' ) return false;
+
+        let ancestor = isSummary ? ownDetails?.parentElement : el.parentElement;
+        while ( ancestor && ancestor !== treeList ) {
+          if ( ancestor.style.display === 'none' ) return false;
+          if ( ancestor.tagName === 'DETAILS' && !ancestor.open ) {
+            // Check if el is the summary of this details — that would already be handled
+            return false;
+          }
+          ancestor = ancestor.parentElement;
+        }
+        return true;
+      } );
+    };
+
+    const selectFileItem = ( el ) => {
+      if ( !el.classList.contains( 'tree-item' ) ) return;
+      const prev = document.querySelector( '.tree-item.active' );
+      if ( prev ) prev.classList.remove( 'active' );
+      el.classList.add( 'active' );
+      state.currentFilePath = el.dataset.path;
+      const fileName = state.currentFilePath.split( '/' ).pop();
+      document.getElementById( 'contentTitle' ).textContent = escapeHTML( fileName );
+      document.getElementById( 'contentBody' ).innerHTML = `<p>Selected: ${ escapeHTML( state.currentFilePath ) }</p>`;
+    };
+
+    const setupKeyboardNav = () => {
+      document.addEventListener( 'keydown', ( e ) => {
+        // '/' shortcut to focus filter
+        if ( e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA' ) {
+          e.preventDefault();
+          document.getElementById( 'treeFilter' ).focus();
+          return;
+        }
+
+        const treeList = document.getElementById( 'treeList' );
+        if ( !treeList.contains( document.activeElement ) ) return;
+
+        const el = document.activeElement;
+        const isSummary = el.classList.contains( 'tree-folder' );
+        const isItem = el.classList.contains( 'tree-item' );
+        if ( !isSummary && !isItem ) return;
+
+        const items = getVisibleTreeItems();
+        const idx = items.indexOf( el );
+        if ( idx === -1 ) return;
+
+        switch ( e.key ) {
+          case 'ArrowDown': {
+            e.preventDefault();
+            const next = items[ idx + 1 ];
+            if ( next ) {
+              next.focus();
+              selectFileItem( next );
+            }
+            break;
+          }
+          case 'ArrowUp': {
+            e.preventDefault();
+            const prev = items[ idx - 1 ];
+            if ( prev ) {
+              prev.focus();
+              selectFileItem( prev );
+            }
+            break;
+          }
+          case 'Enter':
+          case ' ': {
+            e.preventDefault();
+            if ( isSummary ) {
+              el.parentElement.open = !el.parentElement.open;
+            } else {
+              selectFileItem( el );
+            }
+            break;
+          }
+          case 'ArrowRight': {
+            e.preventDefault();
+            if ( isSummary ) {
+              const details = el.parentElement;
+              if ( !details.open ) {
+                details.open = true;
+              } else {
+                // Move to first child
+                const firstChild = details.querySelector( ':scope > details > .tree-folder, :scope > .tree-item' );
+                if ( firstChild ) {
+                  firstChild.focus();
+                  selectFileItem( firstChild );
+                }
+              }
+            }
+            break;
+          }
+          case 'ArrowLeft': {
+            e.preventDefault();
+            if ( isSummary ) {
+              const details = el.parentElement;
+              if ( details.open ) {
+                details.open = false;
+              } else {
+                // Move to parent folder
+                const parentDetails = details.parentElement?.closest( 'details' );
+                if ( parentDetails ) {
+                  const parentSummary = parentDetails.querySelector( ':scope > .tree-folder' );
+                  if ( parentSummary ) parentSummary.focus();
+                }
+              }
+            } else {
+              // File: move to parent folder
+              const parentDetails = el.closest( 'details' );
+              if ( parentDetails ) {
+                const parentSummary = parentDetails.querySelector( ':scope > .tree-folder' );
+                if ( parentSummary ) parentSummary.focus();
+              }
+            }
+            break;
+          }
+        }
+      } );
+    };
+
+    /* ── 23. Auto-open README ── */
+    const autoOpenReadme = () => {
+      if ( !state.tree ) return;
+
+      // Prefer root-level README
+      const readme = state.tree.find( ( f ) =>
+        f.type === 'blob' && /^readme\.(md|txt)$/i.test( f.path )
+      ) ?? state.tree.find( ( f ) =>
+        f.type === 'blob' && /readme\.(md|txt)$/i.test( f.path.split( '/' ).pop() )
+      );
+
+      if ( !readme ) return;
+
+      const treeList = document.getElementById( 'treeList' );
+      const item = treeList.querySelector( `[data-action="select-file"][data-path="${ CSS.escape( readme.path ) }"]` );
+      if ( item ) {
+        item.click();
+        item.scrollIntoView( { block: 'center', behavior: 'smooth' } );
+      }
+    };
+
+    /* ── 24. scrollToTreeFolder ── */
+    const scrollToTreeFolder = ( folderPath ) => {
+      const details = document.querySelector( `details[data-folder-path="${ CSS.escape( folderPath ) }"]` );
+      if ( !details ) return;
+
+      // Open all ancestor <details>
+      let ancestor = details.parentElement?.closest( 'details' );
+      while ( ancestor ) {
+        ancestor.open = true;
+        ancestor = ancestor.parentElement?.closest( 'details' );
+      }
+
+      details.open = true;
+      details.scrollIntoView( { block: 'center', behavior: 'smooth' } );
+    };
+
+    /* ── 25. init ── */
+    const init = async () => {
+      initAppearance();
+      setupListeners();
+      await detectRepo();
+      state.owner = CONFIG.owner;
+      state.repo = CONFIG.repo;
+      state.branch = CONFIG.branch;
+
+      if ( state.owner && state.repo ) {
+        updateHeaderFromConfig();
+
+        document.getElementById( 'treeList' ).innerHTML = '<p>Loading tree…</p>';
+        await fetchTree();
+        autoOpenReadme();
+        setupExpandAll();
+        setupTreeFilter();
+        setupFileSelection();
+        setupKeyboardNav();
+      }
+    };
+
+    init();
+  </script>
+</body>
+
+</html>

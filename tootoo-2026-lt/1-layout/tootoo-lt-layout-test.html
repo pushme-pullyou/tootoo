@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="revised" content="2026-04-08 12:00">
+  <title>TooToo LT Layout — Test App</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      height: 100vh;
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      color: #1f2937;
+    }
+
+    #testPanel {
+      width: 380px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 2px solid #d1d5db;
+      overflow: hidden;
+    }
+
+    #testHeader {
+      padding: 0.6rem 0.8rem;
+      background: #1e3a5f;
+      color: #fff;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    #testHeader span {
+      font-size: 0.75rem;
+      font-weight: normal;
+      opacity: 0.8;
+    }
+
+    #testScroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+      margin-bottom: 0.35rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .summary-bar {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .summary-bar span {
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-weight: bold;
+    }
+
+    .s-pass {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .s-fail {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .s-skip {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .test-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .test-item:last-child {
+      border-bottom: none;
+    }
+
+    .test-name {
+      flex: 1;
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+
+    .test-detail {
+      font-size: 0.7rem;
+      color: #6b7280;
+      margin-top: 0.1rem;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      font-weight: bold;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .pass {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .fail {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .skip {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    /* Manual test items — clickable to cycle pass/fail/skip */
+    .manual-btn {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      cursor: pointer;
+      color: #6b7280;
+      flex-shrink: 0;
+    }
+
+    .manual-btn:hover {
+      background: #e5e7eb;
+    }
+
+    .manual-btn.pass {
+      background: #d1fae5;
+      color: #065f46;
+      border-color: #6ee7b7;
+    }
+
+    .manual-btn.fail {
+      background: #fee2e2;
+      color: #991b1b;
+      border-color: #fca5a5;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .ctrl-btn {
+      background: #f9fafb;
+      border: 1px solid #d1d5db;
+      padding: 0.3rem 0.6rem;
+      border-radius: 5px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      color: #374151;
+    }
+
+    .ctrl-btn:hover {
+      background: #e5e7eb;
+    }
+
+    .ctrl-btn.primary {
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+    }
+
+    .ctrl-btn.primary:hover {
+      opacity: 0.88;
+    }
+
+    #previewUrl {
+      font-size: 0.7rem;
+      color: #6b7280;
+      word-break: break-all;
+      margin-top: 0.35rem;
+      font-family: monospace;
+    }
+
+    #previewPanel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    #previewBar {
+      padding: 0.35rem 0.6rem;
+      background: #f3f4f6;
+      border-bottom: 1px solid #d1d5db;
+      font-size: 0.75rem;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    iframe {
+      flex: 1;
+      border: none;
+      width: 100%;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="testPanel">
+    <div id="testHeader">
+      TooToo LT Layout — Tests
+      <br><span>tootoo-lt-layout.html</span>
+    </div>
+    <div id="testScroll">
+
+      <!-- Unit test results rendered here -->
+      <div id="unitSection"></div>
+
+      <!-- Preview controls -->
+      <div id="controlSection">
+        <div class="section-title">Preview Controls</div>
+        <div class="btn-row">
+          <button class="ctrl-btn primary" id="btnLoadPlain" title="Load layout without URL params">Load Plain</button>
+          <button class="ctrl-btn" id="btnLoadParams" title="Load with ?owner=theo-armour&repo=sandbox">Load w/
+            Params</button>
+          <button class="ctrl-btn" id="btnClearStorage"
+            title="Clear all tootoo-lt localStorage keys for the layout file">Clear Storage</button>
+        </div>
+        <div class="btn-row" style="margin-top: 0.35rem;">
+          <button class="ctrl-btn" id="btnPresetDark" title="Write darkMode=true to localStorage then reload">Preset
+            Dark Mode</button>
+          <button class="ctrl-btn" id="btnPresetFont" title="Write fontSize=22px to localStorage then reload">Preset
+            Font 22px</button>
+          <button class="ctrl-btn" id="btnPresetWide"
+            title="Write sidebarWidth=420px to localStorage then reload">Preset Wide Sidebar</button>
+        </div>
+        <div id="previewUrl"></div>
+      </div>
+
+      <!-- Manual checklist -->
+      <div id="manualSection"></div>
+
+    </div>
+  </div>
+
+  <div id="previewPanel">
+    <div id="previewBar">
+      <span>Preview —</span>
+      <span id="previewBarUrl">tootoo-lt-layout.html</span>
+    </div>
+    <iframe id="preview" src="tootoo-lt-layout.html" title="TooToo LT Layout Preview"></iframe>
+  </div>
+
+  <script>
+
+    // ── Pure functions duplicated from layout for unit testing ─────────────────
+
+    const escapeHTML = ( str ) => {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return String( str ).replace( /[&<>"']/g, ( c ) => map[ c ] );
+    };
+
+    const makeStorageKey = ( pathname, suffix ) => `tootoo-lt:${ pathname }:${ suffix }`;
+
+    // ── Storage key helpers scoped to the layout file ─────────────────────────
+
+    const layoutFile = 'tootoo-lt-layout.html';
+    const layoutURL = new URL( layoutFile, location.href );
+    const layoutPathname = layoutURL.pathname;
+    const sk = ( suffix ) => makeStorageKey( layoutPathname, suffix );
+
+    // ── Minimal test runner ────────────────────────────────────────────────────
+
+    const results = [];
+
+    const test = ( name, fn ) => {
+      try {
+        fn();
+        results.push( { name, status: 'pass', detail: '' } );
+      } catch ( e ) {
+        results.push( { name, status: 'fail', detail: e.message } );
+      }
+    };
+
+    const assert = ( condition, msg = 'assertion failed' ) => {
+      if ( !condition ) throw new Error( msg );
+    };
+
+    const assertEqual = ( a, b ) => {
+      if ( a !== b ) throw new Error( `Expected ${ JSON.stringify( b ) } but got ${ JSON.stringify( a ) }` );
+    };
+
+    // ── Unit tests ─────────────────────────────────────────────────────────────
+
+    // escapeHTML
+    test( 'escapeHTML: plain text unchanged', () =>
+      assertEqual( escapeHTML( 'hello world' ), 'hello world' )
+    );
+
+    test( 'escapeHTML: escapes &', () =>
+      assertEqual( escapeHTML( '&' ), '&amp;' )
+    );
+
+    test( 'escapeHTML: escapes <', () =>
+      assertEqual( escapeHTML( '<' ), '&lt;' )
+    );
+
+    test( 'escapeHTML: escapes >', () =>
+      assertEqual( escapeHTML( '>' ), '&gt;' )
+    );
+
+    test( 'escapeHTML: escapes "', () =>
+      assertEqual( escapeHTML( '"' ), '&quot;' )
+    );
+
+    test( "escapeHTML: escapes '", () =>
+      assertEqual( escapeHTML( "'" ), '&#39;' )
+    );
+
+    test( 'escapeHTML: XSS script tag neutralized', () => {
+      const result = escapeHTML( '\x3cscript\x3ealert(1)\x3c/script\x3e' );
+      assert( !result.includes( '\x3cscript\x3e' ), 'raw <script> found' );
+      assertEqual( result, '&lt;script&gt;alert(1)&lt;/script&gt;' );
+    } );
+
+    test( 'escapeHTML: multiple special chars in one string', () =>
+      assertEqual( escapeHTML( '<b class="x">&amp;</b>' ), '&lt;b class=&quot;x&quot;&gt;&amp;amp;&lt;/b&gt;' )
+    );
+
+    test( 'escapeHTML: coerces number to string', () =>
+      assertEqual( escapeHTML( 42 ), '42' )
+    );
+
+    test( 'escapeHTML: empty string returns empty string', () =>
+      assertEqual( escapeHTML( '' ), '' )
+    );
+
+    // storageKey format
+    test( 'storageKey: format is tootoo-lt:pathname:suffix', () => {
+      const key = makeStorageKey( '/layout.html', 'darkMode' );
+      assertEqual( key, 'tootoo-lt:/layout.html:darkMode' );
+    } );
+
+    test( 'storageKey: different suffixes are distinct', () => {
+      const path = '/tootoo-lt-layout.html';
+      assert(
+        makeStorageKey( path, 'darkMode' ) !== makeStorageKey( path, 'fontSize' ),
+        'keys with different suffixes should differ'
+      );
+    } );
+
+    test( 'storageKey: different pathnames are distinct', () =>
+      assert(
+        makeStorageKey( '/a.html', 'x' ) !== makeStorageKey( '/b.html', 'x' ),
+        'keys with different paths should differ'
+      )
+    );
+
+    test( 'storageKey: empty suffix still valid string', () => {
+      const key = makeStorageKey( '/a.html', '' );
+      assert( typeof key === 'string' && key.startsWith( 'tootoo-lt:' ) );
+    } );
+
+    // Font size clamping (replicated logic)
+    const clampFontInc = ( sz ) => Math.min( sz + 2, 28 );
+    const clampFontDec = ( sz ) => Math.max( sz - 2, 10 );
+
+    test( 'font inc: increases by 2', () =>
+      assertEqual( clampFontInc( 16 ), 18 )
+    );
+
+    test( 'font inc: clamps at 28', () =>
+      assertEqual( clampFontInc( 28 ), 28 )
+    );
+
+    test( 'font inc: does not exceed 28', () =>
+      assertEqual( clampFontInc( 27 ), 28 )
+    );
+
+    test( 'font dec: decreases by 2', () =>
+      assertEqual( clampFontDec( 16 ), 14 )
+    );
+
+    test( 'font dec: clamps at 10', () =>
+      assertEqual( clampFontDec( 10 ), 10 )
+    );
+
+    test( 'font dec: does not go below 10', () =>
+      assertEqual( clampFontDec( 11 ), 10 )
+    );
+
+    // detectRepo URL param logic (replicated)
+    const applyURLParams = ( params ) => {
+      const cfg = { owner: '', repo: '', branch: '' };
+      if ( params.get( 'owner' ) ) cfg.owner = params.get( 'owner' );
+      if ( params.get( 'repo' ) ) cfg.repo = params.get( 'repo' );
+      if ( params.get( 'branch' ) ) cfg.branch = params.get( 'branch' );
+      return cfg;
+    };
+
+    test( 'detectRepo: reads owner from URL params', () => {
+      const p = new URLSearchParams( 'owner=theo-armour&repo=sandbox' );
+      const cfg = applyURLParams( p );
+      assertEqual( cfg.owner, 'theo-armour' );
+    } );
+
+    test( 'detectRepo: reads repo from URL params', () => {
+      const p = new URLSearchParams( 'owner=theo-armour&repo=sandbox' );
+      const cfg = applyURLParams( p );
+      assertEqual( cfg.repo, 'sandbox' );
+    } );
+
+    test( 'detectRepo: reads branch from URL params', () => {
+      const p = new URLSearchParams( 'owner=x&repo=y&branch=main' );
+      const cfg = applyURLParams( p );
+      assertEqual( cfg.branch, 'main' );
+    } );
+
+    test( 'detectRepo: empty param leaves owner blank', () => {
+      const p = new URLSearchParams( '' );
+      const cfg = applyURLParams( p );
+      assertEqual( cfg.owner, '' );
+    } );
+
+    // .git/config parsing (replicated regex)
+    const parseGitConfig = ( text ) => {
+      const match = text.match( /github\.com[:/]([^/\s]+)\/([^/\s.]+)/ );
+      if ( !match ) return null;
+      return { owner: match[ 1 ], repo: match[ 2 ].replace( /\.git$/, '' ) };
+    };
+
+    test( 'parseGitConfig: parses SSH remote URL', () => {
+      const text = '[remote "origin"]\n\turl = git@github.com:theo-armour/sandbox.git';
+      const result = parseGitConfig( text );
+      assert( result !== null, 'should parse' );
+      assertEqual( result.owner, 'theo-armour' );
+      assertEqual( result.repo, 'sandbox' );
+    } );
+
+    test( 'parseGitConfig: parses HTTPS remote URL', () => {
+      const text = '[remote "origin"]\n\turl = https://github.com/theo-armour/sandbox.git';
+      const result = parseGitConfig( text );
+      assert( result !== null, 'should parse' );
+      assertEqual( result.owner, 'theo-armour' );
+    } );
+
+    test( 'parseGitConfig: strips .git suffix from repo', () => {
+      const text = 'url = git@github.com:theo-armour/sandbox.git';
+      const result = parseGitConfig( text );
+      assertEqual( result.repo, 'sandbox' );
+    } );
+
+    test( 'parseGitConfig: returns null for non-github URL', () => {
+      const text = 'url = https://gitlab.com/user/repo.git';
+      assertEqual( parseGitConfig( text ), null );
+    } );
+
+    test( 'parseGitConfig: returns null for empty string', () =>
+      assertEqual( parseGitConfig( '' ), null )
+    );
+
+    // ── Render unit test results ───────────────────────────────────────────────
+
+    const passCount = results.filter( r => r.status === 'pass' ).length;
+    const failCount = results.filter( r => r.status === 'fail' ).length;
+
+    document.getElementById( 'unitSection' ).innerHTML = `
+      <div class="section-title">Unit Tests</div>
+      <div class="summary-bar">
+        <span class="s-pass">${ passCount } pass</span>
+        <span class="s-fail">${ failCount } fail</span>
+        <span class="s-skip">${ results.length } total</span>
+      </div>
+      ${ results.map( r => `
+        <div class="test-item">
+          <div class="test-name">
+            ${ escapeHTML( r.name ) }
+            ${ r.detail ? `<div class="test-detail">${ escapeHTML( r.detail ) }</div>` : '' }
+          </div>
+          <span class="badge ${ r.status }">${ r.status === 'pass' ? '✓ pass' : '✗ fail' }</span>
+        </div>
+      ` ).join( '' ) }
+    `;
+
+    // ── Manual test checklist ─────────────────────────────────────────────────
+
+    const manualChecks = [
+      { id: 'mc-dark', name: 'Dark mode toggle', desc: 'Click 🌙 → page goes dark; click ☀️ → restores light' },
+      { id: 'mc-font-inc', name: 'Font size A+ increases', desc: 'Each A+ click grows all text by 2px (max 28px)' },
+      { id: 'mc-font-dec', name: 'Font size A− decreases', desc: 'Each A− click shrinks text (min 10px)' },
+      { id: 'mc-resize', name: 'Sidebar drag-to-resize', desc: 'Drag the blue vertical bar — sidebar width changes smoothly' },
+      { id: 'mc-token', name: 'Token prompt', desc: '⚙️ Token opens a prompt(); cancelling does nothing; saving reloads' },
+      { id: 'mc-params', name: 'Repo from URL params', desc: 'Click "Load w/ Params" → header shows "theo-armour / sandbox"' },
+      { id: 'mc-form', name: 'Repo detection form', desc: 'Click "Clear Storage" then "Load Plain" → inline owner/repo form appears; entering values shows "Ready"' },
+      { id: 'mc-persist', name: 'Dark mode persists', desc: 'Click "Preset Dark Mode" → page opens in dark mode' },
+      { id: 'mc-font-p', name: 'Font size persists', desc: 'Click "Preset Font 22px" → all text starts at 22px' },
+      { id: 'mc-wide', name: 'Sidebar width persists', desc: 'Click "Preset Wide Sidebar" → sidebar opens at 420px' },
+      { id: 'mc-btt', name: 'Back-to-top button', desc: 'Scroll content area down >400px → ↑ button appears; click → scrolls to top' },
+      { id: 'mc-reload', name: 'Header title reload', desc: 'Click the "owner / repo" title — page reloads without navigation' },
+      { id: 'mc-gh', name: 'GitHub icon link', desc: 'GitHub icon href = https://github.com/theo-armour/sandbox (load w/ params first)' },
+      { id: 'mc-filter', name: 'Tree filter input', desc: 'Filter input is present, styled, and responds to focus (blue border)' },
+    ];
+
+    document.getElementById( 'manualSection' ).innerHTML = `
+      <div class="section-title">Manual Checks — click button to cycle ✓ / ✗</div>
+      ${ manualChecks.map( c => `
+        <div class="test-item">
+          <div class="test-name">
+            ${ escapeHTML( c.name ) }
+            <div class="test-detail">${ escapeHTML( c.desc ) }</div>
+          </div>
+          <button class="manual-btn" data-id="${ escapeHTML( c.id ) }" title="${ escapeHTML( c.desc ) }">?</button>
+        </div>
+      ` ).join( '' ) }
+    `;
+
+    // Click cycles: skip → pass → fail → skip
+    const cycleStates = [ 'skip', 'pass', 'fail' ];
+    const cycleLabels = { skip: '?', pass: '✓', fail: '✗' };
+
+    document.getElementById( 'manualSection' ).addEventListener( 'click', ( e ) => {
+      const btn = e.target.closest( '.manual-btn' );
+      if ( !btn ) return;
+      const cur = btn.dataset.state || 'skip';
+      const next = cycleStates[ ( cycleStates.indexOf( cur ) + 1 ) % cycleStates.length ];
+      btn.dataset.state = next;
+      btn.className = `manual-btn ${ next !== 'skip' ? next : '' }`;
+      btn.textContent = cycleLabels[ next ];
+    } );
+
+    // ── Preview / iframe controls ─────────────────────────────────────────────
+
+    const iframe = document.getElementById( 'preview' );
+    const previewBarUrl = document.getElementById( 'previewBarUrl' );
+
+    const loadPreview = ( url ) => {
+      iframe.src = url;
+      previewBarUrl.textContent = url;
+    };
+
+    document.getElementById( 'btnLoadPlain' ).addEventListener( 'click', () => {
+      loadPreview( layoutFile );
+    } );
+
+    document.getElementById( 'btnLoadParams' ).addEventListener( 'click', () => {
+      loadPreview( layoutFile + '?owner=theo-armour&repo=sandbox&branch=main' );
+    } );
+
+    document.getElementById( 'btnClearStorage' ).addEventListener( 'click', () => {
+      [ 'darkMode', 'fontSize', 'sidebarWidth', 'repo' ].forEach( k => {
+        localStorage.removeItem( sk( k ) );
+      } );
+      localStorage.removeItem( 'githubToken' );
+      // Reload current iframe src
+      const current = iframe.src;
+      iframe.src = '';
+      iframe.src = current;
+    } );
+
+    document.getElementById( 'btnPresetDark' ).addEventListener( 'click', () => {
+      localStorage.setItem( sk( 'darkMode' ), 'true' );
+      loadPreview( layoutFile );
+    } );
+
+    document.getElementById( 'btnPresetFont' ).addEventListener( 'click', () => {
+      localStorage.setItem( sk( 'fontSize' ), '22px' );
+      loadPreview( layoutFile );
+    } );
+
+    document.getElementById( 'btnPresetWide' ).addEventListener( 'click', () => {
+      localStorage.setItem( sk( 'sidebarWidth' ), '420px' );
+      loadPreview( layoutFile );
+    } );
+
+    // Show computed layout pathname so the user can verify storage key prefix
+    document.getElementById( 'previewUrl' ).textContent =
+      'Storage prefix: tootoo-lt:' + layoutPathname + ':…';
+
+  </script>
+
+</body>
+
+</html>
