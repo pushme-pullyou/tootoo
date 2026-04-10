@@ -1528,10 +1528,12 @@
       }
 
       if ( state.pagesEnabled ) {
+        // GitHub Pages renders .md files as HTML when the extension is omitted
+        const pagesPath = path.replace( /\.md$/i, '' );
         const isUserPage = state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`;
         return isUserPage
-          ? `https://${ state.owner }.github.io/${ path }`
-          : `https://${ state.owner }.github.io/${ state.repo }/${ path }`;
+          ? `https://${ state.owner }.github.io/${ pagesPath }`
+          : `https://${ state.owner }.github.io/${ state.repo }/${ pagesPath }`;
       }
 
       return `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;

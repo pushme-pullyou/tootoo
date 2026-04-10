@@ -263,7 +263,8 @@ This prevents the hash or last-file routing from re-opening the previous file af
 - **"Copy" button**: copies raw file text to clipboard; shows "✓ Copied" feedback for 1.5s; hidden for binary types (images, audio, video, PDF, spreadsheets — i.e., `NO_COPY_EXTS`)
 - **"New Tab" button**: opens the file externally.
   - First, check `GET /repos/{owner}/{repo}/pages` (GitHub API). If `200 OK`, the repo has GitHub Pages enabled — open there.
-    - **User page detection**: if repo name matches `{owner}.github.io`, use `https://{owner}.github.io/{path}`; otherwise `https://{owner}.github.io/{repo}/{path}`
+    - **Strip `.md` extension**: GitHub Pages renders markdown files as HTML when the `.md` extension is omitted. Before building the Pages URL, strip a trailing `.md` from the path: `path.replace(/\.md$/i, '')`
+    - **User page detection**: if repo name matches `{owner}.github.io`, use `https://{owner}.github.io/{pagesPath}`; otherwise `https://{owner}.github.io/{repo}/{pagesPath}`
   - If Pages is not enabled (non-200 or error), fall back to the raw content URL: `https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}`
   - Cache the Pages-enabled result in `state.pagesEnabled` (`null` = unknown, `true`/`false`) for the session to avoid repeated API calls.
   - The button stores `data-path` (not a pre-computed URL); `getNewTabUrl(path)` is called async on click.

@@ -1,8 +1,7 @@
 # TooToo LT — Agenda
 
 
-* 2026-04-10 ~ Use GitHub markdown
-* 2026-04-06 ~ new tab: if not pages, use raw
+
 
 
 
