@@ -1807,11 +1807,21 @@
         approvedLargeFiles.add( path );
       }
 
-      // Update active tree item
+      // Update active tree item — open parent folders, highlight, focus, scroll into view
       const prevActive = document.querySelector( '.tree-item.active' );
       if ( prevActive ) prevActive.classList.remove( 'active' );
       const treeEl = document.querySelector( `[data-action="select-file"][data-path="${ CSS.escape( path ) }"]` );
-      if ( treeEl ) treeEl.classList.add( 'active' );
+      if ( treeEl ) {
+        // Open all ancestor <details> so the item is visible
+        let ancestor = treeEl.closest( 'details' );
+        while ( ancestor ) {
+          ancestor.open = true;
+          ancestor = ancestor.parentElement?.closest( 'details' );
+        }
+        treeEl.classList.add( 'active' );
+        treeEl.scrollIntoView( { block: 'center', behavior: 'smooth' } );
+        treeEl.focus();
+      }
 
       state.currentFilePath = path;
 
@@ -2027,6 +2037,12 @@
           } else {
             autoOpenReadme();
           }
+        }
+
+        // Fallback focus: if no file was selected, focus the first visible tree item
+        if ( !document.querySelector( '.tree-item.active' ) ) {
+          const first = document.querySelector( '#treeList .tree-item, #treeList .tree-folder' );
+          if ( first ) first.focus();
         }
       }
     };

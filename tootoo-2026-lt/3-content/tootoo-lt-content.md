@@ -579,8 +579,11 @@ Replace the placeholder. This is the main function called when a file is clicked
 10. Cache text content
 11. Update hash (unless `skipHash` parameter is true)
 12. Save to `currentFile` in localStorage
-13. Highlight active tree item
-14. Scroll content area to top
+13. Open all ancestor `<details>` elements so the tree item is visible (walk up via `.closest('details')`)
+14. Highlight active tree item (add `.active` class)
+15. Scroll the active tree item into view (`scrollIntoView({ block: 'center', behavior: 'smooth' })`)
+16. Focus the active `.tree-item` element so keyboard navigation (arrow keys) works immediately
+17. Scroll content area to top
 
 ---
 
@@ -655,6 +658,14 @@ const init = async () => {
         selectFile(lastPath, { skipHash: false });
       }
       // Otherwise Treeview's post-render auto-open README runs
+    }
+
+    // Fallback focus: if no file was selected (no hash, no saved file, no README),
+    // focus the first visible .tree-item or .tree-folder in #treeList
+    // so the user can start keyboard navigation immediately.
+    if (!document.querySelector('.tree-item.active')) {
+      const first = document.querySelector('#treeList .tree-item, #treeList .tree-folder');
+      if (first) first.focus();
     }
   }
 };
