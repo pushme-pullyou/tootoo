@@ -43,6 +43,9 @@ This prompt assumes the **treeview module** from `tootoo-lt-treeview.html` (atta
 - `#contentArea` — the scrollable content container
 - `scrollToTreeFolder(folderPath)` — scrolls sidebar to a folder
 - `storageKey(suffix)` — namespaces localStorage keys per instance
+- `formatFileSize(bytes)` — returns human-readable size string (B / KB / MB)
+- `getRepoStats()` — returns `{ fileCount, folderCount, totalSize, topTypes, largest }` from `state.tree`, or `null` if tree not loaded
+- The `#btnHelp` About handler already includes Repository Statistics via `getRepoStats()` and uses `getToken()` / `getAuthHeaders()` — keep this intact when modifying the file
 
 ---
 
@@ -240,7 +243,7 @@ This avoids inline `onclick` attributes, which are fragile when folder paths con
 ### `resetToHome()`
 
 Called by clicking the repo breadcrumb:
-1. Remove `lastFilePath` from localStorage
+1. Remove `currentFile` from localStorage
 2. Clear `state.currentFilePath`
 3. Clear `state.tree` (forces fresh API fetch)
 4. Strip hash from URL via `history.replaceState` (best-effort, fails silently on `file://`)
@@ -249,7 +252,7 @@ Called by clicking the repo breadcrumb:
 ### `#headerTitle` click
 
 Clicking the app title reloads the page but first clears state so the reload starts clean:
-1. Remove `lastFilePath` from localStorage
+1. Remove `currentFile` from localStorage
 2. Strip hash from URL via `history.replaceState` (best-effort, fails silently on `file://`)
 3. Call `location.reload()`
 
@@ -377,14 +380,14 @@ const handleHashChange = async () => {
 ### File Open Priority on Init
 
 1. If `location.hash` is present → call `handleHashChange()`
-2. Else if `storageKey('lastFilePath')` exists in localStorage → open that file with `skipHash: false`
+2. Else if `storageKey('currentFile')` exists in localStorage → open that file with `skipHash: false`
 3. Else → auto-open README (from Treeview's existing logic)
 
 ---
 
-## Last File Path Persistence
+## Current File Persistence
 
-- On file select: save path to `storageKey('lastFilePath')`
+- On file select: save path to `storageKey('currentFile')`
 - On init (if no hash): restore last file from localStorage and open it
 - `resetToHome()` clears this
 
@@ -575,7 +578,7 @@ Replace the placeholder. This is the main function called when a file is clicked
 9. Render based on file type
 10. Cache text content
 11. Update hash (unless `skipHash` parameter is true)
-12. Save to `lastFilePath` in localStorage
+12. Save to `currentFile` in localStorage
 13. Highlight active tree item
 14. Scroll content area to top
 
@@ -621,6 +624,7 @@ const init = async () => {
   initAppearance();
   setupListeners();
   setupExpandAll();     // NEW — extract Expand All button handler from Treeview's init logic
+  setupKeyboardNav();   // NEW — wire up keyboard navigation from Treeview
   setupFileSelection(); // NEW — extract #treeList click delegation from Treeview; calls selectFile(path)
   setupContentActions(); // NEW — wire up breadcrumb delegation, Copy button, New Tab button on content area
   restoreFileCache();   // NEW — restore fileTextCache Map from localStorage
@@ -641,12 +645,12 @@ const init = async () => {
 
     // File open priority after tree loads:
     // 1. Hash present → handleHashChange()
-    // 2. Else lastFilePath in localStorage → selectFile(lastPath)
+    // 2. Else currentFile in localStorage → selectFile(lastPath)
     // 3. Else auto-open README (Treeview's existing post-render logic)
     if (location.hash.length > 1) {
       await handleHashChange();
     } else {
-      const lastPath = localStorage.getItem(storageKey('lastFilePath'));
+      const lastPath = localStorage.getItem(storageKey('currentFile'));
       if (lastPath) {
         selectFile(lastPath, { skipHash: false });
       }

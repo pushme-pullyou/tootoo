@@ -58,6 +58,7 @@ The treeview script must define these as **named top-level arrow functions / var
 | `updateRateBadge(response)` | Reads `X-RateLimit-Remaining` and `X-RateLimit-Limit` from a fetch `Response`, updates `#rateBadge` |
 | `fetchTree()` | Async — fetches the repo tree from GitHub API, stores in `state.tree`, calls `renderTree()`. Returns a Promise that resolves when all render batches complete |
 | `let currentAbortController` | Mutable `AbortController` variable — create a new one before each fetch sequence; abort the previous one |
+| `getRepoStats()` | Returns an object with `fileCount`, `folderCount`, `totalSize`, `topTypes`, `largest` computed from `state.tree`, or `null` if tree not loaded |
 
 These are used internally by the treeview and re-used by the content viewer in the next prompt.
 
@@ -273,8 +274,9 @@ The `#btnExpandAll` button:
 2. Find closest `[data-action="select-file"]`
 3. Remove `.active` from previous, add to clicked
 4. Set `state.currentFilePath` to `data-path`
-5. Update content area `<h3>` to the file name
-6. For now: show `<p>Selected: {path}</p>` in content area (placeholder for file viewer prompt)
+5. Persist the path to `localStorage` via `storageKey('currentFile')` so it survives page reload
+6. Update content area `<h3>` to the file name
+7. For now: show `<p>Selected: {path}</p>` in content area (placeholder for file viewer prompt)
 
 ---
 
@@ -303,7 +305,7 @@ Global `keydown` on `document`, active when focus is on `.tree-folder` or `.tree
 
 After all render batches complete:
 
-1. Search `state.tree` for `README.md` or `readme.txt` (case-insensitive, root level preferred)
+1. Search `state.tree` for `README.md` or `readme.txt` (case-insensitive, root level preferred, fall back to any README deeper in the tree)
 2. If found, programmatically select it
 
 ---
@@ -319,6 +321,34 @@ After all render batches complete:
 
 ---
 
+## Repository Statistics (About Page)
+
+### `getRepoStats()`
+
+A helper that computes statistics from `state.tree` (no extra API calls). Returns `null` if `state.tree` is not loaded yet. Otherwise returns an object:
+
+| Field | Description |
+|-------|-------------|
+| `fileCount` | Number of blobs |
+| `folderCount` | Number of trees |
+| `totalSize` | Sum of `size` across all blobs |
+| `topTypes` | Array of `[extension, count]` pairs, sorted by count descending, top 10 |
+| `largest` | Array of the 5 largest blob items (by `size`), sorted descending |
+
+### About Handler Enhancement
+
+The layout's `#btnHelp` click handler already renders an About panel. **Extend** it by inserting a **"Repository Statistics"** `<h3>` section between the existing "GitHub API" section and the "Tips" section. Also replace the manual token/header construction in the Help handler with `getToken()` and `getAuthHeaders()`. Render these stats using `getRepoStats()`:
+
+- Files, folders, total size (using `formatFileSize()`)
+- **Top file types** — ordered list of extensions with counts
+- **Largest files** — ordered list of paths with sizes
+
+If `state.tree` is not loaded, show: `"No tree data loaded yet."`
+
+All dynamic values must be passed through `escapeHTML()`.
+
+---
+
 ## Init Sequence
 
 Append the tree-fetching and rendering process to the **end** of the layout's existing `init()` function (specifically inside the `if ( state.owner && state.repo )` block). **Do not remove** `initAppearance()`, `setupListeners()`, or `detectRepo()`.
@@ -330,13 +360,13 @@ The logic to append inside `init()`:
 2. Set `#treeList.innerHTML = '<p>Loading tree…</p>'`
 3. Fetch tree from API
 4. renderTree(state.tree) — batched
-5. After all batches: auto-open README, show Expand All button
+5. After all batches: check `storageKey('currentFile')` in localStorage — if a saved path exists, select that file (fall back to README if the file is no longer in the tree); otherwise auto-open README. Show Expand All button
 6. Set up filter input listener (debounced)
 7. Set up keyboard navigation listener
 8. Set up `/` shortcut
 ```
 
-**Note**: The content viewer prompt (the next prompt in the series) fully replaces `init()` with its own skeleton. Structure the treeview additions inside `init()` so they can be cleanly lifted into that replacement.
+**Note**: `fetchTree()` should NOT call `autoSelectReadme()` internally — file restoration logic belongs in `init()` so it can check localStorage first.
 
 ---
 

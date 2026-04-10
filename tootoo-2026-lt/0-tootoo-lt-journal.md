@@ -2,6 +2,7 @@
 
 ## 2026-04-09
 
+* 2026-04-08 ~ Add repo date to info page
 * 2026-04-07 ~ "?" about button
 * 2026-04-07 ~ is sheetjs needed? yes
 * 2026-04-06 ~ Move LT to its own repo

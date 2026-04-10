@@ -1,8 +1,8 @@
 # TooToo LT — Agenda
 
+* 2026-04-10 ~ multiple locations
 * 2026-04-10 ~ Use GitHub markdown
 * 2026-04-10 ~ Add footer
-* 2026-04-08 ~ Add repo date to info page
 * 2026-04-07 ~ Style adjustments
 * 2026-04-06 ~ new tab: if not pages, use raw
 

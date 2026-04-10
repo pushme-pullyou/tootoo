@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-10 10:30">
+  <meta name="revised" content="2026-04-10 18:30">
   <title>TooToo LT</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link id="hljsTheme" rel="stylesheet"
@@ -612,9 +612,9 @@
 
     /* ── 2. CONFIG & state ── */
     const CONFIG = {
-      owner: 'theo-armour',   // default for testing
-      repo: 'sandbox',        // default for testing
-      branch: '',             // empty = fetch default branch from API later
+      owner: '',
+      repo: '',
+      branch: '',
     };
 
     const state = {
@@ -795,7 +795,7 @@
             <input id="inpOwner" type="text" placeholder="e.g. octocat" autocomplete="off">
             <label for="inpRepo">Repository</label>
             <input id="inpRepo" type="text" placeholder="e.g. hello-world" autocomplete="off">
-            <button id="btnSetRepo" class="primary">Set Repository</button>
+            <button id="btnSetRepo" class="primary" title="Set repository owner and name">Set Repository</button>
           </div>
         `;
         document.getElementById( 'btnSetRepo' ).addEventListener( 'click', () => {
@@ -875,12 +875,11 @@
           ? `https://github.com/${ state.owner }/${ state.repo }`
           : 'https://github.com/pushme-pullyou/tootoo';
         const sourceUrl = repoUrl + '/tree/main/tootoo-2026-lt';
-        const token = localStorage.getItem( 'githubToken' );
+        const token = getToken();
 
         let rateLimitInfo = 'Unable to fetch';
         try {
-          const headers = token ? { Authorization: `token ${ token }` } : {};
-          const res = await fetch( 'https://api.github.com/rate_limit', { headers } );
+          const res = await fetch( 'https://api.github.com/rate_limit', { headers: getAuthHeaders() } );
           if ( res.ok ) {
             const data = await res.json();
             const core = data.resources.core;
@@ -897,15 +896,37 @@
           <ul>
             <li><strong>Source code:</strong> <a href="${ escapeHTML( sourceUrl ) }" target="_blank" rel="noopener">${ escapeHTML( sourceUrl ) }</a></li>
             <li><strong>Repository:</strong> <a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">${ escapeHTML( repoUrl ) }</a></li>
-            <li><strong>Copyright:</strong> pushme-pullyou</li>
+            <li><strong>Copyright:</strong> pushme-pullyou authors</li>
             <li><strong>License:</strong> MIT License</li>
             <li><strong>Built:</strong> ${ escapeHTML( revised ) }</li>
           </ul>
           <h3>GitHub API</h3>
           <ul>
+            <li><strong>Repo visibility:</strong> Public (private repos require a token)</li>
             <li><strong>Token:</strong> ${ escapeHTML( tokenStatus ) }</li>
             <li><strong>Rate limit:</strong> ${ escapeHTML( rateLimitInfo ) }</li>
+            <li><strong>GitHub Pages:</strong> Supported — auto-detects repos hosted on GitHub Pages</li>
           </ul>
+          ${ ( () => {
+            const stats = getRepoStats();
+            if ( !stats ) return '<h3>Repository Statistics</h3><p>No tree data loaded yet.</p>';
+            const typesHtml = stats.topTypes.map( ( [ ext, count ] ) =>
+              `<li>${ escapeHTML( ext ) }: ${ count } file${ count !== 1 ? 's' : '' }</li>`
+            ).join( '' );
+            const largestHtml = stats.largest.map( ( f ) =>
+              `<li>${ escapeHTML( f.path ) } — ${ formatFileSize( f.size ) }</li>`
+            ).join( '' );
+            return `<h3>Repository Statistics</h3>
+              <ul>
+                <li><strong>Files:</strong> ${ stats.fileCount }</li>
+                <li><strong>Folders:</strong> ${ stats.folderCount }</li>
+                <li><strong>Total size:</strong> ${ formatFileSize( stats.totalSize ) }</li>
+              </ul>
+              <h4>Top file types</h4>
+              <ol>${ typesHtml }</ol>
+              <h4>Largest files</h4>
+              <ol>${ largestHtml }</ol>`;
+          } )() }
           <h3>Tips</h3>
           <ul>
             <li>Use the filter input in the sidebar to search file names</li>
@@ -914,7 +935,18 @@
             <li>Click <strong>🌙</strong> to toggle dark mode — your choice is saved across visits</li>
           </ul>
         `;
-        document.getElementById( 'contentTitle' ).textContent = 'About';
+
+        // Restore original panel header (selectFile replaces it with breadcrumbs)
+        const contentArea = document.getElementById( 'contentArea' );
+        const existingHeader = contentArea.querySelector( '.panel-header.file-header' );
+        const simpleHeader = document.createElement( 'div' );
+        simpleHeader.className = 'panel-header file-header';
+        simpleHeader.innerHTML = '<h3 id="contentTitle">About</h3>';
+        if ( existingHeader ) {
+          existingHeader.replaceWith( simpleHeader );
+        } else {
+          contentArea.insertBefore( simpleHeader, document.getElementById( 'contentBody' ) );
+        }
       } );
 
       // Token prompt
@@ -981,7 +1013,7 @@
       // Header title reload — clears state first
       document.getElementById( 'headerTitle' ).addEventListener( 'click', ( e ) => {
         e.preventDefault();
-        localStorage.removeItem( storageKey( 'lastFilePath' ) );
+        localStorage.removeItem( storageKey( 'currentFile' ) );
         try { history.replaceState( null, '', location.pathname + location.search ); } catch ( _ ) { /* file:// */ }
         location.reload();
       } );
@@ -1033,14 +1065,40 @@
     };
 
     /* ── 15. File size formatting ── */
-    const formatSize = ( bytes ) => {
+    const formatFileSize = ( bytes ) => {
       if ( bytes == null ) return '';
       if ( bytes < 1024 ) return `${ bytes } B`;
       if ( bytes < 1024 * 1024 ) return `${ ( bytes / 1024 ).toFixed( 1 ) } KB`;
       return `${ ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) } MB`;
     };
 
-    /* ── 16. Build nested tree structure ── */
+    /* ── 16. Repository statistics ── */
+    const getRepoStats = () => {
+      if ( !state.tree ) return null;
+      const blobs = state.tree.filter( ( i ) => i.type === 'blob' );
+      const trees = state.tree.filter( ( i ) => i.type === 'tree' );
+      const totalSize = blobs.reduce( ( sum, i ) => sum + ( i.size || 0 ), 0 );
+
+      // Count by extension
+      const extCounts = {};
+      for ( const b of blobs ) {
+        const name = b.path.split( '/' ).pop();
+        const ext = name.includes( '.' ) ? '.' + name.split( '.' ).pop().toLowerCase() : '(no ext)';
+        extCounts[ ext ] = ( extCounts[ ext ] || 0 ) + 1;
+      }
+      const topTypes = Object.entries( extCounts )
+        .sort( ( a, b ) => b[ 1 ] - a[ 1 ] )
+        .slice( 0, 10 );
+
+      // Largest files
+      const largest = [ ...blobs ]
+        .sort( ( a, b ) => ( b.size || 0 ) - ( a.size || 0 ) )
+        .slice( 0, 5 );
+
+      return { fileCount: blobs.length, folderCount: trees.length, totalSize, topTypes, largest };
+    };
+
+    /* ── 17. Build nested tree structure ── */
     const buildNestedTree = ( flatTree ) => {
       const root = { children: {} };
       for ( const item of flatTree ) {
@@ -1063,7 +1121,7 @@
       return root;
     };
 
-    /* ── 17. Sort tree children: folders first, then alphabetical ── */
+    /* ── 18. Sort tree children: folders first, then alphabetical ── */
     const sortedEntries = ( children ) =>
       Object.entries( children ).sort( ( [ aName, aNode ], [ bName, bNode ] ) => {
         const aIsFolder = aNode.type === 'tree' || Object.keys( aNode.children ).length > 0;
@@ -1073,7 +1131,7 @@
         return aName.toLowerCase().localeCompare( bName.toLowerCase() );
       } );
 
-    /* ── 18. Generate HTML for a tree node ── */
+    /* ── 19. Generate HTML for a tree node ── */
     const renderNode = ( name, node, parentPath ) => {
       const fullPath = parentPath ? `${ parentPath }/${ name }` : name;
       const isFolder = node.type === 'tree' || Object.keys( node.children ).length > 0;
@@ -1092,7 +1150,7 @@
       }
 
       const icon = getFileIcon( name );
-      const sizeStr = formatSize( node.size );
+      const sizeStr = formatFileSize( node.size );
       const isReadme = /^readme/i.test( name );
       const nameHtml = isReadme
         ? `<strong>${ escapeHTML( name ) }</strong>`
@@ -1104,7 +1162,7 @@
         `</div>`;
     };
 
-    /* ── 19. renderTree — batched rendering ── */
+    /* ── 20. renderTree — batched rendering ── */
     const renderTree = ( treeArray ) => {
       const treeList = document.getElementById( 'treeList' );
       treeList.innerHTML = '';
@@ -1153,7 +1211,7 @@
       } );
     };
 
-    /* ── 20. fetchTree ── */
+    /* ── 21. fetchTree ── */
     const fetchTree = async () => {
       if ( currentAbortController ) currentAbortController.abort();
       currentAbortController = new AbortController();
@@ -1207,7 +1265,7 @@
       }
     };
 
-    /* ── 21. Filter logic ── */
+    /* ── 22. Filter logic ── */
     const runFilter = () => {
       const query = document.getElementById( 'treeFilter' ).value.trim().toLowerCase();
       const treeList = document.getElementById( 'treeList' );
@@ -1241,7 +1299,7 @@
       } );
     };
 
-    /* ── 22. Debounce helper ── */
+    /* ── 23. Debounce helper ── */
     const debounce = ( fn, ms ) => {
       let timer;
       return ( ...args ) => {
@@ -1250,7 +1308,7 @@
       };
     };
 
-    /* ── 23. Expand All / Collapse All ── */
+    /* ── 24. Expand All / Collapse All ── */
     const setupExpandAll = () => {
       const btn = document.getElementById( 'btnExpandAll' );
       btn.style.display = '';
@@ -1264,7 +1322,7 @@
       } );
     };
 
-    /* ── 24. File selection (event delegation) — calls selectFile ── */
+    /* ── 25. File selection (event delegation) — calls selectFile ── */
     const setupFileSelection = () => {
       document.getElementById( 'treeList' ).addEventListener( 'click', ( e ) => {
         const target = e.target.closest( '[data-action="select-file"]' );
@@ -1273,7 +1331,7 @@
       } );
     };
 
-    /* ── 25. Keyboard navigation ── */
+    /* ── 26. Keyboard navigation ── */
     const getVisibleTreeItems = () => {
       const treeList = document.getElementById( 'treeList' );
       const all = treeList.querySelectorAll( '.tree-folder, .tree-item' );
@@ -1389,14 +1447,14 @@
       } );
     };
 
-    /* ── 26. Auto-open README ── */
+    /* ── 27. Auto-open README ── */
     const autoOpenReadme = () => {
       if ( !state.tree ) return;
 
       const readme = state.tree.find( ( item ) =>
         item.type === 'blob' && /^readme\.(md|txt)$/i.test( item.path )
       ) || state.tree.find( ( item ) =>
-        item.type === 'blob' && /\/readme\.(md|txt)$/i.test( item.path )
+        item.type === 'blob' && /^readme\.(md|txt)$/i.test( item.path.split( '/' ).pop() )
       );
 
       if ( !readme ) return;
@@ -1406,7 +1464,7 @@
       if ( el ) el.scrollIntoView( { block: 'center', behavior: 'smooth' } );
     };
 
-    /* ── 27. scrollToTreeFolder ── */
+    /* ── 28. scrollToTreeFolder ── */
     const scrollToTreeFolder = ( folderPath ) => {
       const target = document.querySelector( `details[data-folder-path="${ CSS.escape( folderPath ) }"]` );
       if ( !target ) return;
@@ -1420,16 +1478,16 @@
       target.scrollIntoView( { block: 'center', behavior: 'smooth' } );
     };
 
-    /* ── 28. resetToHome ── */
+    /* ── 29. resetToHome ── */
     const resetToHome = async () => {
-      localStorage.removeItem( storageKey( 'lastFilePath' ) );
+      localStorage.removeItem( storageKey( 'currentFile' ) );
       state.currentFilePath = '';
       state.tree = null;
       try { history.replaceState( null, '', location.pathname + location.search ); } catch ( _ ) { /* file:// */ }
       await fetchTree();
     };
 
-    /* ── 29. Hash routing ── */
+    /* ── 30. Hash routing ── */
     const updateHash = ( path ) => {
       try {
         history.pushState( null, '', '#' + encodeURIComponent( path ) );
@@ -1453,7 +1511,7 @@
       }
     };
 
-    /* ── 30. getNewTabUrl — GitHub Pages or raw fallback ── */
+    /* ── 31. getNewTabUrl — GitHub Pages or raw fallback ── */
     const getNewTabUrl = async ( path ) => {
       if ( state.pagesEnabled === null ) {
         try {
@@ -1479,7 +1537,7 @@
       return `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
     };
 
-    /* ── 31. buildFileHeader — breadcrumbs + action buttons ── */
+    /* ── 32. buildFileHeader — breadcrumbs + action buttons ── */
     const buildFileHeader = ( path, ext ) => {
       const segments = path.split( '/' );
       const fileName = segments.pop();
@@ -1519,7 +1577,7 @@
         `</div>`;
     };
 
-    /* ── 32. Content rendering helpers ── */
+    /* ── 33. Content rendering helpers ── */
 
     const renderMarkdown = ( text, filePath ) => {
       const ext = filePath.split( '.' ).pop().toLowerCase();
@@ -1663,7 +1721,7 @@
       }
     };
 
-    /* ── 33. fetchFileText — text content fetch ── */
+    /* ── 34. fetchFileText — text content fetch ── */
     const fetchFileText = async ( path, signal ) => {
       const cached = getCachedFileText( path );
       if ( cached !== null ) return cached;
@@ -1693,7 +1751,7 @@
       return text;
     };
 
-    /* ── 34. fetchFileBlob — binary content fetch ── */
+    /* ── 35. fetchFileBlob — binary content fetch ── */
     const fetchFileBlob = async ( path, signal, mimeType ) => {
       const token = getToken();
       let blob;
@@ -1723,7 +1781,7 @@
       return createBlobUrl( blob );
     };
 
-    /* ── 35. selectFile — main function ── */
+    /* ── 36. selectFile — main function ── */
     let lastRawText = '';
 
     const selectFile = async ( path, { skipHash = false } = {} ) => {
@@ -1848,13 +1906,13 @@
       }
 
       // Save last file path
-      localStorage.setItem( storageKey( 'lastFilePath' ), path );
+      localStorage.setItem( storageKey( 'currentFile' ), path );
 
       // Scroll content area to top
       contentArea.scrollTo( { top: 0 } );
     };
 
-    /* ── 36. setupContentActions — breadcrumb delegation, Copy, New Tab, view toggle ── */
+    /* ── 37. setupContentActions — breadcrumb delegation, Copy, New Tab, view toggle ── */
     const setupContentActions = () => {
       const contentArea = document.getElementById( 'contentArea' );
 
@@ -1920,7 +1978,7 @@
       } );
     };
 
-    /* ── 37. Global error handlers ── */
+    /* ── 38. Global error handlers ── */
     window.addEventListener( 'error', ( event ) => {
       const panel = document.createElement( 'div' );
       panel.className = 'error-panel';
@@ -1935,11 +1993,12 @@
       document.body.appendChild( panel );
     } );
 
-    /* ── 38. init ── */
+    /* ── 39. init ── */
     const init = async () => {
       initAppearance();
       setupListeners();
       setupExpandAll();
+      setupKeyboardNav();
       setupFileSelection();
       setupContentActions();
       restoreFileCache();
@@ -1962,7 +2021,7 @@
         if ( location.hash.length > 1 ) {
           await handleHashChange();
         } else {
-          const lastPath = localStorage.getItem( storageKey( 'lastFilePath' ) );
+          const lastPath = localStorage.getItem( storageKey( 'currentFile' ) );
           if ( lastPath ) {
             selectFile( lastPath, { skipHash: false } );
           } else {

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-09 14:30">
+  <meta name="revised" content="2026-04-10 16:00">
   <title>TooToo LT</title>
   <style>
     /* ── Custom Properties ── */
@@ -265,6 +265,30 @@
       transform: translateY(0);
     }
 
+    /* ── Content Footer ── */
+    .content-footer {
+      margin-top: 2rem;
+      padding: 1rem;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-color);
+      opacity: 0.7;
+    }
+
+    .content-footer p {
+      margin: 0;
+    }
+
+    .content-footer a {
+      color: var(--highlight-color);
+      text-decoration: none;
+    }
+
+    .content-footer a:hover {
+      text-decoration: underline;
+    }
+
     /* ── Back to Top ── */
     .back-to-top {
       position: fixed;
@@ -356,7 +380,7 @@
   <main>
 
     <div class="sidebar">
-      <div class="panel-header" title="Last updated: 2026-04-09 14:30">
+      <div class="panel-header" title="Last updated: 2026-04-10 16:00">
         <h3 id="hFiles">Files</h3>
         <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders">Expand
           All</button>
@@ -379,6 +403,12 @@
       <div id="contentBody">
         <p>Awaiting repository detection...</p>
       </div>
+
+      <footer class="content-footer">
+        <p>© <a href="https://github.com/pushme-pullyou" target="_blank" rel="noopener">pushme-pullyou</a> authors · <a
+            href="https://github.com/pushme-pullyou/tootoo/blob/main/LICENSE" target="_blank" rel="noopener">MIT
+            License</a></p>
+      </footer>
 
       <button id="btnBackToTop" class="back-to-top" aria-label="Back to top" title="Back to Top">↑</button>
     </div>
@@ -507,7 +537,7 @@
             <input id="inpOwner" type="text" placeholder="e.g. octocat" autocomplete="off">
             <label for="inpRepo">Repository</label>
             <input id="inpRepo" type="text" placeholder="e.g. hello-world" autocomplete="off">
-            <button id="btnSetRepo" class="primary">Set Repository</button>
+            <button id="btnSetRepo" class="primary" title="Set repository owner and name">Set Repository</button>
           </div>
         `;
 
@@ -603,14 +633,16 @@
           <ul>
             <li><strong>Source code:</strong> <a href="${ escapeHTML( sourceUrl ) }" target="_blank" rel="noopener">${ escapeHTML( sourceUrl ) }</a></li>
             <li><strong>Repository:</strong> <a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">${ escapeHTML( repoUrl ) }</a></li>
-            <li><strong>Copyright:</strong> pushme-pullyou</li>
+            <li><strong>Copyright:</strong> pushme-pullyou authors</li>
             <li><strong>License:</strong> MIT License</li>
             <li><strong>Built:</strong> ${ escapeHTML( revised ) }</li>
           </ul>
           <h3>GitHub API</h3>
           <ul>
+            <li><strong>Repo visibility:</strong> Public (private repos require a token)</li>
             <li><strong>Token:</strong> ${ escapeHTML( tokenStatus ) }</li>
             <li><strong>Rate limit:</strong> ${ escapeHTML( rateLimitInfo ) }</li>
+            <li><strong>GitHub Pages:</strong> Supported — auto-detects repos hosted on GitHub Pages</li>
           </ul>
           <h3>Tips</h3>
           <ul>
@@ -687,9 +719,10 @@
         contentArea.scrollTo( { top: 0, behavior: 'smooth' } );
       } );
 
-      // Header title reload
+      // Header title reload — clears saved file so README is shown
       document.getElementById( 'headerTitle' ).addEventListener( 'click', ( e ) => {
         e.preventDefault();
+        localStorage.removeItem( storageKey( 'currentFile' ) );
         location.reload();
       } );
     };

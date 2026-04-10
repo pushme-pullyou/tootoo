@@ -91,6 +91,12 @@ The `<title>` is updated dynamically by `updateHeaderFromConfig()` after repo de
         <p>Awaiting repository detection...</p>
       </div>
 
+      <footer class="content-footer">
+        <p>© pushme-pullyou authors · MIT License</p>
+          — links: "pushme-pullyou" → https://github.com/pushme-pullyou/tootoo (target _blank, rel noopener)
+                   "MIT License" → https://github.com/pushme-pullyou/tootoo/blob/main/LICENSE (target _blank, rel noopener)
+      </footer>
+
       <button id="btnBackToTop" class="back-to-top" aria-label="Back to top" title="Back to Top">↑</button>
         — position fixed, bottom 1.5rem, right 1.5rem, z-index 20, --highlight-color background,
         white text, border-radius 50% (circular), width 2.5rem, height 2.5rem, font-size 1.2rem,
@@ -239,6 +245,33 @@ Two button styles via CSS classes:
 }
 ```
 
+### Content Footer
+
+```css
+.content-footer {
+  margin-top: 2rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-color);
+  opacity: 0.7;
+}
+
+.content-footer p {
+  margin: 0;
+}
+
+.content-footer a {
+  color: var(--highlight-color);
+  text-decoration: none;
+}
+
+.content-footer a:hover {
+  text-decoration: underline;
+}
+```
+
 ### Back-to-Top Button
 
 ```css
@@ -339,7 +372,7 @@ Returns a Promise (async function). Runs this cascade:
 5. **Fetch `.git/config`** → walk up the directory tree trying paths `''`, `'../'`, `'../../'`, `'../../../'`, `'../../../../'`; parse `github.com[:/]owner/repo` from remote URL; cache result to localStorage; early return if found
    - **5a**: On HTTP/HTTPS, use `fetch()`
    - **5b**: On `file://`, use synchronous `XMLHttpRequest` (fetch is CORS-blocked on file://); check `xhr.status === 200 || xhr.status === 0` and `xhr.responseText` is non-empty
-6. **Show inline form** → render owner + repo input form in `#contentBody` using the `.repo-form` CSS class; return a new Promise that resolves when the user clicks "Set Repository"; form includes `id="inpOwner"`, `id="inpRepo"`, `id="btnSetRepo"` (class `primary`)
+6. **Show inline form** → render owner + repo input form in `#contentBody` using the `.repo-form` CSS class; return a new Promise that resolves when the user clicks "Set Repository"; form includes `id="inpOwner"`, `id="inpRepo"`, `id="btnSetRepo"` (class `primary`, `title="Set repository owner and name"`)
 
 **Note**: `updateHeaderFromConfig()` is NOT called inside `detectRepo()` — it is called from `init()` after state is populated.
 
@@ -372,7 +405,7 @@ Called after `initAppearance()`. Wires up all event handlers:
 - Builds source URL and repo URL from `state.owner` / `state.repo` (falls back to `pushme-pullyou/tootoo`)
 - Reads token from `localStorage.getItem('githubToken')`
 - Fetches live rate limit from `https://api.github.com/rate_limit` (with auth header if token is set); extracts `resources.core.remaining`, `resources.core.limit`, and reset time formatted via `toLocaleTimeString()`
-- Renders about panel in `#contentBody` with: source code link, repository link, copyright (pushme-pullyou authors), MIT license, build date, GitHub API section (visibility,token status + live rate limit, GitHub Pages, public s), tips section (filter, title reload, font size, dark mode)
+- Renders about panel in `#contentBody` with: source code link, repository link, copyright (pushme-pullyou authors), MIT license, build date, GitHub API section (repo visibility,token status + live rate limit, GitHub Pages support), tips section (filter, title reload, font size, dark mode)
 - Sets `#contentTitle` to `"About"`
 - All dynamic values passed through `escapeHTML()`
 
@@ -398,6 +431,7 @@ Called after `initAppearance()`. Wires up all event handlers:
 
 #### Header Title Reload
 - Click handler on `#headerTitle`
+- Clears `storageKey('currentFile')` from localStorage (so the next load shows README instead of restoring the last file)
 - Calls `e.preventDefault()` then `location.reload()`
 
 ### `init()` — Async Entry Point
