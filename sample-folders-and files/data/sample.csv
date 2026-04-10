@@ -1,0 +1,12 @@
+Name,Type,Extension,Size,Description
+README.md,file,md,1024,Root readme file
+docs,folder,,0,Documentation files
+getting-started.md,file,md,2048,Setup guide
+api-reference.md,file,md,1536,API documentation
+images,folder,,0,Image assets
+logo.svg,file,svg,512,Project logo
+diagram.svg,file,svg,1024,Architecture diagram
+data,folder,,0,Data and config files
+config.json,file,json,768,App configuration
+settings.yml,file,yml,640,YAML settings
+projects,folder,,0,Nested project folders

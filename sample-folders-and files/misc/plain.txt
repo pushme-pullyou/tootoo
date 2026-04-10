@@ -1,0 +1,10 @@
+This is a plain text file.
+
+It has no special formatting.
+Just plain text, line by line.
+
+The file browser should display this in a monospace <pre> block
+with HTML characters properly escaped: <div> & "quotes"
+
+    Indented lines should be preserved.
+    Tabs	and	spacing	too.

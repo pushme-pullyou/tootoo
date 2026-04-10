@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sample HTML Page</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 20px;
+      color: #333;
+    }
+
+    h1 {
+      color: #0969da;
+    }
+
+    .card {
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+      background: #f6f8fa;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Sample HTML Page</h1>
+  <p>This is a sample HTML file for testing iframe rendering in TooToo.</p>
+  <div class="card">
+    <h3>Features Tested</h3>
+    <ul>
+      <li>HTML rendering in iframe</li>
+      <li>CSS styling</li>
+      <li>"Open in new tab" link</li>
+    </ul>
+  </div>
+  <p>Current time: <span id="time"></span></p>
+  <script>
+    document.getElementById( "time" ).textContent = new Date().toLocaleTimeString();
+  </script>
+</body>
+
+</html>

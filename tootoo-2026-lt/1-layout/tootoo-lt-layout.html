@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-08 11:00">
+  <meta name="revised" content="2026-04-09 12:00">
   <title>TooToo LT</title>
   <style>
     /* ── Custom Properties ── */
@@ -355,7 +355,7 @@
   <main>
 
     <div class="sidebar">
-      <div class="panel-header" title="Last updated: 2026-04-08 11:00">
+      <div class="panel-header" title="Last updated: 2026-04-09 12:00">
         <h3 id="hFiles">Files</h3>
         <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders">Expand
           All</button>
@@ -443,15 +443,29 @@
         } catch ( _ ) { /* ignore malformed cache */ }
       }
 
-      // Step 4: Fetch .git/config — only on HTTP/HTTPS
+      // Step 4: Parse GitHub Pages URL — e.g. https://owner.github.io/repo/…
+      if ( location.hostname.endsWith( '.github.io' ) ) {
+        const owner = location.hostname.split( '.' )[ 0 ];
+        const segments = location.pathname.split( '/' ).filter( Boolean );
+        const repo = segments[ 0 ] || `${ owner }.github.io`;
+        CONFIG.owner = owner;
+        CONFIG.repo = repo;
+        localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner, repo } ) );
+        return;
+      }
+
+      // Step 5: Fetch .git/config — try walking up the directory tree
+      const gitConfigPrefixes = [ '', '../', '../../', '../../../', '../../../../' ];
+      const gitConfigRegex = /github\.com[:/]([^/\n]+)\/([^.\n]+)(\.git)?/;
+
+      // 5a: Use fetch on HTTP/HTTPS
       if ( location.protocol === 'http:' || location.protocol === 'https:' ) {
-        const prefixes = [ '', '../', '../../', '../../../', '../../../../' ];
-        for ( const prefix of prefixes ) {
+        for ( const prefix of gitConfigPrefixes ) {
           try {
             const res = await fetch( `${ prefix }.git/config` );
             if ( !res.ok ) continue;
             const text = await res.text();
-            const match = text.match( /github\.com[:/]([^/\n]+)\/([^.\n]+)(\.git)?/ );
+            const match = text.match( gitConfigRegex );
             if ( match ) {
               CONFIG.owner = match[ 1 ];
               CONFIG.repo = match[ 2 ];
@@ -462,7 +476,27 @@
         }
       }
 
-      // Step 5: Show inline form — return Promise that resolves on user submit
+      // 5b: Use synchronous XHR on file:// (fetch is CORS-blocked)
+      if ( location.protocol === 'file:' ) {
+        for ( const prefix of gitConfigPrefixes ) {
+          try {
+            const xhr = new XMLHttpRequest();
+            xhr.open( 'GET', `${ prefix }.git/config`, false );
+            xhr.send( null );
+            if ( ( xhr.status === 200 || xhr.status === 0 ) && xhr.responseText ) {
+              const match = xhr.responseText.match( gitConfigRegex );
+              if ( match ) {
+                CONFIG.owner = match[ 1 ];
+                CONFIG.repo = match[ 2 ];
+                localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
+                return;
+              }
+            }
+          } catch ( _ ) { /* XHR blocked or file not found — try next prefix */ }
+        }
+      }
+
+      // Step 6: Show inline form — return Promise that resolves on user submit
       return new Promise( ( resolve ) => {
         const cb = document.getElementById( 'contentBody' );
         cb.innerHTML = `

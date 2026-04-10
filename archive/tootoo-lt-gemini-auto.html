@@ -4,7 +4,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-09 12:00">
   <title>TooToo LT</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link id="hljsTheme" rel="stylesheet"
@@ -43,7 +42,6 @@
     body {
       margin: 0;
       font-family: var(--font-family);
-      font-size: var(--font-size, 16px);
       color: var(--text-color);
       background-color: var(--primary-bg);
       display: flex;
@@ -53,7 +51,7 @@
     }
 
     header {
-      padding: 0.35rem 1rem;
+      padding: 0.75rem 1rem;
       background-color: var(--secondary-bg);
       border-bottom: 1px solid var(--border-color);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -95,47 +93,34 @@
       width: var(--sidebar-width, 300px);
       flex-shrink: 0;
       background-color: var(--secondary-bg);
-      padding: 0.5rem 0 0 1rem;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #navTree {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-    }
-
-    #treeList {
-      flex: 1;
+      padding: 0.5rem 0 1rem 1rem;
       overflow-y: auto;
-      margin-top: 0.5rem;
-      padding-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
 
     .resizer {
-      width: 8px;
+      width: 5px;
       cursor: col-resize;
-      background: var(--highlight-color);
-      opacity: 0.7;
+      background: linear-gradient(to right, transparent 1px, var(--border-color) 1px, var(--border-color) 2px, transparent 2px, transparent 3px, var(--border-color) 3px, var(--border-color) 4px, transparent 4px);
       flex-shrink: 0;
-      position: relative;
       z-index: 10;
-      transition: opacity 0.2s;
+      transition: background 0.2s;
       touch-action: none;
+      opacity: 0.5;
     }
 
     .resizer:hover,
     .resizer.resizing {
+      background: var(--highlight-color);
       opacity: 1;
     }
 
     .content-area {
       flex: 1;
       min-width: 0;
-      padding: 0 1rem 1rem 1rem;
+      padding: 1rem;
       overflow-y: auto;
       overflow-x: auto;
       background-color: var(--primary-bg);
@@ -195,6 +180,9 @@
       font-weight: bold;
       font-family: monospace;
       user-select: none;
+    }
+
+    .tree-folder {
       transition: background-color 0.15s;
     }
 
@@ -209,7 +197,6 @@
     pre {
       background-color: var(--secondary-bg);
       padding: 1rem;
-      max-width: 700px;
       border: 1px solid var(--border-color);
       border-radius: 6px;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -227,8 +214,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 0;
-      padding: 0.5rem 0;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
       border-bottom: 1px solid var(--border-color);
       position: sticky;
       top: 0;
@@ -266,7 +253,7 @@
     }
 
     .file-btn {
-      padding: 0.4rem 0.75rem;
+      padding: 0.25rem 0.5rem;
       font-size: 0.85rem;
     }
 
@@ -284,7 +271,6 @@
 
     .markdown-body {
       padding: 1.5rem;
-      max-width: 700px;
       background: var(--secondary-bg);
       border: 1px solid var(--border-color);
       border-radius: 6px;
@@ -414,37 +400,14 @@
     .back-to-top:hover {
       opacity: 0.85;
     }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 25% !important;
-        padding: 0.5rem 0 1rem 0.5rem;
-      }
-
-      .sidebar .tree-item-size {
-        display: none;
-      }
-
-      .resizer {
-        width: 4px;
-      }
-
-      .file-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-      }
-
-      header {
-        flex-wrap: wrap;
-      }
-    }
   </style>
 </head>
 
 <body>
 
   <header>
+    <strong id="headerTitle" style="cursor: pointer; font-size: 1.1rem;" onclick="resetToHome()" title="Reload">TooToo
+      LT</strong>
     <a id="headerGitHub" href="https://github.com/" target="_blank" rel="noopener" title="View source on GitHub"
       style="display: flex; align-items: center; justify-content: center; color: var(--text-color); opacity: 0.7; padding: 0.2rem;">
       <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor">
@@ -453,17 +416,9 @@
         </path>
       </svg>
     </a>
-    <strong id="headerTitle" style="cursor: pointer; font-size: 1.1rem;" onclick="resetToHome()" title="Reload">TooToo
-      LT</strong>
     <button id="btnDarkMode" onclick="toggleDarkMode()"
-      style="margin-left: auto; background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); font-size: 1.1rem; padding: 0.4rem 0.5rem;"
+      style="margin-left: auto; background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); font-size: 1.1rem; padding: 0.25rem 0.5rem;"
       title="Toggle dark mode">🌙</button>
-    <button onclick="adjustFontSize(-1)"
-      style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); font-size: 1rem; padding: 0.4rem 0.5rem;"
-      title="Decrease text size">A−</button>
-    <button onclick="adjustFontSize(1)"
-      style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); font-size: 1rem; padding: 0.4rem 0.5rem;"
-      title="Increase text size">A+</button>
     <button onclick="promptForToken()"
       style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color);"
       title="Set GitHub Personal Access Token">⚙️
@@ -475,16 +430,16 @@
     <div class="sidebar">
       <div id="navTree">
         <div style="display: flex; align-items: center; margin: 0 0 0.35rem 0;">
-          <h3 style="margin: 0; font-size: 0.95rem;" id="filesHeading">Files</h3>
+          <h3 style="margin: 0; font-size: 0.95rem;">Files</h3>
           <span id="treeRenderStatus" class="tree-render-status" aria-live="polite"></span>
           <button id="btnToggleFolders" onclick="toggleAllFolders()"
-            style="display: none; margin-left: auto; font-size: 0.75rem; padding: 0.4rem 0.5rem;"
+            style="display: none; margin-left: auto; font-size: 0.75rem; padding: 0.15rem 0.4rem;"
             title="Expand or collapse all folders">Expand All</button>
         </div>
         <input id="treeFilter" type="text" placeholder="Filter files…" oninput="filterTree()">
         <div id="treeTruncatedWarning" class="tree-warning" style="display:none;">
           ⚠️ Repository too large. Tree truncated.</div>
-        <div id="treeList"></div>
+        <div style="margin-top: 0.5rem;" id="treeList"></div>
       </div>
     </div>
 
@@ -506,12 +461,6 @@
     } )[ tag ] );
 
     const escapeAttribute = escapeHTML;
-
-    // ── Set "Files" tooltip from meta revised tag ───────────────────────────
-    {
-      const revised = document.querySelector( 'meta[name="revised"]' )?.content;
-      if ( revised ) document.getElementById( 'filesHeading' ).title = `Last updated: ${ revised }`;
-    }
 
     // ── CONFIG ──────────────────────────────────────────────────────────────
 
@@ -634,62 +583,24 @@
         } catch { /* bad JSON, fall through */ }
       }
 
-      // Parse GitHub Pages URL — e.g. https://owner.github.io/repo/…
-      if ( location.hostname.endsWith( '.github.io' ) ) {
-        const owner = location.hostname.split( '.' )[ 0 ];
-        const segments = location.pathname.split( '/' ).filter( Boolean );
-        const repo = segments[ 0 ] || `${ owner }.github.io`;
-        CONFIG.owner = owner;
-        CONFIG.repo = repo;
-        localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner, repo } ) );
-        updateHeaderFromConfig();
-        return resolve();
-      }
-
       // Try fetching .git/config by walking up the directory tree
       const tryFetchGitConfig = async () => {
         const depths = [ '', '../', '../../', '../../../', '../../../../' ];
-        const gitConfigRegex = /github\.com[:/]([^/]+)\/([^/.\s]+)/;
-
-        // Try fetch on HTTP/HTTPS
-        if ( location.protocol === 'http:' || location.protocol === 'https:' ) {
-          for ( const prefix of depths ) {
-            try {
-              const resp = await fetch( prefix + '.git/config' );
-              if ( resp.ok ) {
-                const text = await resp.text();
-                const match = text.match( gitConfigRegex );
-                if ( match ) {
-                  CONFIG.owner = match[ 1 ];
-                  CONFIG.repo = match[ 2 ].replace( /\.git$/, '' );
-                  localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
-                  updateHeaderFromConfig();
-                  return resolve();
-                }
+        for ( const prefix of depths ) {
+          try {
+            const resp = await fetch( prefix + '.git/config' );
+            if ( resp.ok ) {
+              const text = await resp.text();
+              const match = text.match( /github\.com[:/]([^/]+)\/([^/.\s]+)/ );
+              if ( match ) {
+                CONFIG.owner = match[ 1 ];
+                CONFIG.repo = match[ 2 ].replace( /\.git$/, '' );
+                localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
+                updateHeaderFromConfig();
+                return resolve();
               }
-            } catch ( e ) { /* ignore fetch errors and continue up */ }
-          }
-        }
-
-        // Try synchronous XHR on file:// (fetch is CORS-blocked)
-        if ( location.protocol === 'file:' ) {
-          for ( const prefix of depths ) {
-            try {
-              const xhr = new XMLHttpRequest();
-              xhr.open( 'GET', prefix + '.git/config', false );
-              xhr.send( null );
-              if ( ( xhr.status === 200 || xhr.status === 0 ) && xhr.responseText ) {
-                const match = xhr.responseText.match( gitConfigRegex );
-                if ( match ) {
-                  CONFIG.owner = match[ 1 ];
-                  CONFIG.repo = match[ 2 ].replace( /\.git$/, '' );
-                  localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
-                  updateHeaderFromConfig();
-                  return resolve();
-                }
-              }
-            } catch ( _ ) { /* XHR blocked or file not found — try next prefix */ }
-          }
+            }
+          } catch ( e ) { /* ignore fetch errors (like ERR_FILE_NOT_FOUND) and continue up */ }
         }
 
         // Final fallback: show form
@@ -703,7 +614,7 @@
             <label style="display: block; margin-bottom: 1rem; font-weight: 600;">Repository
               <input id="inputRepo" type="text" placeholder="e.g. sandbox" style="display: block; width: 100%; box-sizing: border-box; margin-top: 0.25rem; padding: 0.4rem 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.95rem; background: var(--primary-bg); color: var(--text-color);">
             </label>
-            <button id="btnLoadRepo" style="width: 100%;" title="Load repository">Load Repository</button>
+            <button id="btnLoadRepo" style="width: 100%;">Load Repository</button>
           </div>`;
         document.getElementById( 'btnLoadRepo' ).addEventListener( 'click', () => {
           const owner = document.getElementById( 'inputOwner' ).value.trim();
@@ -810,20 +721,6 @@
       localStorage.setItem( 'darkMode', isDark );
       document.getElementById( 'btnDarkMode' ).textContent = isDark ? '☀️' : '🌙';
       setHljsTheme( isDark );
-    };
-
-    // ── Font size adjustment ────────────────────────────────────────────────
-
-    const FONT_SIZE_MIN = 10;
-    const FONT_SIZE_MAX = 28;
-    const FONT_SIZE_STEP = 2;
-    const FONT_SIZE_DEFAULT = 16;
-
-    const adjustFontSize = delta => {
-      const current = parseInt( getComputedStyle( document.body ).fontSize, 10 ) || FONT_SIZE_DEFAULT;
-      const next = Math.min( FONT_SIZE_MAX, Math.max( FONT_SIZE_MIN, current + delta * FONT_SIZE_STEP ) );
-      document.body.style.setProperty( '--font-size', next + 'px' );
-      localStorage.setItem( 'fontSize', next );
     };
 
     // ── Tree filter ─────────────────────────────────────────────────────────
@@ -1153,12 +1050,12 @@
         const headerHtml = `
           <div class="file-header">
             <h3 class="file-title">
+              <span class="file-title-path">${ repoLink } / ${ pathPrefix }</span>${ escapeHTML( fileName ) }
               <a href="${ escapeAttribute( githubLink ) }" target="_blank" rel="noopener" title="View on GitHub" class="file-source-link">
                 <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path>
                 </svg>
               </a>
-              <span class="file-title-path">${ repoLink } / ${ pathPrefix }</span>${ escapeHTML( fileName ) }
             </h3>
             <div class="file-actions">
               <button onclick="copyFileContent()" id="btnCopy" class="file-btn" title="Copy to clipboard"
@@ -1268,28 +1165,6 @@
         } );
       } );
 
-      const buildItemHtml = ( key, child ) => {
-        const item = child._item;
-        if ( item.type === 'tree' ) {
-          return `<details data-folder-path="${ escapeAttribute( item.path ) }">
-              <summary class="tree-folder" tabindex="0">📁 ${ escapeHTML( key ) }</summary>
-              <div class="tree-children">${ buildHtml( child._children ) }</div>
-            </details>`;
-        }
-        const isReadme = /^readme(\.md|\.txt)?$/i.test( key );
-        const icon = fileIcon( key );
-        const label = isReadme
-          ? `<span class="tree-item-label" style="font-weight: 600;">${ icon } ${ escapeHTML( key ) }</span>`
-          : `<span class="tree-item-label">${ icon } ${ escapeHTML( key ) }</span>`;
-        const sizeLabel = item.size != null
-          ? `<span class="tree-item-size">${ formatFileSize( item.size ) }</span>`
-          : '';
-        return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeAttribute( item.path ) }">
-            ${ label }
-            ${ sizeLabel }
-          </div>`;
-      };
-
       const buildHtml = node => {
         const keys = Object.keys( node );
         keys.sort( ( a, b ) => {
@@ -1299,7 +1174,30 @@
           return a.localeCompare( b );
         } );
 
-        return keys.map( key => buildItemHtml( key, node[ key ] ) ).join( '' );
+        return keys.map( key => {
+          const child = node[ key ];
+          const item = child._item;
+
+          if ( item.type === 'tree' ) {
+            return `<details>
+              <summary class="tree-folder" tabindex="0">📁 ${ escapeHTML( key ) }</summary>
+              <div class="tree-children">${ buildHtml( child._children ) }</div>
+            </details>`;
+          }
+
+          const isReadme = /^readme(\.md|\.txt)?$/i.test( key );
+          const icon = fileIcon( key );
+          const label = isReadme
+            ? `<span class="tree-item-label" style="font-weight: 600;">${ icon } ${ escapeHTML( key ) }</span>`
+            : `<span class="tree-item-label">${ icon } ${ escapeHTML( key ) }</span>`;
+          const sizeLabel = item.size != null
+            ? `<span class="tree-item-size">${ formatFileSize( item.size ) }</span>`
+            : '';
+          return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeAttribute( item.path ) }">
+            ${ label }
+            ${ sizeLabel }
+          </div>`;
+        } ).join( '' );
       };
 
       const rootKeys = Object.keys( root );
@@ -1314,7 +1212,28 @@
       let idx = 0;
       const renderNextBatch = () => {
         const end = Math.min( idx + TREE_RENDER_BATCH_SIZE, rootKeys.length );
-        const chunk = rootKeys.slice( idx, end ).map( key => buildItemHtml( key, root[ key ] ) ).join( '' );
+        const chunk = rootKeys.slice( idx, end ).map( key => {
+          const child = root[ key ];
+          const item = child._item;
+          if ( item.type === 'tree' ) {
+            return `<details>
+              <summary class="tree-folder" tabindex="0">📁 ${ escapeHTML( key ) }</summary>
+              <div class="tree-children">${ buildHtml( child._children ) }</div>
+            </details>`;
+          }
+          const isReadme = /^readme(\.md|\.txt)?$/i.test( key );
+          const icon = fileIcon( key );
+          const label = isReadme
+            ? `<span class="tree-item-label" style="font-weight: 600;">${ icon } ${ escapeHTML( key ) }</span>`
+            : `<span class="tree-item-label">${ icon } ${ escapeHTML( key ) }</span>`;
+          const sizeLabel = item.size != null
+            ? `<span class="tree-item-size">${ formatFileSize( item.size ) }</span>`
+            : '';
+          return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeAttribute( item.path ) }">
+            ${ label }
+            ${ sizeLabel }
+          </div>`;
+        } ).join( '' );
 
         treeList.insertAdjacentHTML( 'beforeend', chunk );
         idx = end;
@@ -1377,19 +1296,30 @@
     // ── Breadcrumb folder navigation ────────────────────────────────────────
 
     const scrollToTreeFolder = folderPath => {
-      const details = treeList.querySelector( `details[data-folder-path="${ CSS.escape( folderPath ) }"]` );
-      if ( !details ) return;
-      // Expand all ancestors
-      let p = details.parentElement;
-      while ( p && p !== treeList ) {
-        if ( p.tagName === 'DETAILS' && !p.open ) p.open = true;
-        p = p.parentElement;
-      }
-      details.open = true;
-      const summary = details.querySelector( 'summary' );
-      if ( summary ) {
+      // Find the <summary> for this folder path by checking all tree-folders
+      const allSummaries = treeList.querySelectorAll( 'summary.tree-folder' );
+      for ( const summary of allSummaries ) {
+        const details = summary.parentElement;
+        // Reconstruct folder path from nesting
+        const childContainer = details.querySelector( '.tree-children' );
+        // Check if any child item starts with this folderPath
+        const match = childContainer?.querySelector(
+          `.tree-item[data-path^="${ CSS.escape( folderPath + '/' ) }"], details`
+        );
+        // Verify this is the right folder by checking the text
+        const text = summary.textContent.replace( /^📁\s*/, '' ).trim();
+        const lastSeg = folderPath.split( '/' ).pop();
+        if ( text !== lastSeg ) continue;
+        // Expand all ancestors
+        let p = details.parentElement;
+        while ( p && p !== treeList ) {
+          if ( p.tagName === 'DETAILS' && !p.open ) p.open = true;
+          p = p.parentElement;
+        }
+        details.open = true;
         summary.scrollIntoView( { block: 'nearest', behavior: 'smooth' } );
         summary.focus();
+        return;
       }
     };
 
@@ -1531,13 +1461,6 @@
       );
     } );
 
-    // Revoke blob URLs on page unload to free memory
-    window.addEventListener( 'beforeunload', () => {
-      document.querySelectorAll( 'iframe[src^="blob:"], img[src^="blob:"], audio[src^="blob:"], video[src^="blob:"]' ).forEach( el => {
-        URL.revokeObjectURL( el.src );
-      } );
-    } );
-
     // ── Init ────────────────────────────────────────────────────────────────
 
     // Restore persisted sidebar width
@@ -1550,10 +1473,6 @@
       document.getElementById( 'btnDarkMode' ).textContent = '☀️';
       setHljsTheme( true );
     }
-
-    // Restore font size
-    const savedFontSize = localStorage.getItem( 'fontSize' );
-    if ( savedFontSize ) document.body.style.setProperty( '--font-size', savedFontSize + 'px' );
 
     ( async () => {
       await detectRepo();

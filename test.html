@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TooToo — File Load Test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      padding: 16px;
+      background: #f6f8fa;
+      color: #24292f;
+    }
+
+    h1 {
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .controls label {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .controls input,
+    .controls select {
+      font-size: 13px;
+      padding: 4px 8px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+    }
+
+    .controls input[type="password"] {
+      width: 260px;
+    }
+
+    button {
+      font-size: 13px;
+      padding: 5px 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #f3f4f6;
+    }
+
+    button.primary {
+      background: #2da44e;
+      color: #fff;
+      border-color: #2da44e;
+    }
+
+    button.primary:hover {
+      background: #218838;
+    }
+
+    button.stop {
+      background: #cf222e;
+      color: #fff;
+      border-color: #cf222e;
+    }
+
+    .summary {
+      font-size: 14px;
+      margin: 12px 0;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e1e4e8;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #2da44e;
+      transition: width 0.2s;
+    }
+
+    #log {
+      max-height: 70vh;
+      overflow-y: auto;
+      font-size: 12px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    .log-row {
+      display: flex;
+      gap: 8px;
+      padding: 3px 8px;
+      border-bottom: 1px solid #f0f0f0;
+      align-items: baseline;
+    }
+
+    .log-row:last-child {
+      border-bottom: none;
+    }
+
+    .log-row .status {
+      flex-shrink: 0;
+      width: 18px;
+      text-align: center;
+    }
+
+    .log-row .path {
+      flex: 1;
+      word-break: break-all;
+    }
+
+    .log-row .detail {
+      flex-shrink: 0;
+      color: #57606a;
+      font-size: 11px;
+    }
+
+    .log-row.pass {
+      background: #dafbe1;
+    }
+
+    .log-row.fail {
+      background: #ffebe9;
+    }
+
+    .log-row.skip {
+      background: #fff8c5;
+    }
+
+    .log-row.info {
+      background: #ddf4ff;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin: 8px 0;
+      font-size: 12px;
+    }
+
+    .filter-bar button {
+      font-size: 11px;
+      padding: 2px 8px;
+    }
+
+    .filter-bar button.active {
+      background: #0969da;
+      color: #fff;
+      border-color: #0969da;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🧪 TooToo File Load Test</h1>
+
+  <div class="controls">
+    <label>Owner:</label>
+    <input id="owner" value="theo-armour">
+    <label>Repo:</label>
+    <input id="repo" value="sandbox">
+    <label>Branch:</label>
+    <input id="branch" value="main">
+    <label>Token:</label>
+    <input id="token" type="password" placeholder="optional — for private repos">
+    <button class="primary" id="btnRun">▶ Run Test</button>
+    <button class="stop" id="btnStop" style="display:none">■ Stop</button>
+  </div>
+
+  <div class="summary" id="summary">Click <strong>Run Test</strong> to fetch the repo tree and test-load every file.
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress" style="width:0"></div>
+  </div>
+
+  <div class="filter-bar">
+    <span>Show:</span>
+    <button class="active" data-filter="all">All</button>
+    <button data-filter="fail">❌ Failures</button>
+    <button data-filter="skip">⏭ Skipped</button>
+    <button data-filter="pass">✅ Passed</button>
+  </div>
+
+  <div id="log"></div>
+
+  <script>
+    const $ = ( id ) => document.getElementById( id );
+    const log = $( "log" );
+    const summary = $( "summary" );
+    const progress = $( "progress" );
+    let aborted = false;
+
+    // Restore token from localStorage if available
+    const savedToken = localStorage.getItem( "gh-token" ) || "";
+    $( "token" ).value = savedToken;
+
+    // Filter buttons
+    let activeFilter = "all";
+    document.querySelector( ".filter-bar" ).addEventListener( "click", ( e ) => {
+      const btn = e.target.closest( "button[data-filter]" );
+      if ( !btn ) return;
+      document.querySelectorAll( ".filter-bar button" ).forEach( b => b.classList.remove( "active" ) );
+      btn.classList.add( "active" );
+      activeFilter = btn.dataset.filter;
+      log.querySelectorAll( ".log-row" ).forEach( row => {
+        if ( activeFilter === "all" ) { row.style.display = ""; return; }
+        row.style.display = row.classList.contains( activeFilter ) ? "" : "none";
+      } );
+    } );
+
+    const addRow = ( status, icon, path, detail, cls ) => {
+      const row = document.createElement( "div" );
+      row.className = `log-row ${ cls }`;
+      row.innerHTML = `<span class="status">${ icon }</span><span class="path">${ esc( path ) }</span><span class="detail">${ esc( detail ) }</span>`;
+      if ( activeFilter !== "all" && !row.classList.contains( activeFilter ) ) row.style.display = "none";
+      log.appendChild( row );
+      log.scrollTop = log.scrollHeight;
+    };
+
+    const esc = ( s ) => s.replace( /&/g, "&amp;" ).replace( /</g, "&lt;" ).replace( />/g, "&gt;" );
+
+    // File extensions that we verify by HEAD/GET request
+    const textExts = [ "md", "txt", "json", "js", "ts", "css", "csv", "xml", "yml", "yaml", "toml", "ini", "cfg", "sh", "bat", "py", "rb", "java", "c", "cpp", "h", "go", "rs", "swift", "kt", "r", "sql", "graphql", "env", "gitignore", "editorconfig", "license" ];
+    const imageExts = [ "png", "jpg", "jpeg", "gif", "svg", "webp", "ico", "bmp", "avif" ];
+    const mediaExts = [ "mp4", "webm", "mp3", "wav", "ogg", "aac", "flac" ];
+    const embedExts = [ "html", "htm", "pdf" ];
+    const binaryExts = [ "xlsx", "xls", "zip", "tar", "gz", "woff", "woff2", "ttf", "eot" ];
+
+    const classifyExt = ( name ) => {
+      const ext = name.includes( "." ) ? name.split( "." ).pop().toLowerCase() : "";
+      if ( imageExts.includes( ext ) ) return "image";
+      if ( mediaExts.includes( ext ) ) return "media";
+      if ( embedExts.includes( ext ) ) return "embed";
+      if ( binaryExts.includes( ext ) ) return "binary";
+      return "text";
+    };
+
+    const formatSize = ( bytes ) => {
+      if ( bytes < 1024 ) return `${ bytes } B`;
+      if ( bytes < 1024 * 1024 ) return `${ ( bytes / 1024 ).toFixed( 1 ) } KB`;
+      return `${ ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) } MB`;
+    };
+
+    $( "btnRun" ).addEventListener( "click", runTest );
+    $( "btnStop" ).addEventListener( "click", () => { aborted = true; } );
+
+    async function runTest () {
+      const owner = $( "owner" ).value.trim();
+      const repo = $( "repo" ).value.trim();
+      const branch = $( "branch" ).value.trim();
+      const token = $( "token" ).value.trim();
+      if ( !owner || !repo || !branch ) return;
+
+      aborted = false;
+      log.innerHTML = "";
+      $( "btnRun" ).style.display = "none";
+      $( "btnStop" ).style.display = "";
+      progress.style.width = "0";
+
+      const headers = {};
+      if ( token ) headers.Authorization = `token ${ token }`;
+
+      // 1. Fetch the tree
+      addRow( "info", "🔄", `Fetching tree: ${ owner }/${ repo } @ ${ branch }`, "", "info" );
+      summary.innerHTML = "Fetching repository tree…";
+
+      let items;
+      try {
+        const url = `https://api.github.com/repos/${ owner }/${ repo }/git/trees/${ branch }?recursive=1`;
+        const resp = await fetch( url, { headers } );
+        if ( !resp.ok ) throw new Error( `HTTP ${ resp.status }` );
+        const data = await resp.json();
+        items = data.tree.filter( i => i.type === "blob" );
+        addRow( "info", "✅", `Tree loaded: ${ items.length } files found`, "", "info" );
+      } catch ( err ) {
+        addRow( "fail", "❌", `Failed to fetch tree: ${ err.message }`, "", "fail" );
+        summary.innerHTML = `<strong style="color:#cf222e">Failed to fetch tree.</strong> ${ esc( err.message ) }`;
+        $( "btnRun" ).style.display = "";
+        $( "btnStop" ).style.display = "none";
+        return;
+      }
+
+      // 2. Test each file
+      let passed = 0, failed = 0, skipped = 0;
+      const total = items.length;
+      const startTime = performance.now();
+
+      // Skip dotfiles and node_modules
+      const testable = items.filter( i => {
+        const parts = i.path.split( "/" );
+        return !parts.some( p => p.startsWith( "." ) || p === "node_modules" );
+      } );
+      const skippedHidden = total - testable.length;
+      if ( skippedHidden ) {
+        addRow( "skip", "⏭", `Skipping ${ skippedHidden } hidden/dotfiles`, "", "skip" );
+        skipped += skippedHidden;
+      }
+
+      // Rate-limit: small delay between requests to avoid GitHub abuse limits
+      const DELAY_MS = 120;
+      const LARGE_SKIP = 5 * 1024 * 1024; // skip files > 5 MB
+
+      for ( let idx = 0; idx < testable.length; idx++ ) {
+        if ( aborted ) {
+          addRow( "info", "🛑", "Test aborted by user", "", "info" );
+          break;
+        }
+
+        const item = testable[ idx ];
+        const pct = Math.round( ( ( idx + 1 ) / testable.length ) * 100 );
+        progress.style.width = pct + "%";
+        summary.innerHTML = `Testing file <strong>${ idx + 1 }</strong> of <strong>${ testable.length }</strong> — ${ pct }% — ✅ ${ passed } ❌ ${ failed } ⏭ ${ skipped }`;
+
+        const name = item.path.split( "/" ).pop();
+        const kind = classifyExt( name );
+        const size = item.size || 0;
+
+        // Skip very large files
+        if ( size > LARGE_SKIP ) {
+          addRow( "skip", "⏭", item.path, `${ formatSize( size ) } — too large`, "skip" );
+          skipped++;
+          continue;
+        }
+
+        const rawUrl = `https://raw.githubusercontent.com/${ owner }/${ repo }/${ branch }/${ item.path }`;
+
+        try {
+          // For text/image/embed: do a GET and check status
+          // For binary/media: do a HEAD request (no need to download)
+          const method = ( kind === "binary" || kind === "media" ) ? "HEAD" : "GET";
+          const resp = await fetch( rawUrl, { method } );
+
+          if ( resp.ok ) {
+            // For text files, also verify we got some content
+            if ( method === "GET" ) {
+              const text = await resp.text();
+              if ( kind === "text" && text.length === 0 && size > 0 ) {
+                addRow( "fail", "❌", item.path, `${ formatSize( size ) } — empty response`, "fail" );
+                failed++;
+              } else {
+                addRow( "pass", "✅", item.path, `${ formatSize( size ) } — ${ kind }`, "pass" );
+                passed++;
+              }
+            } else {
+              addRow( "pass", "✅", item.path, `${ formatSize( size ) } — ${ kind } (HEAD)`, "pass" );
+              passed++;
+            }
+          } else {
+            addRow( "fail", "❌", item.path, `HTTP ${ resp.status }`, "fail" );
+            failed++;
+          }
+        } catch ( err ) {
+          addRow( "fail", "❌", item.path, err.message, "fail" );
+          failed++;
+        }
+
+        // Small delay to be polite to GitHub
+        if ( idx < testable.length - 1 ) {
+          await new Promise( r => setTimeout( r, DELAY_MS ) );
+        }
+      }
+
+      const elapsed = ( ( performance.now() - startTime ) / 1000 ).toFixed( 1 );
+      progress.style.width = "100%";
+      progress.style.background = failed ? "#cf222e" : "#2da44e";
+
+      const resultColor = failed ? "#cf222e" : "#2da44e";
+      summary.innerHTML = `<strong style="color:${ resultColor }">${ failed ? "SOME FAILURES" : "ALL PASSED" }</strong> — ✅ ${ passed } passed · ❌ ${ failed } failed · ⏭ ${ skipped } skipped · ${ elapsed }s`;
+      addRow( "info", "🏁", `Done in ${ elapsed }s`, `${ passed } pass, ${ failed } fail, ${ skipped } skip`, "info" );
+
+      $( "btnRun" ).style.display = "";
+      $( "btnStop" ).style.display = "none";
+    }
+  </script>
+</body>
+
+</html>

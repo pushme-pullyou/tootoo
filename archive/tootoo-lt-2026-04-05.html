@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theo Armour/AA</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link id="hljsTheme" rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary-bg: #f6f8fa;
+      --secondary-bg: #ffffff;
+      --text-color: #24292f;
+      --border-color: #d0d7de;
+      --highlight-color: #0969da;
+      --hover-bg: #f3f4f6;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    body.dark-mode {
+      --primary-bg: #0d1117;
+      --secondary-bg: #161b22;
+      --text-color: #c9d1d9;
+      --border-color: #30363d;
+      --highlight-color: #58a6ff;
+      --hover-bg: #21262d;
+    }
+
+    body.dark-mode .markdown-body {
+      color: var(--text-color);
+    }
+
+    body.dark-mode pre {
+      background-color: var(--secondary-bg);
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-family);
+      color: var(--text-color);
+      background-color: var(--primary-bg);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow-x: hidden;
+    }
+
+    header {
+      padding: 0.75rem 1rem;
+      background-color: var(--secondary-bg);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    button {
+      padding: 0.4rem 0.75rem;
+      background-color: var(--highlight-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    img { width: 100%;}
+	
+    main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: var(--sidebar-width, 300px);
+      flex-shrink: 0;
+      background-color: var(--secondary-bg);
+      padding: 0.5rem 0.5rem 1rem 1rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .resizer {
+      width: 12px;
+      cursor: col-resize;
+      background-color: var(--border-color);
+      flex-shrink: 0;
+      z-index: 10;
+      transition: background-color 0.2s;
+      touch-action: none;
+      border-left: 1px solid var(--hover-bg);
+      border-right: 1px solid var(--hover-bg);
+    }
+
+    .resizer:hover,
+    .resizer.resizing {
+      background-color: var(--highlight-color);
+    }
+
+    .content-area {
+      flex: 1;
+      min-width: 0;
+      padding: 1rem;
+      overflow-y: auto;
+      overflow-x: auto;
+      background-color: var(--primary-bg);
+    }
+
+    .tree-item {
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .tree-item-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tree-item-size {
+      opacity: 0.65;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .tree-item:hover {
+      background-color: var(--hover-bg);
+    }
+
+    .tree-folder {
+      cursor: pointer;
+      padding: 0.2rem;
+      border-radius: 4px;
+      font-weight: bold;
+      font-family: monospace;
+      user-select: none;
+    }
+
+    .tree-folder:hover {
+      background-color: var(--hover-bg);
+    }
+
+    .tree-children {
+      margin-left: 1rem;
+    }
+
+    pre {
+      background-color: var(--secondary-bg);
+      padding: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      overflow-x: auto;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    .error {
+      color: #cf222e;
+      padding: 1rem;
+    }
+
+    .file-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: var(--primary-bg);
+    }
+
+    .file-title {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .file-title-path {
+      opacity: 0.7;
+      font-weight: normal;
+    }
+
+    .file-source-link {
+      color: var(--text-color);
+      text-decoration: none;
+      opacity: 0.7;
+      transform: translateY(2px);
+    }
+
+    .file-source-link:hover {
+      color: var(--highlight-color);
+    }
+
+    .file-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .file-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .markdown-body {
+      padding: 1.5rem;
+      background: var(--secondary-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      line-height: 1.5;
+      overflow-x: auto;
+    }
+
+    .md-error {
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
+      border-radius: 4px;
+    }
+
+    .media-content {
+      max-width: 100%;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+    }
+
+    .iframe-content {
+      width: 100%;
+      height: 80vh;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--secondary-bg);
+    }
+
+    .xlsx-sheet table {
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      min-width: 100%;
+    }
+
+    .xlsx-sheet td,
+    .xlsx-sheet th {
+      border: 1px solid var(--border-color);
+      padding: 0.3rem 0.5rem;
+      white-space: nowrap;
+    }
+
+    .xlsx-sheet th {
+      background: var(--primary-bg);
+      font-weight: 600;
+    }
+
+    #treeFilter {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.85rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--primary-bg);
+      color: var(--text-color);
+      outline: none;
+    }
+
+    #treeFilter:focus {
+      border-color: var(--highlight-color);
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <strong style="cursor: pointer; font-size: 1.1rem;"
+      onclick="history.replaceState(null, '', location.pathname + location.search); location.reload();"
+      title="Reload">Theo Armour / AA</strong>
+    <a href="https://github.com/theo-armour/aa" target="_blank" rel="noopener" title="View source on GitHub"
+      style="display: flex; align-items: center; justify-content: center; color: var(--text-color); opacity: 0.7; padding: 0.2rem;">
+      <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor">
+        <path
+          d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z">
+        </path>
+      </svg>
+    </a>
+    <button id="btnDarkMode" onclick="toggleDarkMode()"
+      style="margin-left: auto; background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); font-size: 1.1rem; padding: 0.25rem 0.5rem;"
+      title="Toggle dark mode">🌙</button>
+    <button onclick="promptForToken()"
+      style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color);"
+      title="Set GitHub Personal Access Token">⚙️
+      Token</button>
+  </header>
+
+  <main>
+    <div class="sidebar">
+      <div id="navTree">
+        <div style="display: flex; align-items: center; margin: 0 0 0.35rem 0;">
+          <h3 style="margin: 0; font-size: 0.95rem;">Files</h3>
+          <button id="btnToggleFolders" onclick="toggleAllFolders()"
+            style="display: none; margin-left: auto; font-size: 0.75rem; padding: 0.15rem 0.4rem;"
+            title="Expand or collapse all folders">Expand All</button>
+        </div>
+        <input id="treeFilter" type="text" placeholder="Filter files…" oninput="filterTree()">
+        <div id="treeTruncatedWarning"
+          style="display:none; padding: 0.5rem; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; font-size: 0.85rem; border-radius: 4px; margin-top: 0.5rem;">
+          ⚠️ Repository too large. Tree truncated.</div>
+        <div style="margin-top: 0.5rem;" id="treeList"></div>
+      </div>
+    </div>
+
+    <div class="resizer" id="dragMe"></div>
+
+    <div class="content-area" id="mainContent">
+      <p>Loading...</p>
+    </div>
+  </main>
+
+  <script>
+    // ── Security helpers ────────────────────────────────────────────────────
+
+    const escapeHTML = str => String( str ).replace( /[&<>'"]/g, tag => ( {
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    } )[ tag ] );
+
+    const escapeAttribute = escapeHTML;
+
+    // ── CONFIG ──────────────────────────────────────────────────────────────
+
+    const CONFIG = {
+      owner: 'theo-armour',
+      repo: 'aa',
+      branch: '',  // empty = auto-detect default branch from API
+    };
+
+    // ── Application state ───────────────────────────────────────────────────
+
+    const state = {
+      owner: '',
+      repo: '',
+      branch: '',
+      tree: [],
+      currentFilePath: '',
+    };
+
+    const ghToken = localStorage.getItem( 'githubToken' ) || '';
+    const headers = ghToken ? { Authorization: `token ${ ghToken }` } : {};
+    const isLocal = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const LARGE_FILE_WARNING_BYTES = 1024 * 1024;
+    const approvedLargeFiles = new Set();
+
+    let mainAbortController = null;
+    const getFetchOptions = ( reset = false ) => {
+      if ( reset ) {
+        if ( mainAbortController ) mainAbortController.abort();
+        mainAbortController = new AbortController();
+      }
+      return { headers, signal: mainAbortController?.signal };
+    };
+
+    // ── DOM references ──────────────────────────────────────────────────────
+
+    const navTree = document.getElementById( 'navTree' );
+    const treeList = document.getElementById( 'treeList' );
+    const mainContent = document.getElementById( 'mainContent' );
+    const btnToggleFolders = document.getElementById( 'btnToggleFolders' );
+
+    // ── Utilities ───────────────────────────────────────────────────────────
+
+    const fileIcon = name => {
+      const ext = name.split( '.' ).pop().toLowerCase();
+      if ( /^readme/i.test( name ) ) return '📝';
+      const map = {
+        md: '📝', txt: '📝',
+        json: '{ }', yml: '⚙️', yaml: '⚙️', toml: '⚙️',
+        js: '🟨', ts: '🟦', py: '🐍',
+        html: '🌐', htm: '🌐', css: '🎨',
+        png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', webp: '🖼️', svg: '🖼️', ico: '🖼️',
+        mp3: '🎵', wav: '🎵', ogg: '🎵',
+        mp4: '🎬', webm: '🎬',
+        pdf: '📕',
+        xlsx: '📊', xls: '📊', csv: '📊', ods: '📊',
+        zip: '📦', gz: '📦', tar: '📦',
+      };
+      return map[ ext ] || '📄';
+    };
+
+    const formatFileSize = bytes => {
+      if ( bytes == null || Number.isNaN( bytes ) ) return '';
+      if ( bytes < 1024 ) return `${ bytes } B`;
+      if ( bytes < 1024 * 1024 ) return `${ ( bytes / 1024 ).toFixed( 1 ) } KB`;
+      return `${ ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) } MB`;
+    };
+
+    const getKnownFileSize = fileNode => {
+      if ( fileNode?.size != null ) return fileNode.size;
+      return null;
+    };
+
+    const getLargeFileApprovalKey = path => `${ state.owner }/${ state.repo }/${ state.branch }/${ path }`;
+
+    const confirmLargeFileLoad = ( path, size ) => {
+      if ( size == null || size < LARGE_FILE_WARNING_BYTES ) return true;
+      const key = getLargeFileApprovalKey( path );
+      if ( approvedLargeFiles.has( key ) ) return true;
+      const ok = window.confirm( `This file is ${ formatFileSize( size ) } and may take a while to load.\n\nLoad ${ path }?` );
+      if ( ok ) approvedLargeFiles.add( key );
+      return ok;
+    };
+
+    // ── Token ───────────────────────────────────────────────────────────────
+
+    const promptForToken = () => {
+      const newToken = prompt( 'Enter GitHub Personal Access Token (for higher rate limits):\nLeave blank to clear.', ghToken );
+      if ( newToken !== null ) {
+        localStorage.setItem( 'githubToken', newToken.trim() );
+        location.reload();
+      }
+    };
+
+    // ── Dark mode toggle ────────────────────────────────────────────────────
+
+    const setHljsTheme = isDark => {
+      document.getElementById( 'hljsTheme' ).href = isDark
+        ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
+        : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
+    };
+
+    const toggleDarkMode = () => {
+      const isDark = document.body.classList.toggle( 'dark-mode' );
+      localStorage.setItem( 'darkMode', isDark );
+      document.getElementById( 'btnDarkMode' ).textContent = isDark ? '☀️' : '🌙';
+      setHljsTheme( isDark );
+    };
+
+    // ── Tree filter ─────────────────────────────────────────────────────────
+
+    const filterTree = () => {
+      const query = document.getElementById( 'treeFilter' ).value.toLowerCase();
+      treeList.querySelectorAll( '.tree-item' ).forEach( item => {
+        const path = ( item.dataset.path || '' ).toLowerCase();
+        const match = !query || path.includes( query );
+        item.style.display = match ? '' : 'none';
+      } );
+      // Show folders that have visible children, hide empty ones
+      treeList.querySelectorAll( 'details' ).forEach( d => {
+        const hasVisible = d.querySelector( '.tree-item:not([style*="display: none"])' );
+        d.style.display = hasVisible ? '' : 'none';
+        if ( query && hasVisible ) d.open = true;
+      } );
+    };
+
+    // ── Copy to clipboard ───────────────────────────────────────────────────
+
+    const copyFileContent = async () => {
+      const raw = document.getElementById( 'viewRaw' );
+      const rendered = document.getElementById( 'viewRendered' );
+      const el = raw || rendered;
+      if ( !el ) return;
+      const code = el.querySelector( 'code' );
+      const text = code ? code.textContent : el.textContent;
+      try {
+        await navigator.clipboard.writeText( text );
+        const btn = document.getElementById( 'btnCopy' );
+        if ( btn ) { btn.textContent = '✓ Copied'; setTimeout( () => btn.textContent = 'Copy', 1500 ); }
+      } catch ( e ) { /* clipboard may be blocked */ }
+    };
+
+    // ── Hash routing ────────────────────────────────────────────────────────
+
+    const updateHash = () => {
+      const hash = `#${ state.owner }/${ state.repo }${ state.currentFilePath ? '/' + state.currentFilePath : '' }`;
+      if ( location.hash !== hash ) history.pushState( null, '', hash );
+    };
+
+    const handleHashChange = async () => {
+      const hash = location.hash.replace( /^#\/?/, '' );
+      if ( !hash ) return;
+
+      const parts = hash.split( '/' );
+      const owner = parts[ 0 ];
+      const repo = parts[ 1 ];
+      const fp = decodeURIComponent( parts.slice( 2 ).join( '/' ) );
+
+      if ( !owner || !repo ) return;
+
+      // Always load tree if it hasn't been loaded yet
+      if ( !state.tree.length || owner !== state.owner || repo !== state.repo ) {
+        state.owner = owner;
+        state.repo = repo;
+        await loadRepo( false );
+      }
+      if ( fp && state.currentFilePath !== fp ) {
+        await handleSelectFile( fp, false );
+      }
+    };
+
+    window.addEventListener( 'popstate', handleHashChange );
+    window.addEventListener( 'hashchange', handleHashChange );
+
+    // ── Load repository tree ────────────────────────────────────────────────
+
+    const loadRepo = async ( doUpdateHash = true ) => {
+      const owner = CONFIG.owner;
+      const repo = CONFIG.repo;
+
+      state.owner = owner;
+      state.repo = repo;
+      state.branch = CONFIG.branch || '';
+      state.currentFilePath = '';
+
+      mainContent.innerHTML = `<p>Loading ${ escapeHTML( owner ) }/${ escapeHTML( repo ) }...</p>`;
+      treeList.innerHTML = '';
+
+      try {
+        const options = getFetchOptions( true );
+
+        // Resolve default branch if not set
+        if ( !state.branch ) {
+          const repoResp = await fetch( `https://api.github.com/repos/${ owner }/${ repo }`, options );
+          if ( !repoResp.ok ) throw new Error( `Status: ${ repoResp.status } - ${ repoResp.statusText }` );
+          const repoData = await repoResp.json();
+          state.branch = repoData.default_branch;
+        }
+
+        // Fetch recursive tree
+        const treeResp = await fetch( `https://api.github.com/repos/${ owner }/${ repo }/git/trees/${ state.branch }?recursive=1`, options );
+        if ( !treeResp.ok ) throw new Error( `Status: ${ treeResp.status } - ${ treeResp.statusText }` );
+        const treeData = await treeResp.json();
+
+        const warningEl = document.getElementById( 'treeTruncatedWarning' );
+        warningEl.style.display = treeData.truncated ? 'block' : 'none';
+
+        state.tree = treeData.tree || [];
+        renderTree( state.tree );
+
+        btnToggleFolders.style.display = 'inline-block';
+        btnToggleFolders.textContent = 'Expand All';
+        btnToggleFolders.dataset.expanded = 'false';
+
+        if ( doUpdateHash ) updateHash();
+
+        // Auto-open README
+        const readmeFile = state.tree.find( item =>
+          item.type === 'blob' && /^readme(\.md|\.txt)?$/i.test( item.path.split( '/' ).pop() )
+        );
+
+        if ( readmeFile ) {
+          handleSelectFile( readmeFile.path, false );
+        } else {
+          mainContent.innerHTML = `<p>Viewing <strong>${ escapeHTML( owner ) }/${ escapeHTML( repo ) }</strong> (branch: ${ escapeHTML( state.branch ) }). Select a file from the tree.</p>`;
+        }
+      } catch ( error ) {
+        if ( error.name === 'AbortError' ) return;
+        if ( error.message.includes( '403' ) ) error.message += ' (Rate limit exceeded. Click "⚙️ Token" to increase limit.)';
+        mainContent.innerHTML = `<p class="error">Error loading repo tree: ${ escapeHTML( error.message ) }</p>`;
+      }
+    };
+
+    // ── File content loading ────────────────────────────────────────────────
+
+    const loadFileContent = async ( ext, url, path, fetchOpts ) => {
+      let renderedHtml = '';
+      let rawHtml = '';
+      let showToggles = false;
+
+      if ( [ 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico' ].includes( ext ) ) {
+        if ( ghToken && !isLocal ) {
+          const mimeMap = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', ico: 'image/x-icon' };
+          const imgOpts = { headers: { ...headers, Accept: 'application/vnd.github.raw+json' } };
+          if ( fetchOpts.signal ) imgOpts.signal = fetchOpts.signal;
+          const resp = await fetch( url, imgOpts );
+          if ( !resp.ok ) throw new Error( 'Failed to load image.' );
+          const blob = await resp.blob();
+          const blobUrl = URL.createObjectURL( new Blob( [ blob ], { type: mimeMap[ ext ] || 'application/octet-stream' } ) );
+          renderedHtml = `<img src="${ escapeAttribute( blobUrl ) }" class="media-content" alt="${ escapeAttribute( path ) }">`;
+        } else {
+          renderedHtml = `<img src="${ escapeAttribute( url ) }" class="media-content" alt="${ escapeAttribute( path ) }">`;
+        }
+        if ( ext === 'svg' ) {
+          const resp = await fetch( url, fetchOpts );
+          rawHtml = `<pre><code>${ escapeHTML( await resp.text() ) }</code></pre>`;
+          showToggles = true;
+        }
+      } else if ( [ 'mp3', 'wav', 'ogg' ].includes( ext ) ) {
+        if ( ghToken && !isLocal ) {
+          const mimeMap = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg' };
+          const audioOpts = { headers: { ...headers, Accept: 'application/vnd.github.raw+json' } };
+          if ( fetchOpts.signal ) audioOpts.signal = fetchOpts.signal;
+          const resp = await fetch( url, audioOpts );
+          if ( !resp.ok ) throw new Error( 'Failed to load audio.' );
+          const blob = await resp.blob();
+          const blobUrl = URL.createObjectURL( new Blob( [ blob ], { type: mimeMap[ ext ] || 'audio/mpeg' } ) );
+          renderedHtml = `<audio controls src="${ escapeAttribute( blobUrl ) }" style="width: 100%; margin-top: 1rem;"></audio>`;
+        } else {
+          renderedHtml = `<audio controls src="${ escapeAttribute( url ) }" style="width: 100%; margin-top: 1rem;"></audio>`;
+        }
+      } else if ( [ 'mp4', 'webm' ].includes( ext ) ) {
+        if ( ghToken && !isLocal ) {
+          const mimeMap = { mp4: 'video/mp4', webm: 'video/webm' };
+          const videoOpts = { headers: { ...headers, Accept: 'application/vnd.github.raw+json' } };
+          if ( fetchOpts.signal ) videoOpts.signal = fetchOpts.signal;
+          const resp = await fetch( url, videoOpts );
+          if ( !resp.ok ) throw new Error( 'Failed to load video.' );
+          const blob = await resp.blob();
+          const blobUrl = URL.createObjectURL( new Blob( [ blob ], { type: mimeMap[ ext ] || 'video/mp4' } ) );
+          renderedHtml = `<video controls src="${ escapeAttribute( blobUrl ) }" class="media-content"></video>`;
+        } else {
+          renderedHtml = `<video controls src="${ escapeAttribute( url ) }" class="media-content"></video>`;
+        }
+      } else if ( ext === 'pdf' ) {
+        if ( ghToken && !isLocal ) {
+          const pdfOpts = { headers: { ...headers, Accept: 'application/vnd.github.raw+json' } };
+          if ( fetchOpts.signal ) pdfOpts.signal = fetchOpts.signal;
+          const resp = await fetch( url, pdfOpts );
+          if ( !resp.ok ) throw new Error( 'Failed to load PDF.' );
+          const blob = await resp.blob();
+          const blobUrl = URL.createObjectURL( new Blob( [ blob ], { type: 'application/pdf' } ) );
+          renderedHtml = `<iframe src="${ escapeAttribute( blobUrl ) }" class="iframe-content"></iframe>`;
+        } else {
+          const docUrl = `https://docs.google.com/viewer?url=${ encodeURIComponent( url ) }&embedded=true`;
+          renderedHtml = `<iframe src="${ escapeAttribute( docUrl ) }" class="iframe-content"></iframe>`;
+        }
+      } else if ( [ 'xlsx', 'xls', 'csv', 'ods' ].includes( ext ) ) {
+        const resp = await fetch( url, fetchOpts );
+        if ( !resp.ok ) throw new Error( 'Failed to load spreadsheet.' );
+        const buf = await resp.arrayBuffer();
+        const wb = XLSX.read( buf, { type: 'array' } );
+        const sheets = wb.SheetNames.map( name => {
+          const html = DOMPurify.sanitize( XLSX.utils.sheet_to_html( wb.Sheets[ name ] ) );
+          return `<h4 style="margin: 1rem 0 0.5rem;">${ escapeHTML( name ) }</h4>
+            <div class="xlsx-sheet" style="overflow-x: auto;">${ html }</div>`;
+        } );
+        renderedHtml = `<div class="xlsx-content">${ sheets.join( '' ) }</div>`;
+      } else {
+        const resp = await fetch( url, fetchOpts );
+        if ( !resp.ok ) throw new Error( 'Failed to load file content.' );
+        const text = await resp.text();
+        const tooLargeForHighlight = text.length > 500_000;
+        const langClass = tooLargeForHighlight ? 'nohighlight' : `language-${ escapeAttribute( ext ) }`;
+        rawHtml = `<pre><code class="${ langClass }">${ escapeHTML( text ) }</code></pre>`;
+
+        if ( ext === 'md' ) {
+          try {
+            renderedHtml = `<div class="markdown-body">${ DOMPurify.sanitize( marked.parse( text ) ) }</div>`;
+            showToggles = true;
+          } catch ( err ) {
+            renderedHtml = `<div class="md-error">⚠️ Failed to render Markdown. Showing raw text.</div>` + rawHtml;
+          }
+        } else if ( [ 'html', 'htm' ].includes( ext ) ) {
+          const blobUrl = URL.createObjectURL( new Blob( [ text ], { type: 'text/html' } ) );
+          renderedHtml = `<iframe src="${ blobUrl }" sandbox="allow-scripts" class="iframe-content"></iframe>`;
+          showToggles = true;
+        } else {
+          renderedHtml = rawHtml;
+        }
+      }
+
+      return { renderedHtml, rawHtml, showToggles };
+    };
+
+    // ── Rendered/Raw toggle ─────────────────────────────────────────────────
+
+    const toggleFileView = view => {
+      const viewRendered = document.getElementById( 'viewRendered' );
+      const viewRaw = document.getElementById( 'viewRaw' );
+      const btnRendered = document.getElementById( 'btnRendered' );
+      const btnRaw = document.getElementById( 'btnRaw' );
+
+      const isRaw = view === 'raw';
+      if ( viewRendered ) viewRendered.style.display = isRaw ? 'none' : 'block';
+      if ( viewRaw ) viewRaw.style.display = isRaw ? 'block' : 'none';
+      if ( btnRendered ) btnRendered.style.opacity = isRaw ? '0.5' : '1';
+      if ( btnRaw ) btnRaw.style.opacity = isRaw ? '1' : '0.5';
+    };
+
+    // ── Select file ─────────────────────────────────────────────────────────
+
+    const handleSelectFile = async ( path, doUpdateHash = true ) => {
+      try {
+        const fileNode = state.tree.find( item => item.path === path );
+        const knownSize = getKnownFileSize( fileNode );
+
+        if ( !confirmLargeFileLoad( path, knownSize ) ) {
+          mainContent.innerHTML = `<p>Skipped loading ${ escapeHTML( path ) }${ knownSize != null ? ` (${ formatFileSize( knownSize ) })` : '' }.</p>`;
+          return;
+        }
+
+        state.currentFilePath = path;
+        if ( doUpdateHash ) updateHash();
+        localStorage.setItem( 'lastFilePath', path );
+        mainContent.innerHTML = `<p>Loading file: ${ escapeHTML( path ) }...</p>`;
+
+        const options = getFetchOptions( true );
+        const url = isLocal
+          ? `./${ path }`
+          : ghToken
+            ? `https://api.github.com/repos/${ state.owner }/${ state.repo }/contents/${ path }?ref=${ state.branch }`
+            : `https://raw.githubusercontent.com/${ state.owner }/${ state.repo }/${ state.branch }/${ path }`;
+        if ( !isLocal && ghToken ) options.headers = { ...headers, Accept: 'application/vnd.github.raw+json' };
+        const ext = path.split( '.' ).pop().toLowerCase();
+
+        const githubLink = `https://github.com/${ state.owner }/${ state.repo }/blob/${ state.branch }/${ path }`;
+        const newTabUrl = `https://${ state.owner }.github.io/${ state.repo }/${ path }`;
+
+        const pathParts = path.split( '/' );
+        const fileName = pathParts.pop();
+        const repoLink = `<a href="#${ escapeAttribute( state.owner ) }/${ escapeAttribute( state.repo ) }"
+               style="color: var(--highlight-color); text-decoration: none; font-weight: normal; cursor: pointer;"
+               onclick="event.preventDefault(); state.currentFilePath = ''; updateHash(); loadRepo(false)">${ escapeHTML( state.repo ) }</a>`;
+        const pathPrefix = pathParts.length ? pathParts.join( ' / ' ) + ' / ' : '';
+
+        const headerHtml = `
+          <div class="file-header">
+            <h3 class="file-title">
+              <span class="file-title-path">${ repoLink } / ${ pathPrefix }</span>${ escapeHTML( fileName ) }
+              <a href="${ escapeAttribute( githubLink ) }" target="_blank" rel="noopener" title="View on GitHub" class="file-source-link">
+                <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path>
+                </svg>
+              </a>
+            </h3>
+            <div class="file-actions">
+              <button onclick="copyFileContent()" id="btnCopy" class="file-btn" title="Copy to clipboard"
+                style="${ [ 'png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'mp3', 'wav', 'ogg', 'mp4', 'webm', 'pdf', 'xlsx', 'xls', 'csv', 'ods' ].includes( ext ) ? 'display:none' : '' }">Copy</button>
+              <button onclick="window.open('${ escapeAttribute( newTabUrl ) }', '_blank', 'noopener')" class="file-btn" title="Open in new tab">New Tab</button>
+              <div id="fileViewToggles" class="file-actions" style="display: none;">
+                <button id="btnRendered" onclick="toggleFileView('rendered')" class="file-btn" title="Show rendered view">Rendered</button>
+                <button id="btnRaw" onclick="toggleFileView('raw')" class="file-btn" style="opacity: 0.5;" title="Show raw source">Raw</button>
+              </div>
+            </div>
+          </div>`;
+
+        // Revoke any previous blob URLs to free memory
+        mainContent.querySelectorAll( 'iframe[src^="blob:"], img[src^="blob:"], audio[src^="blob:"], video[src^="blob:"]' ).forEach( el => {
+          URL.revokeObjectURL( el.src );
+        } );
+
+        const { renderedHtml, rawHtml, showToggles } = await loadFileContent( ext, url, path, options );
+
+        mainContent.innerHTML = `
+          ${ headerHtml }
+          <div id="viewRendered" style="display: block;">${ renderedHtml }</div>
+          ${ rawHtml ? `<div id="viewRaw" style="display: none;">${ rawHtml }</div>` : '' }`;
+
+        if ( showToggles ) document.getElementById( 'fileViewToggles' ).style.display = 'flex';
+
+        try {
+          if ( window.hljs ) hljs.highlightAll();
+        } catch ( e ) { /* ignore */ }
+
+        // Rewrite internal links in markdown
+        if ( ext === 'md' ) {
+          const renderedView = document.getElementById( 'viewRendered' );
+          renderedView.querySelectorAll( 'a' ).forEach( a => {
+            const href = a.getAttribute( 'href' );
+            if ( !href ) return;
+
+            const prefix = `https://github.com/${ state.owner }/${ state.repo }/blob/`;
+            if ( href.startsWith( prefix ) ) {
+              a.onclick = e => {
+                e.preventDefault();
+                let p = href.substring( prefix.length );
+                if ( p.startsWith( state.branch + '/' ) ) p = p.substring( state.branch.length + 1 );
+                else { const s = p.indexOf( '/' ); if ( s !== -1 ) p = p.substring( s + 1 ); }
+                handleSelectFile( decodeURIComponent( p ) );
+              };
+            } else if ( !href.startsWith( 'http://' ) && !href.startsWith( 'https://' ) && !href.startsWith( 'mailto:' ) && !href.startsWith( '#' ) ) {
+              a.onclick = e => {
+                e.preventDefault();
+                const [ relativePath ] = href.split( '#' );
+                const currentDir = path.includes( '/' ) ? path.split( '/' ).slice( 0, -1 ) : [];
+                const resolved = [ ...currentDir ];
+                relativePath.split( '/' ).forEach( seg => {
+                  if ( !seg || seg === '.' ) return;
+                  if ( seg === '..' ) { resolved.pop(); return; }
+                  resolved.push( seg );
+                } );
+                if ( resolved.length ) handleSelectFile( decodeURIComponent( resolved.join( '/' ) ) );
+              };
+            } else if ( !href.startsWith( '#' ) ) {
+              a.target = '_blank';
+              a.rel = 'noopener';
+            }
+          } );
+        }
+      } catch ( error ) {
+        if ( error.name === 'AbortError' ) return;
+        mainContent.innerHTML = `<p class="error">Error: ${ escapeHTML( error.message ) }</p>`;
+      }
+    };
+
+    // ── Tree rendering ──────────────────────────────────────────────────────
+
+    const renderTree = tree => {
+      const root = {};
+      tree.forEach( item => {
+        const parts = item.path.split( '/' );
+        // Skip items inside dot-folders
+        if ( parts.some( ( p, i ) => i < parts.length - 1 && p.startsWith( '.' ) ) ) return;
+        // Skip dot-folders themselves
+        if ( item.type === 'tree' && parts[ parts.length - 1 ].startsWith( '.' ) ) return;
+        // Skip index.html files
+        if ( item.type === 'blob' && parts[ parts.length - 1 ] === 'index.html' ) return;
+        let node = root;
+        parts.forEach( ( part, i ) => {
+          if ( !node[ part ] ) {
+            node[ part ] = {
+              _item: i === parts.length - 1 ? item : { type: 'tree', path: parts.slice( 0, i + 1 ).join( '/' ) },
+              _children: {}
+            };
+          }
+          node = node[ part ]._children;
+        } );
+      } );
+
+      const buildHtml = node => {
+        const keys = Object.keys( node );
+        keys.sort( ( a, b ) => {
+          const aIsFolder = node[ a ]._item.type === 'tree';
+          const bIsFolder = node[ b ]._item.type === 'tree';
+          if ( aIsFolder !== bIsFolder ) return aIsFolder ? -1 : 1;
+          return a.localeCompare( b );
+        } );
+
+        return keys.map( key => {
+          const child = node[ key ];
+          const item = child._item;
+
+          if ( item.type === 'tree' ) {
+            return `<details>
+              <summary class="tree-folder" tabindex="0">📁 ${ escapeHTML( key ) }</summary>
+              <div class="tree-children">${ buildHtml( child._children ) }</div>
+            </details>`;
+          }
+
+          const isReadme = /^readme(\.md|\.txt)?$/i.test( key );
+          const icon = fileIcon( key );
+          const label = isReadme
+            ? `<span class="tree-item-label" style="font-weight: 600;">${ icon } ${ escapeHTML( key ) }</span>`
+            : `<span class="tree-item-label">${ icon } ${ escapeHTML( key ) }</span>`;
+          const sizeLabel = item.size != null
+            ? `<span class="tree-item-size">${ formatFileSize( item.size ) }</span>`
+            : '';
+          return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeAttribute( item.path ) }">
+            ${ label }
+            ${ sizeLabel }
+          </div>`;
+        } ).join( '' );
+      };
+
+      treeList.innerHTML = buildHtml( root );
+    };
+
+    // ── Expand/Collapse all ─────────────────────────────────────────────────
+
+    const toggleAllFolders = () => {
+      const expand = btnToggleFolders.dataset.expanded !== 'true';
+      btnToggleFolders.dataset.expanded = expand.toString();
+      btnToggleFolders.textContent = expand ? 'Collapse All' : 'Expand All';
+      document.querySelectorAll( '#treeList details' ).forEach( d => {
+        if ( expand ) d.setAttribute( 'open', '' );
+        else d.removeAttribute( 'open' );
+      } );
+    };
+
+    // ── Event delegation ────────────────────────────────────────────────────
+
+    treeList.addEventListener( 'click', e => {
+      const el = e.target.closest( '[data-action="select-file"]' );
+      if ( el ) handleSelectFile( el.dataset.path );
+    } );
+
+    // ── Keyboard navigation in tree ─────────────────────────────────────────
+
+    document.addEventListener( 'keydown', e => {
+      const active = document.activeElement;
+      if ( !active || ( !active.classList.contains( 'tree-folder' ) && !active.classList.contains( 'tree-item' ) ) ) return;
+      if ( ![ 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', ' ' ].includes( e.key ) ) return;
+      if ( e.key !== 'Enter' || active.classList.contains( 'tree-item' ) ) e.preventDefault();
+
+      const getVisible = () => Array.from( document.querySelectorAll( '.tree-folder, .tree-item' ) ).filter( node => {
+        if ( node.offsetWidth === 0 && node.offsetHeight === 0 ) return false;
+        let p = node.parentElement;
+        while ( p ) {
+          if ( p.tagName === 'DETAILS' && !p.open ) {
+            if ( !( node.parentElement === p && node.tagName === 'SUMMARY' ) ) return false;
+          }
+          p = p.parentElement;
+        }
+        return true;
+      } );
+
+      const autoLoadFile = el => {
+        if ( el.classList.contains( 'tree-item' ) && el.dataset.path ) {
+          handleSelectFile( el.dataset.path );
+        }
+      };
+
+      if ( e.key === 'ArrowDown' ) {
+        const nodes = getVisible(), idx = nodes.indexOf( active );
+        if ( idx >= 0 && idx < nodes.length - 1 ) { nodes[ idx + 1 ].focus(); autoLoadFile( nodes[ idx + 1 ] ); }
+      } else if ( e.key === 'ArrowUp' ) {
+        const nodes = getVisible(), idx = nodes.indexOf( active );
+        if ( idx > 0 ) { nodes[ idx - 1 ].focus(); autoLoadFile( nodes[ idx - 1 ] ); }
+      } else if ( e.key === 'ArrowRight' && active.classList.contains( 'tree-folder' ) ) {
+        const details = active.parentElement;
+        if ( !details.open ) { details.open = true; }
+        else { const nodes = getVisible(), idx = nodes.indexOf( active ); if ( idx >= 0 && idx < nodes.length - 1 ) nodes[ idx + 1 ].focus(); }
+      } else if ( e.key === 'ArrowLeft' ) {
+        if ( active.classList.contains( 'tree-folder' ) ) {
+          const details = active.parentElement;
+          if ( details.open ) { details.open = false; }
+          else { const pd = details.parentElement.closest( 'details' ); if ( pd ) pd.querySelector( '.tree-folder' ).focus(); }
+        } else {
+          const pd = active.closest( 'details' );
+          if ( pd ) pd.querySelector( '.tree-folder' ).focus();
+        }
+      } else if ( e.key === 'Enter' || e.key === ' ' ) {
+        if ( active.classList.contains( 'tree-item' ) ) {
+          const filePath = active.dataset.path;
+          if ( filePath ) handleSelectFile( filePath );
+        } else if ( e.key === ' ' ) {
+          active.parentElement.open = !active.parentElement.open;
+        }
+      }
+    } );
+
+    // ── Resizable sidebar ───────────────────────────────────────────────────
+
+    const dragMe = document.getElementById( 'dragMe' );
+    const sidebar = document.querySelector( '.sidebar' );
+    let isResizing = false;
+
+    dragMe.addEventListener( 'pointerdown', e => {
+      isResizing = true;
+      dragMe.classList.add( 'resizing' );
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      dragMe.setPointerCapture( e.pointerId );
+    } );
+
+    document.addEventListener( 'pointermove', e => {
+      if ( !isResizing ) return;
+      const newWidth = e.clientX - sidebar.getBoundingClientRect().left;
+      if ( newWidth > 40 ) {
+        sidebar.style.setProperty( '--sidebar-width', newWidth + 'px' );
+        localStorage.setItem( 'sidebarWidth', newWidth );
+      }
+    } );
+
+    document.addEventListener( 'pointerup', e => {
+      if ( !isResizing ) return;
+      isResizing = false;
+      dragMe.classList.remove( 'resizing' );
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      dragMe.releasePointerCapture( e.pointerId );
+    } );
+
+    // ── Global error handlers ───────────────────────────────────────────────
+
+    const errorPanel = ( title, msg ) => `
+      <div style="padding: 1.5rem; background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; border-radius: 6px; margin: 1rem;">
+        <h3 style="margin-top: 0;">⚠️ ${ title }</h3>
+        <p>${ escapeHTML( msg ) }</p>
+        <button onclick="location.reload()" style="margin-top: 1rem; background: #c62828; color: white;" title="Reload the page">Reload Page</button>
+      </div>`;
+
+    window.addEventListener( 'error', event => {
+      mainContent.innerHTML = errorPanel(
+        'Unexpected Error',
+        event.error ? event.error.message : event.message
+      );
+    } );
+
+    window.addEventListener( 'unhandledrejection', event => {
+      if ( event.reason?.name === 'AbortError' ) return;
+      mainContent.innerHTML = errorPanel(
+        'Unexpected Async Error',
+        event.reason ? event.reason.message : 'Unknown error'
+      );
+    } );
+
+    // ── Init ────────────────────────────────────────────────────────────────
+
+    // Restore persisted sidebar width
+    const savedWidth = localStorage.getItem( 'sidebarWidth' );
+    if ( savedWidth ) sidebar.style.setProperty( '--sidebar-width', savedWidth + 'px' );
+
+    // Restore dark mode
+    if ( localStorage.getItem( 'darkMode' ) === 'true' ) {
+      document.body.classList.add( 'dark-mode' );
+      document.getElementById( 'btnDarkMode' ).textContent = '☀️';
+      setHljsTheme( true );
+    }
+
+    state.owner = CONFIG.owner;
+    state.repo = CONFIG.repo;
+    state.branch = CONFIG.branch;
+
+    if ( location.hash ) {
+      handleHashChange();
+    } else {
+      const lastFile = localStorage.getItem( 'lastFilePath' );
+      if ( lastFile ) {
+        loadRepo( false ).then( () => {
+          if ( state.tree.find( i => i.path === lastFile ) ) handleSelectFile( lastFile );
+        } );
+      } else {
+        loadRepo();
+      }
+    }
+  </script>
+
+</body>
+
+</html>

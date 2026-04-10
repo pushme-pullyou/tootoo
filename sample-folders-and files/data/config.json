@@ -1,0 +1,35 @@
+{
+  "app": {
+    "name": "TooToo File Browser",
+    "version": "1.0.0",
+    "description": "A lightweight file browser for GitHub repos"
+  },
+  "github": {
+    "owner": "theo-armour",
+    "repo": "sandbox",
+    "branch": "main",
+    "api": "https://api.github.com"
+  },
+  "ui": {
+    "theme": "github-light",
+    "treeWidth": 280,
+    "treeMinWidth": 200,
+    "treeMaxWidth": 400,
+    "colors": {
+      "header": "#24292f",
+      "background": "#f6f8fa",
+      "border": "#d0d7de",
+      "link": "#0969da",
+      "selected": "#ddf4ff",
+      "error": "#cf222e"
+    }
+  },
+  "features": {
+    "markdown": true,
+    "images": true,
+    "pdf": true,
+    "filter": true,
+    "keyboard": true,
+    "breadcrumbs": true
+  }
+}

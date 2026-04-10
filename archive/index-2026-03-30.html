@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Browser</title>
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      background: #f6f8fa;
+    }
+
+    header {
+      background: #f6f8fa;
+      color: #24292f;
+      border-bottom: 1px solid #d0d7de;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    header a {
+      color: #0969da;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    header a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      display: flex;
+      height: calc(100vh - 48px);
+    }
+
+    /* Left Panel - Tree View */
+    .tree-panel {
+      width: 280px;
+      min-width: 200px;
+      max-width: 400px;
+      background: #ffffff;
+      border-right: 1px solid #d0d7de;
+      overflow-y: auto;
+      resize: horizontal;
+    }
+
+    .tree-header {
+      padding: 8px 12px;
+      background: #f6f8fa;
+      border-bottom: 1px solid #d0d7de;
+      font-size: 14px;
+      color: #24292f;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tree-header span {
+      font-weight: 600;
+    }
+
+    .tree-header button {
+      padding: 2px 8px;
+      font-size: 11px;
+      border: 1px solid #d0d7de;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      color: #57606a;
+    }
+
+    .tree-header button:hover {
+      background: #eaeef2;
+    }
+
+    .tree-search {
+      padding: 6px 12px;
+      background: #f6f8fa;
+      border-bottom: 1px solid #d0d7de;
+      position: sticky;
+      top: 34px;
+      z-index: 2;
+    }
+
+    .tree-search input {
+      width: 100%;
+      padding: 5px 8px;
+      font-size: 13px;
+      border: 1px solid #d0d7de;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .tree-search input:focus {
+      border-color: #0969da;
+      box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.2);
+    }
+
+    .tree-item.hidden {
+      display: none;
+    }
+
+    .tree-children.filter-expanded {
+      display: block;
+    }
+
+    .tree-content {
+      padding: 8px 0;
+    }
+
+    .tree-item {
+      display: flex;
+      align-items: center;
+      padding: 6px 16px;
+      cursor: pointer;
+      color: #24292f;
+      font-size: 14px;
+      transition: background 0.1s;
+      user-select: none;
+      scroll-margin-top: 76px;
+    }
+
+    .tree-item:hover {
+      background: #f6f8fa;
+    }
+
+    .tree-item.selected {
+      background: #ddf4ff;
+    }
+
+    .tree-item.folder {
+      font-weight: 500;
+    }
+
+    .tree-item .icon {
+      width: 20px;
+      margin-right: 8px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .tree-item .name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tree-children {
+      display: none;
+    }
+
+    .tree-children.expanded {
+      display: block;
+    }
+
+    /* Right Panel - Content View */
+    .content-panel {
+      flex: 1;
+      overflow-y: auto;
+      background: #ffffff;
+    }
+
+    .content-header {
+      padding: 12px 20px;
+      background: #f6f8fa;
+      border-bottom: 1px solid #d0d7de;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .content-path {
+      font-size: 14px;
+      color: #57606a;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    .content-path .breadcrumb {
+      cursor: pointer;
+      color: #0969da;
+    }
+
+    .content-path .breadcrumb:hover {
+      text-decoration: underline;
+    }
+
+    .content-path .separator {
+      color: #57606a;
+      margin: 0 2px;
+    }
+
+    .content-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .content-actions button {
+      padding: 5px 12px;
+      font-size: 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #f6f8fa;
+      cursor: pointer;
+      color: #24292f;
+    }
+
+    .content-actions button:hover {
+      background: #eaeef2;
+    }
+
+    .content-body {
+      padding: 24px;
+    }
+
+
+    .content-raw {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      background: #f6f8fa;
+      padding: 16px;
+      border-radius: 6px;
+      border: 1px solid #d0d7de;
+    }
+
+    .content-image {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .content-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #57606a;
+      font-size: 16px;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      color: #57606a;
+    }
+
+    .loading::after {
+      content: "";
+      width: 20px;
+      height: 20px;
+      border: 2px solid #d0d7de;
+      border-top-color: #0969da;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .error {
+      color: #cf222e;
+      padding: 20px;
+      background: #ffebe9;
+      border-radius: 6px;
+      margin: 20px;
+    }
+
+    /* Folder icons */
+    .folder-icon::before {
+      content: "📁";
+    }
+
+    .folder-icon.open::before {
+      content: "📂";
+    }
+
+    .file-icon::before {
+      content: "📄";
+    }
+
+    .md-icon::before {
+      content: "📝";
+    }
+
+    .pdf-icon::before {
+      content: "📕";
+    }
+
+    .xlsx-icon::before {
+      content: "📊";
+    }
+
+    .json-icon::before {
+      content: "📋";
+    }
+
+    .html-icon::before {
+      content: "🌐";
+    }
+
+    .yml-icon::before {
+      content: "⚙️";
+    }
+
+    .image-icon::before {
+      content: "🖼️";
+    }
+
+    /* Highlight (keyboard nav) vs selected (active file) */
+    .tree-item.highlighted {
+      background: #eaeef2;
+    }
+
+    /* Header inline-style classes */
+    #appTitle {
+      cursor: pointer;
+    }
+
+    .header-spacer {
+      flex: 1;
+    }
+
+    #tokenStatus {
+      color: #3fb950;
+      font-size: 13px;
+    }
+
+    #tokenInput {
+      width: 260px;
+      padding: 5px 10px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #fff;
+      color: #24292f;
+      font-size: 13px;
+    }
+
+    .btn-connect {
+      padding: 5px 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #238636;
+      color: white;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn-disconnect {
+      padding: 5px 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #da3633;
+      color: white;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn-retry {
+      padding: 5px 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #f6f8fa;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1 id="appTitle"></h1>
+    <a id="ghLink" href="#" target="_blank">View on GitHub</a>
+    <span class="header-spacer"></span>
+    <span id="tokenStatus"></span>
+    <label for="tokenInput" class="sr-only" hidden>GitHub token</label>
+    <input id="tokenInput" type="password" placeholder="GitHub token (for private repos)"
+      aria-label="GitHub token for private repos">
+    <button id="btnConnect" class="btn-connect">Connect</button>
+    <button id="btnDisconnect" class="btn-disconnect" style="display:none;">Disconnect</button>
+  </header>
+
+  <div class="container">
+    <div class="tree-panel">
+      <div class="tree-header"><span>Files</span><button id="btnFocusPath"
+          title="Focus on active path">⊕</button><button id="btnToggleAll" title="Expand all">⊞</button></div>
+      <div class="tree-search"><input id="treeFilter" type="search" placeholder="Filter files..."
+          aria-label="Filter files"></div>
+      <div class="tree-content" id="tree" role="tree"></div>
+    </div>
+
+    <div class="content-panel">
+      <div class="content-header" id="contentHeader" style="display: none;">
+        <span class="content-path" id="contentPath"></span>
+        <div class="content-actions">
+          <button id="btnCopyPath" title="Copy file path">📋 Copy</button>
+          <button id="btnRaw">Raw</button>
+          <button id="btnGitHub">GitHub</button>
+        </div>
+      </div>
+      <div class="content-body" id="contentBody">
+        <div class="content-placeholder">
+          Select a file from the tree to view its contents
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const CONFIG = {
+      owner: "theo-armour",
+      repo: "sandbox",
+      branch: "main"
+    };
+
+    // State
+    let currentFile = null;
+    let showRaw = false;
+    let treeData = null;
+    let ghToken = localStorage.getItem( "gh-token" ) || "";
+    let selectedEl = null;   // currently active (loaded) file element
+    let highlightedEl = null; // keyboard-nav highlighted element
+    let visibleItemsCache = null; // cached visible items for keyboard nav
+    let filterDebounceId = null;
+
+    // Set title and GitHub link from CONFIG
+    const appTitle = document.getElementById( "appTitle" );
+    const ghLink = document.getElementById( "ghLink" );
+    appTitle.textContent = `📂 ${ CONFIG.owner }/${ CONFIG.repo }`;
+    ghLink.href = `https://github.com/${ CONFIG.owner }/${ CONFIG.repo }`;
+    document.title = `File Browser - ${ CONFIG.owner }/${ CONFIG.repo }`;
+
+    // Title click reloads to initial state
+    appTitle.addEventListener( "click", () => {
+      window.location.href = window.location.pathname;
+    } );
+
+    // Token UI
+    const tokenInput = document.getElementById( "tokenInput" );
+    const btnConnect = document.getElementById( "btnConnect" );
+    const btnDisconnect = document.getElementById( "btnDisconnect" );
+    const tokenStatus = document.getElementById( "tokenStatus" );
+
+    // Show/hide token UI based on whether a token is stored
+    const updateTokenUI = () => {
+      if ( ghToken ) {
+        tokenInput.style.display = "none";
+        btnConnect.style.display = "none";
+        btnDisconnect.style.display = "";
+        tokenStatus.textContent = "Connected";
+      } else {
+        tokenInput.style.display = "";
+        btnConnect.style.display = "";
+        btnDisconnect.style.display = "none";
+        tokenStatus.textContent = "";
+      }
+    };
+    updateTokenUI();
+
+    btnConnect.addEventListener( "click", () => {
+      const val = tokenInput.value.trim();
+      if ( !val ) return;
+      ghToken = val;
+      localStorage.setItem( "gh-token", ghToken );
+      tokenInput.value = "";
+      updateTokenUI();
+      // Clear cached tree so it re-fetches with the token
+      const cacheKey = `tree-${ CONFIG.owner }-${ CONFIG.repo }-${ CONFIG.branch }`;
+      sessionStorage.removeItem( cacheKey );
+      initTree();
+    } );
+
+    btnDisconnect.addEventListener( "click", () => {
+      ghToken = "";
+      localStorage.removeItem( "gh-token" );
+      updateTokenUI();
+      const cacheKey = `tree-${ CONFIG.owner }-${ CONFIG.repo }-${ CONFIG.branch }`;
+      sessionStorage.removeItem( cacheKey );
+      initTree();
+    } );
+
+    // Escape HTML (single shared helper)
+    const escapeHtml = ( text ) => {
+      const div = document.createElement( "div" );
+      div.textContent = text;
+      return div.innerHTML;
+    };
+
+    // Lightweight markdown to HTML converter
+    const mdToHtml = ( md ) => {
+      // Fenced code blocks
+      const blocks = [];
+      md = md.replace( /```(\w*)\n([\s\S]*?)```/g, ( _, lang, code ) => {
+        blocks.push( `<pre><code>${ escapeHtml( code.trimEnd() ) }</code></pre>` );
+        return `\x00BLOCK${ blocks.length - 1 }\x00`;
+      } );
+
+      const lines = md.split( "\n" );
+      const out = [];
+      let i = 0;
+
+      while ( i < lines.length ) {
+        const line = lines[ i ];
+
+        // Block placeholder
+        const blockMatch = line.match( /^\x00BLOCK(\d+)\x00$/ );
+        if ( blockMatch ) { out.push( blocks[ +blockMatch[ 1 ] ] ); i++; continue; }
+
+        // Blank line
+        if ( line.trim() === "" ) { i++; continue; }
+
+        // Headings
+        const hMatch = line.match( /^(#{1,6})\s+(.+)/ );
+        if ( hMatch ) { out.push( `<h${ hMatch[ 1 ].length }>${ inline( hMatch[ 2 ] ) }</h${ hMatch[ 1 ].length }>` ); i++; continue; }
+
+        // Horizontal rule
+        if ( /^(---|\*\*\*|___)\s*$/.test( line ) ) { out.push( "<hr>" ); i++; continue; }
+
+        // Unordered list
+        if ( /^[\-\*]\s/.test( line ) ) {
+          const items = [];
+          while ( i < lines.length && /^[\-\*]\s/.test( lines[ i ] ) ) {
+            items.push( `<li>${ inline( lines[ i ].replace( /^[\-\*]\s+/, "" ) ) }</li>` );
+            i++;
+          }
+          out.push( `<ul>${ items.join( "" ) }</ul>` ); continue;
+        }
+
+        // Ordered list
+        if ( /^\d+\.\s/.test( line ) ) {
+          const items = [];
+          while ( i < lines.length && /^\d+\.\s/.test( lines[ i ] ) ) {
+            items.push( `<li>${ inline( lines[ i ].replace( /^\d+\.\s+/, "" ) ) }</li>` );
+            i++;
+          }
+          out.push( `<ol>${ items.join( "" ) }</ol>` ); continue;
+        }
+
+        // Paragraph (collect consecutive non-blank lines)
+        const para = [];
+        while ( i < lines.length && lines[ i ].trim() !== "" && !/^#{1,6}\s/.test( lines[ i ] ) && !/^[\-\*]\s/.test( lines[ i ] ) && !/^\d+\.\s/.test( lines[ i ] ) && !/^(---|\*\*\*|___)\s*$/.test( lines[ i ] ) && !/^\x00BLOCK/.test( lines[ i ] ) ) {
+          para.push( lines[ i ] );
+          i++;
+        }
+        out.push( `<p>${ inline( para.join( "\n" ) ) }</p>` );
+      }
+
+      return out.join( "\n" );
+    };
+
+    // Inline markdown: bold, italic, code, links, images
+    const inline = ( text ) => {
+      return text
+        .replace( /&/g, "&amp;" ).replace( /</g, "&lt;" ).replace( />/g, "&gt;" )
+        .replace( /`([^`]+)`/g, "<code>$1</code>" )
+        .replace( /!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%">' )
+        .replace( /\[([^\]]+)\]\(([^)]+)\)/g, ( _, text, url ) => {
+          if ( /^\s*javascript:/i.test( url ) ) return text;
+          return `<a href="${ url }">${ text }</a>`;
+        } )
+        .replace( /\*\*([^*]+)\*\*/g, "<strong>$1</strong>" )
+        .replace( /__([^_]+)__/g, "<strong>$1</strong>" )
+        .replace( /\*([^*]+)\*/g, "<em>$1</em>" )
+        .replace( /_([^_]+)_/g, "<em>$1</em>" )
+        .replace( /~~([^~]+)~~/g, "<del>$1</del>" );
+    };
+
+    // DOM Elements
+    const treeEl = document.getElementById( "tree" );
+    const contentHeader = document.getElementById( "contentHeader" );
+    const contentPath = document.getElementById( "contentPath" );
+    const contentBody = document.getElementById( "contentBody" );
+    const btnRaw = document.getElementById( "btnRaw" );
+    const btnGitHub = document.getElementById( "btnGitHub" );
+    const btnCopyPath = document.getElementById( "btnCopyPath" );
+    const btnToggleAll = document.getElementById( "btnToggleAll" );
+    const btnFocusPath = document.getElementById( "btnFocusPath" );
+    const treeFilter = document.getElementById( "treeFilter" );
+
+    // Get file icon class
+    const getIconClass = ( name, isDir ) => {
+      if ( isDir ) return "folder-icon";
+      const ext = name.split( "." ).pop().toLowerCase();
+      const iconMap = {
+        md: "md-icon",
+        pdf: "pdf-icon",
+        xlsx: "xlsx-icon",
+        xls: "xlsx-icon",
+        json: "json-icon",
+        html: "html-icon",
+        htm: "html-icon",
+        yml: "yml-icon",
+        yaml: "yml-icon",
+        png: "image-icon",
+        jpg: "image-icon",
+        jpeg: "image-icon",
+        gif: "image-icon",
+        svg: "image-icon",
+        webp: "image-icon"
+      };
+      return iconMap[ ext ] || "file-icon";
+    };
+
+    // Build tree from flat list
+    const buildTree = ( items ) => {
+      const tree = { children: {}, isDir: true };
+
+      items.forEach( item => {
+        const parts = item.path.split( "/" );
+        let current = tree;
+
+        parts.forEach( ( part, i ) => {
+          if ( !current.children[ part ] ) {
+            current.children[ part ] = {
+              name: part,
+              path: parts.slice( 0, i + 1 ).join( "/" ),
+              isDir: i < parts.length - 1 || item.type === "tree",
+              children: {}
+            };
+          }
+          current = current.children[ part ];
+        } );
+      } );
+
+      return tree;
+    };
+
+    // Sort tree items (folders first, then alphabetically)
+    const sortTreeItems = ( items ) =>
+      Object.values( items ).sort( ( a, b ) => {
+        if ( a.isDir && !b.isDir ) return -1;
+        if ( !a.isDir && b.isDir ) return 1;
+        return a.name.localeCompare( b.name );
+      } );
+
+    // Invalidate keyboard nav cache whenever tree structure changes
+    const invalidateVisibleCache = () => { visibleItemsCache = null; };
+
+    // Render tree recursively
+    const renderTree = ( node, container, level = 0 ) => {
+      const items = sortTreeItems( node.children );
+
+      items.forEach( item => {
+        // Skip hidden files and common non-content files
+        if ( item.name.startsWith( "." ) || item.name === "node_modules" ) return;
+
+        const itemEl = document.createElement( "div" );
+        itemEl.className = `tree-item ${ item.isDir ? "folder" : "file" }`;
+        itemEl.dataset.path = item.path;
+        itemEl.style.paddingLeft = `${ 16 + level * 16 }px`;
+        itemEl.setAttribute( "role", "treeitem" );
+        if ( item.isDir ) itemEl.setAttribute( "aria-expanded", "false" );
+
+        const iconSpan = document.createElement( "span" );
+        iconSpan.className = `icon ${ getIconClass( item.name, item.isDir ) }`;
+        const nameSpan = document.createElement( "span" );
+        nameSpan.className = "name";
+        nameSpan.textContent = item.name;
+        itemEl.appendChild( iconSpan );
+        itemEl.appendChild( nameSpan );
+
+        // Create children container for folders (even if empty initially)
+        let childrenEl = null;
+        if ( item.isDir ) {
+          childrenEl = document.createElement( "div" );
+          childrenEl.className = "tree-children";
+          childrenEl.setAttribute( "role", "group" );
+          if ( Object.keys( item.children ).length > 0 ) {
+            renderTree( item, childrenEl, level + 1 );
+          }
+        }
+
+        itemEl.addEventListener( "click", ( e ) => {
+          e.stopPropagation();
+          if ( item.isDir && childrenEl ) {
+            toggleFolder( itemEl, childrenEl, item );
+            itemEl.scrollIntoView( { block: "nearest" } );
+          } else if ( !item.isDir ) {
+            selectFile( item, itemEl );
+          }
+        } );
+
+        container.appendChild( itemEl );
+        if ( childrenEl ) {
+          container.appendChild( childrenEl );
+        }
+      } );
+    };
+
+    // Toggle folder open/close (accordion: collapse siblings)
+    const toggleFolder = ( itemEl, childrenEl, folderItem ) => {
+      const icon = itemEl.querySelector( ".icon" );
+      const isOpen = childrenEl.classList.contains( "expanded" );
+
+      if ( isOpen ) {
+        childrenEl.classList.remove( "expanded" );
+        icon.classList.remove( "open" );
+        itemEl.setAttribute( "aria-expanded", "false" );
+      } else {
+        // Collapse sibling folders at the same level
+        const parent = itemEl.parentElement;
+        if ( parent ) {
+          parent.querySelectorAll( ":scope > .tree-children.expanded" ).forEach( sib => {
+            if ( sib !== childrenEl ) {
+              sib.classList.remove( "expanded" );
+              const sibItem = sib.previousElementSibling;
+              sibItem?.querySelector( ".icon" )?.classList.remove( "open" );
+              sibItem?.setAttribute( "aria-expanded", "false" );
+            }
+          } );
+        }
+
+        childrenEl.classList.add( "expanded" );
+        icon.classList.add( "open" );
+        itemEl.setAttribute( "aria-expanded", "true" );
+
+        // Auto-display the folder's README.md if it exists
+        if ( folderItem?.children[ "README.md" ] ) {
+          const readme = folderItem.children[ "README.md" ];
+          contentHeader.style.display = "flex";
+          contentPath.innerHTML = buildBreadcrumbs( readme.path );
+          currentFile = readme;
+          showRaw = false;
+          btnRaw.textContent = "Raw";
+          loadFileContent( readme );
+        }
+      }
+      invalidateVisibleCache();
+    };
+
+    // Select file and load content
+    const selectFile = async ( item, itemEl ) => {
+      // Update selection UI — clear both highlight and selected
+      highlightedEl?.classList.remove( "highlighted" );
+      highlightedEl = null;
+      selectedEl?.classList.remove( "selected" );
+      selectedEl = itemEl;
+      itemEl.classList.add( "selected" );
+      itemEl.scrollIntoView( { block: "nearest" } );
+
+      currentFile = item;
+      showRaw = false;
+      btnRaw.textContent = "Raw";
+
+      // Update header with clickable breadcrumbs
+      contentHeader.style.display = "flex";
+      contentPath.innerHTML = buildBreadcrumbs( item.path );
+
+      // Update URL hash (skip if already matching, e.g. from hash navigation)
+      const targetHash = encodeURIComponent( item.path );
+      if ( location.hash.slice( 1 ) !== targetHash ) {
+        location.hash = targetHash;
+      }
+
+      // Load content
+      await loadFileContent( item );
+    };
+
+    // Load file content
+    const loadFileContent = async ( item ) => {
+      contentBody.innerHTML = '<div class="loading">Loading</div>';
+
+      try {
+        const ext = item.name.split( "." ).pop().toLowerCase();
+        // "../" because index.html is one level deep in tootoo/
+        const fileUrl = "../" + item.path;
+        const safeName = escapeHtml( item.name );
+        const safeUrl = encodeURI( fileUrl );
+
+        // Handle different file types
+        if ( [ "png", "jpg", "jpeg", "gif", "svg", "webp" ].includes( ext ) ) {
+          const img = document.createElement( "img" );
+          img.className = "content-image";
+          img.src = safeUrl;
+          img.alt = item.name;
+          contentBody.innerHTML = "";
+          contentBody.appendChild( img );
+        } else if ( [ "pdf" ].includes( ext ) ) {
+          contentBody.innerHTML = `
+            <p>PDF file: <strong>${ safeName }</strong></p>
+            <p><a href="${ safeUrl }" target="_blank">Open PDF in new tab</a></p>
+            <iframe src="${ safeUrl }" style="width:100%;height:600px;border:1px solid #d0d7de;border-radius:6px;"></iframe>
+          `;
+        } else if ( [ "xlsx", "xls" ].includes( ext ) ) {
+          contentBody.innerHTML = `
+            <p>Excel file: <strong>${ safeName }</strong></p>
+            <p><a href="${ safeUrl }" target="_blank">Download ${ safeName }</a></p>
+          `;
+        } else {
+          // Fetch text content
+          const response = await fetch( fileUrl );
+          if ( !response.ok ) throw new Error( `HTTP ${ response.status }` );
+          const text = await response.text();
+
+          if ( ext === "md" && !showRaw ) {
+            const html = mdToHtml( text );
+            contentBody.innerHTML = `<div class="markdown-body">${ html }</div>`;
+          } else {
+            contentBody.innerHTML = `<pre class="content-raw">${ escapeHtml( text ) }</pre>`;
+          }
+        }
+      } catch ( error ) {
+        contentBody.innerHTML = `<div class="error">Error loading file: ${ escapeHtml( error.message ) }</div>`;
+      }
+    };
+
+    // Toggle raw/rendered view
+    btnRaw.addEventListener( "click", async () => {
+      if ( !currentFile ) return;
+      showRaw = !showRaw;
+      btnRaw.textContent = showRaw ? "Rendered" : "Raw";
+      await loadFileContent( currentFile );
+    } );
+
+    // Copy file path to clipboard
+    btnCopyPath.addEventListener( "click", async () => {
+      if ( !currentFile ) return;
+      try {
+        await navigator.clipboard.writeText( currentFile.path );
+        btnCopyPath.textContent = "✓ Copied";
+      } catch {
+        btnCopyPath.textContent = "✗ Failed";
+      }
+      setTimeout( () => btnCopyPath.textContent = "📋 Copy", 1500 );
+    } );
+
+    // Focus on active path: collapse all, then expand only the path to the selected file
+    btnFocusPath.addEventListener( "click", () => {
+      // Collapse everything first
+      treeEl.querySelectorAll( ".tree-children.expanded" ).forEach( el => {
+        el.classList.remove( "expanded" );
+        const prev = el.previousElementSibling;
+        prev?.querySelector( ".icon" )?.classList.remove( "open" );
+        prev?.setAttribute( "aria-expanded", "false" );
+      } );
+      btnToggleAll.textContent = "⊞";
+      btnToggleAll.title = "Expand all";
+
+      // Expand the path to the currently selected file
+      if ( selectedEl ) {
+        let parent = selectedEl.parentElement;
+        while ( parent && parent !== treeEl ) {
+          if ( parent.classList.contains( "tree-children" ) ) {
+            parent.classList.add( "expanded" );
+            const prev = parent.previousElementSibling;
+            prev?.querySelector( ".icon" )?.classList.add( "open" );
+            prev?.setAttribute( "aria-expanded", "true" );
+          }
+          parent = parent.parentElement;
+        }
+        selectedEl.scrollIntoView( { block: "nearest" } );
+      }
+      invalidateVisibleCache();
+    } );
+
+    // Toggle expand/collapse all folders
+    btnToggleAll.addEventListener( "click", () => {
+      const allChildren = treeEl.querySelectorAll( ".tree-children" );
+      const anyExpanded = treeEl.querySelector( ".tree-children.expanded" );
+
+      if ( anyExpanded ) {
+        // Collapse all
+        allChildren.forEach( el => {
+          el.classList.remove( "expanded" );
+          const prev = el.previousElementSibling;
+          prev?.querySelector( ".icon" )?.classList.remove( "open" );
+          prev?.setAttribute( "aria-expanded", "false" );
+        } );
+        btnToggleAll.textContent = "⊞";
+        btnToggleAll.title = "Expand all";
+      } else {
+        // Expand all
+        allChildren.forEach( el => {
+          el.classList.add( "expanded" );
+          const prev = el.previousElementSibling;
+          prev?.querySelector( ".icon" )?.classList.add( "open" );
+          prev?.setAttribute( "aria-expanded", "true" );
+        } );
+        btnToggleAll.textContent = "⊟";
+        btnToggleAll.title = "Collapse all";
+      }
+      invalidateVisibleCache();
+    } );
+
+    // Filter tree items — files only, not folders (debounced)
+    const applyFilter = () => {
+      const query = treeFilter.value.toLowerCase().trim();
+      const allItems = treeEl.querySelectorAll( ".tree-item" );
+      const allChildren = treeEl.querySelectorAll( ".tree-children" );
+
+      if ( !query ) {
+        // Reset: show all items, remove filter-expanded
+        allItems.forEach( el => el.classList.remove( "hidden" ) );
+        allChildren.forEach( el => el.classList.remove( "filter-expanded" ) );
+        invalidateVisibleCache();
+        return;
+      }
+
+      // Hide all, then show matching files and their parent folders
+      allItems.forEach( el => el.classList.add( "hidden" ) );
+      allChildren.forEach( el => el.classList.remove( "filter-expanded" ) );
+
+      allItems.forEach( el => {
+        // Skip folders — only match files
+        if ( el.classList.contains( "folder" ) ) return;
+
+        // Match only the file name, not folder segments in the path
+        const name = ( el.querySelector( ".name" )?.textContent || "" ).toLowerCase();
+        if ( name.includes( query ) ) {
+          el.classList.remove( "hidden" );
+          // Expand and show parent folders
+          let parent = el.parentElement;
+          while ( parent && parent !== treeEl ) {
+            if ( parent.classList.contains( "tree-children" ) ) {
+              parent.classList.add( "filter-expanded" );
+              parent.previousElementSibling?.classList.remove( "hidden" );
+            }
+            parent = parent.parentElement;
+          }
+        }
+      } );
+      invalidateVisibleCache();
+    };
+
+    treeFilter.addEventListener( "input", () => {
+      clearTimeout( filterDebounceId );
+      filterDebounceId = setTimeout( applyFilter, 150 );
+    } );
+
+    // Build clickable breadcrumb path
+    const buildBreadcrumbs = ( path ) => {
+      const parts = path.split( "/" );
+      return parts.map( ( part, i ) => {
+        const safe = ( s ) => s.replace( /&/g, "&amp;" ).replace( /</g, "&lt;" ).replace( />/g, "&gt;" ).replace( /"/g, "&quot;" );
+        if ( i === parts.length - 1 ) return `<span>${ safe( part ) }</span>`;
+        const folderPath = parts.slice( 0, i + 1 ).join( "/" );
+        return `<span class="breadcrumb" data-folder="${ safe( folderPath ) }">${ safe( part ) }</span>`;
+      } ).join( '<span class="separator">/</span>' );
+    };
+
+    // Keyboard navigation — highlight is separate from file selection
+    const highlightItem = ( el ) => {
+      highlightedEl?.classList.remove( "highlighted" );
+      highlightedEl = el;
+      el.classList.add( "highlighted" );
+      el.scrollIntoView( { block: "nearest" } );
+    };
+
+    // Breadcrumb click delegation
+    contentPath.addEventListener( "click", ( e ) => {
+      const crumb = e.target.closest( ".breadcrumb" );
+      if ( crumb?.dataset.folder ) openFolder( crumb.dataset.folder );
+    } );
+
+    // Open a folder by path (for breadcrumb clicks)
+    const openFolder = ( path ) => {
+      const parts = path.split( "/" );
+      let current = treeData;
+      for ( const part of parts ) {
+        if ( current.children?.[ part ] ) current = current.children[ part ];
+        else return;
+      }
+      if ( !current.isDir ) return;
+
+      // Expand all parent folders in the DOM first
+      const folderEl = treeEl.querySelector( `[data-path="${ CSS.escape( path ) }"]` );
+      if ( folderEl ) {
+        let parent = folderEl.parentElement;
+        while ( parent && parent !== treeEl ) {
+          if ( parent.classList.contains( "tree-children" ) && !parent.classList.contains( "expanded" ) ) {
+            parent.classList.add( "expanded" );
+            const prev = parent.previousElementSibling;
+            prev?.querySelector( ".icon" )?.classList.add( "open" );
+            prev?.setAttribute( "aria-expanded", "true" );
+          }
+          parent = parent.parentElement;
+        }
+
+        // Now expand the target folder itself
+        const childrenEl = folderEl.nextElementSibling;
+        if ( childrenEl?.classList.contains( "tree-children" ) && !childrenEl.classList.contains( "expanded" ) ) {
+          toggleFolder( folderEl, childrenEl, current );
+        }
+
+        // Highlight and scroll into view
+        highlightItem( folderEl );
+      }
+      invalidateVisibleCache();
+    };
+
+    // Build visible items list with caching
+    const getVisibleItems = () => {
+      if ( visibleItemsCache ) return visibleItemsCache;
+      visibleItemsCache = [ ...treeEl.querySelectorAll( ".tree-item:not(.hidden)" ) ]
+        .filter( el => {
+          let parent = el.parentElement;
+          while ( parent && parent !== treeEl ) {
+            if ( parent.classList.contains( "tree-children" ) && !parent.classList.contains( "expanded" ) && !parent.classList.contains( "filter-expanded" ) ) return false;
+            parent = parent.parentElement;
+          }
+          return true;
+        } );
+      return visibleItemsCache;
+    };
+
+    document.addEventListener( "keydown", ( e ) => {
+      // Only handle when not typing in an input
+      if ( e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" ) return;
+
+      const visible = getVisibleItems();
+      if ( !visible.length ) return;
+
+      // Find the currently highlighted or selected item
+      const currentEl = highlightedEl || selectedEl;
+      const currentIdx = currentEl ? visible.indexOf( currentEl ) : -1;
+
+      if ( e.key === "ArrowDown" ) {
+        e.preventDefault();
+        const next = visible[ currentIdx + 1 ] || visible[ 0 ];
+        if ( next.classList.contains( "folder" ) ) {
+          highlightItem( next );
+        } else {
+          highlightedEl?.classList.remove( "highlighted" );
+          highlightedEl = null;
+          next.click();
+        }
+      } else if ( e.key === "ArrowUp" ) {
+        e.preventDefault();
+        const prev = visible[ currentIdx - 1 ] || visible[ visible.length - 1 ];
+        if ( prev.classList.contains( "folder" ) ) {
+          highlightItem( prev );
+        } else {
+          highlightedEl?.classList.remove( "highlighted" );
+          highlightedEl = null;
+          prev.click();
+        }
+      } else if ( e.key === "Enter" || e.key === " " ) {
+        e.preventDefault();
+        if ( currentIdx >= 0 ) visible[ currentIdx ].click();
+      } else if ( e.key === "ArrowRight" ) {
+        // Expand a folder
+        if ( currentIdx >= 0 ) {
+          const el = visible[ currentIdx ];
+          const childrenEl = el.nextElementSibling;
+          if ( childrenEl?.classList.contains( "tree-children" ) && !childrenEl.classList.contains( "expanded" ) ) {
+            e.preventDefault();
+            el.click();
+          }
+        }
+      } else if ( e.key === "ArrowLeft" ) {
+        // Collapse a folder
+        if ( currentIdx >= 0 ) {
+          const el = visible[ currentIdx ];
+          const childrenEl = el.nextElementSibling;
+          if ( childrenEl?.classList.contains( "tree-children" ) && childrenEl.classList.contains( "expanded" ) ) {
+            e.preventDefault();
+            el.click();
+          }
+        }
+      }
+    } );
+
+    // Open in GitHub
+    btnGitHub.addEventListener( "click", () => {
+      if ( !currentFile ) return;
+      const url = `https://github.com/${ CONFIG.owner }/${ CONFIG.repo }/blob/${ CONFIG.branch }/${ currentFile.path }`;
+      window.open( url, "_blank" );
+    } );
+
+    // Fetch tree from GitHub API with sessionStorage caching
+    const fetchTree = async () => {
+      const cacheKey = `tree-${ CONFIG.owner }-${ CONFIG.repo }-${ CONFIG.branch }`;
+      const cached = sessionStorage.getItem( cacheKey );
+
+      if ( cached ) {
+        return JSON.parse( cached );
+      }
+
+      const url = `https://api.github.com/repos/${ CONFIG.owner }/${ CONFIG.repo }/git/trees/${ CONFIG.branch }?recursive=1`;
+      const headers = {};
+      if ( ghToken ) headers.Authorization = `token ${ ghToken }`;
+      const response = await fetch( url, { headers } );
+
+      if ( !response.ok ) {
+        const hint = response.status === 404
+          ? " (repo may be private — enter a token above)"
+          : "";
+        throw new Error( `GitHub API error: HTTP ${ response.status }${ hint }` );
+      }
+
+      const data = await response.json();
+      sessionStorage.setItem( cacheKey, JSON.stringify( data.tree ) );
+      return data.tree;
+    };
+
+    // Initialize tree from GitHub API
+    const initTree = async () => {
+      treeEl.innerHTML = '<div class="loading">Loading</div>';
+
+      try {
+        const items = await fetchTree();
+        treeData = buildTree( items );
+        treeEl.innerHTML = "";
+        renderTree( treeData, treeEl );
+        invalidateVisibleCache();
+
+        // Check for hash and load that file, or show root README.md
+        if ( location.hash ) {
+          const path = decodeURIComponent( location.hash.slice( 1 ) );
+          selectFileByPath( path );
+        } else if ( treeData.children[ "README.md" ] ) {
+          const readme = treeData.children[ "README.md" ];
+          contentHeader.style.display = "flex";
+          contentPath.innerHTML = buildBreadcrumbs( readme.path );
+          currentFile = readme;
+          showRaw = false;
+          btnRaw.textContent = "Raw";
+          loadFileContent( readme );
+        }
+      } catch ( error ) {
+        treeEl.innerHTML = `<div class="error">
+          ${ escapeHtml( error.message ) }
+          <br><br>
+          <button id="btnRetry" class="btn-retry">Retry</button>
+        </div>`;
+        document.getElementById( "btnRetry" ).addEventListener( "click", initTree );
+      }
+    };
+
+    // Select file by path — accordion-aware parent expansion
+    const selectFileByPath = ( path ) => {
+      const parts = path.split( "/" );
+      let current = treeData;
+
+      for ( const part of parts ) {
+        if ( current.children?.[ part ] ) {
+          current = current.children[ part ];
+        } else {
+          return; // Path not found
+        }
+      }
+
+      if ( !current.isDir ) {
+        // Expand parent folders one at a time (triggers accordion)
+        const ancestors = path.split( "/" ).slice( 0, -1 );
+        let folderPath = "";
+        for ( const seg of ancestors ) {
+          folderPath = folderPath ? folderPath + "/" + seg : seg;
+          const folderEl = treeEl.querySelector( `[data-path="${ CSS.escape( folderPath ) }"]` );
+          const childrenEl = folderEl?.nextElementSibling;
+          if ( folderEl && childrenEl?.classList.contains( "tree-children" ) && !childrenEl.classList.contains( "expanded" ) ) {
+            childrenEl.classList.add( "expanded" );
+            folderEl.querySelector( ".icon" )?.classList.add( "open" );
+            folderEl.setAttribute( "aria-expanded", "true" );
+          }
+        }
+
+        // Find and click the tree item
+        const itemEl = treeEl.querySelector( `[data-path="${ CSS.escape( current.path ) }"]` );
+        if ( itemEl ) {
+          invalidateVisibleCache();
+          itemEl.click();
+        }
+      }
+    };
+
+    // Handle hash changes
+    window.addEventListener( "hashchange", () => {
+      if ( location.hash ) {
+        const path = decodeURIComponent( location.hash.slice( 1 ) );
+        selectFileByPath( path );
+      }
+    } );
+
+    // Initialize
+    initTree();
+  </script>
+</body>
+
+</html>

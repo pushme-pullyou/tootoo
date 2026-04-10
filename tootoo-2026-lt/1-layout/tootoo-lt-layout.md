@@ -289,8 +289,11 @@ Returns a Promise (async function). Runs this cascade:
 1. **URL query parameters** → `?owner=X&repo=Y&branch=Z` merged into CONFIG
 2. **CONFIG already filled** → early return
 3. **localStorage cache** → read `storageKey('repo')` JSON (`{owner, repo}`) — checked before `.git/config` to avoid noisy 404 console errors; early return if found
-4. **Fetch `.git/config`** → **only on HTTP/HTTPS** — wrap the entire fetch loop in `if ( location.protocol === 'http:' || location.protocol === 'https:' )` to avoid console 404 errors when opened from `file://`; try paths `''`, `'../'`, `'../../'`, `'../../../'`, `'../../../../'`; parse `github.com[:/]owner/repo` from remote URL; cache result to localStorage; early return if found
-5. **Show inline form** → render owner + repo input form in `#contentBody`; return a new Promise that resolves when the user clicks "Set Repository"; form includes `id="inpOwner"`, `id="inpRepo"`, `id="btnSetRepo"` (class `primary`); inline styles for the form layout (flex column, gap, max-width 300px, padding on inputs)
+4. **GitHub Pages URL** → if `location.hostname` ends with `.github.io`, extract owner from the hostname subdomain and repo from the first pathname segment (falls back to `owner.github.io` for user pages with no path segment); cache result to localStorage; early return if found
+5. **Fetch `.git/config`** → walk up the directory tree trying paths `''`, `'../'`, `'../../'`, `'../../../'`, `'../../../../'`; parse `github.com[:/]owner/repo` from remote URL; cache result to localStorage; early return if found
+   - **5a**: On HTTP/HTTPS, use `fetch()`
+   - **5b**: On `file://`, use synchronous `XMLHttpRequest` (fetch is CORS-blocked on file://); check `xhr.status === 200 || xhr.status === 0` and `xhr.responseText` is non-empty
+6. **Show inline form** → render owner + repo input form in `#contentBody`; return a new Promise that resolves when the user clicks "Set Repository"; form includes `id="inpOwner"`, `id="inpRepo"`, `id="btnSetRepo"` (class `primary`); inline styles for the form layout (flex column, gap, max-width 300px, padding on inputs)
 
 **Note**: `updateHeaderFromConfig()` is NOT called inside `detectRepo()` — it is called from `init()` after state is populated.
 

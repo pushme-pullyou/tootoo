@@ -4,7 +4,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-09 12:00">
   <title>TooToo LT</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link id="hljsTheme" rel="stylesheet"
@@ -43,7 +42,6 @@
     body {
       margin: 0;
       font-family: var(--font-family);
-      font-size: var(--font-size, 16px);
       color: var(--text-color);
       background-color: var(--primary-bg);
       display: flex;
@@ -53,15 +51,13 @@
     }
 
     header {
-      padding: 0.35rem 1rem;
+      padding: 0.75rem 1rem;
       background-color: var(--secondary-bg);
       border-bottom: 1px solid var(--border-color);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
       align-items: center;
-      z-index: 10;
     }
 
     button {
@@ -69,20 +65,14 @@
       background-color: var(--highlight-color);
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       font-size: 0.95rem;
       white-space: nowrap;
-      transition: opacity 0.15s, transform 0.15s, border-color 0.15s;
     }
 
     button:hover {
-      opacity: 0.88;
-      transform: translateY(-0.5px);
-    }
-
-    button:active {
-      transform: translateY(0);
+      opacity: 0.9;
     }
 
     main {
@@ -95,51 +85,37 @@
       width: var(--sidebar-width, 300px);
       flex-shrink: 0;
       background-color: var(--secondary-bg);
-      padding: 0.5rem 0 0 1rem;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #navTree {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-    }
-
-    #treeList {
-      flex: 1;
+      padding: 0.5rem 0 1rem 1rem;
       overflow-y: auto;
-      margin-top: 0.5rem;
-      padding-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
 
     .resizer {
-      width: 8px;
+      width: 12px;
       cursor: col-resize;
-      background: var(--highlight-color);
-      opacity: 0.7;
+      background-color: var(--border-color);
       flex-shrink: 0;
-      position: relative;
       z-index: 10;
-      transition: opacity 0.2s;
+      transition: background-color 0.2s;
       touch-action: none;
+      border-left: 1px solid var(--hover-bg);
+      border-right: 1px solid var(--hover-bg);
     }
 
     .resizer:hover,
     .resizer.resizing {
-      opacity: 1;
+      background-color: var(--highlight-color);
     }
 
     .content-area {
       flex: 1;
       min-width: 0;
-      padding: 0 1rem 1rem 1rem;
+      padding: 1rem;
       overflow-y: auto;
       overflow-x: auto;
       background-color: var(--primary-bg);
-      transition: opacity 0.15s ease;
     }
 
     .content-area img {
@@ -157,7 +133,6 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.25rem;
-      transition: background-color 0.15s, color 0.15s;
     }
 
     .tree-item-label {
@@ -178,16 +153,6 @@
       background-color: var(--hover-bg);
     }
 
-    .tree-item.active {
-      background-color: color-mix(in srgb, var(--highlight-color) 15%, transparent);
-      color: var(--highlight-color);
-      font-weight: 600;
-    }
-
-    .tree-item.active .tree-item-size {
-      opacity: 0.75;
-    }
-
     .tree-folder {
       cursor: pointer;
       padding: 0.2rem;
@@ -195,7 +160,6 @@
       font-weight: bold;
       font-family: monospace;
       user-select: none;
-      transition: background-color 0.15s;
     }
 
     .tree-folder:hover {
@@ -209,10 +173,8 @@
     pre {
       background-color: var(--secondary-bg);
       padding: 1rem;
-      max-width: 700px;
       border: 1px solid var(--border-color);
-      border-radius: 6px;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      border-radius: 4px;
       overflow-x: auto;
       font-family: monospace;
       white-space: pre-wrap;
@@ -227,8 +189,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 0;
-      padding: 0.5rem 0;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
       border-bottom: 1px solid var(--border-color);
       position: sticky;
       top: 0;
@@ -266,30 +228,16 @@
     }
 
     .file-btn {
-      padding: 0.4rem 0.75rem;
+      padding: 0.25rem 0.5rem;
       font-size: 0.85rem;
-    }
-
-    .rate-limit-status {
-      font-size: 0.8rem;
-      padding: 0.2rem 0.45rem;
-      border: 1px solid var(--border-color);
-      border-radius: 999px;
-      background: var(--primary-bg);
-      color: var(--text-color);
-      opacity: 0.85;
-      display: none;
-      white-space: nowrap;
     }
 
     .markdown-body {
       padding: 1.5rem;
-      max-width: 700px;
       background: var(--secondary-bg);
       border: 1px solid var(--border-color);
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-      line-height: 1.6;
+      border-radius: 4px;
+      line-height: 1.5;
       overflow-x: auto;
     }
 
@@ -371,80 +319,14 @@
     #treeFilter:focus {
       border-color: var(--highlight-color);
     }
-
-    .tree-render-status {
-      font-size: 0.75rem;
-      opacity: 0.75;
-      margin-left: 0.5rem;
-      display: none;
-      white-space: nowrap;
-    }
-
-    .breadcrumb-link {
-      color: var(--highlight-color);
-      text-decoration: none;
-      font-weight: normal;
-      cursor: pointer;
-    }
-
-    .breadcrumb-link:hover {
-      text-decoration: underline;
-    }
-
-    .back-to-top {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      z-index: 20;
-      background: var(--highlight-color);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 2.5rem;
-      height: 2.5rem;
-      font-size: 1.2rem;
-      cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-      transition: opacity 0.2s;
-    }
-
-    .back-to-top:hover {
-      opacity: 0.85;
-    }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 25% !important;
-        padding: 0.5rem 0 1rem 0.5rem;
-      }
-
-      .sidebar .tree-item-size {
-        display: none;
-      }
-
-      .resizer {
-        width: 4px;
-      }
-
-      .file-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-      }
-
-      header {
-        flex-wrap: wrap;
-      }
-    }
   </style>
 </head>
 
 <body>
 
   <header>
+    <strong id="headerTitle" style="cursor: pointer; font-size: 1.1rem;" onclick="resetToHome()" title="Reload">TooToo
+      LT</strong>
     <a id="headerGitHub" href="https://github.com/" target="_blank" rel="noopener" title="View source on GitHub"
       style="display: flex; align-items: center; justify-content: center; color: var(--text-color); opacity: 0.7; padding: 0.2rem;">
       <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor">
@@ -453,38 +335,28 @@
         </path>
       </svg>
     </a>
-    <strong id="headerTitle" style="cursor: pointer; font-size: 1.1rem;" onclick="resetToHome()" title="Reload">TooToo
-      LT</strong>
     <button id="btnDarkMode" onclick="toggleDarkMode()"
-      style="margin-left: auto; background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); font-size: 1.1rem; padding: 0.4rem 0.5rem;"
+      style="margin-left: auto; background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); font-size: 1.1rem; padding: 0.25rem 0.5rem;"
       title="Toggle dark mode">🌙</button>
-    <button onclick="adjustFontSize(-1)"
-      style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); font-size: 1rem; padding: 0.4rem 0.5rem;"
-      title="Decrease text size">A−</button>
-    <button onclick="adjustFontSize(1)"
-      style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); font-size: 1rem; padding: 0.4rem 0.5rem;"
-      title="Increase text size">A+</button>
     <button onclick="promptForToken()"
       style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color);"
       title="Set GitHub Personal Access Token">⚙️
       Token</button>
-    <span id="rateLimitStatus" class="rate-limit-status" aria-live="polite"></span>
   </header>
 
   <main>
     <div class="sidebar">
       <div id="navTree">
         <div style="display: flex; align-items: center; margin: 0 0 0.35rem 0;">
-          <h3 style="margin: 0; font-size: 0.95rem;" id="filesHeading">Files</h3>
-          <span id="treeRenderStatus" class="tree-render-status" aria-live="polite"></span>
+          <h3 style="margin: 0; font-size: 0.95rem;">Files</h3>
           <button id="btnToggleFolders" onclick="toggleAllFolders()"
-            style="display: none; margin-left: auto; font-size: 0.75rem; padding: 0.4rem 0.5rem;"
+            style="display: none; margin-left: auto; font-size: 0.75rem; padding: 0.15rem 0.4rem;"
             title="Expand or collapse all folders">Expand All</button>
         </div>
         <input id="treeFilter" type="text" placeholder="Filter files…" oninput="filterTree()">
         <div id="treeTruncatedWarning" class="tree-warning" style="display:none;">
           ⚠️ Repository too large. Tree truncated.</div>
-        <div id="treeList"></div>
+        <div style="margin-top: 0.5rem;" id="treeList"></div>
       </div>
     </div>
 
@@ -493,9 +365,6 @@
     <div class="content-area" id="mainContent">
       <p>Loading...</p>
     </div>
-    <button class="back-to-top" id="btnBackToTop"
-      onclick="document.getElementById('mainContent').scrollTo({top:0,behavior:'smooth'})" title="Back to top"
-      aria-label="Back to top">↑</button>
   </main>
 
   <script>
@@ -506,12 +375,6 @@
     } )[ tag ] );
 
     const escapeAttribute = escapeHTML;
-
-    // ── Set "Files" tooltip from meta revised tag ───────────────────────────
-    {
-      const revised = document.querySelector( 'meta[name="revised"]' )?.content;
-      if ( revised ) document.getElementById( 'filesHeading' ).title = `Last updated: ${ revised }`;
-    }
 
     // ── CONFIG ──────────────────────────────────────────────────────────────
 
@@ -534,70 +397,7 @@
     const ghToken = localStorage.getItem( 'githubToken' ) || '';
     const headers = ghToken ? { Authorization: `token ${ ghToken }` } : {};
     const LARGE_FILE_WARNING_BYTES = 1024 * 1024;
-    const FILE_TEXT_CACHE_LIMIT = 25;
-    const FILE_TEXT_CACHE_MAX_CHARS = 300_000;
-    const TREE_RENDER_BATCH_SIZE = 120;
     const storageKey = suffix => `tootoo-lt:${ location.pathname }:${ suffix }`;
-
-    const fileTextCache = new Map();
-    try {
-      const cached = JSON.parse( localStorage.getItem( storageKey( 'fileTextCache' ) ) || '[]' );
-      if ( Array.isArray( cached ) ) {
-        cached.forEach( entry => {
-          if ( Array.isArray( entry ) && typeof entry[ 0 ] === 'string' && typeof entry[ 1 ] === 'string' ) {
-            fileTextCache.set( entry[ 0 ], entry[ 1 ] );
-          }
-        } );
-      }
-    } catch ( e ) { /* ignore bad cache */ }
-
-    const persistFileTextCache = () => {
-      try {
-        localStorage.setItem( storageKey( 'fileTextCache' ), JSON.stringify( Array.from( fileTextCache.entries() ) ) );
-      } catch ( e ) { /* storage quota may be full */ }
-    };
-
-    const getFileCacheKey = path => `${ state.owner }/${ state.repo }/${ state.branch }/${ path }`;
-
-    const getCachedFileText = path => {
-      const key = getFileCacheKey( path );
-      if ( !fileTextCache.has( key ) ) return null;
-      const value = fileTextCache.get( key );
-      fileTextCache.delete( key );
-      fileTextCache.set( key, value );
-      return value;
-    };
-
-    const setCachedFileText = ( path, text ) => {
-      if ( typeof text !== 'string' || text.length > FILE_TEXT_CACHE_MAX_CHARS ) return;
-      const key = getFileCacheKey( path );
-      if ( fileTextCache.has( key ) ) fileTextCache.delete( key );
-      fileTextCache.set( key, text );
-      while ( fileTextCache.size > FILE_TEXT_CACHE_LIMIT ) {
-        const firstKey = fileTextCache.keys().next().value;
-        fileTextCache.delete( firstKey );
-      }
-      persistFileTextCache();
-    };
-
-    const updateRateLimitStatus = resp => {
-      const el = document.getElementById( 'rateLimitStatus' );
-      if ( !el || !resp?.headers ) return;
-      const remaining = resp.headers.get( 'x-ratelimit-remaining' );
-      const limit = resp.headers.get( 'x-ratelimit-limit' );
-      const reset = resp.headers.get( 'x-ratelimit-reset' );
-      if ( !remaining || !limit ) return;
-      let resetTxt = '';
-      if ( reset ) {
-        const ms = Number( reset ) * 1000;
-        if ( Number.isFinite( ms ) ) {
-          const d = new Date( ms );
-          resetTxt = `, resets ${ d.toLocaleTimeString( [], { hour: '2-digit', minute: '2-digit' } ) }`;
-        }
-      }
-      el.textContent = `API ${ remaining }/${ limit }${ resetTxt }`;
-      el.style.display = 'inline-flex';
-    };
 
     // ── Auto-detect repo ────────────────────────────────────────────────────
 
@@ -608,88 +408,39 @@
     };
 
     const detectRepo = () => new Promise( resolve => {
-      // Check URL query parameters first: ?owner=X&repo=Y&branch=Z
-      const params = new URLSearchParams( location.search );
-      if ( params.get( 'owner' ) ) CONFIG.owner = params.get( 'owner' );
-      if ( params.get( 'repo' ) ) CONFIG.repo = params.get( 'repo' );
-      if ( params.get( 'branch' ) ) CONFIG.branch = params.get( 'branch' );
-
       // If CONFIG is already filled in, use it directly
       if ( CONFIG.owner && CONFIG.repo ) {
         updateHeaderFromConfig();
         return resolve();
       }
 
-      // First check localStorage cache to prevent noisy browser 404 console errors
-      const cached = localStorage.getItem( storageKey( 'repo' ) );
-      if ( cached ) {
-        try {
-          const { owner, repo } = JSON.parse( cached );
-          if ( owner && repo ) {
-            CONFIG.owner = owner;
-            CONFIG.repo = repo;
-            updateHeaderFromConfig();
-            return resolve();
-          }
-        } catch { /* bad JSON, fall through */ }
-      }
-
-      // Parse GitHub Pages URL — e.g. https://owner.github.io/repo/…
-      if ( location.hostname.endsWith( '.github.io' ) ) {
-        const owner = location.hostname.split( '.' )[ 0 ];
-        const segments = location.pathname.split( '/' ).filter( Boolean );
-        const repo = segments[ 0 ] || `${ owner }.github.io`;
-        CONFIG.owner = owner;
-        CONFIG.repo = repo;
-        localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner, repo } ) );
-        updateHeaderFromConfig();
-        return resolve();
-      }
-
-      // Try fetching .git/config by walking up the directory tree
-      const tryFetchGitConfig = async () => {
-        const depths = [ '', '../', '../../', '../../../', '../../../../' ];
-        const gitConfigRegex = /github\.com[:/]([^/]+)\/([^/.\s]+)/;
-
-        // Try fetch on HTTP/HTTPS
-        if ( location.protocol === 'http:' || location.protocol === 'https:' ) {
-          for ( const prefix of depths ) {
-            try {
-              const resp = await fetch( prefix + '.git/config' );
-              if ( resp.ok ) {
-                const text = await resp.text();
-                const match = text.match( gitConfigRegex );
-                if ( match ) {
-                  CONFIG.owner = match[ 1 ];
-                  CONFIG.repo = match[ 2 ].replace( /\.git$/, '' );
-                  localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
-                  updateHeaderFromConfig();
-                  return resolve();
-                }
-              }
-            } catch ( e ) { /* ignore fetch errors and continue up */ }
-          }
+      // Try fetching .git/config (works from local server or file:// with --allow-file-access-from-files)
+      fetch( '.git/config' ).then( resp => {
+        if ( !resp.ok ) throw new Error( 'not found' );
+        return resp.text();
+      } ).then( text => {
+        const match = text.match( /github\.com[:/]([^/]+)\/([^/.\s]+)/ );
+        if ( match ) {
+          CONFIG.owner = match[ 1 ];
+          CONFIG.repo = match[ 2 ].replace( /\.git$/, '' );
+          localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
+          updateHeaderFromConfig();
+          return resolve();
         }
-
-        // Try synchronous XHR on file:// (fetch is CORS-blocked)
-        if ( location.protocol === 'file:' ) {
-          for ( const prefix of depths ) {
-            try {
-              const xhr = new XMLHttpRequest();
-              xhr.open( 'GET', prefix + '.git/config', false );
-              xhr.send( null );
-              if ( ( xhr.status === 200 || xhr.status === 0 ) && xhr.responseText ) {
-                const match = xhr.responseText.match( gitConfigRegex );
-                if ( match ) {
-                  CONFIG.owner = match[ 1 ];
-                  CONFIG.repo = match[ 2 ].replace( /\.git$/, '' );
-                  localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
-                  updateHeaderFromConfig();
-                  return resolve();
-                }
-              }
-            } catch ( _ ) { /* XHR blocked or file not found — try next prefix */ }
-          }
+        throw new Error( 'no github remote' );
+      } ).catch( () => {
+        // Fallback: check localStorage cache
+        const cached = localStorage.getItem( storageKey( 'repo' ) );
+        if ( cached ) {
+          try {
+            const { owner, repo } = JSON.parse( cached );
+            if ( owner && repo ) {
+              CONFIG.owner = owner;
+              CONFIG.repo = repo;
+              updateHeaderFromConfig();
+              return resolve();
+            }
+          } catch { /* bad JSON, fall through */ }
         }
 
         // Final fallback: show form
@@ -703,7 +454,7 @@
             <label style="display: block; margin-bottom: 1rem; font-weight: 600;">Repository
               <input id="inputRepo" type="text" placeholder="e.g. sandbox" style="display: block; width: 100%; box-sizing: border-box; margin-top: 0.25rem; padding: 0.4rem 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.95rem; background: var(--primary-bg); color: var(--text-color);">
             </label>
-            <button id="btnLoadRepo" style="width: 100%;" title="Load repository">Load Repository</button>
+            <button id="btnLoadRepo" style="width: 100%;">Load Repository</button>
           </div>`;
         document.getElementById( 'btnLoadRepo' ).addEventListener( 'click', () => {
           const owner = document.getElementById( 'inputOwner' ).value.trim();
@@ -715,9 +466,7 @@
           updateHeaderFromConfig();
           resolve();
         } );
-      };
-
-      tryFetchGitConfig();
+      } );
     } );
     const approvedLargeFiles = new Set();
 
@@ -736,7 +485,6 @@
     const treeList = document.getElementById( 'treeList' );
     const mainContent = document.getElementById( 'mainContent' );
     const btnToggleFolders = document.getElementById( 'btnToggleFolders' );
-    const treeRenderStatus = document.getElementById( 'treeRenderStatus' );
 
     // ── Utilities ───────────────────────────────────────────────────────────
 
@@ -812,20 +560,6 @@
       setHljsTheme( isDark );
     };
 
-    // ── Font size adjustment ────────────────────────────────────────────────
-
-    const FONT_SIZE_MIN = 10;
-    const FONT_SIZE_MAX = 28;
-    const FONT_SIZE_STEP = 2;
-    const FONT_SIZE_DEFAULT = 16;
-
-    const adjustFontSize = delta => {
-      const current = parseInt( getComputedStyle( document.body ).fontSize, 10 ) || FONT_SIZE_DEFAULT;
-      const next = Math.min( FONT_SIZE_MAX, Math.max( FONT_SIZE_MIN, current + delta * FONT_SIZE_STEP ) );
-      document.body.style.setProperty( '--font-size', next + 'px' );
-      localStorage.setItem( 'fontSize', next );
-    };
-
     // ── Tree filter ─────────────────────────────────────────────────────────
 
     const filterTree = () => {
@@ -864,7 +598,6 @@
     const resetToHome = () => {
       localStorage.removeItem( storageKey( 'lastFilePath' ) );
       state.currentFilePath = '';
-      state.tree = [];
       try { history.replaceState( null, '', location.pathname + location.search ); } catch ( e ) { }
       loadRepo( false );
     };
@@ -920,7 +653,6 @@
           // Resolve default branch if not set
           if ( !state.branch ) {
             const repoResp = await fetch( `https://api.github.com/repos/${ owner }/${ repo }`, options );
-            updateRateLimitStatus( repoResp );
             if ( !repoResp.ok ) {
               if ( repoResp.status === 404 && !ghToken ) {
                 mainContent.innerHTML = `<p class="error">Repository <strong>${ escapeHTML( owner ) }/${ escapeHTML( repo ) }</strong> is private or does not exist.<br><br>If this is a private repository, click <strong>⚙️ Token</strong> to enter a GitHub Personal Access Token with <code>repo</code> scope.</p>`;
@@ -938,7 +670,6 @@
 
           // Fetch recursive tree
           const treeResp = await fetch( `https://api.github.com/repos/${ owner }/${ repo }/git/trees/${ state.branch }?recursive=1`, options );
-          updateRateLimitStatus( treeResp );
           if ( !treeResp.ok ) throw new Error( `Status: ${ treeResp.status } - ${ treeResp.statusText }` );
           const treeData = await treeResp.json();
 
@@ -997,7 +728,6 @@
       const opts = { headers: { ...headers, Accept: 'application/vnd.github.raw+json' } };
       if ( fetchOpts.signal ) opts.signal = fetchOpts.signal;
       const resp = await fetch( url, opts );
-      updateRateLimitStatus( resp );
       if ( !resp.ok ) throw new Error( `Failed to load ${ ext } file.` );
       const blob = await resp.blob();
       return URL.createObjectURL( new Blob( [ blob ], { type: MIME_TYPES[ ext ] || 'application/octet-stream' } ) );
@@ -1011,18 +741,12 @@
       let showToggles = false;
 
       if ( IMAGE_EXTS.includes( ext ) ) {
+        const src = await fetchMediaUrl( url, ext, fetchOpts );
+        renderedHtml = `<img src="${ escapeAttribute( src ) }" class="media-content" alt="${ escapeAttribute( path ) }">`;
         if ( ext === 'svg' ) {
           const resp = await fetch( url, fetchOpts );
-          updateRateLimitStatus( resp );
-          if ( !resp.ok ) throw new Error( 'Failed to load svg file.' );
-          const text = await resp.text();
-          const src = URL.createObjectURL( new Blob( [ text ], { type: 'image/svg+xml' } ) );
-          renderedHtml = `<img src="${ escapeAttribute( src ) }" class="media-content" alt="${ escapeAttribute( path ) }">`;
-          rawHtml = `<pre><code>${ escapeHTML( text ) }</code></pre>`;
+          rawHtml = `<pre><code>${ escapeHTML( await resp.text() ) }</code></pre>`;
           showToggles = true;
-        } else {
-          const src = await fetchMediaUrl( url, ext, fetchOpts );
-          renderedHtml = `<img src="${ escapeAttribute( src ) }" class="media-content" alt="${ escapeAttribute( path ) }">`;
         }
       } else if ( AUDIO_EXTS.includes( ext ) ) {
         const src = await fetchMediaUrl( url, ext, fetchOpts );
@@ -1040,7 +764,6 @@
         }
       } else if ( SHEET_EXTS.includes( ext ) ) {
         const resp = await fetch( url, fetchOpts );
-        updateRateLimitStatus( resp );
         if ( !resp.ok ) throw new Error( 'Failed to load spreadsheet.' );
         const buf = await resp.arrayBuffer();
         const wb = XLSX.read( buf, { type: 'array' } );
@@ -1051,14 +774,9 @@
         } );
         renderedHtml = `<div class="xlsx-content">${ sheets.join( '' ) }</div>`;
       } else {
-        let text = getCachedFileText( path );
-        if ( text == null ) {
-          const resp = await fetch( url, fetchOpts );
-          updateRateLimitStatus( resp );
-          if ( !resp.ok ) throw new Error( 'Failed to load file content.' );
-          text = await resp.text();
-          setCachedFileText( path, text );
-        }
+        const resp = await fetch( url, fetchOpts );
+        if ( !resp.ok ) throw new Error( 'Failed to load file content.' );
+        const text = await resp.text();
         const tooLargeForHighlight = text.length > 500_000;
         const langClass = tooLargeForHighlight ? 'nohighlight' : `language-${ escapeAttribute( ext ) }`;
         rawHtml = `<pre><code class="${ langClass }">${ escapeHTML( text ) }</code></pre>`;
@@ -1082,15 +800,9 @@
       return { renderedHtml, rawHtml, showToggles };
     };
 
-    // ── Rendered/Raw toggle (with per-type memory) ──────────────────────────
+    // ── Rendered/Raw toggle ─────────────────────────────────────────────────
 
-    const getViewPrefKey = ext => storageKey( `viewPref:${ ext }` );
-
-    const getPreferredView = ext => {
-      try { return localStorage.getItem( getViewPrefKey( ext ) ) || 'rendered'; } catch { return 'rendered'; }
-    };
-
-    const toggleFileView = ( view, ext ) => {
+    const toggleFileView = view => {
       const viewRendered = document.getElementById( 'viewRendered' );
       const viewRaw = document.getElementById( 'viewRaw' );
       const btnRendered = document.getElementById( 'btnRendered' );
@@ -1101,9 +813,6 @@
       if ( viewRaw ) viewRaw.style.display = isRaw ? 'block' : 'none';
       if ( btnRendered ) btnRendered.style.opacity = isRaw ? '0.5' : '1';
       if ( btnRaw ) btnRaw.style.opacity = isRaw ? '1' : '0.5';
-      if ( ext ) {
-        try { localStorage.setItem( getViewPrefKey( ext ), view ); } catch { /* quota full */ }
-      }
     };
 
     // ── Select file ─────────────────────────────────────────────────────────
@@ -1121,52 +830,42 @@
         state.currentFilePath = path;
         if ( doUpdateHash ) updateHash();
         localStorage.setItem( storageKey( 'lastFilePath' ), path );
-        highlightActiveTreeItem( path );
         mainContent.innerHTML = `<p>Loading file: ${ escapeHTML( path ) }...</p>`;
 
         const options = getFetchOptions( true );
-        const safePath = path.split( '/' ).map( encodeURIComponent ).join( '/' );
         const url = ghToken
-          ? `https://api.github.com/repos/${ state.owner }/${ state.repo }/contents/${ safePath }?ref=${ state.branch }`
-          : `https://raw.githubusercontent.com/${ state.owner }/${ state.repo }/${ state.branch }/${ safePath }`;
+          ? `https://api.github.com/repos/${ state.owner }/${ state.repo }/contents/${ path }?ref=${ state.branch }`
+          : `https://raw.githubusercontent.com/${ state.owner }/${ state.repo }/${ state.branch }/${ path }`;
         if ( ghToken ) options.headers = { ...headers, Accept: 'application/vnd.github.raw+json' };
         const ext = path.split( '.' ).pop().toLowerCase();
 
         const githubLink = `https://github.com/${ state.owner }/${ state.repo }/blob/${ state.branch }/${ path }`;
-        const isUserPage = state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`;
-        const newTabUrl = isUserPage
-          ? `https://${ state.owner }.github.io/${ path }`
-          : `https://${ state.owner }.github.io/${ state.repo }/${ path }`;
+        const newTabUrl = `https://${ state.owner }.github.io/${ state.repo }/${ path }`;
 
         const pathParts = path.split( '/' );
         const fileName = pathParts.pop();
         const repoLink = `<a href="#"
                style="color: var(--highlight-color); text-decoration: none; font-weight: normal; cursor: pointer;"
                onclick="event.preventDefault(); resetToHome()">${ escapeHTML( state.repo ) }</a>`;
-        const pathPrefix = pathParts.length
-          ? pathParts.map( ( seg, i ) => {
-            const folderPath = pathParts.slice( 0, i + 1 ).join( '/' );
-            return `<a class="breadcrumb-link" onclick="event.preventDefault(); scrollToTreeFolder('${ escapeAttribute( folderPath ) }')" href="#">${ escapeHTML( seg ) }</a>`;
-          } ).join( ' / ' ) + ' / '
-          : '';
+        const pathPrefix = pathParts.length ? pathParts.join( ' / ' ) + ' / ' : '';
 
         const headerHtml = `
           <div class="file-header">
             <h3 class="file-title">
+              <span class="file-title-path">${ repoLink } / ${ pathPrefix }</span>${ escapeHTML( fileName ) }
               <a href="${ escapeAttribute( githubLink ) }" target="_blank" rel="noopener" title="View on GitHub" class="file-source-link">
                 <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path>
                 </svg>
               </a>
-              <span class="file-title-path">${ repoLink } / ${ pathPrefix }</span>${ escapeHTML( fileName ) }
             </h3>
             <div class="file-actions">
               <button onclick="copyFileContent()" id="btnCopy" class="file-btn" title="Copy to clipboard"
                 style="${ NO_COPY_EXTS.includes( ext ) ? 'display:none' : '' }">Copy</button>
               <button onclick="window.open('${ escapeAttribute( newTabUrl ) }', '_blank', 'noopener')" class="file-btn" title="Open in new tab">New Tab</button>
               <div id="fileViewToggles" class="file-actions" style="display: none;">
-                <button id="btnRendered" onclick="toggleFileView('rendered', '${ escapeAttribute( ext ) }')" class="file-btn" title="Show rendered view">Rendered</button>
-                <button id="btnRaw" onclick="toggleFileView('raw', '${ escapeAttribute( ext ) }')" class="file-btn" style="opacity: 0.5;" title="Show raw source">Raw</button>
+                <button id="btnRendered" onclick="toggleFileView('rendered')" class="file-btn" title="Show rendered view">Rendered</button>
+                <button id="btnRaw" onclick="toggleFileView('raw')" class="file-btn" style="opacity: 0.5;" title="Show raw source">Raw</button>
               </div>
             </div>
           </div>`;
@@ -1183,11 +882,7 @@
           <div id="viewRendered" style="display: block;">${ renderedHtml }</div>
           ${ rawHtml ? `<div id="viewRaw" style="display: none;">${ rawHtml }</div>` : '' }`;
 
-        if ( showToggles ) {
-          document.getElementById( 'fileViewToggles' ).style.display = 'flex';
-          const pref = getPreferredView( ext );
-          if ( pref === 'raw' ) toggleFileView( 'raw', ext );
-        }
+        if ( showToggles ) document.getElementById( 'fileViewToggles' ).style.display = 'flex';
 
         try {
           if ( window.hljs ) hljs.highlightAll();
@@ -1210,9 +905,9 @@
                 handleSelectFile( decodeURIComponent( p ) );
               };
             } else if ( !href.startsWith( 'http://' ) && !href.startsWith( 'https://' ) && !href.startsWith( 'mailto:' ) && !href.startsWith( '#' ) ) {
-              a.onclick = async e => {
+              a.onclick = e => {
                 e.preventDefault();
-                const [ relativePath, hashSection ] = href.split( '#' );
+                const [ relativePath ] = href.split( '#' );
                 const currentDir = path.includes( '/' ) ? path.split( '/' ).slice( 0, -1 ) : [];
                 const resolved = [ ...currentDir ];
                 relativePath.split( '/' ).forEach( seg => {
@@ -1220,14 +915,7 @@
                   if ( seg === '..' ) { resolved.pop(); return; }
                   resolved.push( seg );
                 } );
-                if ( resolved.length ) {
-                  await handleSelectFile( decodeURIComponent( resolved.join( '/' ) ) );
-                  if ( hashSection ) {
-                    let el = document.getElementById( hashSection );
-                    if ( !el ) { try { el = document.querySelector( `[name="${ CSS.escape( hashSection ) }"]` ); } catch ( e ) { /* invalid selector */ } }
-                    if ( el ) el.scrollIntoView();
-                  }
-                }
+                if ( resolved.length ) handleSelectFile( decodeURIComponent( resolved.join( '/' ) ) );
               };
             } else if ( !href.startsWith( '#' ) ) {
               a.target = '_blank';
@@ -1244,11 +932,6 @@
     // ── Tree rendering ──────────────────────────────────────────────────────
 
     const renderTree = tree => {
-      if ( treeRenderStatus ) {
-        treeRenderStatus.style.display = 'inline';
-        treeRenderStatus.textContent = 'Rendering tree...';
-      }
-
       const root = {};
       tree.forEach( item => {
         const parts = item.path.split( '/' );
@@ -1268,28 +951,6 @@
         } );
       } );
 
-      const buildItemHtml = ( key, child ) => {
-        const item = child._item;
-        if ( item.type === 'tree' ) {
-          return `<details data-folder-path="${ escapeAttribute( item.path ) }">
-              <summary class="tree-folder" tabindex="0">📁 ${ escapeHTML( key ) }</summary>
-              <div class="tree-children">${ buildHtml( child._children ) }</div>
-            </details>`;
-        }
-        const isReadme = /^readme(\.md|\.txt)?$/i.test( key );
-        const icon = fileIcon( key );
-        const label = isReadme
-          ? `<span class="tree-item-label" style="font-weight: 600;">${ icon } ${ escapeHTML( key ) }</span>`
-          : `<span class="tree-item-label">${ icon } ${ escapeHTML( key ) }</span>`;
-        const sizeLabel = item.size != null
-          ? `<span class="tree-item-size">${ formatFileSize( item.size ) }</span>`
-          : '';
-        return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeAttribute( item.path ) }">
-            ${ label }
-            ${ sizeLabel }
-          </div>`;
-      };
-
       const buildHtml = node => {
         const keys = Object.keys( node );
         keys.sort( ( a, b ) => {
@@ -1299,43 +960,33 @@
           return a.localeCompare( b );
         } );
 
-        return keys.map( key => buildItemHtml( key, node[ key ] ) ).join( '' );
+        return keys.map( key => {
+          const child = node[ key ];
+          const item = child._item;
+
+          if ( item.type === 'tree' ) {
+            return `<details>
+              <summary class="tree-folder" tabindex="0">📁 ${ escapeHTML( key ) }</summary>
+              <div class="tree-children">${ buildHtml( child._children ) }</div>
+            </details>`;
+          }
+
+          const isReadme = /^readme(\.md|\.txt)?$/i.test( key );
+          const icon = fileIcon( key );
+          const label = isReadme
+            ? `<span class="tree-item-label" style="font-weight: 600;">${ icon } ${ escapeHTML( key ) }</span>`
+            : `<span class="tree-item-label">${ icon } ${ escapeHTML( key ) }</span>`;
+          const sizeLabel = item.size != null
+            ? `<span class="tree-item-size">${ formatFileSize( item.size ) }</span>`
+            : '';
+          return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeAttribute( item.path ) }">
+            ${ label }
+            ${ sizeLabel }
+          </div>`;
+        } ).join( '' );
       };
 
-      const rootKeys = Object.keys( root );
-      rootKeys.sort( ( a, b ) => {
-        const aIsFolder = root[ a ]._item.type === 'tree';
-        const bIsFolder = root[ b ]._item.type === 'tree';
-        if ( aIsFolder !== bIsFolder ) return aIsFolder ? -1 : 1;
-        return a.localeCompare( b );
-      } );
-
-      treeList.innerHTML = '';
-      let idx = 0;
-      const renderNextBatch = () => {
-        const end = Math.min( idx + TREE_RENDER_BATCH_SIZE, rootKeys.length );
-        const chunk = rootKeys.slice( idx, end ).map( key => buildItemHtml( key, root[ key ] ) ).join( '' );
-
-        treeList.insertAdjacentHTML( 'beforeend', chunk );
-        idx = end;
-        if ( treeRenderStatus ) {
-          const pct = rootKeys.length ? Math.round( ( idx / rootKeys.length ) * 100 ) : 100;
-          treeRenderStatus.textContent = `Rendering tree... ${ pct }%`;
-        }
-        if ( idx < rootKeys.length ) {
-          setTimeout( renderNextBatch, 0 );
-        } else if ( treeRenderStatus ) {
-          treeRenderStatus.textContent = `Rendered ${ rootKeys.length } items`;
-          setTimeout( () => {
-            if ( treeRenderStatus ) {
-              treeRenderStatus.style.display = 'none';
-              treeRenderStatus.textContent = '';
-            }
-          }, 1200 );
-        }
-      };
-
-      renderNextBatch();
+      treeList.innerHTML = buildHtml( root );
     };
 
     // ── Expand/Collapse all ─────────────────────────────────────────────────
@@ -1355,63 +1006,6 @@
     treeList.addEventListener( 'click', e => {
       const el = e.target.closest( '[data-action="select-file"]' );
       if ( el ) handleSelectFile( el.dataset.path );
-    } );
-
-    // ── Highlight active file + auto-expand ─────────────────────────────────
-
-    const highlightActiveTreeItem = path => {
-      treeList.querySelectorAll( '.tree-item.active' ).forEach( el => el.classList.remove( 'active' ) );
-      const item = treeList.querySelector( `.tree-item[data-path="${ CSS.escape( path ) }"]` );
-      if ( !item ) return;
-      item.classList.add( 'active' );
-      // Auto-expand ancestor folders
-      let parent = item.parentElement;
-      while ( parent && parent !== treeList ) {
-        if ( parent.tagName === 'DETAILS' && !parent.open ) parent.open = true;
-        parent = parent.parentElement;
-      }
-      // Scroll tree item into view
-      item.scrollIntoView( { block: 'nearest', behavior: 'smooth' } );
-    };
-
-    // ── Breadcrumb folder navigation ────────────────────────────────────────
-
-    const scrollToTreeFolder = folderPath => {
-      const details = treeList.querySelector( `details[data-folder-path="${ CSS.escape( folderPath ) }"]` );
-      if ( !details ) return;
-      // Expand all ancestors
-      let p = details.parentElement;
-      while ( p && p !== treeList ) {
-        if ( p.tagName === 'DETAILS' && !p.open ) p.open = true;
-        p = p.parentElement;
-      }
-      details.open = true;
-      const summary = details.querySelector( 'summary' );
-      if ( summary ) {
-        summary.scrollIntoView( { block: 'nearest', behavior: 'smooth' } );
-        summary.focus();
-      }
-    };
-
-    // ── Back-to-top button visibility ───────────────────────────────────────
-
-    const btnBackToTop = document.getElementById( 'btnBackToTop' );
-    mainContent.addEventListener( 'scroll', () => {
-      if ( mainContent.scrollTop > 400 ) {
-        btnBackToTop.style.display = 'flex';
-      } else {
-        btnBackToTop.style.display = 'none';
-      }
-    } );
-
-    // ── Keyboard shortcut: '/' to focus filter ──────────────────────────────
-
-    document.addEventListener( 'keydown', e => {
-      if ( e.key === '/' && ![ 'INPUT', 'TEXTAREA', 'SELECT' ].includes( document.activeElement.tagName ) ) {
-        e.preventDefault();
-        document.getElementById( 'treeFilter' ).focus();
-        return;
-      }
     } );
 
     // ── Keyboard navigation in tree ─────────────────────────────────────────
@@ -1531,13 +1125,6 @@
       );
     } );
 
-    // Revoke blob URLs on page unload to free memory
-    window.addEventListener( 'beforeunload', () => {
-      document.querySelectorAll( 'iframe[src^="blob:"], img[src^="blob:"], audio[src^="blob:"], video[src^="blob:"]' ).forEach( el => {
-        URL.revokeObjectURL( el.src );
-      } );
-    } );
-
     // ── Init ────────────────────────────────────────────────────────────────
 
     // Restore persisted sidebar width
@@ -1550,10 +1137,6 @@
       document.getElementById( 'btnDarkMode' ).textContent = '☀️';
       setHljsTheme( true );
     }
-
-    // Restore font size
-    const savedFontSize = localStorage.getItem( 'fontSize' );
-    if ( savedFontSize ) document.body.style.setProperty( '--font-size', savedFontSize + 'px' );
 
     ( async () => {
       await detectRepo();

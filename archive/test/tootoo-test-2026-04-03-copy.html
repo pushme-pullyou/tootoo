@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TooToo — GitHub Browser</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+:root {
+  --primary-bg: #ffffff;
+  --secondary-bg: #f6f8fa;
+  --text-color: #24292f;
+  --border-color: #d0d7de;
+  --highlight-color: #0969da;
+  --hover-bg: #f3f4f6;
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --sidebar-width: 300px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-family);
+  color: var(--text-color);
+  background: var(--primary-bg);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+a { color: var(--highlight-color); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* HEADER */
+header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--secondary-bg);
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  min-height: 44px;
+}
+header h1 {
+  font-size: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+header h1:hover { color: var(--highlight-color); }
+#ownerInput {
+  width: 140px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 13px;
+}
+.hdr-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--primary-bg);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.hdr-btn:hover { background: var(--hover-bg); }
+.hdr-btn.dark { background: #24292f; color: #fff; border-color: #24292f; }
+.hdr-btn.dark:hover { background: #32383f; }
+#btnProfileLink {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+#btnProfileLink:hover { background: var(--hover-bg); }
+#btnExpandCollapse { display: none; }
+.hdr-spacer { flex: 1; }
+
+/* MAIN LAYOUT */
+main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.sidebar {
+  width: var(--sidebar-width);
+  min-width: 150px;
+  max-width: 60vw;
+  overflow-y: auto;
+  border-right: 1px solid var(--border-color);
+  background: var(--primary-bg);
+  display: flex;
+  flex-direction: column;
+}
+.resizer {
+  width: 8px;
+  cursor: col-resize;
+  background: var(--border-color);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.resizer:hover, .resizer.active { background: var(--highlight-color); }
+.content-area {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* SIDEBAR PANELS */
+#repoListContainer, #navTree { display: none; padding: 8px; }
+#repoListContainer.active, #navTree.active { display: flex; flex-direction: column; flex: 1; }
+.sidebar-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+#filterInput, #sortSelect, #branchSelect {
+  padding: 3px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 12px;
+}
+#filterInput { width: 100%; margin-bottom: 6px; }
+#sortSelect, #branchSelect { font-size: 11px; }
+#repoList, #treeList { list-style: none; flex: 1; overflow-y: auto; }
+#repoList li {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  font-size: 13px;
+}
+#repoList li:hover { background: var(--hover-bg); }
+.repo-name { font-weight: 600; color: var(--highlight-color); }
+.repo-meta { font-size: 11px; color: #656d76; display: flex; gap: 8px; margin-top: 2px; flex-wrap: wrap; }
+.repo-meta span { display: inline-flex; align-items: center; gap: 2px; }
+.lang-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.load-more-btn {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-top: 6px;
+  text-align: center;
+  background: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.load-more-btn:hover { background: var(--hover-bg); }
+
+/* TREE */
+.tree-folder, .tree-item {
+  padding: 3px 6px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  outline: none;
+}
+.tree-folder:hover, .tree-item:hover { background: var(--hover-bg); }
+.tree-folder:focus, .tree-item:focus { box-shadow: 0 0 0 2px var(--highlight-color); }
+.tree-item-size { font-size: 11px; color: #656d76; margin-left: 8px; white-space: nowrap; }
+details { margin-left: 12px; }
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: '▶ '; font-size: 10px; }
+details[open] > summary::before { content: '▼ '; }
+.tree-truncation-warning {
+  background: #fff8c5;
+  border: 1px solid #d4a72c;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 8px;
+  display: none;
+}
+
+/* FILE VIEWER */
+.file-header {
+  position: sticky;
+  top: -16px;
+  background: var(--primary-bg);
+  padding: 8px 0 8px 0;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 12px;
+  z-index: 5;
+}
+.file-title {
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.file-title a { font-weight: 400; }
+.file-actions { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
+.toggle-btn {
+  padding: 3px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--primary-bg);
+  cursor: pointer;
+  opacity: 0.5;
+}
+.toggle-btn.active { opacity: 1; background: var(--secondary-bg); }
+#viewRendered, #viewRaw { display: none; }
+#viewRendered.active { display: block; }
+#viewRaw.active { display: block; }
+
+/* MARKDOWN */
+.markdown-body {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 24px;
+  line-height: 1.6;
+  font-size: 14px;
+  overflow-wrap: break-word;
+}
+.markdown-body h1, .markdown-body h2 { border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
+.markdown-body h1 { font-size: 1.6em; }
+.markdown-body h2 { font-size: 1.3em; }
+.markdown-body h3 { font-size: 1.1em; }
+.markdown-body pre { background: var(--secondary-bg); border-radius: 6px; padding: 12px; overflow-x: auto; }
+.markdown-body code { background: var(--secondary-bg); padding: 2px 5px; border-radius: 4px; font-size: 0.9em; }
+.markdown-body pre code { background: none; padding: 0; }
+.markdown-body img { max-width: 100%; }
+.markdown-body table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+.markdown-body th, .markdown-body td { border: 1px solid var(--border-color); padding: 6px 10px; text-align: left; }
+.markdown-body th { background: var(--secondary-bg); }
+.markdown-body blockquote { border-left: 4px solid var(--border-color); padding-left: 12px; color: #656d76; }
+
+/* STATS CARD */
+.stats-card {
+  max-width: 600px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  background: var(--primary-bg);
+}
+.stats-card .avatar { width: 80px; height: 80px; border-radius: 50%; margin-bottom: 10px; }
+.stats-card h2 { font-size: 20px; margin-bottom: 4px; }
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+  font-size: 13px;
+  margin-top: 10px;
+}
+.stats-grid dt { font-weight: 600; }
+.stats-grid dd { color: #656d76; }
+.lang-bar { height: 8px; border-radius: 4px; overflow: hidden; display: flex; margin-top: 8px; }
+.lang-bar-segment { height: 100%; }
+.lang-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; font-size: 12px; }
+.lang-legend span { display: inline-flex; align-items: center; gap: 3px; }
+
+/* DISCOVER */
+.discover-page { max-width: 800px; margin: 0 auto; }
+.discover-page h2 { margin-bottom: 12px; font-size: 18px; }
+.discover-section { margin-bottom: 28px; }
+.discover-section h3 { font-size: 14px; margin-bottom: 8px; color: #656d76; }
+.pill-btn {
+  display: inline-block;
+  padding: 4px 12px;
+  margin: 3px;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  background: var(--primary-bg);
+  cursor: pointer;
+  font-size: 13px;
+}
+.pill-btn:hover { background: var(--hover-bg); border-color: var(--highlight-color); color: var(--highlight-color); }
+.top-users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+.top-user-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.top-user-card:hover { background: var(--hover-bg); }
+.top-user-card img { width: 64px; height: 64px; border-radius: 50%; margin-bottom: 6px; }
+.top-user-card strong { color: var(--highlight-color); }
+
+/* ERROR PANEL */
+.error-panel {
+  background: #ffebe9;
+  border: 1px solid #d1242f;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  font-size: 13px;
+}
+.error-panel button { margin-top: 8px; }
+
+/* MISC */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border-color); border-top-color: var(--highlight-color); border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+iframe { border: 1px solid var(--border-color); border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="titleLink">TooToo</h1>
+  <input type="text" id="ownerInput" placeholder="GitHub user or org" list="recentUsersList" autocomplete="off">
+  <datalist id="recentUsersList"></datalist>
+  <button id="btnProfileLink" title="View on GitHub">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+  </button>
+  <button id="btnMainAction" class="hdr-btn" data-mode="repos">Get Repos</button>
+  <button id="btnOrgs" class="hdr-btn">Get Orgs</button>
+  <button id="btnGists" class="hdr-btn">Get Gists</button>
+  <button id="btnStats" class="hdr-btn">Stats</button>
+  <button id="btnDiscover" class="hdr-btn dark">🌍 Discover</button>
+  <button id="btnExpandCollapse" class="hdr-btn">Expand All</button>
+  <span class="hdr-spacer"></span>
+  <button id="btnToken" class="hdr-btn">⚙️ Token</button>
+</header>
+
+<main>
+  <div class="sidebar" id="sidebar">
+    <div id="repoListContainer">
+      <div class="sidebar-heading">
+        <span id="repoListHeading">Repositories</span>
+        <select id="sortSelect">
+          <option value="updated">Recently Updated</option>
+          <option value="stars">Stars</option>
+          <option value="name">Name</option>
+          <option value="pushed">Last Push</option>
+          <option value="size">Size</option>
+        </select>
+      </div>
+      <input type="text" id="filterInput" placeholder="Filter…">
+      <ul id="repoList"></ul>
+    </div>
+    <div id="navTree">
+      <div class="sidebar-heading">
+        <span>Files</span>
+        <select id="branchSelect" title="Switch branch"></select>
+      </div>
+      <div id="treeTruncationWarning" class="tree-truncation-warning">⚠️ Tree is truncated — repo may have too many files.</div>
+      <div id="treeList"></div>
+    </div>
+  </div>
+  <div class="resizer" id="dragMe"></div>
+  <div class="content-area" id="mainContent">
+    <p style="color:#656d76; margin-top:40px; text-align:center;">Enter a GitHub username above and click <strong>Get Repos</strong> to start browsing.</p>
+  </div>
+</main>
+
+<script>
+/* ============================================================
+   CONFIG — change these per deployment
+   ============================================================ */
+const CONFIG = {
+  defaultOwner: 'theo-armour',
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  owner: '',
+  repo: '',
+  branch: 'main',
+  tree: [],
+  isGist: false,
+  currentFilePath: '',
+  repoItems: [],
+  repoRenderer: null,
+};
+
+let mainAbortController = new AbortController();
+const approvedLargeFiles = new Set();
+const LARGE_FILE_WARNING_BYTES = 1024 * 1024;
+
+/* ============================================================
+   SECURITY HELPERS
+   ============================================================ */
+const escapeHTML = (str) => {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+};
+const escapeAttribute = (str) => String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/* ============================================================
+   LANGUAGE COLORS
+   ============================================================ */
+const LANG_COLORS = {
+  JavaScript: '#f1e05a', Python: '#3572A5', Java: '#b07219', TypeScript: '#3178c6',
+  'C++': '#f34b7d', C: '#555555', 'C#': '#178600', Go: '#00ADD8', Rust: '#dea584',
+  Ruby: '#701516', PHP: '#4F5D95', Swift: '#F05138', Kotlin: '#A97BFF', Dart: '#00B4AB',
+  Scala: '#c22d40', Shell: '#89e051', HTML: '#e34c26', CSS: '#563d7c', Vue: '#41b883',
+  Svelte: '#ff3e00', R: '#198CE7', Lua: '#000080', Perl: '#0298c3', Haskell: '#5e5086',
+  Elixir: '#6e4a7e', Clojure: '#db5855', Julia: '#a270ba', Zig: '#ec915c', Nim: '#ffc200',
+  OCaml: '#3be133',
+};
+
+/* ============================================================
+   DOM REFERENCES
+   ============================================================ */
+const $ = (id) => document.getElementById(id);
+const ownerInput = $('ownerInput');
+const repoListContainer = $('repoListContainer');
+const navTree = $('navTree');
+const repoList = $('repoList');
+const treeList = $('treeList');
+const mainContent = $('mainContent');
+const sortSelect = $('sortSelect');
+const filterInput = $('filterInput');
+const branchSelect = $('branchSelect');
+const btnMainAction = $('btnMainAction');
+const btnOrgs = $('btnOrgs');
+const btnGists = $('btnGists');
+const btnStats = $('btnStats');
+const btnExpandCollapse = $('btnExpandCollapse');
+const btnDiscover = $('btnDiscover');
+const repoListHeading = $('repoListHeading');
+const treeTruncationWarning = $('treeTruncationWarning');
+
+/* ============================================================
+   GITHUB API
+   ============================================================ */
+const getToken = () => localStorage.getItem('githubToken') || '';
+
+const apiFetch = async (url, signal) => {
+  const headers = { Accept: 'application/vnd.github.v3+json' };
+  const token = getToken();
+  if (token) headers.Authorization = `token ${token}`;
+  const resp = await fetch(url, { headers, signal });
+  if (!resp.ok) {
+    const msg = resp.status === 403
+      ? `Rate limited (403). ${token ? '' : 'Add a token for 5,000 req/hr.'}`
+      : `GitHub API error ${resp.status}`;
+    throw new Error(msg);
+  }
+  return resp.json();
+};
+
+const rawFetch = async (url, signal) => {
+  const headers = {};
+  const token = getToken();
+  if (token) headers.Authorization = `token ${token}`;
+  const resp = await fetch(url, { headers, signal });
+  if (!resp.ok) throw new Error(`Fetch error ${resp.status}`);
+  return resp.text();
+};
+
+const cancelPending = () => {
+  mainAbortController.abort();
+  mainAbortController = new AbortController();
+  return mainAbortController.signal;
+};
+
+/* ============================================================
+   RECENT USERS
+   ============================================================ */
+const getRecentUsers = () => {
+  try { return JSON.parse(localStorage.getItem('tootooRecentUsers') || '[]'); } catch { return []; }
+};
+
+const addRecentUser = (user) => {
+  let list = getRecentUsers().filter((u) => u.toLowerCase() !== user.toLowerCase());
+  list.unshift(user);
+  if (list.length > 10) list = list.slice(0, 10);
+  localStorage.setItem('tootooRecentUsers', JSON.stringify(list));
+  refreshRecentDatalist();
+};
+
+const refreshRecentDatalist = () => {
+  const dl = $('recentUsersList');
+  dl.innerHTML = getRecentUsers().map((u) => `<option value="${escapeAttribute(u)}">`).join('');
+};
+
+/* ============================================================
+   HASH ROUTING
+   ============================================================ */
+const updateHash = (hash) => {
+  history.pushState(null, '', '#' + hash);
+};
+
+const handleHashChange = async () => {
+  const hash = location.hash.slice(1);
+  if (!hash) return;
+  const parts = hash.split('/');
+
+  if (parts[0] === 'gist' && parts[1]) {
+    state.isGist = true;
+    await handleSelectGist(parts[1]);
+    if (parts[2]) {
+      const file = state.tree.find((f) => f.path === parts[2]);
+      if (file) await handleSelectFile(file);
+    }
+    return;
+  }
+
+  const owner = parts[0];
+  ownerInput.value = owner;
+  state.owner = owner;
+
+  if (parts.length === 1) {
+    await fetchRepos();
+    return;
+  }
+
+  const repo = parts[1];
+  await handleSelectRepo(repo);
+
+  if (parts.length > 2) {
+    const filePath = parts.slice(2).join('/');
+    const file = state.tree.find((f) => f.path === filePath);
+    if (file) await handleSelectFile(file);
+  }
+};
+
+/* ============================================================
+   SIDEBAR CONTROL
+   ============================================================ */
+const showRepoList = () => {
+  repoListContainer.classList.add('active');
+  navTree.classList.remove('active');
+  btnExpandCollapse.style.display = 'none';
+  $('sidebar').style.display = '';
+};
+
+const showTree = () => {
+  repoListContainer.classList.remove('active');
+  navTree.classList.add('active');
+  btnExpandCollapse.style.display = '';
+  $('sidebar').style.display = '';
+};
+
+const hideSidebar = () => {
+  repoListContainer.classList.remove('active');
+  navTree.classList.remove('active');
+  btnExpandCollapse.style.display = 'none';
+};
+
+/* ============================================================
+   BUTTON STATE
+   ============================================================ */
+const resetMainAction = () => {
+  btnMainAction.textContent = 'Get Repos';
+  btnMainAction.dataset.mode = 'repos';
+  btnOrgs.style.display = '';
+  btnGists.style.display = '';
+  btnStats.style.display = '';
+};
+
+const setBackToRepos = () => {
+  btnMainAction.textContent = '← Back to Repos';
+  btnMainAction.dataset.mode = 'back';
+  btnOrgs.style.display = 'none';
+  btnGists.style.display = 'none';
+};
+
+/* ============================================================
+   RELATIVE TIME
+   ============================================================ */
+const relativeTime = (dateStr) => {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+};
+
+const formatBytes = (bytes) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+/* ============================================================
+   GENERIC PAGINATED LIST FETCHER
+   ============================================================ */
+const fetchList = async ({ url, label, page = 1, itemRenderer, storeItems, onDone, signal }) => {
+  repoList.innerHTML = page === 1 ? `<li><span class="spinner"></span> Loading ${escapeHTML(label)}…</li>` : repoList.innerHTML;
+  // Remove previous load-more button
+  const prevBtn = repoList.querySelector('.load-more-btn');
+  if (prevBtn) prevBtn.remove();
+  // Remove loading indicator if page > 1
+  if (page > 1) {
+    const loadingLi = repoList.querySelector('.loading-indicator');
+    if (loadingLi) loadingLi.remove();
+  }
+
+  try {
+    const data = await apiFetch(`${url}${url.includes('?') ? '&' : '?'}per_page=100&page=${page}`, signal);
+    if (page === 1) repoList.innerHTML = '';
+
+    if (storeItems) {
+      if (page === 1) state.repoItems = [];
+      state.repoItems.push(...data);
+      state.repoRenderer = itemRenderer;
+    }
+
+    data.forEach((item) => {
+      const li = document.createElement('li');
+      li.innerHTML = itemRenderer(item);
+      Object.keys(li.firstElementChild?.dataset || {}).forEach(() => {});
+      // Copy data attributes from inner element to li
+      const inner = li.querySelector('[data-action]');
+      if (inner) {
+        li.dataset.action = inner.dataset.action;
+        li.dataset.value = inner.dataset.value || '';
+        li.removeChild(inner);
+        li.innerHTML = inner.innerHTML;
+      } else {
+        li.innerHTML = itemRenderer(item);
+      }
+      repoList.appendChild(li);
+    });
+
+    if (data.length >= 100) {
+      const moreBtn = document.createElement('li');
+      moreBtn.className = 'load-more-btn';
+      moreBtn.textContent = `Load More ${label}`;
+      moreBtn.dataset.action = 'load-more';
+      moreBtn.dataset.page = page + 1;
+      moreBtn.addEventListener('click', () => {
+        fetchList({ url, label, page: page + 1, itemRenderer, storeItems, onDone, signal });
+      });
+      repoList.appendChild(moreBtn);
+    }
+    if (onDone) onDone(data);
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    repoList.innerHTML = `<li class="error-panel">${escapeHTML(err.message)}</li>`;
+  }
+};
+
+/* ============================================================
+   REPO RENDERING
+   ============================================================ */
+const repoItemRenderer = (repo) => {
+  const lang = repo.language || '';
+  const langDot = lang && LANG_COLORS[lang] ? `<span class="lang-dot" style="background:${LANG_COLORS[lang]}"></span>` : '';
+  const pages = repo.has_pages ? ' 🌐' : '';
+  return `<div data-action="select-repo" data-value="${escapeAttribute(repo.name)}">
+    <span class="repo-name">${escapeHTML(repo.name)}</span>${pages}
+    <div class="repo-meta">
+      ${lang ? `<span>${langDot} ${escapeHTML(lang)}</span>` : ''}
+      ${repo.stargazers_count ? `<span>⭐ ${repo.stargazers_count}</span>` : ''}
+      <span>${relativeTime(repo.pushed_at || repo.updated_at)}</span>
+    </div>
+  </div>`;
+};
+
+/* ============================================================
+   FETCH REPOS
+   ============================================================ */
+const fetchRepos = async () => {
+  const owner = ownerInput.value.trim();
+  if (!owner) return;
+  state.owner = owner;
+  state.repo = '';
+  state.isGist = false;
+  addRecentUser(owner);
+  resetMainAction();
+  showRepoList();
+  repoListHeading.textContent = 'Repositories';
+  mainContent.innerHTML = '';
+  filterInput.value = '';
+  sortSelect.value = 'updated';
+
+  const signal = cancelPending();
+  await fetchList({
+    url: `https://api.github.com/users/${encodeURIComponent(owner)}/repos?sort=updated`,
+    label: 'Repos',
+    itemRenderer: repoItemRenderer,
+    storeItems: true,
+    signal,
+  });
+};
+
+/* ============================================================
+   FETCH ORGS
+   ============================================================ */
+const fetchOrgs = async () => {
+  const owner = ownerInput.value.trim();
+  if (!owner) return;
+  state.owner = owner;
+  addRecentUser(owner);
+  showRepoList();
+  repoListHeading.textContent = 'Organizations';
+  mainContent.innerHTML = '';
+  const signal = cancelPending();
+
+  await fetchList({
+    url: `https://api.github.com/users/${encodeURIComponent(owner)}/orgs`,
+    label: 'Orgs',
+    signal,
+    itemRenderer: (org) =>
+      `<div data-action="select-owner" data-value="${escapeAttribute(org.login)}">
+        <span class="repo-name">${escapeHTML(org.login)}</span>
+      </div>`,
+  });
+};
+
+/* ============================================================
+   FETCH GISTS
+   ============================================================ */
+const fetchGists = async () => {
+  const owner = ownerInput.value.trim();
+  if (!owner) return;
+  state.owner = owner;
+  addRecentUser(owner);
+  showRepoList();
+  repoListHeading.textContent = 'Gists';
+  mainContent.innerHTML = '';
+  const signal = cancelPending();
+
+  await fetchList({
+    url: `https://api.github.com/users/${encodeURIComponent(owner)}/gists`,
+    label: 'Gists',
+    signal,
+    itemRenderer: (gist) => {
+      const desc = gist.description || Object.keys(gist.files)[0] || gist.id;
+      return `<div data-action="select-gist" data-value="${escapeAttribute(gist.id)}">
+        <span class="repo-name">${escapeHTML(desc)}</span>
+        <div class="repo-meta"><span>${Object.keys(gist.files).length} file(s)</span></div>
+      </div>`;
+    },
+  });
+};
+
+/* ============================================================
+   SELECT GIST
+   ============================================================ */
+const handleSelectGist = async (gistId) => {
+  const signal = cancelPending();
+  state.isGist = true;
+  state.repo = gistId;
+
+  try {
+    const gist = await apiFetch(`https://api.github.com/gists/${gistId}`, signal);
+    state.tree = Object.values(gist.files).map((f) => ({
+      path: f.filename,
+      type: 'blob',
+      size: f.size,
+      raw_url: f.raw_url,
+    }));
+    renderTree(state.tree);
+    showTree();
+    setBackToRepos();
+    updateHash(`gist/${gistId}`);
+
+    // Auto-open first file
+    if (state.tree.length > 0) {
+      await handleSelectFile(state.tree[0]);
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    mainContent.innerHTML = `<div class="error-panel">${escapeHTML(err.message)}</div>`;
+  }
+};
+
+/* ============================================================
+   SELECT REPO
+   ============================================================ */
+const handleSelectRepo = async (repoName, skipHash = false, branch = null) => {
+  const signal = cancelPending();
+  state.repo = repoName;
+  state.isGist = false;
+
+  try {
+    // Get repo info for default branch
+    const repoData = await apiFetch(
+      `https://api.github.com/repos/${encodeURIComponent(state.owner)}/${encodeURIComponent(repoName)}`,
+      signal
+    );
+    state.branch = branch || repoData.default_branch || 'main';
+
+    // Fetch branches
+    try {
+      const branches = await apiFetch(
+        `https://api.github.com/repos/${encodeURIComponent(state.owner)}/${encodeURIComponent(repoName)}/branches?per_page=100`,
+        signal
+      );
+      branchSelect.innerHTML = branches.map((b) =>
+        `<option value="${escapeAttribute(b.name)}" ${b.name === state.branch ? 'selected' : ''}>${escapeHTML(b.name)}</option>`
+      ).join('');
+    } catch {
+      branchSelect.innerHTML = `<option value="${escapeAttribute(state.branch)}" selected>${escapeHTML(state.branch)}</option>`;
+    }
+
+    // Fetch tree
+    const treeData = await apiFetch(
+      `https://api.github.com/repos/${encodeURIComponent(state.owner)}/${encodeURIComponent(repoName)}/git/trees/${encodeURIComponent(state.branch)}?recursive=1`,
+      signal
+    );
+    treeTruncationWarning.style.display = treeData.truncated ? 'block' : 'none';
+    state.tree = treeData.tree || [];
+
+    renderTree(state.tree);
+    showTree();
+    setBackToRepos();
+    if (!skipHash) updateHash(`${state.owner}/${repoName}`);
+
+    // Auto-open README
+    const readme = state.tree.find((f) =>
+      f.type === 'blob' && /^readme\.(md|txt)$/i.test(f.path)
+    );
+    if (readme) await handleSelectFile(readme);
+    else mainContent.innerHTML = `<p style="color:#656d76;">No README found. Select a file from the tree.</p>`;
+
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    mainContent.innerHTML = `<div class="error-panel">${escapeHTML(err.message)}</div>`;
+  }
+};
+
+/* ============================================================
+   TREE RENDERING
+   ============================================================ */
+const renderTree = (items) => {
+  // Build nested object
+  const root = {};
+  items.filter((i) => i.type === 'blob' || i.type === 'tree').forEach((item) => {
+    const parts = item.path.split('/');
+    let node = root;
+    parts.forEach((part, idx) => {
+      if (!node[part]) node[part] = idx === parts.length - 1 && item.type === 'blob'
+        ? { __file: item }
+        : {};
+      node = node[part];
+    });
+  });
+
+  const buildHTML = (node, prefix = '') => {
+    const entries = Object.entries(node).filter(([k]) => k !== '__file');
+    // Separate folders and files, sort each alphabetically
+    const folders = entries.filter(([, v]) => !v.__file).sort(([a], [b]) => a.localeCompare(b));
+    const files = entries.filter(([, v]) => v.__file).sort(([a], [b]) => a.localeCompare(b));
+
+    let html = '';
+    folders.forEach(([name, children]) => {
+      html += `<details><summary class="tree-folder" tabindex="0">📁 ${escapeHTML(name)}</summary>${buildHTML(children, prefix ? prefix + '/' + name : name)}</details>`;
+    });
+    files.forEach(([name, val]) => {
+      const f = val.__file;
+      const path = f.path;
+      const size = f.size != null ? `<span class="tree-item-size">${formatBytes(f.size)}</span>` : '';
+      html += `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${escapeAttribute(path)}">
+        <span>📄 ${escapeHTML(name)}</span>${size}</div>`;
+    });
+    return html;
+  };
+
+  treeList.innerHTML = buildHTML(root);
+};
+
+/* ============================================================
+   FILE CONTENT VIEWER
+   ============================================================ */
+const handleSelectFile = async (fileItem) => {
+  const signal = cancelPending();
+  const path = fileItem.path;
+  state.currentFilePath = path;
+  const ext = path.split('.').pop().toLowerCase();
+
+  // Large file check
+  if (fileItem.size && fileItem.size > LARGE_FILE_WARNING_BYTES && !approvedLargeFiles.has(path)) {
+    if (!confirm(`This file is ${formatBytes(fileItem.size)}. Load it?`)) return;
+    approvedLargeFiles.add(path);
+  }
+
+  // Update hash
+  if (state.isGist) {
+    updateHash(`gist/${state.repo}/${path}`);
+  } else {
+    updateHash(`${state.owner}/${state.repo}/${path}`);
+  }
+
+  // Build URL
+  let fileUrl;
+  if (state.isGist && fileItem.raw_url) {
+    fileUrl = fileItem.raw_url;
+  } else {
+    fileUrl = `https://raw.githubusercontent.com/${encodeURIComponent(state.owner)}/${encodeURIComponent(state.repo)}/${encodeURIComponent(state.branch)}/${path}`;
+  }
+
+  // GitHub link
+  const ghUrl = state.isGist
+    ? `https://gist.github.com/${state.repo}`
+    : `https://github.com/${state.owner}/${state.repo}/blob/${state.branch}/${path}`;
+
+  // New tab URL
+  const newTabUrl = state.isGist
+    ? fileItem.raw_url
+    : `https://${state.owner}.github.io/${state.repo}/${path}`;
+
+  // File header
+  const pathParts = path.split('/');
+  const repoLink = state.isGist
+    ? escapeHTML(state.repo.slice(0, 8) + '…')
+    : `<a href="#" onclick="event.preventDefault(); handleSelectRepo('${escapeAttribute(state.repo)}')">${escapeHTML(state.repo)}</a>`;
+
+  const pathCrumbs = pathParts.map((p) => escapeHTML(p)).join(' / ');
+
+  const isMarkdown = /^(md|markdown)$/.test(ext);
+  const isHTML = /^(html|htm)$/.test(ext);
+  const isSVG = ext === 'svg';
+  const isImage = /^(png|jpg|jpeg|gif|webp|svg|ico)$/.test(ext);
+  const isAudio = /^(mp3|wav|ogg)$/.test(ext);
+  const isVideo = /^(mp4|webm)$/.test(ext);
+  const isPDF = ext === 'pdf';
+  const hasToggle = isMarkdown || isHTML || isSVG;
+
+  let headerHTML = `<div class="file-header">
+    <h3 class="file-title">${repoLink} / ${pathCrumbs}
+      <a href="${escapeAttribute(ghUrl)}" target="_blank" rel="noopener" title="View on GitHub">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+    </h3>
+    <div class="file-actions">
+      <a href="${escapeAttribute(newTabUrl)}" target="_blank" rel="noopener" class="hdr-btn" style="text-decoration:none;">New Tab</a>
+      ${hasToggle ? `<button class="toggle-btn active" onclick="toggleView('rendered')">Rendered</button><button class="toggle-btn" onclick="toggleView('raw')">Raw</button>` : ''}
+    </div>
+  </div>`;
+
+  mainContent.innerHTML = headerHTML + `<div id="viewRendered" class="active"></div><div id="viewRaw"></div>`;
+  const viewRendered = $('viewRendered');
+  const viewRaw = $('viewRaw');
+
+  // Highlight active tree item
+  treeList.querySelectorAll('.tree-item').forEach((el) => {
+    el.style.background = el.dataset.path === path ? 'var(--hover-bg)' : '';
+    el.style.fontWeight = el.dataset.path === path ? '600' : '';
+  });
+
+  try {
+    if (isImage && !isSVG) {
+      viewRendered.innerHTML = `<img src="${escapeAttribute(fileUrl)}" alt="${escapeAttribute(path)}" style="max-width:100%;">`;
+      viewRendered.classList.add('active');
+    } else if (isAudio) {
+      viewRendered.innerHTML = `<audio controls style="width:100%;" src="${escapeAttribute(fileUrl)}"></audio>`;
+      viewRendered.classList.add('active');
+    } else if (isVideo) {
+      viewRendered.innerHTML = `<video controls style="max-width:100%;max-height:80vh;" src="${escapeAttribute(fileUrl)}"></video>`;
+      viewRendered.classList.add('active');
+    } else if (isPDF) {
+      viewRendered.innerHTML = `<iframe src="https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true" style="width:100%;height:80vh;" sandbox="allow-scripts allow-same-origin"></iframe>`;
+      viewRendered.classList.add('active');
+    } else {
+      // Fetch text content
+      const text = await rawFetch(fileUrl, signal);
+
+      if (isMarkdown) {
+        try {
+          const rendered = marked.parse(text);
+          viewRendered.innerHTML = `<div class="markdown-body">${rendered}</div>`;
+          // Rewrite links
+          viewRendered.querySelectorAll('.markdown-body a').forEach((a) => {
+            const href = a.getAttribute('href');
+            if (!href) return;
+            if (href.startsWith('http')) {
+              a.target = '_blank';
+              a.rel = 'noopener';
+            } else if (!href.startsWith('#')) {
+              // Relative link — resolve against current dir
+              const dir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+              const resolved = dir ? dir + '/' + href : href;
+              a.href = '#';
+              a.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = state.tree.find((f) => f.path === resolved);
+                if (target) handleSelectFile(target);
+              });
+            }
+          });
+          viewRendered.querySelectorAll('.markdown-body img').forEach((img) => {
+            const src = img.getAttribute('src');
+            if (src && !src.startsWith('http') && !src.startsWith('data:')) {
+              const dir = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+              const resolved = dir ? dir + '/' + src : src;
+              img.src = `https://raw.githubusercontent.com/${state.owner}/${state.repo}/${state.branch}/${resolved}`;
+            }
+          });
+        } catch {
+          viewRendered.innerHTML = `<div class="error-panel">Markdown parse error</div>`;
+        }
+        viewRaw.innerHTML = `<pre><code>${escapeHTML(text)}</code></pre>`;
+        viewRendered.classList.add('active');
+      } else if (isHTML) {
+        const blob = new Blob([text], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+        viewRendered.innerHTML = `<iframe src="${blobUrl}" sandbox="allow-scripts" style="width:100%;height:80vh;"></iframe>`;
+        viewRaw.innerHTML = `<pre><code class="language-html">${escapeHTML(text)}</code></pre>`;
+        viewRendered.classList.add('active');
+        hljs.highlightAll();
+      } else if (isSVG) {
+        viewRendered.innerHTML = `<img src="${escapeAttribute(fileUrl)}" alt="SVG" style="max-width:100%;">`;
+        viewRaw.innerHTML = `<pre><code class="language-xml">${escapeHTML(text)}</code></pre>`;
+        viewRendered.classList.add('active');
+        hljs.highlightAll();
+      } else {
+        // Code / text
+        const langClass = ext ? `language-${ext}` : '';
+        viewRendered.innerHTML = `<pre><code class="${langClass}">${escapeHTML(text)}</code></pre>`;
+        viewRendered.classList.add('active');
+        hljs.highlightAll();
+      }
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    mainContent.innerHTML = headerHTML + `<div class="error-panel">${escapeHTML(err.message)}</div>`;
+  }
+};
+
+/* ============================================================
+   VIEW TOGGLE
+   ============================================================ */
+window.toggleView = (mode) => {
+  const rendered = $('viewRendered');
+  const raw = $('viewRaw');
+  const btns = document.querySelectorAll('.toggle-btn');
+  if (mode === 'rendered') {
+    rendered.classList.add('active');
+    raw.classList.remove('active');
+    btns[0]?.classList.add('active');
+    btns[1]?.classList.remove('active');
+  } else {
+    rendered.classList.remove('active');
+    raw.classList.add('active');
+    btns[0]?.classList.remove('active');
+    btns[1]?.classList.add('active');
+  }
+};
+
+/* ============================================================
+   STATS
+   ============================================================ */
+const fetchStats = async () => {
+  const signal = cancelPending();
+  const owner = ownerInput.value.trim();
+  if (!owner) return;
+
+  if (state.repo && !state.isGist) {
+    // Repo-level stats
+    try {
+      mainContent.innerHTML = `<p><span class="spinner"></span> Loading repo stats…</p>`;
+      const repo = await apiFetch(
+        `https://api.github.com/repos/${encodeURIComponent(state.owner)}/${encodeURIComponent(state.repo)}`,
+        signal
+      );
+      let langHTML = '';
+      try {
+        const langs = await apiFetch(
+          `https://api.github.com/repos/${encodeURIComponent(state.owner)}/${encodeURIComponent(state.repo)}/languages`,
+          signal
+        );
+        const total = Object.values(langs).reduce((a, b) => a + b, 0);
+        if (total > 0) {
+          const bar = Object.entries(langs).map(([lang, bytes]) => {
+            const pct = ((bytes / total) * 100).toFixed(1);
+            const color = LANG_COLORS[lang] || '#ccc';
+            return `<div class="lang-bar-segment" style="width:${pct}%;background:${color};" title="${escapeAttribute(lang)} ${pct}%"></div>`;
+          }).join('');
+          const legend = Object.entries(langs).map(([lang, bytes]) => {
+            const pct = ((bytes / total) * 100).toFixed(1);
+            const color = LANG_COLORS[lang] || '#ccc';
+            return `<span><span class="lang-dot" style="background:${color}"></span>${escapeHTML(lang)} ${pct}%</span>`;
+          }).join('');
+          langHTML = `<div class="lang-bar">${bar}</div><div class="lang-legend">${legend}</div>`;
+        }
+      } catch {}
+
+      mainContent.innerHTML = `<div class="stats-card">
+        <img class="avatar" src="${escapeAttribute(repo.owner?.avatar_url || '')}" alt="">
+        <h2>${escapeHTML(repo.full_name)}</h2>
+        <p>${escapeHTML(repo.description || '')}</p>
+        ${langHTML}
+        <dl class="stats-grid">
+          <dt>⭐ Stars</dt><dd>${repo.stargazers_count}</dd>
+          <dt>👀 Watchers</dt><dd>${repo.watchers_count}</dd>
+          <dt>🍴 Forks</dt><dd>${repo.forks_count}</dd>
+          <dt>🐛 Issues</dt><dd>${repo.open_issues_count}</dd>
+          <dt>💻 Language</dt><dd>${escapeHTML(repo.language || 'N/A')}</dd>
+          <dt>📜 License</dt><dd>${escapeHTML(repo.license?.spdx_id || 'N/A')}</dd>
+          <dt>📦 Size</dt><dd>${formatBytes((repo.size || 0) * 1024)}</dd>
+          <dt>📅 Created</dt><dd>${new Date(repo.created_at).toLocaleDateString()}</dd>
+          <dt>🔄 Updated</dt><dd>${relativeTime(repo.updated_at)}</dd>
+          ${repo.homepage ? `<dt>🌐 Homepage</dt><dd><a href="${escapeAttribute(repo.homepage)}" target="_blank" rel="noopener">${escapeHTML(repo.homepage)}</a></dd>` : ''}
+          ${repo.has_pages ? `<dt>📄 Pages</dt><dd><a href="https://${state.owner}.github.io/${repo.name}" target="_blank" rel="noopener">Live</a></dd>` : ''}
+        </dl>
+      </div>`;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      mainContent.innerHTML = `<div class="error-panel">${escapeHTML(err.message)}</div>`;
+    }
+  } else {
+    // User-level stats
+    try {
+      mainContent.innerHTML = `<p><span class="spinner"></span> Loading user stats…</p>`;
+      const user = await apiFetch(`https://api.github.com/users/${encodeURIComponent(owner)}`, signal);
+      mainContent.innerHTML = `<div class="stats-card">
+        <img class="avatar" src="${escapeAttribute(user.avatar_url || '')}" alt="">
+        <h2>${escapeHTML(user.name || user.login)}</h2>
+        <p>${escapeHTML(user.bio || '')}</p>
+        <dl class="stats-grid">
+          <dt>📍 Location</dt><dd>${escapeHTML(user.location || 'N/A')}</dd>
+          <dt>👥 Followers</dt><dd>${user.followers}</dd>
+          <dt>👤 Following</dt><dd>${user.following}</dd>
+          <dt>📦 Public Repos</dt><dd>${user.public_repos}</dd>
+          <dt>📝 Public Gists</dt><dd>${user.public_gists}</dd>
+          <dt>📅 Joined</dt><dd>${new Date(user.created_at).toLocaleDateString()}</dd>
+        </dl>
+      </div>`;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      mainContent.innerHTML = `<div class="error-panel">${escapeHTML(err.message)}</div>`;
+    }
+  }
+};
+
+/* ============================================================
+   DISCOVER
+   ============================================================ */
+const showDiscover = () => {
+  cancelPending();
+  hideSidebar();
+  btnMainAction.textContent = '← Back to Search';
+  btnMainAction.dataset.mode = 'back-discover';
+  btnOrgs.style.display = 'none';
+  btnGists.style.display = 'none';
+  btnStats.style.display = 'none';
+
+  const curatedGroups = [
+    { label: 'Creative Coding & 3D', users: ['mrdoob', 'pmndrs', 'greggman', 'd3', 'playcanvas'] },
+    { label: 'Massive Orgs', users: ['microsoft', 'google', 'nasa', 'vercel', 'freeCodeCamp'] },
+    { label: 'Prolific Devs', users: ['sindresorhus', 'tj', 'torvalds', 'ruanyf', 'gaearon'] },
+  ];
+
+  const curatedHTML = curatedGroups.map((g) =>
+    `<div class="discover-section">
+      <h3>${escapeHTML(g.label)}</h3>
+      ${g.users.map((u) => `<button class="pill-btn" onclick="selectDiscoverUser('${escapeAttribute(u)}')">${escapeHTML(u)}</button>`).join('')}
+    </div>`
+  ).join('');
+
+  mainContent.innerHTML = `<div class="discover-page">
+    <h2>🌍 Discover GitHub</h2>
+    <div class="discover-section">
+      <h3>Roll the Dice</h3>
+      <button class="hdr-btn dark" onclick="handleRandomUser()" style="font-size:14px;padding:10px 24px;">Surprise Me (Random User)</button>
+      <span id="randomStatus" style="margin-left:8px;font-size:13px;color:#656d76;"></span>
+    </div>
+    ${curatedHTML}
+    <div class="discover-section">
+      <h3>API Search</h3>
+      <button class="hdr-btn" onclick="handleSearchTopUsers()">Fetch Top Followed Global Users</button>
+      <div id="topUsersGrid" class="top-users-grid" style="margin-top:12px;"></div>
+    </div>
+  </div>`;
+};
+
+window.selectDiscoverUser = (user) => {
+  ownerInput.value = user;
+  resetMainAction();
+  fetchRepos();
+};
+
+window.handleRandomUser = async () => {
+  const status = $('randomStatus');
+  const signal = cancelPending();
+  for (let i = 0; i < 8; i++) {
+    const id = Math.floor(Math.random() * 100000000) + 1;
+    status.textContent = `Attempt ${i + 1}/8…`;
+    try {
+      const user = await apiFetch(`https://api.github.com/user/${id}`, signal);
+      if (user?.login) {
+        ownerInput.value = user.login;
+        resetMainAction();
+        fetchRepos();
+        return;
+      }
+    } catch { /* 404 — try again */ }
+  }
+  status.textContent = 'No luck this time — try again!';
+};
+
+window.handleSearchTopUsers = async () => {
+  const grid = $('topUsersGrid');
+  if (!grid) return;
+  grid.innerHTML = `<span class="spinner"></span> Searching…`;
+  const signal = cancelPending();
+  try {
+    const data = await apiFetch(
+      'https://api.github.com/search/users?q=followers:>20000&sort=followers&order=desc&per_page=30',
+      signal
+    );
+    grid.innerHTML = (data.items || []).map((u) =>
+      `<div class="top-user-card" onclick="selectDiscoverUser('${escapeAttribute(u.login)}')">
+        <img src="${escapeAttribute(u.avatar_url)}" alt="">
+        <strong>${escapeHTML(u.login)}</strong>
+      </div>`
+    ).join('');
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    grid.innerHTML = `<span style="color:red;">${escapeHTML(err.message)}</span>`;
+  }
+};
+
+/* ============================================================
+   SORTING
+   ============================================================ */
+sortSelect.addEventListener('change', () => {
+  const key = sortSelect.value;
+  const sorted = [...state.repoItems].sort((a, b) => {
+    if (key === 'stars') return (b.stargazers_count || 0) - (a.stargazers_count || 0);
+    if (key === 'name') return (a.name || '').localeCompare(b.name || '');
+    if (key === 'pushed') return new Date(b.pushed_at || 0) - new Date(a.pushed_at || 0);
+    if (key === 'size') return (b.size || 0) - (a.size || 0);
+    return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
+  });
+  repoList.innerHTML = '';
+  sorted.forEach((item) => {
+    const li = document.createElement('li');
+    li.innerHTML = state.repoRenderer(item);
+    const inner = li.querySelector('[data-action]');
+    if (inner) {
+      li.dataset.action = inner.dataset.action;
+      li.dataset.value = inner.dataset.value || '';
+      const content = inner.innerHTML;
+      li.innerHTML = content;
+    }
+    repoList.appendChild(li);
+  });
+});
+
+/* ============================================================
+   FILTERING
+   ============================================================ */
+let filterTimer;
+filterInput.addEventListener('input', () => {
+  clearTimeout(filterTimer);
+  filterTimer = setTimeout(() => {
+    const q = filterInput.value.toLowerCase();
+    repoList.querySelectorAll('li').forEach((li) => {
+      li.style.display = li.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }, 250);
+});
+
+/* ============================================================
+   BRANCH SWITCH
+   ============================================================ */
+branchSelect.addEventListener('change', () => {
+  const newBranch = branchSelect.value;
+  handleSelectRepo(state.repo, true, newBranch);
+});
+
+/* ============================================================
+   EVENT DELEGATION — REPO LIST
+   ============================================================ */
+repoList.addEventListener('click', (e) => {
+  const li = e.target.closest('li');
+  if (!li) return;
+  const action = li.dataset.action;
+  const value = li.dataset.value;
+
+  if (action === 'select-repo') handleSelectRepo(value);
+  else if (action === 'select-owner') {
+    ownerInput.value = value;
+    fetchRepos();
+  }
+  else if (action === 'select-gist') handleSelectGist(value);
+});
+
+/* ============================================================
+   EVENT DELEGATION — TREE
+   ============================================================ */
+treeList.addEventListener('click', (e) => {
+  const item = e.target.closest('[data-action="select-file"]');
+  if (!item) return;
+  const path = item.dataset.path;
+  const fileItem = state.tree.find((f) => f.path === path);
+  if (fileItem) handleSelectFile(fileItem);
+});
+
+/* ============================================================
+   KEYBOARD NAVIGATION
+   ============================================================ */
+document.addEventListener('keydown', (e) => {
+  const focused = document.activeElement;
+  if (!focused?.classList.contains('tree-folder') && !focused?.classList.contains('tree-item')) return;
+
+  const getVisibleItems = () => {
+    return [...treeList.querySelectorAll('.tree-folder, .tree-item')].filter((el) => {
+      let parent = el.closest('details');
+      while (parent) {
+        if (!parent.open && !parent.querySelector(':scope > summary')?.contains(el)) return false;
+        // Check if element is inside a closed details
+        const parentDetails = parent.parentElement?.closest('details');
+        if (parentDetails && !parentDetails.open) return false;
+        parent = parentDetails;
+      }
+      return true;
+    });
+  };
+
+  const items = getVisibleItems();
+  const idx = items.indexOf(focused);
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (idx < items.length - 1) items[idx + 1].focus();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (idx > 0) items[idx - 1].focus();
+  } else if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    focused.click();
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    if (focused.classList.contains('tree-folder')) {
+      const details = focused.closest('details');
+      if (details && !details.open) {
+        details.open = true;
+      } else {
+        // Move to first child
+        const nextItems = getVisibleItems();
+        const nextIdx = nextItems.indexOf(focused);
+        if (nextIdx < nextItems.length - 1) nextItems[nextIdx + 1].focus();
+      }
+    }
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    if (focused.classList.contains('tree-folder')) {
+      const details = focused.closest('details');
+      if (details?.open) {
+        details.open = false;
+        return;
+      }
+    }
+    // Move to parent folder
+    const parentDetails = focused.closest('details')?.parentElement?.closest('details');
+    if (parentDetails) {
+      parentDetails.querySelector(':scope > summary')?.focus();
+    }
+  }
+});
+
+/* ============================================================
+   HEADER BUTTON EVENTS
+   ============================================================ */
+$('titleLink').addEventListener('click', () => {
+  history.replaceState(null, '', location.pathname);
+  location.reload();
+});
+
+btnMainAction.addEventListener('click', () => {
+  if (btnMainAction.dataset.mode === 'back' || btnMainAction.dataset.mode === 'back-discover') {
+    resetMainAction();
+    showRepoList();
+    if (state.owner) fetchRepos();
+  } else {
+    fetchRepos();
+  }
+});
+
+btnOrgs.addEventListener('click', fetchOrgs);
+btnGists.addEventListener('click', fetchGists);
+btnStats.addEventListener('click', fetchStats);
+btnDiscover.addEventListener('click', showDiscover);
+
+$('btnToken').addEventListener('click', () => {
+  const current = getToken();
+  const val = prompt(`GitHub Personal Access Token${current ? ' (blank to clear)' : ''}:`, current);
+  if (val === null) return;
+  if (val.trim()) localStorage.setItem('githubToken', val.trim());
+  else localStorage.removeItem('githubToken');
+  location.reload();
+});
+
+$('btnProfileLink').addEventListener('click', () => {
+  const owner = ownerInput.value.trim();
+  if (owner) window.open(`https://github.com/${encodeURIComponent(owner)}`, '_blank');
+});
+
+ownerInput.addEventListener('focus', () => ownerInput.select());
+ownerInput.addEventListener('change', () => {
+  if (ownerInput.value.trim()) fetchRepos();
+});
+ownerInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') fetchRepos();
+});
+
+/* ============================================================
+   EXPAND / COLLAPSE ALL
+   ============================================================ */
+btnExpandCollapse.addEventListener('click', () => {
+  const allDetails = treeList.querySelectorAll('details');
+  const shouldExpand = btnExpandCollapse.textContent === 'Expand All';
+  allDetails.forEach((d) => d.open = shouldExpand);
+  btnExpandCollapse.textContent = shouldExpand ? 'Collapse All' : 'Expand All';
+});
+
+/* ============================================================
+   RESIZABLE SIDEBAR
+   ============================================================ */
+const resizer = $('dragMe');
+let isResizing = false;
+
+resizer.addEventListener('pointerdown', (e) => {
+  isResizing = true;
+  resizer.setPointerCapture(e.pointerId);
+  resizer.classList.add('active');
+  document.body.style.userSelect = 'none';
+  document.body.style.cursor = 'col-resize';
+});
+
+document.addEventListener('pointermove', (e) => {
+  if (!isResizing) return;
+  const newWidth = Math.max(150, Math.min(e.clientX, window.innerWidth * 0.6));
+  document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
+});
+
+document.addEventListener('pointerup', () => {
+  if (!isResizing) return;
+  isResizing = false;
+  resizer.classList.remove('active');
+  document.body.style.userSelect = '';
+  document.body.style.cursor = '';
+});
+
+/* ============================================================
+   GLOBAL ERROR HANDLERS
+   ============================================================ */
+window.addEventListener('error', (e) => {
+  console.error(e);
+  mainContent.innerHTML += `<div class="error-panel">
+    <strong>Error:</strong> ${escapeHTML(e.message || 'Unknown error')}
+    <br><button class="hdr-btn" onclick="location.reload()">Reload</button>
+  </div>`;
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  if (e.reason?.name === 'AbortError') return;
+  console.error(e);
+  mainContent.innerHTML += `<div class="error-panel">
+    <strong>Error:</strong> ${escapeHTML(e.reason?.message || 'Unknown error')}
+    <br><button class="hdr-btn" onclick="location.reload()">Reload</button>
+  </div>`;
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+refreshRecentDatalist();
+
+if (location.hash.length > 1) {
+  handleHashChange();
+} else if (CONFIG.defaultOwner) {
+  ownerInput.value = CONFIG.defaultOwner;
+}
+
+window.addEventListener('popstate', handleHashChange);
+window.addEventListener('hashchange', handleHashChange);
+
+// Expose for inline onclick handlers
+window.handleSelectRepo = handleSelectRepo;
+</script>
+</body>
+</html>

@@ -1,0 +1,2105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=900, initial-scale=1.0">
+  <title>TooToo</title>
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      height: 100vh;
+      overflow-x: auto;
+      overflow-y: hidden;
+      background: #f6f8fa;
+    }
+
+    header {
+      background: #f6f8fa;
+      color: #24292f;
+      border-bottom: 1px solid #d0d7de;
+      padding: 4px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header h1 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    header a {
+      color: #0969da;
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    header a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      display: flex;
+      height: calc(100vh - 32px);
+      min-width: 900px;
+    }
+
+    /* Left Panel - Tree View */
+    .tree-panel {
+      width: 280px;
+      min-width: 120px;
+      max-width: 400px;
+      flex-shrink: 0;
+      background: #ffffff;
+      border-right: 1px solid #d0d7de;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .resize-handle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 6px;
+      height: 100%;
+      cursor: col-resize;
+      background: transparent;
+      z-index: 3;
+      touch-action: none;
+    }
+
+    .resize-handle:hover,
+    .resize-handle.dragging {
+      background: #0969da;
+    }
+
+    .tree-header {
+      padding: 4px 8px;
+      background: #f6f8fa;
+      border-bottom: 1px solid #d0d7de;
+      font-size: 12px;
+      color: #24292f;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tree-header span {
+      font-weight: 600;
+    }
+
+    .tree-header button {
+      padding: 1px 6px;
+      font-size: 11px;
+      border: 1px solid #d0d7de;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      color: #57606a;
+    }
+
+    .tree-header button:hover {
+      background: #eaeef2;
+    }
+
+    .tree-header input {
+      flex: 1;
+      min-width: 0;
+      padding: 2px 6px;
+      font-size: 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .tree-header input:focus {
+      border-color: #0969da;
+      box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.2);
+    }
+
+    .tree-item.hidden {
+      display: none;
+    }
+
+    .tree-children.filter-expanded {
+      display: block;
+    }
+
+    .tree-content {
+      padding: 8px 0;
+    }
+
+    .tree-item {
+      display: flex;
+      align-items: center;
+      padding: 6px 16px;
+      cursor: pointer;
+      color: #24292f;
+      font-size: 14px;
+      transition: background 0.1s;
+      user-select: none;
+      scroll-margin-top: 76px;
+    }
+
+    .tree-item:hover {
+      background: #f6f8fa;
+    }
+
+    .tree-item.selected {
+      background: #ddf4ff;
+    }
+
+    .tree-item.folder {
+      font-weight: 500;
+    }
+
+    .tree-item .icon {
+      width: 20px;
+      margin-right: 8px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .tree-item .name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tree-item .badge {
+      margin-left: auto;
+      padding-left: 8px;
+      font-size: 11px;
+      color: #656d76;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .tree-children {
+      display: none;
+    }
+
+    .tree-children.expanded {
+      display: block;
+    }
+
+    /* Right Panel - Content View */
+    .content-panel {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      background: #ffffff;
+    }
+
+    .content-header {
+      padding: 4px 12px;
+      background: #f6f8fa;
+      border-bottom: 1px solid #d0d7de;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .content-stats {
+      font-size: 11px;
+      color: #656d76;
+      margin-left: 12px;
+      white-space: nowrap;
+    }
+
+    .content-path {
+      font-size: 12px;
+      color: #57606a;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    .content-path .breadcrumb {
+      cursor: pointer;
+      color: #0969da;
+    }
+
+    .content-path .breadcrumb:hover {
+      text-decoration: underline;
+    }
+
+    .content-path .separator {
+      color: #57606a;
+      margin: 0 2px;
+    }
+
+    .content-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .content-actions button {
+      padding: 2px 8px;
+      font-size: 11px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #f6f8fa;
+      cursor: pointer;
+      color: #24292f;
+    }
+
+    .content-actions button:hover {
+      background: #eaeef2;
+    }
+
+    .content-body {
+      padding: 12px;
+    }
+
+
+    .content-raw {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      background: #f6f8fa;
+      padding: 16px;
+      border-radius: 6px;
+      border: 1px solid #d0d7de;
+    }
+
+    .large-file-prompt {
+      text-align: center;
+      padding: 48px 24px;
+      color: #57606a;
+    }
+
+    .large-file-prompt p {
+      margin: 8px 0;
+    }
+
+    .large-file-prompt button {
+      margin-top: 12px;
+      padding: 6px 16px;
+      font-size: 14px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #f6f8fa;
+      color: #24292f;
+      cursor: pointer;
+    }
+
+    .large-file-prompt button:hover {
+      background: #eaeef2;
+    }
+
+    .content-image {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .content-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #57606a;
+      font-size: 16px;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      color: #57606a;
+    }
+
+    .loading::after {
+      content: "";
+      width: 20px;
+      height: 20px;
+      border: 2px solid #d0d7de;
+      border-top-color: #0969da;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .error {
+      color: #cf222e;
+      padding: 20px;
+      background: #ffebe9;
+      border-radius: 6px;
+      margin: 20px;
+    }
+
+    /* Folder icons */
+    .folder-icon::before {
+      content: "📁";
+    }
+
+    .folder-icon.open::before {
+      content: "📂";
+    }
+
+    .file-icon::before {
+      content: "📄";
+    }
+
+    .md-icon::before {
+      content: "📝";
+    }
+
+    .pdf-icon::before {
+      content: "📕";
+    }
+
+    .xlsx-icon::before {
+      content: "📊";
+    }
+
+    .json-icon::before {
+      content: "📋";
+    }
+
+    .html-icon::before {
+      content: "🌐";
+    }
+
+    .yml-icon::before {
+      content: "⚙️";
+    }
+
+    .image-icon::before {
+      content: "🖼️";
+    }
+
+    .video-icon::before {
+      content: "🎬";
+    }
+
+    .audio-icon::before {
+      content: "🎵";
+    }
+
+    /* Highlight (keyboard nav) vs selected (active file) */
+    .tree-item.highlighted {
+      background: #eaeef2;
+    }
+
+    /* Header inline-style classes */
+    #appTitle {
+      cursor: pointer;
+    }
+
+    .header-spacer {
+      flex: 1;
+    }
+
+    #tokenStatus {
+      color: #3fb950;
+      font-size: 12px;
+    }
+
+    #tokenInput {
+      width: 220px;
+      padding: 2px 8px;
+      border: 1px solid #d0d7de;
+      border-radius: 4px;
+      background: #fff;
+      color: #24292f;
+      font-size: 12px;
+    }
+
+    .btn-connect {
+      padding: 2px 8px;
+      border: 1px solid #d0d7de;
+      border-radius: 4px;
+      background: #238636;
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .btn-disconnect {
+      padding: 2px 8px;
+      border: 1px solid #d0d7de;
+      border-radius: 4px;
+      background: #da3633;
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .btn-retry {
+      padding: 5px 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background: #f6f8fa;
+      cursor: pointer;
+    }
+
+    #ownerSelect {
+      padding: 2px 6px;
+      font-size: 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 4px;
+      background: #fff;
+      color: #24292f;
+      max-width: 160px;
+    }
+
+    #repoSelect {
+      padding: 2px 6px;
+      font-size: 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 4px;
+      background: #fff;
+      color: #24292f;
+      max-width: 180px;
+    }
+
+    /* Stats modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #d0d7de;
+      width: 460px;
+      max-width: 95vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    #ownerModal .modal {
+      width: 760px;
+    }
+
+    .modal-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid #d0d7de;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .modal-header button {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #57606a;
+      padding: 0 4px;
+    }
+
+    .modal-body {
+      padding: 16px;
+    }
+
+    .modal-body table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .modal-body th,
+    .modal-body td {
+      text-align: left;
+      padding: 4px 8px;
+      border-bottom: 1px solid #d0d7de;
+    }
+
+    .modal-body th {
+      color: #57606a;
+      font-weight: 500;
+    }
+
+    .modal-body td:last-child {
+      text-align: right;
+      font-family: "SFMono-Regular", Consolas, monospace;
+    }
+
+    .modal-body h3 {
+      font-size: 12px;
+      color: #57606a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 16px 0 6px;
+    }
+
+    .modal-body h3:first-child {
+      margin-top: 0;
+    }
+
+    .owner-profile {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .owner-profile img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 1px solid #d0d7de;
+    }
+
+    .owner-profile .owner-info {
+      flex: 1;
+    }
+
+    .owner-profile .owner-name {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .owner-profile .owner-login {
+      font-size: 13px;
+      color: #57606a;
+    }
+
+    .owner-profile .owner-bio {
+      font-size: 13px;
+      color: #24292f;
+      margin-top: 6px;
+    }
+
+    .owner-meta {
+      font-size: 12px;
+      color: #57606a;
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+    }
+
+    .owner-meta span {
+      white-space: nowrap;
+    }
+
+    .contrib-graph {
+      margin-top: 4px;
+    }
+
+    .contrib-graph .contrib-summary {
+      font-size: 12px;
+      color: #57606a;
+      margin-bottom: 8px;
+    }
+
+    .contrib-grid {
+      display: flex;
+      gap: 2px;
+      overflow-x: auto;
+    }
+
+    .contrib-week {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .contrib-day {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      background: #ebedf0;
+    }
+
+    .contrib-legend {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 6px;
+      font-size: 11px;
+      color: #57606a;
+      justify-content: flex-end;
+    }
+
+    .contrib-legend .contrib-day {
+      width: 10px;
+      height: 10px;
+    }
+
+    .orgs-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 4px 0;
+    }
+
+    .orgs-list img {
+      transition: transform 0.15s;
+    }
+
+    .orgs-list img:hover {
+      transform: scale(1.15);
+    }
+
+    .modal h3 a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .modal h3 a:hover {
+      color: #0969da;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <header title="23:33">
+    <h1 id="appTitle" title="Click to reload"></h1>
+    <select id="ownerSelect" title="Switch owner or organization" aria-label="Select owner or organization"></select>
+    <select id="repoSelect" title="Switch repository" aria-label="Select repository"></select>
+    <a id="ghLink" href="#" target="_blank" title="Open this repo on GitHub">View on GitHub</a>
+    <button id="btnOwnerInfo" title="Owner profile & stats"
+      style="background:none;border:none;cursor:pointer;font-size:14px;">👤</button>
+    <button id="btnStats" title="Repository stats"
+      style="background:none;border:none;cursor:pointer;font-size:14px;">📊</button>
+    <span class="header-spacer"></span>
+    <span id="tokenStatus" title="GitHub API connection status"></span>
+    <label for="tokenInput" class="sr-only" hidden>GitHub token</label>
+    <input id="tokenInput" type="password" placeholder="GitHub token (for private repos)"
+      title="Paste a GitHub personal access token to access private repos" aria-label="GitHub token for private repos">
+    <button id="btnConnect" class="btn-connect" title="Save token and connect">Connect</button>
+    <button id="btnDisconnect" class="btn-disconnect" title="Remove saved token"
+      style="display:none;">Disconnect</button>
+  </header>
+
+  <div class="container">
+    <div class="tree-panel" id="treePanel">
+      <div class="resize-handle" id="resizeHandle"></div>
+      <div class="tree-header"><span>Files</span><input id="treeFilter" type="search" placeholder="Filter..."
+          aria-label="Filter files"><button id="btnFocusPath" title="Focus on active path">⊕</button><button
+          id="btnToggleAll" title="Expand all">⊞</button></div>
+      <div class="tree-content" id="tree" role="tree"></div>
+    </div>
+
+    <div class="content-panel">
+      <div class="content-header" id="contentHeader" style="display: none;">
+        <span class="content-path" id="contentPath"></span>
+        <span class="content-stats" id="contentStats"></span>
+        <div class="content-actions">
+          <button id="btnCopyPath" title="Copy file path">📋 Copy</button>
+          <button id="btnRaw">Raw</button>
+          <button id="btnGitHub">GitHub</button>
+        </div>
+      </div>
+      <div class="content-body" id="contentBody">
+        <div class="content-placeholder">
+          Select a file from the tree to view its contents
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Owner modal -->
+  <div class="modal-overlay" id="ownerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Owner Profile</span>
+        <button id="btnCloseOwner">&times;</button>
+      </div>
+      <div class="modal-body" id="ownerBody">
+        <div class="loading">Loading</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats modal -->
+  <div class="modal-overlay" id="statsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Repository Stats</span>
+        <button id="btnCloseStats">&times;</button>
+      </div>
+      <div class="modal-body" id="statsBody"></div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration — repo is mutable (switched via dropdown)
+    const CONFIG = {
+      owner: "theo-armour",
+      repo: "sandbox",
+      branch: "main",
+      localRepo: "sandbox" // the repo this app is hosted in (uses relative paths)
+    };
+
+    // Auto-detect path prefix: "./" at repo root, "../" in a subfolder
+    // Handles both GitHub Pages (/sandbox/) and local folder (/theo-armour-sandbox/)
+    const _dir = location.pathname.replace( /\/[^/]*\.[^/]*$/, "" ).replace( /\/$/, "" );
+    const _parentDir = _dir.split( "/" ).pop();
+    const atRoot = _parentDir === CONFIG.localRepo || _parentDir.endsWith( "-" + CONFIG.localRepo );
+    const basePath = atRoot ? "./" : "../";
+
+    // State
+    let currentFile = null;
+    let showRaw = false;
+    let treeData = null;
+    let ghToken = localStorage.getItem( "gh-token" ) || "";
+    let selectedEl = null;   // currently active (loaded) file element
+    let highlightedEl = null; // keyboard-nav highlighted element
+    let visibleItemsCache = null; // cached visible items for keyboard nav
+    let filterDebounceId = null;
+
+    // Set title and GitHub link from CONFIG
+    const appTitle = document.getElementById( "appTitle" );
+    const ghLink = document.getElementById( "ghLink" );
+    const ownerSelect = document.getElementById( "ownerSelect" );
+    const repoSelect = document.getElementById( "repoSelect" );
+
+    const updateConfigUI = () => {
+      appTitle.textContent = `📂 ${ CONFIG.owner }`;
+      ghLink.href = `https://github.com/${ CONFIG.owner }/${ CONFIG.repo }`;
+      document.title = `TooToo - ${ CONFIG.owner }/${ CONFIG.repo }`;
+    };
+    updateConfigUI();
+
+    // Title click reloads to initial state
+    appTitle.addEventListener( "click", () => {
+      window.location.href = window.location.pathname;
+    } );
+
+    // Owner / organization selector
+    const fetchOrgs = async () => {
+      ownerSelect.innerHTML = "";
+      // Always include the default user
+      const userOpt = document.createElement( "option" );
+      userOpt.value = CONFIG.owner;
+      userOpt.textContent = CONFIG.owner;
+      userOpt.selected = true;
+      ownerSelect.appendChild( userOpt );
+
+      if ( !ghToken ) return;
+      try {
+        const response = await fetch( `https://api.github.com/users/${ CONFIG.owner }/orgs?per_page=100`, {
+          headers: { Authorization: `token ${ ghToken }` }
+        } );
+        if ( !response.ok ) return;
+        const orgs = await response.json();
+        orgs.forEach( org => {
+          const opt = document.createElement( "option" );
+          opt.value = org.login;
+          opt.textContent = org.login;
+          if ( org.login === CONFIG.owner ) opt.selected = true;
+          ownerSelect.appendChild( opt );
+        } );
+      } catch {
+        // silently keep just the default user
+      }
+    };
+
+    ownerSelect.addEventListener( "change", async () => {
+      CONFIG.owner = ownerSelect.value;
+      CONFIG.repo = "";
+      CONFIG.branch = "main";
+      location.hash = "";
+      currentFile = null;
+      selectedEl = null;
+      highlightedEl = null;
+      contentHeader.style.display = "none";
+      contentBody.innerHTML = '<div class="content-placeholder">Loading repositories\u2026</div>';
+      updateConfigUI();
+      await fetchRepos();
+      // fetchRepos auto-selects the first repo when CONFIG.repo was empty
+      if ( CONFIG.repo ) {
+        updateConfigUI();
+        initTree();
+      }
+    } );
+
+    // Repo selector
+    const fetchRepos = async () => {
+      repoSelect.innerHTML = "";
+
+      try {
+        // Use orgs endpoint for organizations, users endpoint for personal accounts
+        const isOrg = ownerSelect.selectedIndex > 0;
+        const apiPath = isOrg
+          ? `https://api.github.com/orgs/${ CONFIG.owner }/repos?per_page=100&sort=updated`
+          : `https://api.github.com/users/${ CONFIG.owner }/repos?per_page=100&sort=updated`;
+        const headers = {};
+        if ( ghToken ) headers.Authorization = `token ${ ghToken }`;
+        const response = await fetch( apiPath, { headers } );
+        if ( !response.ok ) return;
+
+        const repos = await response.json();
+
+        // If current repo isn't in the list (e.g. private), prepend it
+        if ( CONFIG.repo && !repos.some( r => r.name === CONFIG.repo ) ) {
+          const curOpt = document.createElement( "option" );
+          curOpt.value = CONFIG.repo;
+          curOpt.dataset.branch = CONFIG.branch;
+          curOpt.textContent = `🔒 ${ CONFIG.repo }`;
+          curOpt.selected = true;
+          repoSelect.appendChild( curOpt );
+        }
+
+        repos.forEach( r => {
+          const opt = document.createElement( "option" );
+          opt.value = r.name;
+          opt.dataset.branch = r.default_branch;
+          opt.dataset.hasPages = r.has_pages ? "1" : "";
+          opt.textContent = r.private ? `🔒 ${ r.name }` : r.name;
+          if ( r.name === CONFIG.repo ) opt.selected = true;
+          repoSelect.appendChild( opt );
+        } );
+
+        // If no repo was pre-selected, pick the first one
+        if ( !CONFIG.repo && repoSelect.options.length ) {
+          repoSelect.selectedIndex = 0;
+          CONFIG.repo = repoSelect.options[ 0 ].value;
+          CONFIG.branch = repoSelect.options[ 0 ].dataset.branch || "main";
+          updateConfigUI();
+        }
+      } catch {
+        // silently keep whatever is there
+      }
+
+      // Add fallback if dropdown is still empty
+      if ( !repoSelect.options.length && CONFIG.repo ) {
+        const fallback = document.createElement( "option" );
+        fallback.value = CONFIG.repo;
+        fallback.textContent = CONFIG.repo;
+        repoSelect.appendChild( fallback );
+      }
+    };
+
+    repoSelect.addEventListener( "change", () => {
+      const selected = repoSelect.selectedOptions[ 0 ];
+      CONFIG.repo = selected.value;
+      CONFIG.branch = selected.dataset.branch || "main";
+      location.hash = "";
+      currentFile = null;
+      selectedEl = null;
+      highlightedEl = null;
+      contentHeader.style.display = "none";
+      contentBody.innerHTML = '<div class="content-placeholder">Select a file from the tree to view its contents</div>';
+      updateConfigUI();
+      // Clear cached tree for the previous repo
+      const cacheKey = `tree-${ CONFIG.owner }-${ CONFIG.repo }-${ CONFIG.branch }`;
+      sessionStorage.removeItem( cacheKey );
+      initTree();
+    } );
+
+    // Token UI
+    const tokenInput = document.getElementById( "tokenInput" );
+    const btnConnect = document.getElementById( "btnConnect" );
+    const btnDisconnect = document.getElementById( "btnDisconnect" );
+    const tokenStatus = document.getElementById( "tokenStatus" );
+
+    // Show/hide token UI based on whether a token is stored
+    const updateTokenUI = () => {
+      if ( ghToken ) {
+        tokenInput.style.display = "none";
+        btnConnect.style.display = "none";
+        btnDisconnect.style.display = "";
+        tokenStatus.textContent = "Connected";
+      } else {
+        tokenInput.style.display = "";
+        btnConnect.style.display = "";
+        btnDisconnect.style.display = "none";
+        tokenStatus.textContent = "";
+      }
+    };
+    updateTokenUI();
+
+    btnConnect.addEventListener( "click", () => {
+      const val = tokenInput.value.trim();
+      if ( !val ) return;
+      ghToken = val;
+      localStorage.setItem( "gh-token", ghToken );
+      tokenInput.value = "";
+      updateTokenUI();
+      // Clear cached tree so it re-fetches with the token
+      const cacheKey = `tree-${ CONFIG.owner }-${ CONFIG.repo }-${ CONFIG.branch }`;
+      sessionStorage.removeItem( cacheKey );
+      fetchOrgs();
+      fetchRepos();
+      initTree();
+    } );
+
+    btnDisconnect.addEventListener( "click", () => {
+      ghToken = "";
+      localStorage.removeItem( "gh-token" );
+      updateTokenUI();
+      const cacheKey = `tree-${ CONFIG.owner }-${ CONFIG.repo }-${ CONFIG.branch }`;
+      sessionStorage.removeItem( cacheKey );
+      // Reset owner to default
+      CONFIG.owner = ownerSelect.options[ 0 ]?.value || CONFIG.owner;
+      fetchOrgs();
+      fetchRepos();
+      initTree();
+    } );
+
+    // Escape HTML (single shared helper)
+    const escapeHtml = ( text ) => text
+      .replace( /&/g, "&amp;" )
+      .replace( /</g, "&lt;" )
+      .replace( />/g, "&gt;" )
+      .replace( /"/g, "&quot;" )
+      .replace( /'/g, "&#39;" );
+
+    // Escape HTML but make URLs clickable (for plain text / raw views)
+    const linkifyAndEscape = ( text ) => {
+      const urlRe = /(https?:\/\/[^\s<>]*[^\s<>.,;:!?\)\]'"\*])/g;
+      let result = "";
+      let lastIndex = 0;
+      let match;
+      while ( ( match = urlRe.exec( text ) ) !== null ) {
+        result += escapeHtml( text.slice( lastIndex, match.index ) );
+        const url = match[ 1 ];
+        result += `<a href="${ escapeHtml( url ) }" target="_blank">${ escapeHtml( url ) }</a>`;
+        lastIndex = urlRe.lastIndex;
+      }
+      result += escapeHtml( text.slice( lastIndex ) );
+      return result;
+    };
+
+    // Lightweight markdown to HTML converter
+    const mdToHtml = ( md ) => {
+      // Fenced code blocks
+      const blocks = [];
+      md = md.replace( /```(\w*)\n([\s\S]*?)```/g, ( _, lang, code ) => {
+        blocks.push( `<pre><code>${ escapeHtml( code.trimEnd() ) }</code></pre>` );
+        return `\x00BLOCK${ blocks.length - 1 }\x00`;
+      } );
+
+      const lines = md.split( "\n" );
+      const out = [];
+      let i = 0;
+
+      while ( i < lines.length ) {
+        const line = lines[ i ];
+
+        // Block placeholder
+        const blockMatch = line.match( /^\x00BLOCK(\d+)\x00$/ );
+        if ( blockMatch ) { out.push( blocks[ +blockMatch[ 1 ] ] ); i++; continue; }
+
+        // Blank line
+        if ( line.trim() === "" ) { i++; continue; }
+
+        // Headings
+        const hMatch = line.match( /^(#{1,6})\s+(.+)/ );
+        if ( hMatch ) { out.push( `<h${ hMatch[ 1 ].length }>${ inline( hMatch[ 2 ] ) }</h${ hMatch[ 1 ].length }>` ); i++; continue; }
+
+        // Horizontal rule
+        if ( /^(---|\*\*\*|___)\s*$/.test( line ) ) { out.push( "<hr>" ); i++; continue; }
+
+        // Unordered list
+        if ( /^[\-\*]\s/.test( line ) ) {
+          const items = [];
+          while ( i < lines.length && /^[\-\*]\s/.test( lines[ i ] ) ) {
+            items.push( `<li>${ inline( lines[ i ].replace( /^[\-\*]\s+/, "" ) ) }</li>` );
+            i++;
+          }
+          out.push( `<ul>${ items.join( "" ) }</ul>` ); continue;
+        }
+
+        // Ordered list
+        if ( /^\d+\.\s/.test( line ) ) {
+          const items = [];
+          while ( i < lines.length && /^\d+\.\s/.test( lines[ i ] ) ) {
+            items.push( `<li>${ inline( lines[ i ].replace( /^\d+\.\s+/, "" ) ) }</li>` );
+            i++;
+          }
+          out.push( `<ol>${ items.join( "" ) }</ol>` ); continue;
+        }
+
+        // Paragraph (collect consecutive non-blank lines)
+        const para = [];
+        while ( i < lines.length && lines[ i ].trim() !== "" && !/^#{1,6}\s/.test( lines[ i ] ) && !/^[\-\*]\s/.test( lines[ i ] ) && !/^\d+\.\s/.test( lines[ i ] ) && !/^(---|\*\*\*|___)\s*$/.test( lines[ i ] ) && !/^\x00BLOCK/.test( lines[ i ] ) ) {
+          para.push( lines[ i ] );
+          i++;
+        }
+        out.push( `<p>${ inline( para.join( "\n" ) ) }</p>` );
+      }
+
+      return out.join( "\n" );
+    };
+
+    // Inline markdown: bold, italic, code, links, images
+    const inline = ( text ) => {
+      return text
+        .replace( /&/g, "&amp;" ).replace( /</g, "&lt;" ).replace( />/g, "&gt;" )
+        .replace( /`([^`]+)`/g, "<code>$1</code>" )
+        .replace( /!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%">' )
+        .replace( /\[([^\]]+)\]\(([^)]+)\)/g, ( _, text, url ) => {
+          if ( /^\s*javascript:/i.test( url ) ) return text;
+          const safeUrl = url.replace( /"/g, "&quot;" );
+          return `<a href="${ safeUrl }">${ text }</a>`;
+        } )
+        .replace( /\*\*([^*]+)\*\*/g, "<strong>$1</strong>" )
+        .replace( /__([^_]+)__/g, "<strong>$1</strong>" )
+        .replace( /\*([^*]+)\*/g, "<em>$1</em>" )
+        .replace( /_([^_]+)_/g, "<em>$1</em>" )
+        .replace( /~~([^~]+)~~/g, "<del>$1</del>" )
+        .replace( /(<a\s[^>]*>[\s\S]*?<\/a>)|(<[^>]+>)|(https?:\/\/[^\s<>]*[^\s<>.,;:!?\)\]'"&])/g, ( match, aTag, tag, url ) => {
+          if ( aTag || tag ) return match;
+          return `<a href="${ url }" target="_blank">${ url }</a>`;
+        } );
+    };
+
+    // DOM Elements
+    const treeEl = document.getElementById( "tree" );
+
+    // Resize handle for tree panel
+    const treePanel = document.getElementById( "treePanel" );
+    const resizeHandle = document.getElementById( "resizeHandle" );
+    const startDrag = ( startX ) => {
+      const startWidth = treePanel.offsetWidth;
+      resizeHandle.classList.add( "dragging" );
+      const onMove = ( x ) => {
+        const newWidth = Math.min( 400, Math.max( 120, startWidth + x - startX ) );
+        treePanel.style.width = newWidth + "px";
+      };
+      const onUp = () => {
+        resizeHandle.classList.remove( "dragging" );
+        document.removeEventListener( "mousemove", mouseMove );
+        document.removeEventListener( "mouseup", onUp );
+        document.removeEventListener( "touchmove", touchMove );
+        document.removeEventListener( "touchend", onUp );
+      };
+      const mouseMove = ( e ) => onMove( e.clientX );
+      const touchMove = ( e ) => onMove( e.touches[ 0 ].clientX );
+      document.addEventListener( "mousemove", mouseMove );
+      document.addEventListener( "mouseup", onUp );
+      document.addEventListener( "touchmove", touchMove, { passive: true } );
+      document.addEventListener( "touchend", onUp );
+    };
+    resizeHandle.addEventListener( "mousedown", ( e ) => { e.preventDefault(); startDrag( e.clientX ); } );
+    resizeHandle.addEventListener( "touchstart", ( e ) => { startDrag( e.touches[ 0 ].clientX ); }, { passive: true } );
+    const contentHeader = document.getElementById( "contentHeader" );
+    const contentPath = document.getElementById( "contentPath" );
+    const contentBody = document.getElementById( "contentBody" );
+    const contentStats = document.getElementById( "contentStats" );
+    const btnRaw = document.getElementById( "btnRaw" );
+    const btnGitHub = document.getElementById( "btnGitHub" );
+    const btnCopyPath = document.getElementById( "btnCopyPath" );
+    const btnToggleAll = document.getElementById( "btnToggleAll" );
+    const btnFocusPath = document.getElementById( "btnFocusPath" );
+    const treeFilter = document.getElementById( "treeFilter" );
+    const statsModal = document.getElementById( "statsModal" );
+    const statsBody = document.getElementById( "statsBody" );
+    const btnStats = document.getElementById( "btnStats" );
+    const btnCloseStats = document.getElementById( "btnCloseStats" );
+    const ownerModal = document.getElementById( "ownerModal" );
+    const ownerBody = document.getElementById( "ownerBody" );
+    const btnOwnerInfo = document.getElementById( "btnOwnerInfo" );
+    const btnCloseOwner = document.getElementById( "btnCloseOwner" );
+
+    // Owner modal
+    btnOwnerInfo.addEventListener( "click", async () => {
+      ownerBody.innerHTML = '<div class="loading">Loading</div>';
+      ownerModal.classList.add( "open" );
+      try {
+        const headers = {};
+        if ( ghToken ) headers.Authorization = `token ${ ghToken }`;
+        // Try user endpoint first, fall back to org
+        let data;
+        let isOrg = false;
+        const userResp = await fetch( `https://api.github.com/users/${ CONFIG.owner }`, { headers } );
+        if ( userResp.ok ) {
+          data = await userResp.json();
+          isOrg = data.type === "Organization";
+        } else {
+          throw new Error( `HTTP ${ userResp.status }` );
+        }
+
+        // Fetch recent repos and orgs in parallel
+        const reposUrl = isOrg
+          ? `https://api.github.com/orgs/${ CONFIG.owner }/repos?per_page=100&sort=updated`
+          : `https://api.github.com/users/${ CONFIG.owner }/repos?per_page=100&sort=updated`;
+        const orgsUrl = `https://api.github.com/users/${ CONFIG.owner }/orgs`;
+        const [ reposResp, orgsResp ] = await Promise.all( [
+          fetch( reposUrl, { headers } ),
+          !isOrg ? fetch( orgsUrl, { headers } ) : Promise.resolve( null )
+        ] );
+        const repos = reposResp.ok ? await reposResp.json() : [];
+        const orgs = orgsResp?.ok ? await orgsResp.json() : [];
+
+        // Compute repo stats
+        const totalStars = repos.reduce( ( s, r ) => s + ( r.stargazers_count || 0 ), 0 );
+        const totalForks = repos.reduce( ( s, r ) => s + ( r.forks_count || 0 ), 0 );
+        const languages = {};
+        repos.forEach( r => { if ( r.language ) languages[ r.language ] = ( languages[ r.language ] || 0 ) + 1; } );
+        const topLangs = Object.entries( languages ).sort( ( a, b ) => b[ 1 ] - a[ 1 ] ).slice( 0, 8 );
+        const recentRepos = repos.slice( 0, 5 );
+        const now = new Date();
+        const activeLastMonth = repos.filter( r => ( now - new Date( r.pushed_at ) ) < 30 * 86400000 ).length;
+
+        // Build HTML
+        let html = `<div class="owner-profile">`;
+        html += `<img src="${ data.avatar_url }" alt="${ escapeHtml( data.login ) }">`;
+        html += `<div class="owner-info">`;
+        html += `<div class="owner-name">${ escapeHtml( data.name || data.login ) }</div>`;
+        html += `<div class="owner-login">@${ escapeHtml( data.login ) }${ isOrg ? " · Organization" : "" }</div>`;
+        if ( data.bio ) html += `<div class="owner-bio">${ escapeHtml( data.bio ) }</div>`;
+        html += `<div class="owner-meta">`;
+        if ( data.location ) html += `<span>📍 ${ escapeHtml( data.location ) }</span>`;
+        if ( data.company ) html += `<span>🏢 ${ escapeHtml( data.company ) }</span>`;
+        if ( data.blog ) html += `<span>🔗 <a href="${ data.blog.startsWith( "http" ) ? data.blog : "https://" + data.blog }" target="_blank">${ escapeHtml( data.blog ) }</a></span>`;
+        if ( data.twitter_username ) html += `<span>𝕏 @${ escapeHtml( data.twitter_username ) }</span>`;
+        const created = new Date( data.created_at );
+        html += `<span>📅 Joined ${ created.toLocaleDateString( "en-US", { month: "short", year: "numeric" } ) }</span>`;
+        html += `</div></div></div>`;
+
+        const ghProfileUrl = `https://github.com/${ CONFIG.owner }`;
+
+        // Contributions graph (requires token, users only)
+        if ( !isOrg && ghToken ) {
+          html += `<h3><a href="${ ghProfileUrl }" target="_blank">Contributions</a></h3><div class="contrib-graph" id="contribGraph"><div class="loading">Loading contributions</div></div>`;
+        }
+
+        // Achievements (requires token, users only)
+        if ( !isOrg && ghToken ) {
+          html += `<h3><a href="${ ghProfileUrl }?tab=achievements" target="_blank">Achievements</a></h3>`;
+          html += `<div id="achievementsSection"><div class="loading">Loading achievements</div></div>`;
+        }
+
+        // Numbers
+        html += `<h3><a href="${ ghProfileUrl }" target="_blank">Overview</a></h3><table>`;
+        html += `<tr><th>Public repos</th><td>${ data.public_repos }</td></tr>`;
+        if ( data.public_gists != null ) html += `<tr><th>Public gists</th><td>${ data.public_gists }</td></tr>`;
+        if ( data.followers != null ) html += `<tr><th>Followers</th><td><a href="${ ghProfileUrl }?tab=followers" target="_blank">${ data.followers }</a></td></tr>`;
+        if ( data.following != null ) html += `<tr><th>Following</th><td><a href="${ ghProfileUrl }?tab=following" target="_blank">${ data.following }</a></td></tr>`;
+        html += `<tr><th>Total stars earned</th><td>⭐ ${ totalStars }</td></tr>`;
+        html += `<tr><th>Total forks</th><td>🍴 ${ totalForks }</td></tr>`;
+        html += `<tr><th>Active last 30 days</th><td>${ activeLastMonth } repos</td></tr>`;
+        html += `</table>`;
+
+        // Organizations
+        if ( orgs.length ) {
+          html += `<h3><a href="${ ghProfileUrl }" target="_blank">Organizations</a></h3><div class="orgs-list">`;
+          orgs.forEach( org => {
+            html += `<a href="https://github.com/${ encodeURIComponent( org.login ) }" target="_blank" title="${ escapeHtml( org.login ) }">`;
+            html += `<img src="${ org.avatar_url }" alt="${ escapeHtml( org.login ) }" style="width:32px;height:32px;border-radius:6px;">`;
+            html += `</a>`;
+          } );
+          html += `</div>`;
+        }
+
+        // Languages
+        if ( topLangs.length ) {
+          html += `<h3><a href="${ ghProfileUrl }?tab=repositories" target="_blank">Top languages</a></h3><table>`;
+          html += `<tr><th>Language</th><th style="text-align:right">Repos</th></tr>`;
+          topLangs.forEach( ( [ lang, count ] ) => {
+            html += `<tr><td>${ escapeHtml( lang ) }</td><td style="text-align:right">${ count }</td></tr>`;
+          } );
+          html += `</table>`;
+        }
+
+        // Recent repos
+        if ( recentRepos.length ) {
+          html += `<h3><a href="${ ghProfileUrl }?tab=repositories&sort=updated" target="_blank">Recently updated</a></h3><table>`;
+          html += `<tr><th>Repository</th><th style="text-align:right">Updated</th></tr>`;
+          recentRepos.forEach( r => {
+            const updated = new Date( r.pushed_at );
+            const ago = Math.floor( ( now - updated ) / 86400000 );
+            const when = ago === 0 ? "today" : ago === 1 ? "1 day ago" : `${ ago } days ago`;
+            html += `<tr><td>${ r.private ? "🔒 " : "" }<a href="https://github.com/${ CONFIG.owner }/${ encodeURIComponent( r.name ) }" target="_blank">${ escapeHtml( r.name ) }</a>${ r.stargazers_count ? " ⭐" + r.stargazers_count : "" }</td><td style="text-align:right">${ when }</td></tr>`;
+          } );
+          html += `</table>`;
+        }
+
+        ownerBody.innerHTML = html;
+
+        // Fetch contributions + achievements via GraphQL (async, fills in after modal renders)
+        if ( !isOrg && ghToken ) {
+          const graphqlQuery = {
+            query: `query($login:String!){user(login:$login){contributionsCollection{totalCommitContributions totalIssueContributions totalPullRequestContributions totalPullRequestReviewContributions totalRepositoryContributions restrictedContributionsCount contributionCalendar{totalContributions weeks{contributionDays{contributionCount date color}}}}}}`,
+            variables: { login: CONFIG.owner }
+          };
+          try {
+            const gqlResp = await fetch( "https://api.github.com/graphql", {
+              method: "POST",
+              headers: { Authorization: `bearer ${ ghToken }`, "Content-Type": "application/json" },
+              body: JSON.stringify( graphqlQuery )
+            } );
+            const gqlData = await gqlResp.json();
+            const contribs = gqlData?.data?.user?.contributionsCollection;
+            const calendar = contribs?.contributionCalendar;
+
+            // Populate achievements
+            if ( contribs ) {
+              const achieveEl = document.getElementById( "achievementsSection" );
+              if ( achieveEl ) {
+                let ahtml = `<table>`;
+                ahtml += `<tr><th>Total commits</th><td>${ ( contribs.totalCommitContributions || 0 ).toLocaleString() }</td></tr>`;
+                ahtml += `<tr><th>Pull requests</th><td>${ ( contribs.totalPullRequestContributions || 0 ).toLocaleString() }</td></tr>`;
+                ahtml += `<tr><th>Issues opened</th><td>${ ( contribs.totalIssueContributions || 0 ).toLocaleString() }</td></tr>`;
+                ahtml += `<tr><th>Code reviews</th><td>${ ( contribs.totalPullRequestReviewContributions || 0 ).toLocaleString() }</td></tr>`;
+                ahtml += `<tr><th>Repositories created</th><td>${ ( contribs.totalRepositoryContributions || 0 ).toLocaleString() }</td></tr>`;
+                if ( contribs.restrictedContributionsCount ) ahtml += `<tr><th>Private contributions</th><td>${ contribs.restrictedContributionsCount.toLocaleString() }</td></tr>`;
+                ahtml += `</table>`;
+                achieveEl.innerHTML = ahtml;
+              }
+            }
+
+            if ( calendar ) {
+              const contribEl = document.getElementById( "contribGraph" );
+              let ghtml = `<div class="contrib-summary">${ calendar.totalContributions.toLocaleString() } contributions in the last year</div>`;
+              ghtml += `<div class="contrib-grid">`;
+              calendar.weeks.forEach( week => {
+                ghtml += `<div class="contrib-week">`;
+                week.contributionDays.forEach( day => {
+                  const title = `${ day.contributionCount } contributions on ${ day.date }`;
+                  ghtml += `<div class="contrib-day" style="background:${ day.color }" title="${ title }"></div>`;
+                } );
+                ghtml += `</div>`;
+              } );
+              ghtml += `</div>`;
+              ghtml += `<div class="contrib-legend"><span>Less</span>`;
+              [ "#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39" ].forEach( c => {
+                ghtml += `<div class="contrib-day" style="background:${ c }"></div>`;
+              } );
+              ghtml += `<span>More</span></div>`;
+              contribEl.innerHTML = ghtml;
+            }
+          } catch {
+            const contribEl = document.getElementById( "contribGraph" );
+            if ( contribEl ) contribEl.innerHTML = `<div style="font-size:12px;color:#57606a;">Could not load contributions</div>`;
+            const achieveEl = document.getElementById( "achievementsSection" );
+            if ( achieveEl ) achieveEl.innerHTML = `<div style="font-size:12px;color:#57606a;">Could not load achievements</div>`;
+          }
+        }
+      } catch ( err ) {
+        ownerBody.innerHTML = `<div class="error">Failed to load owner info: ${ escapeHtml( err.message ) }</div>`;
+      }
+    } );
+
+    btnCloseOwner.addEventListener( "click", () => ownerModal.classList.remove( "open" ) );
+    ownerModal.addEventListener( "click", ( e ) => {
+      if ( e.target === ownerModal ) ownerModal.classList.remove( "open" );
+    } );
+
+    // Stats modal
+    btnStats.addEventListener( "click", () => {
+      if ( !treeData ) return;
+      statsBody.innerHTML = buildRepoStats( treeData );
+      statsModal.classList.add( "open" );
+    } );
+
+    btnCloseStats.addEventListener( "click", () => statsModal.classList.remove( "open" ) );
+    statsModal.addEventListener( "click", ( e ) => {
+      if ( e.target === statsModal ) statsModal.classList.remove( "open" );
+    } );
+
+    const buildRepoStats = ( tree ) => {
+      const exts = {};
+      let totalFiles = 0, totalFolders = 0, totalSize = 0;
+      const largest = [];
+
+      const walk = ( node ) => {
+        for ( const child of Object.values( node.children ) ) {
+          if ( child.name.startsWith( "." ) || child.name === "node_modules" ) continue;
+          if ( child.isDir ) {
+            totalFolders++;
+            walk( child );
+          } else {
+            totalFiles++;
+            totalSize += child.size || 0;
+            const ext = child.name.includes( "." ) ? child.name.split( "." ).pop().toLowerCase() : "(none)";
+            exts[ ext ] = ( exts[ ext ] || { count: 0, size: 0 } );
+            exts[ ext ].count++;
+            exts[ ext ].size += child.size || 0;
+            largest.push( { name: child.name, path: child.path, size: child.size || 0 } );
+          }
+        }
+      };
+      walk( tree );
+
+      const sortedExts = Object.entries( exts ).sort( ( a, b ) => b[ 1 ].count - a[ 1 ].count );
+      largest.sort( ( a, b ) => b.size - a.size );
+      const top10 = largest.slice( 0, 10 );
+
+      let html = `<h3>Overview</h3>
+        <table>
+          <tr><th>Files</th><td>${ totalFiles }</td></tr>
+          <tr><th>Folders</th><td>${ totalFolders }</td></tr>
+          <tr><th>Total size</th><td>${ formatSize( totalSize ) }</td></tr>
+        </table>`;
+
+      html += `<h3>Files by type</h3><table>
+        <tr><th>Extension</th><th style="text-align:right">Count</th><th style="text-align:right">Size</th></tr>`;
+      sortedExts.forEach( ( [ ext, data ] ) => {
+        html += `<tr><td>.${ escapeHtml( ext ) }</td><td style="text-align:right">${ data.count }</td><td style="text-align:right">${ formatSize( data.size ) }</td></tr>`;
+      } );
+      html += `</table>`;
+
+      if ( top10.length ) {
+        html += `<h3>Largest files</h3><table>`;
+        top10.forEach( f => {
+          html += `<tr><td title="${ escapeHtml( f.path ) }">${ escapeHtml( f.name ) }</td><td>${ formatSize( f.size ) }</td></tr>`;
+        } );
+        html += `</table>`;
+      }
+
+      return html;
+    };
+
+    // Get file icon class
+    const getIconClass = ( name, isDir ) => {
+      if ( isDir ) return "folder-icon";
+      const ext = name.split( "." ).pop().toLowerCase();
+      const iconMap = {
+        md: "md-icon",
+        pdf: "pdf-icon",
+        xlsx: "xlsx-icon",
+        xls: "xlsx-icon",
+        json: "json-icon",
+        html: "html-icon",
+        htm: "html-icon",
+        yml: "yml-icon",
+        yaml: "yml-icon",
+        png: "image-icon",
+        jpg: "image-icon",
+        jpeg: "image-icon",
+        gif: "image-icon",
+        svg: "image-icon",
+        webp: "image-icon",
+        ico: "image-icon",
+        bmp: "image-icon",
+        avif: "image-icon",
+        mp4: "video-icon",
+        webm: "video-icon",
+        ogg: "audio-icon",
+        mp3: "audio-icon",
+        wav: "audio-icon",
+        aac: "audio-icon",
+        flac: "audio-icon"
+      };
+      return iconMap[ ext ] || "file-icon";
+    };
+
+    // Build tree from flat list
+    const buildTree = ( items ) => {
+      const tree = { children: {}, isDir: true };
+
+      items.forEach( item => {
+        const parts = item.path.split( "/" );
+        let current = tree;
+
+        parts.forEach( ( part, i ) => {
+          if ( !current.children[ part ] ) {
+            current.children[ part ] = {
+              name: part,
+              path: parts.slice( 0, i + 1 ).join( "/" ),
+              isDir: i < parts.length - 1 || item.type === "tree",
+              size: item.size || 0,
+              children: {}
+            };
+          }
+          current = current.children[ part ];
+        } );
+      } );
+
+      return tree;
+    };
+
+    // Count files recursively in a folder (excludes dotfiles and node_modules)
+    const countFiles = ( node ) => {
+      let count = 0;
+      for ( const child of Object.values( node.children ) ) {
+        if ( child.name.startsWith( "." ) || child.name === "node_modules" ) continue;
+        if ( child.isDir ) count += countFiles( child );
+        else count++;
+      }
+      return count;
+    };
+
+    // Format file size for display
+    const formatSize = ( bytes ) => {
+      if ( bytes < 1024 ) return `${ bytes } B`;
+      if ( bytes < 1024 * 1024 ) return `${ ( bytes / 1024 ).toFixed( 1 ) } KB`;
+      return `${ ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) } MB`;
+    };
+
+    // Sort tree items (folders first, then alphabetically)
+    const sortTreeItems = ( items ) =>
+      Object.values( items ).sort( ( a, b ) => {
+        if ( a.isDir && !b.isDir ) return -1;
+        if ( !a.isDir && b.isDir ) return 1;
+        return a.name.localeCompare( b.name );
+      } );
+
+    // Invalidate keyboard nav cache whenever tree structure changes
+    const invalidateVisibleCache = () => { visibleItemsCache = null; };
+
+    // Render tree recursively
+    const renderTree = ( node, container, level = 0 ) => {
+      const items = sortTreeItems( node.children );
+
+      items.forEach( item => {
+        // Skip hidden files and common non-content files
+        if ( item.name.startsWith( "." ) || item.name === "node_modules" ) return;
+
+        const itemEl = document.createElement( "div" );
+        itemEl.className = `tree-item ${ item.isDir ? "folder" : "file" }`;
+        itemEl.dataset.path = item.path;
+        itemEl.style.paddingLeft = `${ 16 + level * 16 }px`;
+        itemEl.setAttribute( "role", "treeitem" );
+        if ( item.isDir ) itemEl.setAttribute( "aria-expanded", "false" );
+
+        const iconSpan = document.createElement( "span" );
+        iconSpan.className = `icon ${ getIconClass( item.name, item.isDir ) }`;
+        const nameSpan = document.createElement( "span" );
+        nameSpan.className = "name";
+        nameSpan.textContent = item.name;
+        itemEl.appendChild( iconSpan );
+        itemEl.appendChild( nameSpan );
+
+        // Badge: file count for folders, file size for files
+        const badgeSpan = document.createElement( "span" );
+        badgeSpan.className = "badge";
+        if ( item.isDir ) {
+          const fileCount = countFiles( item );
+          badgeSpan.textContent = fileCount > 0 ? fileCount : "";
+        } else if ( item.size > 0 ) {
+          badgeSpan.textContent = formatSize( item.size );
+        }
+        if ( badgeSpan.textContent ) itemEl.appendChild( badgeSpan );
+
+        // Create children container for folders (even if empty initially)
+        let childrenEl = null;
+        if ( item.isDir ) {
+          childrenEl = document.createElement( "div" );
+          childrenEl.className = "tree-children";
+          childrenEl.setAttribute( "role", "group" );
+          if ( Object.keys( item.children ).length > 0 ) {
+            renderTree( item, childrenEl, level + 1 );
+          }
+        }
+
+        itemEl.addEventListener( "click", ( e ) => {
+          e.stopPropagation();
+          if ( item.isDir && childrenEl ) {
+            toggleFolder( itemEl, childrenEl, item );
+            itemEl.scrollIntoView( { block: "nearest" } );
+          } else if ( !item.isDir ) {
+            selectFile( item, itemEl );
+          }
+        } );
+
+        container.appendChild( itemEl );
+        if ( childrenEl ) {
+          container.appendChild( childrenEl );
+        }
+      } );
+    };
+
+    // Toggle folder open/close (accordion: collapse siblings)
+    const toggleFolder = ( itemEl, childrenEl, folderItem ) => {
+      const icon = itemEl.querySelector( ".icon" );
+      const isOpen = childrenEl.classList.contains( "expanded" );
+
+      if ( isOpen ) {
+        childrenEl.classList.remove( "expanded" );
+        icon.classList.remove( "open" );
+        itemEl.setAttribute( "aria-expanded", "false" );
+      } else {
+        // Collapse sibling folders at the same level
+        const parent = itemEl.parentElement;
+        if ( parent ) {
+          parent.querySelectorAll( ":scope > .tree-children.expanded" ).forEach( sib => {
+            if ( sib !== childrenEl ) {
+              sib.classList.remove( "expanded" );
+              const sibItem = sib.previousElementSibling;
+              sibItem?.querySelector( ".icon" )?.classList.remove( "open" );
+              sibItem?.setAttribute( "aria-expanded", "false" );
+            }
+          } );
+        }
+
+        childrenEl.classList.add( "expanded" );
+        icon.classList.add( "open" );
+        itemEl.setAttribute( "aria-expanded", "true" );
+
+        // Auto-display the folder's README.md if it exists
+        if ( folderItem?.children[ "README.md" ] ) {
+          const readme = folderItem.children[ "README.md" ];
+          const readmeEl = treeEl.querySelector( `[data-path="${ CSS.escape( readme.path ) }"]` );
+          if ( readmeEl ) {
+            selectedEl?.classList.remove( "selected" );
+            selectedEl = readmeEl;
+            readmeEl.classList.add( "selected" );
+          }
+          contentHeader.style.display = "flex";
+          contentPath.innerHTML = buildBreadcrumbs( readme.path );
+          currentFile = readme;
+          showRaw = false;
+          btnRaw.textContent = "Raw";
+          loadFileContent( readme );
+        }
+      }
+      invalidateVisibleCache();
+    };
+
+    // Select file and load content
+    const selectFile = async ( item, itemEl ) => {
+      // Update selection UI — clear both highlight and selected
+      highlightedEl?.classList.remove( "highlighted" );
+      highlightedEl = null;
+      selectedEl?.classList.remove( "selected" );
+      selectedEl = itemEl;
+      itemEl.classList.add( "selected" );
+      itemEl.scrollIntoView( { block: "nearest" } );
+
+      currentFile = item;
+      showRaw = false;
+      btnRaw.textContent = "Raw";
+
+      // Update header with clickable breadcrumbs
+      contentHeader.style.display = "flex";
+      contentPath.innerHTML = buildBreadcrumbs( item.path );
+
+      // Update URL hash (skip if already matching, e.g. from hash navigation)
+      const targetHash = encodeURIComponent( item.path );
+      if ( location.hash.slice( 1 ) !== targetHash ) {
+        location.hash = targetHash;
+      }
+
+      // Load content
+      await loadFileContent( item );
+    };
+
+    // Large file threshold (512 KB) for text-based content
+    const LARGE_FILE_THRESHOLD = 512 * 1024;
+
+    // Load file content
+    const loadFileContent = async ( item, skipSizeCheck = false ) => {
+      // For text-based files, prompt before loading large files
+      if ( !skipSizeCheck && item.size > LARGE_FILE_THRESHOLD ) {
+        const ext = item.name.split( "." ).pop().toLowerCase();
+        const mediaExts = [ "png", "jpg", "jpeg", "gif", "svg", "webp", "ico", "bmp", "avif",
+          "mp4", "webm", "mp3", "wav", "ogg", "aac", "flac", "pdf", "xlsx", "xls" ];
+        if ( !mediaExts.includes( ext ) ) {
+          contentStats.textContent = "";
+          contentBody.innerHTML = `<div class="large-file-prompt">
+            <p>⚠️ <strong>${ escapeHtml( item.name ) }</strong> is ${ formatSize( item.size ) }</p>
+            <p>Large files may slow down the browser.</p>
+            <button id="btnLoadAnyway">Load anyway</button>
+          </div>`;
+          document.getElementById( "btnLoadAnyway" ).addEventListener( "click", () => loadFileContent( item, true ) );
+          return;
+        }
+      }
+
+      contentBody.innerHTML = '<div class="loading">Loading</div>';
+      contentStats.textContent = "";
+
+      try {
+        const ext = item.name.split( "." ).pop().toLowerCase();
+        // Local repo uses relative paths (only works over HTTP, not file://)
+        const isLocal = location.protocol !== "file:" && CONFIG.repo === CONFIG.localRepo && CONFIG.owner === ownerSelect.options[ 0 ]?.value;
+        const hasPages = repoSelect.selectedOptions[ 0 ]?.dataset.hasPages === "1";
+        // Pages URL for embeddable content (HTML, images, media); raw URL for text fetches
+        const pagesUrl = isLocal
+          ? basePath + item.path
+          : hasPages
+            ? `https://${ CONFIG.owner }.github.io/${ CONFIG.repo }/${ item.path }`
+            : `https://raw.githubusercontent.com/${ CONFIG.owner }/${ CONFIG.repo }/${ CONFIG.branch }/${ item.path }`;
+        const rawUrl = isLocal
+          ? basePath + item.path
+          : `https://raw.githubusercontent.com/${ CONFIG.owner }/${ CONFIG.repo }/${ CONFIG.branch }/${ item.path }`;
+        const safeName = escapeHtml( item.name );
+        const safePagesUrl = encodeURI( pagesUrl ).replace( /#/g, "%23" );
+        const safeRawUrl = encodeURI( rawUrl ).replace( /#/g, "%23" );
+
+        // Handle different file types
+        if ( [ "png", "jpg", "jpeg", "gif", "svg", "webp", "ico", "bmp", "avif" ].includes( ext ) ) {
+          const img = document.createElement( "img" );
+          img.className = "content-image";
+          img.src = safeRawUrl;
+          img.alt = item.name;
+          img.onerror = () => { contentBody.innerHTML = `<div class="error">Failed to load image: ${ escapeHtml( item.name ) }</div>`; };
+          img.onload = () => { contentStats.textContent = `${ img.naturalWidth } × ${ img.naturalHeight } · ${ formatSize( item.size ) }`; };
+          contentBody.innerHTML = "";
+          contentBody.appendChild( img );
+        } else if ( [ "mp4", "webm" ].includes( ext ) ) {
+          contentBody.innerHTML = `
+            <p>Video: <strong>${ safeName }</strong></p>
+            <video controls style="max-width:100%;border-radius:6px;">
+              <source src="${ safeRawUrl }" type="video/${ ext }">
+              Your browser does not support the video tag.
+            </video>
+          `;
+          contentBody.querySelector( "video" ).addEventListener( "loadedmetadata", ( e ) => {
+            const dur = Math.round( e.target.duration );
+            const min = Math.floor( dur / 60 );
+            const sec = String( dur % 60 ).padStart( 2, "0" );
+            contentStats.textContent = `${ min }:${ sec } · ${ formatSize( item.size ) }`;
+          } );
+        } else if ( [ "mp3", "wav", "ogg", "aac", "flac" ].includes( ext ) ) {
+          const mimeType = ext === "mp3" ? "mpeg" : ext;
+          contentBody.innerHTML = `
+            <p>Audio: <strong>${ safeName }</strong></p>
+            <audio controls style="width:100%;margin-top:12px;">
+              <source src="${ safeRawUrl }" type="audio/${ mimeType }">
+              Your browser does not support the audio tag.
+            </audio>
+          `;
+          contentBody.querySelector( "audio" ).addEventListener( "loadedmetadata", ( e ) => {
+            const dur = Math.round( e.target.duration );
+            const min = Math.floor( dur / 60 );
+            const sec = String( dur % 60 ).padStart( 2, "0" );
+            contentStats.textContent = `${ min }:${ sec } · ${ formatSize( item.size ) }`;
+          } );
+        } else if ( [ "html", "htm" ].includes( ext ) ) {
+          contentBody.innerHTML = `
+            <p>HTML file: <strong>${ safeName }</strong>
+              <a href="${ safePagesUrl }" target="_blank">Open in new tab</a></p>
+            <iframe src="${ safePagesUrl }" style="width:100%;height:calc(100vh - 160px);border:1px solid #d0d7de;border-radius:6px;" sandbox="allow-scripts allow-same-origin"></iframe>
+          `;
+        } else if ( [ "pdf" ].includes( ext ) ) {
+          contentBody.innerHTML = `
+            <p>PDF file: <strong>${ safeName }</strong></p>
+            <p><a href="${ safeRawUrl }" target="_blank">Open PDF in new tab</a></p>
+            <iframe src="${ safeRawUrl }" style="width:100%;height:calc(100vh - 160px);border:1px solid #d0d7de;border-radius:6px;"></iframe>
+          `;
+        } else if ( [ "xlsx", "xls" ].includes( ext ) ) {
+          contentBody.innerHTML = `
+            <p>Excel file: <strong>${ safeName }</strong></p>
+            <p><a href="${ safeRawUrl }" target="_blank">Download ${ safeName }</a></p>
+          `;
+        } else {
+          // Fetch text content via raw URL (has CORS headers, unlike github.io)
+          const response = await fetch( rawUrl );
+          if ( !response.ok ) throw new Error( `HTTP ${ response.status }` );
+          const text = await response.text();
+
+          const lines = text.split( "\n" ).length;
+          const words = text.split( /\s+/ ).filter( Boolean ).length;
+          const readMin = Math.ceil( words / 200 );
+          contentStats.textContent = `${ lines } lines · ${ words } words · ~${ readMin } min read`;
+
+          if ( ext === "md" && !showRaw ) {
+            const html = mdToHtml( text );
+            contentBody.innerHTML = `<div class="markdown-body">${ html }</div>`;
+          } else {
+            contentBody.innerHTML = `<pre class="content-raw">${ linkifyAndEscape( text ) }</pre>`;
+          }
+        }
+      } catch ( error ) {
+        contentBody.innerHTML = `<div class="error">Error loading file: ${ escapeHtml( error.message ) }</div>`;
+      }
+    };
+
+    // Toggle raw/rendered view
+    btnRaw.addEventListener( "click", async () => {
+      if ( !currentFile ) return;
+      showRaw = !showRaw;
+      btnRaw.textContent = showRaw ? "Rendered" : "Raw";
+      await loadFileContent( currentFile );
+    } );
+
+    // Copy file path to clipboard
+    btnCopyPath.addEventListener( "click", async () => {
+      if ( !currentFile ) return;
+      try {
+        await navigator.clipboard.writeText( currentFile.path );
+        btnCopyPath.textContent = "✓ Copied";
+      } catch {
+        btnCopyPath.textContent = "✗ Failed";
+      }
+      setTimeout( () => btnCopyPath.textContent = "📋 Copy", 1500 );
+    } );
+
+    // Focus on active path: collapse all, then expand only the path to the selected file
+    btnFocusPath.addEventListener( "click", () => {
+      // Collapse everything first
+      treeEl.querySelectorAll( ".tree-children.expanded" ).forEach( el => {
+        el.classList.remove( "expanded" );
+        const prev = el.previousElementSibling;
+        prev?.querySelector( ".icon" )?.classList.remove( "open" );
+        prev?.setAttribute( "aria-expanded", "false" );
+      } );
+      btnToggleAll.textContent = "⊞";
+      btnToggleAll.title = "Expand all";
+
+      // Expand the path to the currently selected file
+      if ( selectedEl ) {
+        let parent = selectedEl.parentElement;
+        while ( parent && parent !== treeEl ) {
+          if ( parent.classList.contains( "tree-children" ) ) {
+            parent.classList.add( "expanded" );
+            const prev = parent.previousElementSibling;
+            prev?.querySelector( ".icon" )?.classList.add( "open" );
+            prev?.setAttribute( "aria-expanded", "true" );
+          }
+          parent = parent.parentElement;
+        }
+        selectedEl.scrollIntoView( { block: "nearest" } );
+      }
+      invalidateVisibleCache();
+    } );
+
+    // Toggle expand/collapse all folders
+    btnToggleAll.addEventListener( "click", () => {
+      const allChildren = treeEl.querySelectorAll( ".tree-children" );
+      const anyExpanded = treeEl.querySelector( ".tree-children.expanded" );
+
+      if ( anyExpanded ) {
+        // Collapse all
+        allChildren.forEach( el => {
+          el.classList.remove( "expanded" );
+          const prev = el.previousElementSibling;
+          prev?.querySelector( ".icon" )?.classList.remove( "open" );
+          prev?.setAttribute( "aria-expanded", "false" );
+        } );
+        btnToggleAll.textContent = "⊞";
+        btnToggleAll.title = "Expand all";
+      } else {
+        // Expand all
+        allChildren.forEach( el => {
+          el.classList.add( "expanded" );
+          const prev = el.previousElementSibling;
+          prev?.querySelector( ".icon" )?.classList.add( "open" );
+          prev?.setAttribute( "aria-expanded", "true" );
+        } );
+        btnToggleAll.textContent = "⊟";
+        btnToggleAll.title = "Collapse all";
+      }
+      invalidateVisibleCache();
+    } );
+
+    // Filter tree items — files only, not folders (debounced)
+    const applyFilter = () => {
+      const query = treeFilter.value.toLowerCase().trim();
+      const allItems = treeEl.querySelectorAll( ".tree-item" );
+      const allChildren = treeEl.querySelectorAll( ".tree-children" );
+
+      if ( !query ) {
+        // Reset: show all items, remove filter-expanded
+        allItems.forEach( el => el.classList.remove( "hidden" ) );
+        allChildren.forEach( el => el.classList.remove( "filter-expanded" ) );
+        invalidateVisibleCache();
+        return;
+      }
+
+      // Hide all, then show matching files and their parent folders
+      allItems.forEach( el => el.classList.add( "hidden" ) );
+      allChildren.forEach( el => el.classList.remove( "filter-expanded" ) );
+
+      allItems.forEach( el => {
+        // Skip folders — only match files
+        if ( el.classList.contains( "folder" ) ) return;
+
+        // Match only the file name, not folder segments in the path
+        const name = ( el.querySelector( ".name" )?.textContent || "" ).toLowerCase();
+        if ( name.includes( query ) ) {
+          el.classList.remove( "hidden" );
+          // Expand and show parent folders
+          let parent = el.parentElement;
+          while ( parent && parent !== treeEl ) {
+            if ( parent.classList.contains( "tree-children" ) ) {
+              parent.classList.add( "filter-expanded" );
+              parent.previousElementSibling?.classList.remove( "hidden" );
+            }
+            parent = parent.parentElement;
+          }
+        }
+      } );
+      invalidateVisibleCache();
+    };
+
+    treeFilter.addEventListener( "input", () => {
+      clearTimeout( filterDebounceId );
+      filterDebounceId = setTimeout( applyFilter, 150 );
+    } );
+
+    // Build clickable breadcrumb path
+    const buildBreadcrumbs = ( path ) => {
+      const parts = path.split( "/" );
+      return parts.map( ( part, i ) => {
+        const safe = ( s ) => s.replace( /&/g, "&amp;" ).replace( /</g, "&lt;" ).replace( />/g, "&gt;" ).replace( /"/g, "&quot;" );
+        if ( i === parts.length - 1 ) return `<span>${ safe( part ) }</span>`;
+        const folderPath = parts.slice( 0, i + 1 ).join( "/" );
+        return `<span class="breadcrumb" data-folder="${ safe( folderPath ) }">${ safe( part ) }</span>`;
+      } ).join( '<span class="separator">/</span>' );
+    };
+
+    // Keyboard navigation — highlight is separate from file selection
+    const highlightItem = ( el ) => {
+      highlightedEl?.classList.remove( "highlighted" );
+      highlightedEl = el;
+      el.classList.add( "highlighted" );
+      el.scrollIntoView( { block: "nearest" } );
+    };
+
+    // Breadcrumb click delegation
+    contentPath.addEventListener( "click", ( e ) => {
+      const crumb = e.target.closest( ".breadcrumb" );
+      if ( crumb?.dataset.folder ) openFolder( crumb.dataset.folder );
+    } );
+
+    // Open a folder by path (for breadcrumb clicks)
+    const openFolder = ( path ) => {
+      const parts = path.split( "/" );
+      let current = treeData;
+      for ( const part of parts ) {
+        if ( current.children?.[ part ] ) current = current.children[ part ];
+        else return;
+      }
+      if ( !current.isDir ) return;
+
+      // Expand all parent folders in the DOM first
+      const folderEl = treeEl.querySelector( `[data-path="${ CSS.escape( path ) }"]` );
+      if ( folderEl ) {
+        let parent = folderEl.parentElement;
+        while ( parent && parent !== treeEl ) {
+          if ( parent.classList.contains( "tree-children" ) && !parent.classList.contains( "expanded" ) ) {
+            parent.classList.add( "expanded" );
+            const prev = parent.previousElementSibling;
+            prev?.querySelector( ".icon" )?.classList.add( "open" );
+            prev?.setAttribute( "aria-expanded", "true" );
+          }
+          parent = parent.parentElement;
+        }
+
+        // Now expand the target folder itself
+        const childrenEl = folderEl.nextElementSibling;
+        if ( childrenEl?.classList.contains( "tree-children" ) && !childrenEl.classList.contains( "expanded" ) ) {
+          toggleFolder( folderEl, childrenEl, current );
+        }
+
+        // Highlight and scroll into view
+        highlightItem( folderEl );
+      }
+      invalidateVisibleCache();
+    };
+
+    // Build visible items list with caching
+    const getVisibleItems = () => {
+      if ( visibleItemsCache ) return visibleItemsCache;
+      visibleItemsCache = [ ...treeEl.querySelectorAll( ".tree-item:not(.hidden)" ) ]
+        .filter( el => {
+          let parent = el.parentElement;
+          while ( parent && parent !== treeEl ) {
+            if ( parent.classList.contains( "tree-children" ) && !parent.classList.contains( "expanded" ) && !parent.classList.contains( "filter-expanded" ) ) return false;
+            parent = parent.parentElement;
+          }
+          return true;
+        } );
+      return visibleItemsCache;
+    };
+
+    document.addEventListener( "keydown", ( e ) => {
+      // Only handle when not typing in an input
+      if ( e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" ) return;
+
+      const visible = getVisibleItems();
+      if ( !visible.length ) return;
+
+      // Find the currently highlighted or selected item
+      const currentEl = highlightedEl || selectedEl;
+      const currentIdx = currentEl ? visible.indexOf( currentEl ) : -1;
+
+      if ( e.key === "ArrowDown" ) {
+        e.preventDefault();
+        const next = visible[ currentIdx + 1 ] || visible[ 0 ];
+        if ( next.classList.contains( "folder" ) ) {
+          highlightItem( next );
+        } else {
+          highlightedEl?.classList.remove( "highlighted" );
+          highlightedEl = null;
+          next.click();
+        }
+      } else if ( e.key === "ArrowUp" ) {
+        e.preventDefault();
+        const prev = visible[ currentIdx - 1 ] || visible[ visible.length - 1 ];
+        if ( prev.classList.contains( "folder" ) ) {
+          highlightItem( prev );
+        } else {
+          highlightedEl?.classList.remove( "highlighted" );
+          highlightedEl = null;
+          prev.click();
+        }
+      } else if ( e.key === "Enter" || e.key === " " ) {
+        e.preventDefault();
+        if ( currentIdx >= 0 ) visible[ currentIdx ].click();
+      } else if ( e.key === "ArrowRight" ) {
+        // Expand a folder
+        if ( currentIdx >= 0 ) {
+          const el = visible[ currentIdx ];
+          const childrenEl = el.nextElementSibling;
+          if ( childrenEl?.classList.contains( "tree-children" ) && !childrenEl.classList.contains( "expanded" ) ) {
+            e.preventDefault();
+            el.click();
+          }
+        }
+      } else if ( e.key === "ArrowLeft" ) {
+        // Collapse a folder
+        if ( currentIdx >= 0 ) {
+          const el = visible[ currentIdx ];
+          const childrenEl = el.nextElementSibling;
+          if ( childrenEl?.classList.contains( "tree-children" ) && childrenEl.classList.contains( "expanded" ) ) {
+            e.preventDefault();
+            el.click();
+          }
+        }
+      }
+    } );
+
+    // Open in GitHub
+    btnGitHub.addEventListener( "click", () => {
+      if ( !currentFile ) return;
+      const url = `https://github.com/${ CONFIG.owner }/${ CONFIG.repo }/blob/${ CONFIG.branch }/${ currentFile.path }`;
+      window.open( url, "_blank" );
+    } );
+
+    // Fetch tree from GitHub API with sessionStorage caching
+    const fetchTree = async () => {
+      const cacheKey = `tree-${ CONFIG.owner }-${ CONFIG.repo }-${ CONFIG.branch }`;
+      const cached = sessionStorage.getItem( cacheKey );
+
+      if ( cached ) {
+        return JSON.parse( cached );
+      }
+
+      const url = `https://api.github.com/repos/${ CONFIG.owner }/${ CONFIG.repo }/git/trees/${ CONFIG.branch }?recursive=1`;
+      const headers = {};
+      if ( ghToken ) headers.Authorization = `token ${ ghToken }`;
+      const response = await fetch( url, { headers } );
+
+      if ( !response.ok ) {
+        const hint = response.status === 404
+          ? " (repo may be private — enter a token above)"
+          : "";
+        throw new Error( `GitHub API error: HTTP ${ response.status }${ hint }` );
+      }
+
+      const data = await response.json();
+      sessionStorage.setItem( cacheKey, JSON.stringify( data.tree ) );
+      return data.tree;
+    };
+
+    // Initialize tree from GitHub API
+    const initTree = async () => {
+      treeEl.innerHTML = '<div class="loading">Loading</div>';
+
+      try {
+        const items = await fetchTree();
+        treeData = buildTree( items );
+        treeEl.innerHTML = "";
+        renderTree( treeData, treeEl );
+        invalidateVisibleCache();
+
+        // Check for hash and load that file, or show root README.md
+        if ( location.hash ) {
+          const path = decodeURIComponent( location.hash.slice( 1 ) );
+          selectFileByPath( path );
+        } else if ( treeData.children[ "README.md" ] ) {
+          const readme = treeData.children[ "README.md" ];
+          contentHeader.style.display = "flex";
+          contentPath.innerHTML = buildBreadcrumbs( readme.path );
+          currentFile = readme;
+          showRaw = false;
+          btnRaw.textContent = "Raw";
+          loadFileContent( readme );
+        }
+      } catch ( error ) {
+        treeEl.innerHTML = `<div class="error">
+          ${ escapeHtml( error.message ) }
+          <br><br>
+          <button id="btnRetry" class="btn-retry">Retry</button>
+        </div>`;
+        document.getElementById( "btnRetry" ).addEventListener( "click", initTree );
+      }
+    };
+
+    // Select file by path — accordion-aware parent expansion
+    const selectFileByPath = ( path ) => {
+      const parts = path.split( "/" );
+      let current = treeData;
+
+      for ( const part of parts ) {
+        if ( current.children?.[ part ] ) {
+          current = current.children[ part ];
+        } else {
+          return; // Path not found
+        }
+      }
+
+      if ( !current.isDir ) {
+        // Expand parent folders using toggleFolder (enforces accordion)
+        const ancestors = path.split( "/" ).slice( 0, -1 );
+        let folderPath = "";
+        let folderNode = treeData;
+        for ( const seg of ancestors ) {
+          folderPath = folderPath ? folderPath + "/" + seg : seg;
+          folderNode = folderNode.children?.[ seg ];
+          if ( !folderNode ) break;
+          const folderEl = treeEl.querySelector( `[data-path="${ CSS.escape( folderPath ) }"]` );
+          const childrenEl = folderEl?.nextElementSibling;
+          if ( folderEl && childrenEl?.classList.contains( "tree-children" ) && !childrenEl.classList.contains( "expanded" ) ) {
+            toggleFolder( folderEl, childrenEl, folderNode );
+          }
+        }
+
+        // Find and click the tree item
+        const itemEl = treeEl.querySelector( `[data-path="${ CSS.escape( current.path ) }"]` );
+        if ( itemEl ) {
+          invalidateVisibleCache();
+          itemEl.click();
+        }
+      }
+    };
+
+    // Handle hash changes
+    window.addEventListener( "hashchange", () => {
+      if ( location.hash ) {
+        const path = decodeURIComponent( location.hash.slice( 1 ) );
+        selectFileByPath( path );
+      }
+    } );
+
+    // Initialize
+    fetchOrgs();
+    fetchRepos();
+    initTree();
+  </script>
+</body>
+
+</html>
