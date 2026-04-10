@@ -372,7 +372,7 @@ Called after `initAppearance()`. Wires up all event handlers:
 - Builds source URL and repo URL from `state.owner` / `state.repo` (falls back to `pushme-pullyou/tootoo`)
 - Reads token from `localStorage.getItem('githubToken')`
 - Fetches live rate limit from `https://api.github.com/rate_limit` (with auth header if token is set); extracts `resources.core.remaining`, `resources.core.limit`, and reset time formatted via `toLocaleTimeString()`
-- Renders about panel in `#contentBody` with: source code link, repository link, copyright (pushme-pullyou), MIT license, build date, GitHub API section (token status + live rate limit), tips section (filter, title reload, font size, dark mode)
+- Renders about panel in `#contentBody` with: source code link, repository link, copyright (pushme-pullyou authors), MIT license, build date, GitHub API section (visibility,token status + live rate limit, GitHub Pages, public s), tips section (filter, title reload, font size, dark mode)
 - Sets `#contentTitle` to `"About"`
 - All dynamic values passed through `escapeHTML()`
 
