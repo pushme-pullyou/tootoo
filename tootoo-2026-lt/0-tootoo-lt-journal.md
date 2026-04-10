@@ -2,8 +2,11 @@
 
 ## 2026-04-09
 
+* 2026-04-07 ~ "?" about button
 * 2026-04-07 ~ is sheetjs needed? yes
 * 2026-04-06 ~ Move LT to its own repo
+* 2026-04-06 ~ LT: repo stats, but only for the current repo. No orgs, gists, or other repos.
+
 ## 2026-04-07
 
 * 2026-04-07 ~ Text size control

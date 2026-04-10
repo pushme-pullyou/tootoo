@@ -60,6 +60,7 @@ The `<title>` is updated dynamically by `updateHeaderFromConfig()` after repo de
     [Dark mode button] — id="btnDarkMode", class="header-btn dark-mode-btn", right-aligned (margin-left: auto), toggles 🌙/☀️, title="Toggle Dark Mode"
     [A− button]        — id="btnFontDec", class="header-btn", title="Decrease Font Size"
     [A+ button]        — id="btnFontInc", class="header-btn", title="Increase Font Size"
+    [Help button]      — id="btnHelp", class="header-btn", text "?", title="About this app"
     [Token button]     — id="btnToken", class="header-btn", text "⚙️ Token", title="Set GitHub Personal Access Token"
     [Rate limit badge] — <div> id="rateBadge", class="rate-limit-badge", hidden by default (display: none),
                          shows "API remaining/limit", title="API Rate Limit", aria-live="polite"
@@ -193,6 +194,51 @@ Two button styles via CSS classes:
    - Hover: opacity 0.88, translateY(-1px)
    - Active: translateY(0)
 
+### Rate Limit Badge
+
+```css
+.rate-limit-badge {
+  display: none;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: var(--hover-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+```
+
+### Inline Repo Form
+
+```css
+.repo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 300px;
+  padding: 1rem;
+}
+
+.repo-form label {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.repo-form input {
+  padding: 0.4rem 0.5rem;
+  font-size: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--secondary-bg);
+  color: var(--text-color);
+  outline: none;
+}
+
+.repo-form input:focus {
+  border-color: var(--highlight-color);
+}
+```
+
 ### Back-to-Top Button
 
 ```css
@@ -293,7 +339,7 @@ Returns a Promise (async function). Runs this cascade:
 5. **Fetch `.git/config`** → walk up the directory tree trying paths `''`, `'../'`, `'../../'`, `'../../../'`, `'../../../../'`; parse `github.com[:/]owner/repo` from remote URL; cache result to localStorage; early return if found
    - **5a**: On HTTP/HTTPS, use `fetch()`
    - **5b**: On `file://`, use synchronous `XMLHttpRequest` (fetch is CORS-blocked on file://); check `xhr.status === 200 || xhr.status === 0` and `xhr.responseText` is non-empty
-6. **Show inline form** → render owner + repo input form in `#contentBody`; return a new Promise that resolves when the user clicks "Set Repository"; form includes `id="inpOwner"`, `id="inpRepo"`, `id="btnSetRepo"` (class `primary`); inline styles for the form layout (flex column, gap, max-width 300px, padding on inputs)
+6. **Show inline form** → render owner + repo input form in `#contentBody` using the `.repo-form` CSS class; return a new Promise that resolves when the user clicks "Set Repository"; form includes `id="inpOwner"`, `id="inpRepo"`, `id="btnSetRepo"` (class `primary`)
 
 **Note**: `updateHeaderFromConfig()` is NOT called inside `detectRepo()` — it is called from `init()` after state is populated.
 
@@ -319,6 +365,16 @@ Called after `initAppearance()`. Wires up all event handlers:
 - `#btnFontInc`: clamp to max 28, step +2, set via `document.documentElement.style.setProperty('--font-size', sz + 'px')`
 - `#btnFontDec`: clamp to min 10, step −2, same approach
 - Persist to `localStorage` via `storageKey('fontSize')`
+
+#### Help / About
+- Async click handler on `#btnHelp`
+- Reads `revised` from `<meta name="revised">` content
+- Builds source URL and repo URL from `state.owner` / `state.repo` (falls back to `pushme-pullyou/tootoo`)
+- Reads token from `localStorage.getItem('githubToken')`
+- Fetches live rate limit from `https://api.github.com/rate_limit` (with auth header if token is set); extracts `resources.core.remaining`, `resources.core.limit`, and reset time formatted via `toLocaleTimeString()`
+- Renders about panel in `#contentBody` with: source code link, repository link, copyright (pushme-pullyou), MIT license, build date, GitHub API section (token status + live rate limit), tips section (filter, title reload, font size, dark mode)
+- Sets `#contentTitle` to `"About"`
+- All dynamic values passed through `escapeHTML()`
 
 #### Token Prompt
 - Click handler on `#btnToken`

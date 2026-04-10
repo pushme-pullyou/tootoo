@@ -1,11 +1,10 @@
 # TooToo LT — Agenda
 
-
+* Add repo date to info
+ page
 * 2026-04-07 ~ Style adjustments
-* 2026-04-07 ~ "?" about button
 * 2026-04-06 ~ new tab: if not pages, use raw
 
-* 2026-04-06 ~ LT: repo stats, but only for the current repo. No orgs, gists, or other repos.
 
 
 ## Prompt

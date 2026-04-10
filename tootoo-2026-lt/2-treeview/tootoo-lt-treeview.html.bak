@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-08 11:00">
+  <meta name="revised" content="2026-04-08 14:30">
   <title>TooToo LT</title>
   <style>
     /* ── Custom Properties ── */
@@ -330,7 +330,7 @@
       }
     }
 
-    /* ── Tree View ── */
+    /* ── Treeview ── */
     .tree-folder {
       display: flex;
       align-items: center;
@@ -411,7 +411,7 @@
   <main>
 
     <div class="sidebar">
-      <div class="panel-header" title="Last updated: 2026-04-08 11:00">
+      <div class="panel-header" title="Last updated: 2026-04-08 14:30">
         <h3 id="hFiles">Files</h3>
         <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders">Expand
           All</button>
@@ -451,9 +451,9 @@
 
     /* ── 2. CONFIG & state ── */
     const CONFIG = {
-      owner: 'theo-armour',  // default for testing
-      repo: 'sandbox',       // default for testing
-      branch: '',            // empty = fetch default branch from API later
+      owner: 'theo-armour',
+      repo: 'sandbox',
+      branch: '',
     };
 
     const state = {
@@ -477,16 +477,13 @@
 
     /* ── 5. detectRepo ── */
     const detectRepo = async () => {
-      // Step 1: URL query parameters
       const params = new URLSearchParams( location.search );
       if ( params.get( 'owner' ) ) CONFIG.owner = params.get( 'owner' );
       if ( params.get( 'repo' ) ) CONFIG.repo = params.get( 'repo' );
       if ( params.get( 'branch' ) ) CONFIG.branch = params.get( 'branch' );
 
-      // Step 2: CONFIG already filled
       if ( CONFIG.owner && CONFIG.repo ) return;
 
-      // Step 3: localStorage cache (checked before .git/config to avoid 404 noise)
       const cached = localStorage.getItem( storageKey( 'repo' ) );
       if ( cached ) {
         try {
@@ -499,7 +496,6 @@
         } catch ( _ ) { /* ignore malformed cache */ }
       }
 
-      // Step 4: Fetch .git/config — only on HTTP/HTTPS
       if ( location.protocol === 'http:' || location.protocol === 'https:' ) {
         const prefixes = [ '', '../', '../../', '../../../', '../../../../' ];
         for ( const prefix of prefixes ) {
@@ -518,7 +514,6 @@
         }
       }
 
-      // Step 5: Show inline form — return Promise that resolves on user submit
       return new Promise( ( resolve ) => {
         const cb = document.getElementById( 'contentBody' );
         cb.innerHTML = `
@@ -546,19 +541,16 @@
 
     /* ── 6. initAppearance ── */
     const initAppearance = () => {
-      // Dark mode
       if ( localStorage.getItem( storageKey( 'darkMode' ) ) === 'true' ) {
         document.body.classList.add( 'dark-mode' );
         document.getElementById( 'btnDarkMode' ).textContent = '☀️';
       }
 
-      // Font size
       const savedFontSize = localStorage.getItem( storageKey( 'fontSize' ) );
       if ( savedFontSize ) {
         document.documentElement.style.setProperty( '--font-size', savedFontSize );
       }
 
-      // Sidebar width
       const savedWidth = localStorage.getItem( storageKey( 'sidebarWidth' ) );
       if ( savedWidth ) {
         document.documentElement.style.setProperty( '--sidebar-width', savedWidth );
@@ -633,20 +625,6 @@
         localStorage.setItem( storageKey( 'sidebarWidth' ), currentWidth );
       } );
 
-      // Filter input & clear button — show/hide clear button on input
-      const treeFilter = document.getElementById( 'treeFilter' );
-      const btnFilterClear = document.getElementById( 'btnFilterClear' );
-
-      treeFilter.addEventListener( 'input', () => {
-        btnFilterClear.style.display = treeFilter.value ? 'block' : 'none';
-      } );
-
-      btnFilterClear.addEventListener( 'click', () => {
-        treeFilter.value = '';
-        btnFilterClear.style.display = 'none';
-        treeFilter.focus();
-      } );
-
       // Back to top
       const btnBackToTop = document.getElementById( 'btnBackToTop' );
 
@@ -665,446 +643,17 @@
       } );
     };
 
-    /* ── 8. Tree: File icon helper ── */
-    const getFileIcon = ( name ) => {
-      const ext = name.includes( '.' ) ? name.split( '.' ).pop().toLowerCase() : '';
-      const icons = {
-        'md': '📝',
-        'js': '🟨', 'mjs': '🟨', 'cjs': '🟨',
-        'ts': '🟦', 'tsx': '🟦',
-        'py': '🐍',
-        'html': '🌐', 'htm': '🌐',
-        'css': '🎨', 'scss': '🎨', 'less': '🎨',
-        'png': '🖼️', 'jpg': '🖼️', 'jpeg': '🖼️', 'gif': '🖼️',
-        'webp': '🖼️', 'svg': '🖼️', 'ico': '🖼️',
-        'mp3': '🎵', 'wav': '🎵', 'ogg': '🎵',
-        'mp4': '🎬', 'webm': '🎬',
-        'pdf': '📕',
-        'xlsx': '📊', 'xls': '📊', 'csv': '📊', 'ods': '📊',
-        'yaml': '⚙️', 'yml': '⚙️', 'toml': '⚙️',
-        'zip': '📦', 'tar': '📦', 'gz': '📦', '7z': '📦',
-        'json': '{ }',
-      };
-      return icons[ ext ] || '📄';
+    /* ── 8. Auth helpers (Public API) ── */
+    const getToken = () => localStorage.getItem( 'githubToken' ) || '';
+
+    const getAuthHeaders = () => {
+      const headers = { Accept: 'application/vnd.github+json' };
+      const token = getToken();
+      if ( token ) headers.Authorization = `token ${ token }`;
+      return headers;
     };
 
-    /* ── 9. Tree: File size formatter ── */
-    const formatSize = ( bytes ) => {
-      if ( bytes === undefined || bytes === null ) return '';
-      if ( bytes < 1024 ) return `${ bytes } B`;
-      if ( bytes < 1024 * 1024 ) return `${ ( bytes / 1024 ).toFixed( 1 ) } KB`;
-      return `${ ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) } MB`;
-    };
-
-    /* ── 10. Tree: Build nested structure from flat array ── */
-    const buildNestedTree = ( treeArray ) => {
-      const root = {};
-      for ( const item of treeArray ) {
-        const parts = item.path.split( '/' );
-        let node = root;
-        for ( let i = 0; i < parts.length; i++ ) {
-          const part = parts[ i ];
-          if ( !node[ part ] ) {
-            node[ part ] = {
-              children: {},
-              type: i === parts.length - 1 ? item.type : 'tree',
-              size: item.size,
-              path: item.path,
-            };
-          }
-          node = node[ part ].children;
-        }
-      }
-      return root;
-    };
-
-    /* ── 11. Tree: Filter out dot-prefixed folders ── */
-    const filterHiddenFolders = ( node ) => {
-      const result = {};
-      for ( const [ name, child ] of Object.entries( node ) ) {
-        if ( name.startsWith( '.' ) ) continue;
-        result[ name ] = {
-          ...child,
-          children: filterHiddenFolders( child.children ),
-        };
-      }
-      return result;
-    };
-
-    /* ── 12. Tree: Sort entries — folders first, then alpha ── */
-    const getSortedEntries = ( node ) => {
-      return Object.entries( node ).sort( ( [ nameA, nodeA ], [ nameB, nodeB ] ) => {
-        if ( nodeA.type === 'tree' && nodeB.type !== 'tree' ) return -1;
-        if ( nodeA.type !== 'tree' && nodeB.type === 'tree' ) return 1;
-        return nameA.toLowerCase().localeCompare( nameB.toLowerCase() );
-      } );
-    };
-
-    /* ── 13. Tree: Render a single node (recursive) ── */
-    const renderTreeNode = ( name, node, parentPath ) => {
-      const fullPath = parentPath ? `${ parentPath }/${ name }` : name;
-
-      if ( node.type === 'tree' ) {
-        const safeName = escapeHTML( name );
-        const safePath = escapeHTML( fullPath );
-        let childrenHTML = '';
-        for ( const [ childName, childNode ] of getSortedEntries( node.children ) ) {
-          childrenHTML += renderTreeNode( childName, childNode, fullPath );
-        }
-        return `<details data-folder-path="${ safePath }">
-  <summary class="tree-folder" tabindex="0" title="${ safePath }">
-    📁 <span class="folder-name">${ safeName }</span>
-  </summary>
-  ${ childrenHTML }
-</details>`;
-      }
-
-      // Blob (file)
-      const icon = getFileIcon( name );
-      const size = formatSize( node.size );
-      const safeName = escapeHTML( name );
-      const safePath = escapeHTML( fullPath );
-      const isReadme = /^readme\.(md|txt)$/i.test( name );
-      const nameHTML = isReadme ? `<strong>${ safeName }</strong>` : safeName;
-      return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ safePath }" title="${ safePath }">
-  <span class="tree-item-name">${ icon } ${ nameHTML }</span>
-  ${ size ? `<span class="tree-item-size">${ escapeHTML( size ) }</span>` : '' }
-</div>`;
-    };
-
-    /* ── 14. Tree: Batched render ── */
-    const renderTree = ( treeArray ) => {
-      const nested = filterHiddenFolders( buildNestedTree( treeArray ) );
-      const treeList = document.getElementById( 'treeList' );
-      const rootEntries = getSortedEntries( nested );
-
-      if ( rootEntries.length === 0 ) {
-        treeList.innerHTML += '<p>No files found.</p>';
-        return;
-      }
-
-      const BATCH_SIZE = 120;
-      let rendered = 0;
-
-      // Progress status element
-      const statusEl = document.createElement( 'div' );
-      statusEl.id = 'treeRenderStatus';
-      statusEl.style.cssText = 'font-size: 0.85rem; color: var(--text-color); opacity: 0.7; padding: 0.3rem 0.5rem;';
-      treeList.appendChild( statusEl );
-
-      const renderBatch = () => {
-        const batchEnd = Math.min( rendered + BATCH_SIZE, rootEntries.length );
-        const fragment = document.createDocumentFragment();
-
-        for ( let i = rendered; i < batchEnd; i++ ) {
-          const [ name, node ] = rootEntries[ i ];
-          const tempDiv = document.createElement( 'div' );
-          tempDiv.innerHTML = renderTreeNode( name, node, '' );
-          while ( tempDiv.firstChild ) {
-            fragment.appendChild( tempDiv.firstChild );
-          }
-        }
-
-        treeList.insertBefore( fragment, statusEl );
-        rendered = batchEnd;
-
-        const pct = Math.round( ( rendered / rootEntries.length ) * 100 );
-        statusEl.textContent = `${ pct }% rendered…`;
-
-        if ( rendered < rootEntries.length ) {
-          setTimeout( renderBatch, 0 );
-        } else {
-          statusEl.remove();
-          onTreeRendered();
-        }
-      };
-
-      renderBatch();
-    };
-
-    /* ── 15. Tree: Post-render callback ── */
-    const onTreeRendered = () => {
-      document.getElementById( 'btnExpandAll' ).style.display = 'inline';
-      autoOpenReadme();
-      setupTreeFilter();
-      setupKeyboardNav();
-    };
-
-    /* ── 16. Tree: Shared filter logic ── */
-    let savedFolderStates = null;
-
-    const runFilter = () => {
-      const treeFilter = document.getElementById( 'treeFilter' );
-      const query = treeFilter.value.trim().toLowerCase();
-      const treeList = document.getElementById( 'treeList' );
-      const allDetails = Array.from( treeList.querySelectorAll( 'details' ) );
-
-      if ( !query ) {
-        // Restore all visibility
-        treeList.querySelectorAll( '.tree-item, details' ).forEach( el => {
-          el.style.display = '';
-        } );
-        // Restore folder open/closed states saved before filtering
-        if ( savedFolderStates ) {
-          allDetails.forEach( d => {
-            const key = d.dataset.folderPath;
-            if ( savedFolderStates.has( key ) ) {
-              d.open = savedFolderStates.get( key );
-            }
-          } );
-          savedFolderStates = null;
-        }
-        return;
-      }
-
-      // Save folder open states before first filter application
-      if ( !savedFolderStates ) {
-        savedFolderStates = new Map();
-        allDetails.forEach( d => {
-          savedFolderStates.set( d.dataset.folderPath, d.open );
-        } );
-      }
-
-      // Show/hide file items
-      treeList.querySelectorAll( '.tree-item' ).forEach( item => {
-        const path = ( item.dataset.path || '' ).toLowerCase();
-        item.style.display = path.includes( query ) ? '' : 'none';
-      } );
-
-      // Show/hide folders based on visible descendants (bottom-up)
-      const detailsReversed = Array.from( treeList.querySelectorAll( 'details' ) ).reverse();
-      detailsReversed.forEach( d => {
-        const hasVisible = Array.from( d.children ).some( child =>
-          ( child.classList.contains( 'tree-item' ) && child.style.display !== 'none' ) ||
-          ( child.tagName === 'DETAILS' && child.style.display !== 'none' )
-        );
-        if ( hasVisible ) {
-          d.style.display = '';
-          d.open = true;
-        } else {
-          d.style.display = 'none';
-        }
-      } );
-    };
-
-    /* ── 17. Tree: Setup filter listeners ── */
-    const setupTreeFilter = () => {
-      const treeFilter = document.getElementById( 'treeFilter' );
-      const btnFilterClear = document.getElementById( 'btnFilterClear' );
-
-      let filterTimer;
-      treeFilter.addEventListener( 'input', () => {
-        clearTimeout( filterTimer );
-        filterTimer = setTimeout( runFilter, 150 );
-      } );
-
-      // Augment clear button: value clearing is done by layout listener; this adds the runFilter call
-      btnFilterClear.addEventListener( 'click', () => {
-        runFilter();
-      } );
-    };
-
-    /* ── 18. Tree: Expand / Collapse All ── */
-    const setupExpandCollapse = () => {
-      const btn = document.getElementById( 'btnExpandAll' );
-      btn.addEventListener( 'click', () => {
-        const details = document.querySelectorAll( '#treeList details' );
-        if ( btn.textContent.trim() === 'Expand All' ) {
-          details.forEach( d => { d.open = true; } );
-          btn.textContent = 'Collapse All';
-          btn.title = 'Collapse All Folders';
-        } else {
-          details.forEach( d => { d.open = false; } );
-          btn.textContent = 'Expand All';
-          btn.title = 'Expand All Folders';
-        }
-      } );
-    };
-
-    /* ── 19. Tree: File selection (event delegation) ── */
-    const setupFileSelection = () => {
-      const treeList = document.getElementById( 'treeList' );
-      treeList.addEventListener( 'click', ( e ) => {
-        const target = e.target.closest( '[data-action="select-file"]' );
-        if ( !target ) return;
-
-        // Deactivate previous selection
-        const prev = treeList.querySelector( '.tree-item.active' );
-        if ( prev ) prev.classList.remove( 'active' );
-
-        target.classList.add( 'active' );
-        state.currentFilePath = target.dataset.path;
-
-        // Update content area
-        document.getElementById( 'contentTitle' ).textContent = target.dataset.path.split( '/' ).pop();
-        document.getElementById( 'contentBody' ).innerHTML = `<p>Selected: ${ escapeHTML( target.dataset.path ) }</p>`;
-      } );
-    };
-
-    /* ── 20. Tree: Keyboard navigation ── */
-
-    /*
-     * getVisibleTreeItems():
-     *   - .tree-folder is a <summary>. Its own parent <details> being closed does NOT
-     *     hide the summary — it stays visible as the click target. So for folders we
-     *     start the ancestor walk at the GRANDPARENT (skip the folder's own <details>).
-     *     However if the filter set display:none on that <details>, the folder IS hidden.
-     *   - .tree-item is hidden if any ancestor <details> is closed OR has display:none.
-     *   - Any element with el.style.display === 'none' is excluded directly.
-     */
-    const getVisibleTreeItems = () => {
-      return Array.from( document.querySelectorAll( '#treeList .tree-folder, #treeList .tree-item' ) )
-        .filter( el => {
-          if ( el.style.display === 'none' ) return false;
-          const isFolder = el.classList.contains( 'tree-folder' );
-          // For a folder (<summary>): its own <details> being closed doesn't hide it,
-          // but display:none on that <details> (set by filter) does.
-          if ( isFolder && el.parentElement?.style.display === 'none' ) return false;
-          // Walk ancestors: skip the folder's own <details>, start from its parent.
-          let ancestor = isFolder ? el.parentElement?.parentElement : el.parentElement;
-          while ( ancestor && ancestor.id !== 'treeList' ) {
-            if ( ancestor.style.display === 'none' ) return false;
-            if ( ancestor.tagName === 'DETAILS' && !ancestor.open ) return false;
-            ancestor = ancestor.parentElement;
-          }
-          return true;
-        } );
-    };
-
-    const setupKeyboardNav = () => {
-      document.addEventListener( 'keydown', ( e ) => {
-        // '/' shortcut: focus filter unless already in an input
-        if ( e.key === '/' && ![ 'INPUT', 'TEXTAREA' ].includes( e.target.tagName ) ) {
-          e.preventDefault();
-          document.getElementById( 'treeFilter' ).focus();
-          return;
-        }
-
-        const active = document.activeElement;
-        const inTree = active &&
-          active.closest( '#treeList' ) &&
-          ( active.classList.contains( 'tree-folder' ) || active.classList.contains( 'tree-item' ) );
-
-        if ( !inTree ) return;
-
-        const items = getVisibleTreeItems();
-        const idx = items.indexOf( active );
-
-        switch ( e.key ) {
-          case 'ArrowDown': {
-            e.preventDefault();
-            const next = items[ idx + 1 ];
-            if ( next ) {
-              next.focus();
-              if ( next.classList.contains( 'tree-item' ) ) next.click();
-            }
-            break;
-          }
-          case 'ArrowUp': {
-            e.preventDefault();
-            const prev = items[ idx - 1 ];
-            if ( prev ) {
-              prev.focus();
-              if ( prev.classList.contains( 'tree-item' ) ) prev.click();
-            }
-            break;
-          }
-          case 'Enter':
-          case ' ': {
-            e.preventDefault();
-            if ( active.classList.contains( 'tree-folder' ) ) {
-              const details = active.parentElement;
-              details.open = !details.open;
-            } else {
-              active.click();
-            }
-            break;
-          }
-          case 'ArrowRight': {
-            e.preventDefault();
-            if ( active.classList.contains( 'tree-folder' ) ) {
-              const details = active.parentElement;
-              if ( !details.open ) {
-                details.open = true;
-              } else {
-                // Move focus to first child item
-                const newItems = getVisibleTreeItems();
-                const newIdx = newItems.indexOf( active );
-                const next = newItems[ newIdx + 1 ];
-                if ( next ) next.focus();
-              }
-            }
-            break;
-          }
-          case 'ArrowLeft': {
-            e.preventDefault();
-            if ( active.classList.contains( 'tree-folder' ) ) {
-              const details = active.parentElement;
-              if ( details.open ) {
-                details.open = false;
-              } else {
-                // Move to parent folder summary
-                const parentDetails = details.parentElement?.closest( 'details' );
-                if ( parentDetails ) parentDetails.querySelector( '.tree-folder' )?.focus();
-              }
-            } else {
-              // File: move to parent folder summary
-              const parentDetails = active.closest( 'details' );
-              if ( parentDetails ) parentDetails.querySelector( '.tree-folder' )?.focus();
-            }
-            break;
-          }
-        }
-      } );
-    };
-
-    /* ── 21. Tree: Auto-open README ── */
-    const autoOpenReadme = () => {
-      if ( !state.tree ) return;
-
-      // Root-level README preferred
-      const rootReadme = state.tree.find( item =>
-        item.type === 'blob' && /^readme\.(md|txt)$/i.test( item.path )
-      );
-
-      if ( rootReadme ) {
-        const el = document.querySelector(
-          `#treeList .tree-item[data-path="${ CSS.escape( rootReadme.path ) }"]`
-        );
-        if ( el ) { el.click(); return; }
-      }
-
-      // Fallback: any README anywhere
-      const anyReadme = state.tree.find( item =>
-        item.type === 'blob' && /readme\.(md|txt)$/i.test( item.path )
-      );
-      if ( anyReadme ) {
-        const el = document.querySelector(
-          `#treeList .tree-item[data-path="${ CSS.escape( anyReadme.path ) }"]`
-        );
-        if ( el ) el.click();
-      }
-    };
-
-    /* ── 22. Tree: Scroll to folder utility ── */
-    const scrollToTreeFolder = ( folderPath ) => {
-      const el = document.querySelector(
-        `details[data-folder-path="${ CSS.escape( folderPath ) }"]`
-      );
-      if ( !el ) return;
-
-      // Open all ancestor <details>
-      let parent = el.parentElement?.closest( 'details' );
-      while ( parent ) {
-        parent.open = true;
-        parent = parent.parentElement?.closest( 'details' );
-      }
-
-      el.open = true;
-      el.scrollIntoView( { block: 'center', behavior: 'smooth' } );
-    };
-
-    /* ── 23. Tree: Rate limit badge ── */
+    /* ── 9. Rate limit badge (Public API) ── */
     const updateRateBadge = ( response ) => {
       const remaining = response.headers.get( 'X-RateLimit-Remaining' );
       const limit = response.headers.get( 'X-RateLimit-Limit' );
@@ -1115,81 +664,475 @@
       }
     };
 
-    /* ── 24. Tree: Auth headers ── */
-    const getAuthHeaders = () => {
-      const token = localStorage.getItem( 'githubToken' );
-      return token ? { 'Authorization': `token ${ token }` } : {};
+    /* ── 10. AbortController (Public API) ── */
+    let currentAbortController = null;
+
+    /* ── 11. File type icons ── */
+    const getFileIcon = ( fileName ) => {
+      const ext = fileName.includes( '.' ) ? '.' + fileName.split( '.' ).pop().toLowerCase() : '';
+      const iconMap = {
+        '.md': '📝',
+        '.js': '🟨', '.mjs': '🟨', '.cjs': '🟨',
+        '.ts': '🟦', '.tsx': '🟦',
+        '.py': '🐍',
+        '.html': '🌐', '.htm': '🌐',
+        '.css': '🎨', '.scss': '🎨', '.less': '🎨',
+        '.png': '🖼️', '.jpg': '🖼️', '.jpeg': '🖼️', '.gif': '🖼️', '.webp': '🖼️', '.svg': '🖼️', '.ico': '🖼️',
+        '.mp3': '🎵', '.wav': '🎵', '.ogg': '🎵',
+        '.mp4': '🎬', '.webm': '🎬',
+        '.pdf': '📕',
+        '.xlsx': '📊', '.xls': '📊', '.csv': '📊', '.ods': '📊',
+        '.yaml': '⚙️', '.yml': '⚙️', '.toml': '⚙️',
+        '.zip': '📦', '.tar': '📦', '.gz': '📦', '.7z': '📦',
+        '.json': '{ }',
+      };
+      return iconMap[ ext ] ?? '📄';
     };
 
-    /* ── 25. Tree: AbortController (module-level) ── */
-    let treeAbortController = null;
+    /* ── 12. File size formatting ── */
+    const formatSize = ( bytes ) => {
+      if ( bytes < 1024 ) return `${ bytes } B`;
+      if ( bytes < 1024 * 1024 ) return `${ ( bytes / 1024 ).toFixed( 1 ) } KB`;
+      return `${ ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) } MB`;
+    };
 
-    /* ── 26. Tree: Fetch repo tree and render ── */
-    const initTree = async () => {
-      if ( treeAbortController ) treeAbortController.abort();
-      treeAbortController = new AbortController();
-      const signal = treeAbortController.signal;
+    /* ── 13. Build nested tree structure ── */
+    const buildNestedTree = ( flatTree ) => {
+      const root = { children: {} };
 
-      const { owner, repo } = state;
-      const headers = getAuthHeaders();
+      for ( const item of flatTree ) {
+        const parts = item.path.split( '/' );
+        // Skip items whose any path segment starts with '.'
+        if ( parts.some( ( p ) => p.startsWith( '.' ) ) ) continue;
+
+        let current = root;
+        for ( let i = 0; i < parts.length; i++ ) {
+          const part = parts[ i ];
+          if ( !current.children[ part ] ) {
+            current.children[ part ] = { children: {}, type: 'tree', path: parts.slice( 0, i + 1 ).join( '/' ) };
+          }
+          if ( i === parts.length - 1 ) {
+            current.children[ part ].type = item.type;
+            current.children[ part ].size = item.size;
+            current.children[ part ].path = item.path;
+          }
+          current = current.children[ part ];
+        }
+      }
+
+      return root;
+    };
+
+    /* ── 14. Sort tree children ── */
+    const sortedEntries = ( children ) =>
+      Object.entries( children ).sort( ( [ aName, aNode ], [ bName, bNode ] ) => {
+        const aIsFolder = Object.keys( aNode.children ).length > 0 || aNode.type === 'tree';
+        const bIsFolder = Object.keys( bNode.children ).length > 0 || bNode.type === 'tree';
+        if ( aIsFolder && !bIsFolder ) return -1;
+        if ( !aIsFolder && bIsFolder ) return 1;
+        return aName.toLowerCase().localeCompare( bName.toLowerCase() );
+      } );
+
+    /* ── 15. Render a single node to HTML ── */
+    const renderNode = ( name, node ) => {
+      const isFolder = Object.keys( node.children ).length > 0 || ( node.type === 'tree' && Object.keys( node.children ).length === 0 );
+
+      if ( isFolder ) {
+        const childHTML = sortedEntries( node.children )
+          .map( ( [ childName, childNode ] ) => renderNode( childName, childNode ) )
+          .join( '' );
+        return `<details data-folder-path="${ escapeHTML( node.path ) }">
+  <summary class="tree-folder" tabindex="0" title="${ escapeHTML( node.path ) }">📁 <span class="folder-name">${ escapeHTML( name ) }</span></summary>
+  ${ childHTML }
+</details>`;
+      }
+
+      const icon = getFileIcon( name );
+      const isReadme = /^readme/i.test( name );
+      const nameHTML = isReadme
+        ? `<strong>${ icon } ${ escapeHTML( name ) }</strong>`
+        : `${ icon } ${ escapeHTML( name ) }`;
+      const sizeHTML = node.size != null ? `<span class="tree-item-size">${ formatSize( node.size ) }</span>` : '';
+
+      return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeHTML( node.path ) }" title="${ escapeHTML( node.path ) }">
+  <span class="tree-item-name">${ nameHTML }</span>
+  ${ sizeHTML }
+</div>`;
+    };
+
+    /* ── 16. renderTree (batched) ── */
+    const renderTree = ( treeArray ) => {
+      const treeList = document.getElementById( 'treeList' );
+      treeList.innerHTML = '';
+
+      const nested = buildNestedTree( treeArray );
+      const rootEntries = sortedEntries( nested.children );
+      const BATCH_SIZE = 120;
+      const totalBatches = Math.ceil( rootEntries.length / BATCH_SIZE );
+
+      // Progress status
+      const statusEl = document.createElement( 'div' );
+      statusEl.id = 'treeRenderStatus';
+      statusEl.style.cssText = 'font-size:0.85rem;opacity:0.7;padding:0.3rem 0.5rem;';
+      statusEl.textContent = '0% rendered…';
+      treeList.appendChild( statusEl );
+
+      return new Promise( ( resolve ) => {
+        let batchIndex = 0;
+
+        const renderBatch = () => {
+          const start = batchIndex * BATCH_SIZE;
+          const end = Math.min( start + BATCH_SIZE, rootEntries.length );
+          const fragment = document.createDocumentFragment();
+          const temp = document.createElement( 'div' );
+
+          for ( let i = start; i < end; i++ ) {
+            const [ name, node ] = rootEntries[ i ];
+            temp.innerHTML = renderNode( name, node );
+            while ( temp.firstChild ) fragment.appendChild( temp.firstChild );
+          }
+
+          treeList.appendChild( fragment );
+          batchIndex++;
+
+          const pct = Math.round( ( end / rootEntries.length ) * 100 );
+          statusEl.textContent = `${ pct }% rendered…`;
+
+          if ( batchIndex < totalBatches ) {
+            setTimeout( renderBatch, 0 );
+          } else {
+            statusEl.remove();
+            resolve();
+          }
+        };
+
+        if ( rootEntries.length === 0 ) {
+          statusEl.remove();
+          treeList.innerHTML = '<p>No files found.</p>';
+          resolve();
+        } else {
+          setTimeout( renderBatch, 0 );
+        }
+      } );
+    };
+
+    /* ── 17. fetchTree (Public API) ── */
+    const fetchTree = async () => {
+      if ( currentAbortController ) currentAbortController.abort();
+      currentAbortController = new AbortController();
+      const signal = currentAbortController.signal;
+
       const treeList = document.getElementById( 'treeList' );
 
       try {
-        // Fetch default branch if not known
+        // Fetch default branch if needed
         if ( !state.branch ) {
           const repoRes = await fetch(
-            `https://api.github.com/repos/${ owner }/${ repo }`,
-            { headers, signal }
+            `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`,
+            { headers: getAuthHeaders(), signal }
           );
           updateRateBadge( repoRes );
-          if ( !repoRes.ok ) throw new Error( `HTTP ${ repoRes.status }` );
+          if ( !repoRes.ok ) throw new Error( `Repo fetch failed: ${ repoRes.status }` );
           const repoData = await repoRes.json();
           state.branch = repoData.default_branch;
         }
 
-        treeList.innerHTML = '<p>Loading tree…</p>';
-
+        // Fetch recursive tree
         const treeRes = await fetch(
-          `https://api.github.com/repos/${ owner }/${ repo }/git/trees/${ state.branch }?recursive=1`,
-          { headers, signal }
+          `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/git/trees/${ encodeURIComponent( state.branch ) }?recursive=1`,
+          { headers: getAuthHeaders(), signal }
         );
         updateRateBadge( treeRes );
 
         if ( treeRes.status === 403 ) {
-          treeList.innerHTML = '<p style="color: red;">Rate limited. Add a GitHub token for higher limits.</p>';
+          treeList.innerHTML = '<p style="color:red;">Rate limited. Add a GitHub token for higher limits.</p>';
           return;
         }
-        if ( !treeRes.ok ) throw new Error( `HTTP ${ treeRes.status }` );
+        if ( !treeRes.ok ) throw new Error( `Tree fetch failed: ${ treeRes.status }` );
 
         const treeData = await treeRes.json();
-        state.tree = treeData.tree;
-
-        treeList.innerHTML = '';
 
         // Truncation warning
         if ( treeData.truncated ) {
           const warning = document.createElement( 'div' );
-          warning.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; font-size: 0.85rem;';
+          warning.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;padding:0.5rem;border-radius:4px;margin-bottom:0.5rem;font-size:0.85rem;';
           warning.textContent = '⚠️ Repository tree is truncated. Some files may not appear.';
+          treeList.innerHTML = '';
           treeList.appendChild( warning );
         }
 
-        // Set up file selection before rendering (event delegation — works immediately)
-        setupFileSelection();
-
-        // Set up expand/collapse button
-        setupExpandCollapse();
-
-        // Start batched rendering
-        renderTree( state.tree );
+        state.tree = treeData.tree;
+        await renderTree( state.tree );
 
       } catch ( err ) {
         if ( err.name === 'AbortError' ) return;
-        treeList.innerHTML = `<p style="color: red;">Error: ${ escapeHTML( err.message ) }</p>`;
+        treeList.innerHTML = `<p style="color:red;">${ escapeHTML( err.message ) }</p>`;
       }
     };
 
-    /* ── 27. init ── */
+    /* ── 18. Filter logic ── */
+    const runFilter = () => {
+      const query = document.getElementById( 'treeFilter' ).value.trim().toLowerCase();
+      const treeList = document.getElementById( 'treeList' );
+      const items = treeList.querySelectorAll( '.tree-item' );
+      const folders = treeList.querySelectorAll( 'details' );
+
+      if ( !query ) {
+        // Show everything, restore folder state
+        items.forEach( ( el ) => { el.style.display = ''; } );
+        folders.forEach( ( el ) => { el.style.display = ''; } );
+        return;
+      }
+
+      // First hide all items, then show matches
+      items.forEach( ( el ) => {
+        const path = ( el.dataset.path || '' ).toLowerCase();
+        el.style.display = path.includes( query ) ? '' : 'none';
+      } );
+
+      // For each folder: show & open if it has visible descendants, else hide
+      // Process deepest folders first
+      const folderArr = Array.from( folders ).reverse();
+      for ( const detail of folderArr ) {
+        const hasVisible = detail.querySelector( '.tree-item:not([style*="display: none"])' ) ||
+          detail.querySelector( 'details:not([style*="display: none"])' );
+        if ( hasVisible ) {
+          detail.style.display = '';
+          detail.open = true;
+        } else {
+          detail.style.display = 'none';
+        }
+      }
+    };
+
+    let filterTimeout = null;
+    const debouncedFilter = () => {
+      clearTimeout( filterTimeout );
+      filterTimeout = setTimeout( runFilter, 150 );
+    };
+
+    /* ── 19. setupTreeFilter ── */
+    const setupTreeFilter = () => {
+      const treeFilter = document.getElementById( 'treeFilter' );
+      const btnFilterClear = document.getElementById( 'btnFilterClear' );
+
+      treeFilter.addEventListener( 'input', () => {
+        btnFilterClear.style.display = treeFilter.value ? 'block' : 'none';
+        debouncedFilter();
+      } );
+
+      btnFilterClear.addEventListener( 'click', () => {
+        treeFilter.value = '';
+        btnFilterClear.style.display = 'none';
+        runFilter();
+        treeFilter.focus();
+      } );
+    };
+
+    /* ── 20. Expand All / Collapse All ── */
+    const setupExpandAll = () => {
+      const btn = document.getElementById( 'btnExpandAll' );
+      btn.style.display = '';
+      let expanded = false;
+
+      btn.addEventListener( 'click', () => {
+        const allDetails = document.getElementById( 'treeList' ).querySelectorAll( 'details' );
+        expanded = !expanded;
+        allDetails.forEach( ( d ) => { d.open = expanded; } );
+        btn.textContent = expanded ? 'Collapse All' : 'Expand All';
+      } );
+    };
+
+    /* ── 21. File selection (event delegation) ── */
+    const setupFileSelection = () => {
+      document.getElementById( 'treeList' ).addEventListener( 'click', ( e ) => {
+        const target = e.target.closest( '[data-action="select-file"]' );
+        if ( !target ) return;
+
+        const prev = document.querySelector( '.tree-item.active' );
+        if ( prev ) prev.classList.remove( 'active' );
+
+        target.classList.add( 'active' );
+        state.currentFilePath = target.dataset.path;
+
+        const fileName = state.currentFilePath.split( '/' ).pop();
+        document.getElementById( 'contentTitle' ).textContent = escapeHTML( fileName );
+        document.getElementById( 'contentBody' ).innerHTML = `<p>Selected: ${ escapeHTML( state.currentFilePath ) }</p>`;
+      } );
+    };
+
+    /* ── 22. Keyboard navigation ── */
+    const getVisibleTreeItems = () => {
+      const treeList = document.getElementById( 'treeList' );
+      const all = treeList.querySelectorAll( '.tree-folder, .tree-item' );
+      return Array.from( all ).filter( ( el ) => {
+        // Check the element itself is not hidden
+        if ( el.style.display === 'none' ) return false;
+
+        // For .tree-folder (<summary>), start checking from the grandparent
+        // (skip its own <details> parent since the summary is always visible when the <details> is shown)
+        // But if the <details> itself has display:none (from filter), exclude it
+        const isSummary = el.classList.contains( 'tree-folder' );
+        const ownDetails = isSummary ? el.parentElement : null;
+        if ( isSummary && ownDetails?.style.display === 'none' ) return false;
+
+        let ancestor = isSummary ? ownDetails?.parentElement : el.parentElement;
+        while ( ancestor && ancestor !== treeList ) {
+          if ( ancestor.style.display === 'none' ) return false;
+          if ( ancestor.tagName === 'DETAILS' && !ancestor.open ) {
+            // Check if el is the summary of this details — that would already be handled
+            return false;
+          }
+          ancestor = ancestor.parentElement;
+        }
+        return true;
+      } );
+    };
+
+    const selectFileItem = ( el ) => {
+      if ( !el.classList.contains( 'tree-item' ) ) return;
+      const prev = document.querySelector( '.tree-item.active' );
+      if ( prev ) prev.classList.remove( 'active' );
+      el.classList.add( 'active' );
+      state.currentFilePath = el.dataset.path;
+      const fileName = state.currentFilePath.split( '/' ).pop();
+      document.getElementById( 'contentTitle' ).textContent = escapeHTML( fileName );
+      document.getElementById( 'contentBody' ).innerHTML = `<p>Selected: ${ escapeHTML( state.currentFilePath ) }</p>`;
+    };
+
+    const setupKeyboardNav = () => {
+      document.addEventListener( 'keydown', ( e ) => {
+        // '/' shortcut to focus filter
+        if ( e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA' ) {
+          e.preventDefault();
+          document.getElementById( 'treeFilter' ).focus();
+          return;
+        }
+
+        const treeList = document.getElementById( 'treeList' );
+        if ( !treeList.contains( document.activeElement ) ) return;
+
+        const el = document.activeElement;
+        const isSummary = el.classList.contains( 'tree-folder' );
+        const isItem = el.classList.contains( 'tree-item' );
+        if ( !isSummary && !isItem ) return;
+
+        const items = getVisibleTreeItems();
+        const idx = items.indexOf( el );
+        if ( idx === -1 ) return;
+
+        switch ( e.key ) {
+          case 'ArrowDown': {
+            e.preventDefault();
+            const next = items[ idx + 1 ];
+            if ( next ) {
+              next.focus();
+              selectFileItem( next );
+            }
+            break;
+          }
+          case 'ArrowUp': {
+            e.preventDefault();
+            const prev = items[ idx - 1 ];
+            if ( prev ) {
+              prev.focus();
+              selectFileItem( prev );
+            }
+            break;
+          }
+          case 'Enter':
+          case ' ': {
+            e.preventDefault();
+            if ( isSummary ) {
+              el.parentElement.open = !el.parentElement.open;
+            } else {
+              selectFileItem( el );
+            }
+            break;
+          }
+          case 'ArrowRight': {
+            e.preventDefault();
+            if ( isSummary ) {
+              const details = el.parentElement;
+              if ( !details.open ) {
+                details.open = true;
+              } else {
+                // Move to first child
+                const firstChild = details.querySelector( ':scope > details > .tree-folder, :scope > .tree-item' );
+                if ( firstChild ) {
+                  firstChild.focus();
+                  selectFileItem( firstChild );
+                }
+              }
+            }
+            break;
+          }
+          case 'ArrowLeft': {
+            e.preventDefault();
+            if ( isSummary ) {
+              const details = el.parentElement;
+              if ( details.open ) {
+                details.open = false;
+              } else {
+                // Move to parent folder
+                const parentDetails = details.parentElement?.closest( 'details' );
+                if ( parentDetails ) {
+                  const parentSummary = parentDetails.querySelector( ':scope > .tree-folder' );
+                  if ( parentSummary ) parentSummary.focus();
+                }
+              }
+            } else {
+              // File: move to parent folder
+              const parentDetails = el.closest( 'details' );
+              if ( parentDetails ) {
+                const parentSummary = parentDetails.querySelector( ':scope > .tree-folder' );
+                if ( parentSummary ) parentSummary.focus();
+              }
+            }
+            break;
+          }
+        }
+      } );
+    };
+
+    /* ── 23. Auto-open README ── */
+    const autoOpenReadme = () => {
+      if ( !state.tree ) return;
+
+      // Prefer root-level README
+      const readme = state.tree.find( ( f ) =>
+        f.type === 'blob' && /^readme\.(md|txt)$/i.test( f.path )
+      ) ?? state.tree.find( ( f ) =>
+        f.type === 'blob' && /readme\.(md|txt)$/i.test( f.path.split( '/' ).pop() )
+      );
+
+      if ( !readme ) return;
+
+      const treeList = document.getElementById( 'treeList' );
+      const item = treeList.querySelector( `[data-action="select-file"][data-path="${ CSS.escape( readme.path ) }"]` );
+      if ( item ) {
+        item.click();
+        item.scrollIntoView( { block: 'center', behavior: 'smooth' } );
+      }
+    };
+
+    /* ── 24. scrollToTreeFolder ── */
+    const scrollToTreeFolder = ( folderPath ) => {
+      const details = document.querySelector( `details[data-folder-path="${ CSS.escape( folderPath ) }"]` );
+      if ( !details ) return;
+
+      // Open all ancestor <details>
+      let ancestor = details.parentElement?.closest( 'details' );
+      while ( ancestor ) {
+        ancestor.open = true;
+        ancestor = ancestor.parentElement?.closest( 'details' );
+      }
+
+      details.open = true;
+      details.scrollIntoView( { block: 'center', behavior: 'smooth' } );
+    };
+
+    /* ── 25. init ── */
     const init = async () => {
       initAppearance();
       setupListeners();
@@ -1197,11 +1140,17 @@
       state.owner = CONFIG.owner;
       state.repo = CONFIG.repo;
       state.branch = CONFIG.branch;
+
       if ( state.owner && state.repo ) {
         updateHeaderFromConfig();
-        const cb = document.getElementById( 'contentBody' );
-        cb.innerHTML = '<p>Ready — repo detected: <strong>' + escapeHTML( state.owner ) + ' / ' + escapeHTML( state.repo ) + '</strong></p>';
-        await initTree();
+
+        document.getElementById( 'treeList' ).innerHTML = '<p>Loading tree…</p>';
+        await fetchTree();
+        autoOpenReadme();
+        setupExpandAll();
+        setupTreeFilter();
+        setupFileSelection();
+        setupKeyboardNav();
       }
     };
 

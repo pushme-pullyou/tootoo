@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-08 14:30">
+  <meta name="revised" content="2026-04-10 09:00">
   <title>TooToo LT</title>
   <style>
     /* ── Custom Properties ── */
@@ -313,23 +313,6 @@
       border-color: var(--highlight-color);
     }
 
-    /* ── Responsive ── */
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 25% !important;
-      }
-
-      .resizer {
-        width: 4px;
-      }
-
-      .file-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-      }
-    }
-
     /* ── Treeview ── */
     .tree-folder {
       display: flex;
@@ -385,6 +368,23 @@
     details {
       padding-left: 0;
     }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 25% !important;
+      }
+
+      .resizer {
+        width: 4px;
+      }
+
+      .file-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+    }
   </style>
 </head>
 
@@ -404,6 +404,7 @@
     <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode">🌙</button>
     <button id="btnFontDec" class="header-btn" title="Decrease Font Size">A−</button>
     <button id="btnFontInc" class="header-btn" title="Increase Font Size">A+</button>
+    <button id="btnHelp" class="header-btn" title="About this app">?</button>
     <button id="btnToken" class="header-btn" title="Set GitHub Personal Access Token">⚙️ Token</button>
     <div id="rateBadge" class="rate-limit-badge" title="API Rate Limit" aria-live="polite"></div>
   </header>
@@ -411,7 +412,7 @@
   <main>
 
     <div class="sidebar">
-      <div class="panel-header" title="Last updated: 2026-04-08 14:30">
+      <div class="panel-header" title="Last updated: 2026-04-10 09:00">
         <h3 id="hFiles">Files</h3>
         <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders">Expand
           All</button>
@@ -451,9 +452,9 @@
 
     /* ── 2. CONFIG & state ── */
     const CONFIG = {
-      owner: 'theo-armour',
-      repo: 'sandbox',
-      branch: '',
+      owner: 'theo-armour',   // default for testing
+      repo: 'sandbox',        // default for testing
+      branch: '',             // empty = fetch default branch from API later
     };
 
     const state = {
@@ -477,13 +478,16 @@
 
     /* ── 5. detectRepo ── */
     const detectRepo = async () => {
+      // Step 1: URL query parameters
       const params = new URLSearchParams( location.search );
       if ( params.get( 'owner' ) ) CONFIG.owner = params.get( 'owner' );
       if ( params.get( 'repo' ) ) CONFIG.repo = params.get( 'repo' );
       if ( params.get( 'branch' ) ) CONFIG.branch = params.get( 'branch' );
 
+      // Step 2: CONFIG already filled
       if ( CONFIG.owner && CONFIG.repo ) return;
 
+      // Step 3: localStorage cache (checked before .git/config to avoid 404 noise)
       const cached = localStorage.getItem( storageKey( 'repo' ) );
       if ( cached ) {
         try {
@@ -496,14 +500,29 @@
         } catch ( _ ) { /* ignore malformed cache */ }
       }
 
+      // Step 4: Parse GitHub Pages URL — e.g. https://owner.github.io/repo/…
+      if ( location.hostname.endsWith( '.github.io' ) ) {
+        const owner = location.hostname.split( '.' )[ 0 ];
+        const segments = location.pathname.split( '/' ).filter( Boolean );
+        const repo = segments[ 0 ] || `${ owner }.github.io`;
+        CONFIG.owner = owner;
+        CONFIG.repo = repo;
+        localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner, repo } ) );
+        return;
+      }
+
+      // Step 5: Fetch .git/config — try walking up the directory tree
+      const gitConfigPrefixes = [ '', '../', '../../', '../../../', '../../../../' ];
+      const gitConfigRegex = /github\.com[:/]([^/\n]+)\/([^.\n]+)(\.git)?/;
+
+      // 5a: Use fetch on HTTP/HTTPS
       if ( location.protocol === 'http:' || location.protocol === 'https:' ) {
-        const prefixes = [ '', '../', '../../', '../../../', '../../../../' ];
-        for ( const prefix of prefixes ) {
+        for ( const prefix of gitConfigPrefixes ) {
           try {
             const res = await fetch( `${ prefix }.git/config` );
             if ( !res.ok ) continue;
             const text = await res.text();
-            const match = text.match( /github\.com[:/]([^/\n]+)\/([^.\n]+)(\.git)?/ );
+            const match = text.match( gitConfigRegex );
             if ( match ) {
               CONFIG.owner = match[ 1 ];
               CONFIG.repo = match[ 2 ];
@@ -514,6 +533,27 @@
         }
       }
 
+      // 5b: Use synchronous XHR on file:// (fetch is CORS-blocked)
+      if ( location.protocol === 'file:' ) {
+        for ( const prefix of gitConfigPrefixes ) {
+          try {
+            const xhr = new XMLHttpRequest();
+            xhr.open( 'GET', `${ prefix }.git/config`, false );
+            xhr.send( null );
+            if ( ( xhr.status === 200 || xhr.status === 0 ) && xhr.responseText ) {
+              const match = xhr.responseText.match( gitConfigRegex );
+              if ( match ) {
+                CONFIG.owner = match[ 1 ];
+                CONFIG.repo = match[ 2 ];
+                localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
+                return;
+              }
+            }
+          } catch ( _ ) { /* XHR blocked or file not found — try next prefix */ }
+        }
+      }
+
+      // Step 6: Show inline form — return Promise that resolves on user submit
       return new Promise( ( resolve ) => {
         const cb = document.getElementById( 'contentBody' );
         cb.innerHTML = `
@@ -541,16 +581,19 @@
 
     /* ── 6. initAppearance ── */
     const initAppearance = () => {
+      // Dark mode
       if ( localStorage.getItem( storageKey( 'darkMode' ) ) === 'true' ) {
         document.body.classList.add( 'dark-mode' );
         document.getElementById( 'btnDarkMode' ).textContent = '☀️';
       }
 
+      // Font size
       const savedFontSize = localStorage.getItem( storageKey( 'fontSize' ) );
       if ( savedFontSize ) {
         document.documentElement.style.setProperty( '--font-size', savedFontSize );
       }
 
+      // Sidebar width
       const savedWidth = localStorage.getItem( storageKey( 'sidebarWidth' ) );
       if ( savedWidth ) {
         document.documentElement.style.setProperty( '--sidebar-width', savedWidth );
@@ -584,6 +627,56 @@
         const sz = Math.max( getFontSize() - 2, 10 );
         document.documentElement.style.setProperty( '--font-size', sz + 'px' );
         localStorage.setItem( storageKey( 'fontSize' ), sz + 'px' );
+      } );
+
+      // Help / About
+      document.getElementById( 'btnHelp' ).addEventListener( 'click', async () => {
+        const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
+        const repoUrl = state.owner && state.repo
+          ? `https://github.com/${ state.owner }/${ state.repo }`
+          : 'https://github.com/pushme-pullyou/tootoo';
+        const sourceUrl = repoUrl + '/tree/main/tootoo-2026-lt';
+        const token = localStorage.getItem( 'githubToken' );
+
+        // Fetch live rate limit from GitHub API
+        let rateLimitInfo = 'Unable to fetch';
+        try {
+          const headers = token ? { Authorization: `token ${ token }` } : {};
+          const res = await fetch( 'https://api.github.com/rate_limit', { headers } );
+          if ( res.ok ) {
+            const data = await res.json();
+            const core = data.resources.core;
+            const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
+            rateLimitInfo = `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })`;
+          }
+        } catch ( _ ) { /* offline or blocked */ }
+
+        const tokenStatus = token ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
+        const cb = document.getElementById( 'contentBody' );
+        cb.innerHTML = `
+          <h2>About TooToo LT</h2>
+          <p>A lightweight single-file GitHub repository browser.</p>
+          <ul>
+            <li><strong>Source code:</strong> <a href="${ escapeHTML( sourceUrl ) }" target="_blank" rel="noopener">${ escapeHTML( sourceUrl ) }</a></li>
+            <li><strong>Repository:</strong> <a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">${ escapeHTML( repoUrl ) }</a></li>
+            <li><strong>Copyright:</strong> pushme-pullyou</li>
+            <li><strong>License:</strong> MIT License</li>
+            <li><strong>Built:</strong> ${ escapeHTML( revised ) }</li>
+          </ul>
+          <h3>GitHub API</h3>
+          <ul>
+            <li><strong>Token:</strong> ${ escapeHTML( tokenStatus ) }</li>
+            <li><strong>Rate limit:</strong> ${ escapeHTML( rateLimitInfo ) }</li>
+          </ul>
+          <h3>Tips</h3>
+          <ul>
+            <li>Use the filter input in the sidebar to search file names</li>
+            <li>Click the title in the header to reload</li>
+            <li>Use <strong>A−</strong> / <strong>A+</strong> to adjust font size — helpful on phones and small screens</li>
+            <li>Click <strong>🌙</strong> to toggle dark mode — your choice is saved across visits</li>
+          </ul>
+        `;
+        document.getElementById( 'contentTitle' ).textContent = 'About';
       } );
 
       // Token prompt
@@ -625,6 +718,17 @@
         localStorage.setItem( storageKey( 'sidebarWidth' ), currentWidth );
       } );
 
+      // Filter input (debounced) — replaces layout's simple show/hide handlers
+      const debouncedFilter = debounce( runFilter, 150 );
+      document.getElementById( 'treeFilter' ).addEventListener( 'input', debouncedFilter );
+
+      document.getElementById( 'btnFilterClear' ).addEventListener( 'click', () => {
+        document.getElementById( 'treeFilter' ).value = '';
+        document.getElementById( 'btnFilterClear' ).style.display = 'none';
+        runFilter();
+        document.getElementById( 'treeFilter' ).focus();
+      } );
+
       // Back to top
       const btnBackToTop = document.getElementById( 'btnBackToTop' );
 
@@ -643,7 +747,8 @@
       } );
     };
 
-    /* ── 8. Auth helpers (Public API) ── */
+    /* ── 8. GitHub API helpers (Public API) ── */
+
     const getToken = () => localStorage.getItem( 'githubToken' ) || '';
 
     const getAuthHeaders = () => {
@@ -653,7 +758,6 @@
       return headers;
     };
 
-    /* ── 9. Rate limit badge (Public API) ── */
     const updateRateBadge = ( response ) => {
       const remaining = response.headers.get( 'X-RateLimit-Remaining' );
       const limit = response.headers.get( 'X-RateLimit-Limit' );
@@ -664,10 +768,9 @@
       }
     };
 
-    /* ── 10. AbortController (Public API) ── */
     let currentAbortController = null;
 
-    /* ── 11. File type icons ── */
+    /* ── 9. File type icons ── */
     const getFileIcon = ( fileName ) => {
       const ext = fileName.includes( '.' ) ? '.' + fileName.split( '.' ).pop().toLowerCase() : '';
       const iconMap = {
@@ -686,22 +789,24 @@
         '.zip': '📦', '.tar': '📦', '.gz': '📦', '.7z': '📦',
         '.json': '{ }',
       };
-      return iconMap[ ext ] ?? '📄';
+      return iconMap[ ext ] || '📄';
     };
 
-    /* ── 12. File size formatting ── */
+    /* ── 10. File size formatting ── */
     const formatSize = ( bytes ) => {
+      if ( bytes == null ) return '';
       if ( bytes < 1024 ) return `${ bytes } B`;
       if ( bytes < 1024 * 1024 ) return `${ ( bytes / 1024 ).toFixed( 1 ) } KB`;
       return `${ ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) } MB`;
     };
 
-    /* ── 13. Build nested tree structure ── */
+    /* ── 11. Build nested tree structure ── */
     const buildNestedTree = ( flatTree ) => {
       const root = { children: {} };
 
       for ( const item of flatTree ) {
         const parts = item.path.split( '/' );
+
         // Skip items whose any path segment starts with '.'
         if ( parts.some( ( p ) => p.startsWith( '.' ) ) ) continue;
 
@@ -709,7 +814,7 @@
         for ( let i = 0; i < parts.length; i++ ) {
           const part = parts[ i ];
           if ( !current.children[ part ] ) {
-            current.children[ part ] = { children: {}, type: 'tree', path: parts.slice( 0, i + 1 ).join( '/' ) };
+            current.children[ part ] = { children: {}, type: null, size: null, path: null };
           }
           if ( i === parts.length - 1 ) {
             current.children[ part ].type = item.type;
@@ -723,82 +828,87 @@
       return root;
     };
 
-    /* ── 14. Sort tree children ── */
+    /* ── 12. Sort tree children: folders first, then alphabetical ── */
     const sortedEntries = ( children ) =>
       Object.entries( children ).sort( ( [ aName, aNode ], [ bName, bNode ] ) => {
-        const aIsFolder = Object.keys( aNode.children ).length > 0 || aNode.type === 'tree';
-        const bIsFolder = Object.keys( bNode.children ).length > 0 || bNode.type === 'tree';
+        const aIsFolder = aNode.type === 'tree' || Object.keys( aNode.children ).length > 0;
+        const bIsFolder = bNode.type === 'tree' || Object.keys( bNode.children ).length > 0;
         if ( aIsFolder && !bIsFolder ) return -1;
         if ( !aIsFolder && bIsFolder ) return 1;
         return aName.toLowerCase().localeCompare( bName.toLowerCase() );
       } );
 
-    /* ── 15. Render a single node to HTML ── */
-    const renderNode = ( name, node ) => {
-      const isFolder = Object.keys( node.children ).length > 0 || ( node.type === 'tree' && Object.keys( node.children ).length === 0 );
+    /* ── 13. Generate HTML for a tree node ── */
+    const renderNode = ( name, node, parentPath ) => {
+      const fullPath = parentPath ? `${ parentPath }/${ name }` : name;
+      const isFolder = node.type === 'tree' || Object.keys( node.children ).length > 0;
 
       if ( isFolder ) {
-        const childHTML = sortedEntries( node.children )
-          .map( ( [ childName, childNode ] ) => renderNode( childName, childNode ) )
+        const childrenHtml = sortedEntries( node.children )
+          .map( ( [ childName, childNode ] ) => renderNode( childName, childNode, fullPath ) )
           .join( '' );
-        return `<details data-folder-path="${ escapeHTML( node.path ) }">
-  <summary class="tree-folder" tabindex="0" title="${ escapeHTML( node.path ) }">📁 <span class="folder-name">${ escapeHTML( name ) }</span></summary>
-  ${ childHTML }
-</details>`;
+
+        return `<details data-folder-path="${ escapeHTML( fullPath ) }">` +
+          `<summary class="tree-folder" tabindex="0" title="${ escapeHTML( fullPath ) }">` +
+          `📁 <span class="folder-name">${ escapeHTML( name ) }</span>` +
+          `</summary>` +
+          childrenHtml +
+          `</details>`;
       }
 
+      // File
       const icon = getFileIcon( name );
+      const sizeStr = formatSize( node.size );
       const isReadme = /^readme/i.test( name );
-      const nameHTML = isReadme
-        ? `<strong>${ icon } ${ escapeHTML( name ) }</strong>`
-        : `${ icon } ${ escapeHTML( name ) }`;
-      const sizeHTML = node.size != null ? `<span class="tree-item-size">${ formatSize( node.size ) }</span>` : '';
+      const nameHtml = isReadme
+        ? `<strong>${ escapeHTML( name ) }</strong>`
+        : escapeHTML( name );
 
-      return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeHTML( node.path ) }" title="${ escapeHTML( node.path ) }">
-  <span class="tree-item-name">${ nameHTML }</span>
-  ${ sizeHTML }
-</div>`;
+      return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeHTML( fullPath ) }" title="${ escapeHTML( fullPath ) }">` +
+        `<span class="tree-item-name">${ icon } ${ nameHtml }</span>` +
+        `<span class="tree-item-size">${ escapeHTML( sizeStr ) }</span>` +
+        `</div>`;
     };
 
-    /* ── 16. renderTree (batched) ── */
+    /* ── 14. renderTree — batched rendering ── */
     const renderTree = ( treeArray ) => {
       const treeList = document.getElementById( 'treeList' );
       treeList.innerHTML = '';
 
       const nested = buildNestedTree( treeArray );
       const rootEntries = sortedEntries( nested.children );
-      const BATCH_SIZE = 120;
-      const totalBatches = Math.ceil( rootEntries.length / BATCH_SIZE );
+      const batchSize = 120;
+      const total = rootEntries.length;
+      let rendered = 0;
 
       // Progress status
       const statusEl = document.createElement( 'div' );
       statusEl.id = 'treeRenderStatus';
-      statusEl.style.cssText = 'font-size:0.85rem;opacity:0.7;padding:0.3rem 0.5rem;';
-      statusEl.textContent = '0% rendered…';
+      statusEl.style.cssText = 'font-size: 0.85rem; color: var(--text-color); opacity: 0.7; padding: 0.3rem 0.5rem;';
       treeList.appendChild( statusEl );
 
       return new Promise( ( resolve ) => {
-        let batchIndex = 0;
-
         const renderBatch = () => {
-          const start = batchIndex * BATCH_SIZE;
-          const end = Math.min( start + BATCH_SIZE, rootEntries.length );
-          const fragment = document.createDocumentFragment();
-          const temp = document.createElement( 'div' );
+          const end = Math.min( rendered + batchSize, total );
+          let html = '';
 
-          for ( let i = start; i < end; i++ ) {
+          for ( let i = rendered; i < end; i++ ) {
             const [ name, node ] = rootEntries[ i ];
-            temp.innerHTML = renderNode( name, node );
-            while ( temp.firstChild ) fragment.appendChild( temp.firstChild );
+            html += renderNode( name, node, '' );
           }
 
-          treeList.appendChild( fragment );
-          batchIndex++;
+          // Insert batch before status element
+          const fragment = document.createElement( 'div' );
+          fragment.innerHTML = html;
+          while ( fragment.firstChild ) {
+            treeList.insertBefore( fragment.firstChild, statusEl );
+          }
 
-          const pct = Math.round( ( end / rootEntries.length ) * 100 );
+          rendered = end;
+          const pct = Math.round( ( rendered / total ) * 100 );
           statusEl.textContent = `${ pct }% rendered…`;
 
-          if ( batchIndex < totalBatches ) {
+          if ( rendered < total ) {
             setTimeout( renderBatch, 0 );
           } else {
             statusEl.remove();
@@ -806,58 +916,62 @@
           }
         };
 
-        if ( rootEntries.length === 0 ) {
+        if ( total === 0 ) {
           statusEl.remove();
-          treeList.innerHTML = '<p>No files found.</p>';
           resolve();
         } else {
-          setTimeout( renderBatch, 0 );
+          renderBatch();
         }
       } );
     };
 
-    /* ── 17. fetchTree (Public API) ── */
+    /* ── 15. fetchTree ── */
     const fetchTree = async () => {
+      // Abort previous fetch sequence
       if ( currentAbortController ) currentAbortController.abort();
       currentAbortController = new AbortController();
       const signal = currentAbortController.signal;
 
       const treeList = document.getElementById( 'treeList' );
+      const headers = getAuthHeaders();
 
       try {
         // Fetch default branch if needed
         if ( !state.branch ) {
           const repoRes = await fetch(
             `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`,
-            { headers: getAuthHeaders(), signal }
+            { headers, signal }
           );
           updateRateBadge( repoRes );
-          if ( !repoRes.ok ) throw new Error( `Repo fetch failed: ${ repoRes.status }` );
+          if ( !repoRes.ok ) throw new Error( `Failed to fetch repo info: ${ repoRes.status }` );
           const repoData = await repoRes.json();
           state.branch = repoData.default_branch;
         }
 
-        // Fetch recursive tree
+        treeList.innerHTML = '<p>Loading tree…</p>';
+
+        // Fetch tree
         const treeRes = await fetch(
           `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/git/trees/${ encodeURIComponent( state.branch ) }?recursive=1`,
-          { headers: getAuthHeaders(), signal }
+          { headers, signal }
         );
         updateRateBadge( treeRes );
 
         if ( treeRes.status === 403 ) {
-          treeList.innerHTML = '<p style="color:red;">Rate limited. Add a GitHub token for higher limits.</p>';
+          treeList.innerHTML = '<p style="color: red;">Rate limited. Add a GitHub token for higher limits.</p>';
           return;
         }
-        if ( !treeRes.ok ) throw new Error( `Tree fetch failed: ${ treeRes.status }` );
+
+        if ( !treeRes.ok ) throw new Error( `Failed to fetch tree: ${ treeRes.status }` );
 
         const treeData = await treeRes.json();
 
         // Truncation warning
         if ( treeData.truncated ) {
-          const warning = document.createElement( 'div' );
-          warning.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;padding:0.5rem;border-radius:4px;margin-bottom:0.5rem;font-size:0.85rem;';
-          warning.textContent = '⚠️ Repository tree is truncated. Some files may not appear.';
           treeList.innerHTML = '';
+          const warning = document.createElement( 'div' );
+          warning.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; font-size: 0.85rem;';
+          warning.textContent = '⚠️ Repository tree is truncated. Some files may not appear.';
           treeList.appendChild( warning );
         }
 
@@ -866,70 +980,58 @@
 
       } catch ( err ) {
         if ( err.name === 'AbortError' ) return;
-        treeList.innerHTML = `<p style="color:red;">${ escapeHTML( err.message ) }</p>`;
+        treeList.innerHTML = `<p style="color: red;">${ escapeHTML( err.message ) }</p>`;
       }
     };
 
-    /* ── 18. Filter logic ── */
+    /* ── 16. Filter logic ── */
     const runFilter = () => {
       const query = document.getElementById( 'treeFilter' ).value.trim().toLowerCase();
       const treeList = document.getElementById( 'treeList' );
+      const btnFilterClear = document.getElementById( 'btnFilterClear' );
+
+      btnFilterClear.style.display = query ? 'block' : 'none';
+
       const items = treeList.querySelectorAll( '.tree-item' );
       const folders = treeList.querySelectorAll( 'details' );
 
       if ( !query ) {
-        // Show everything, restore folder state
+        // Show all, restore natural state
         items.forEach( ( el ) => { el.style.display = ''; } );
         folders.forEach( ( el ) => { el.style.display = ''; } );
         return;
       }
 
-      // First hide all items, then show matches
+      // Hide/show files
       items.forEach( ( el ) => {
         const path = ( el.dataset.path || '' ).toLowerCase();
         el.style.display = path.includes( query ) ? '' : 'none';
       } );
 
-      // For each folder: show & open if it has visible descendants, else hide
-      // Process deepest folders first
-      const folderArr = Array.from( folders ).reverse();
-      for ( const detail of folderArr ) {
-        const hasVisible = detail.querySelector( '.tree-item:not([style*="display: none"])' ) ||
-          detail.querySelector( 'details:not([style*="display: none"])' );
+      // Hide/show folders based on visible descendants
+      // Process from deepest to shallowest
+      const foldersArr = Array.from( folders ).reverse();
+      foldersArr.forEach( ( details ) => {
+        const hasVisible = details.querySelector( '.tree-item:not([style*="display: none"])' );
         if ( hasVisible ) {
-          detail.style.display = '';
-          detail.open = true;
+          details.style.display = '';
+          details.open = true;
         } else {
-          detail.style.display = 'none';
+          details.style.display = 'none';
         }
-      }
-    };
-
-    let filterTimeout = null;
-    const debouncedFilter = () => {
-      clearTimeout( filterTimeout );
-      filterTimeout = setTimeout( runFilter, 150 );
-    };
-
-    /* ── 19. setupTreeFilter ── */
-    const setupTreeFilter = () => {
-      const treeFilter = document.getElementById( 'treeFilter' );
-      const btnFilterClear = document.getElementById( 'btnFilterClear' );
-
-      treeFilter.addEventListener( 'input', () => {
-        btnFilterClear.style.display = treeFilter.value ? 'block' : 'none';
-        debouncedFilter();
-      } );
-
-      btnFilterClear.addEventListener( 'click', () => {
-        treeFilter.value = '';
-        btnFilterClear.style.display = 'none';
-        runFilter();
-        treeFilter.focus();
       } );
     };
 
-    /* ── 20. Expand All / Collapse All ── */
+    /* ── 17. Debounce helper ── */
+    const debounce = ( fn, ms ) => {
+      let timer;
+      return ( ...args ) => {
+        clearTimeout( timer );
+        timer = setTimeout( () => fn( ...args ), ms );
+      };
+    };
+
+    /* ── 18. Expand All / Collapse All ── */
     const setupExpandAll = () => {
       const btn = document.getElementById( 'btnExpandAll' );
       btn.style.display = '';
@@ -943,12 +1045,13 @@
       } );
     };
 
-    /* ── 21. File selection (event delegation) ── */
+    /* ── 19. File selection (event delegation) ── */
     const setupFileSelection = () => {
       document.getElementById( 'treeList' ).addEventListener( 'click', ( e ) => {
         const target = e.target.closest( '[data-action="select-file"]' );
         if ( !target ) return;
 
+        // Remove previous active
         const prev = document.querySelector( '.tree-item.active' );
         if ( prev ) prev.classList.remove( 'active' );
 
@@ -961,27 +1064,35 @@
       } );
     };
 
-    /* ── 22. Keyboard navigation ── */
+    /* ── 20. Keyboard navigation ── */
     const getVisibleTreeItems = () => {
       const treeList = document.getElementById( 'treeList' );
       const all = treeList.querySelectorAll( '.tree-folder, .tree-item' );
       return Array.from( all ).filter( ( el ) => {
-        // Check the element itself is not hidden
+        // Check if the element itself is hidden
         if ( el.style.display === 'none' ) return false;
 
-        // For .tree-folder (<summary>), start checking from the grandparent
-        // (skip its own <details> parent since the summary is always visible when the <details> is shown)
-        // But if the <details> itself has display:none (from filter), exclude it
-        const isSummary = el.classList.contains( 'tree-folder' );
-        const ownDetails = isSummary ? el.parentElement : null;
-        if ( isSummary && ownDetails?.style.display === 'none' ) return false;
+        // For tree-folder (summary): start checking from the grandparent
+        // (skip the <details> that this summary belongs to)
+        // But still exclude if its own <details> has display:none (from filter)
+        if ( el.classList.contains( 'tree-folder' ) ) {
+          const ownDetails = el.parentElement;
+          if ( ownDetails && ownDetails.style.display === 'none' ) return false;
+          let ancestor = ownDetails?.parentElement;
+          while ( ancestor && ancestor !== treeList ) {
+            if ( ancestor.tagName === 'DETAILS' ) {
+              if ( !ancestor.open || ancestor.style.display === 'none' ) return false;
+            }
+            ancestor = ancestor.parentElement;
+          }
+          return true;
+        }
 
-        let ancestor = isSummary ? ownDetails?.parentElement : el.parentElement;
+        // For tree-item: hidden if any ancestor <details> is closed or display:none
+        let ancestor = el.parentElement;
         while ( ancestor && ancestor !== treeList ) {
-          if ( ancestor.style.display === 'none' ) return false;
-          if ( ancestor.tagName === 'DETAILS' && !ancestor.open ) {
-            // Check if el is the summary of this details — that would already be handled
-            return false;
+          if ( ancestor.tagName === 'DETAILS' ) {
+            if ( !ancestor.open || ancestor.style.display === 'none' ) return false;
           }
           ancestor = ancestor.parentElement;
         }
@@ -1002,29 +1113,28 @@
 
     const setupKeyboardNav = () => {
       document.addEventListener( 'keydown', ( e ) => {
+        const treeList = document.getElementById( 'treeList' );
+        const active = document.activeElement;
+
         // '/' shortcut to focus filter
-        if ( e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA' ) {
+        if ( e.key === '/' && active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' ) {
           e.preventDefault();
           document.getElementById( 'treeFilter' ).focus();
           return;
         }
 
-        const treeList = document.getElementById( 'treeList' );
-        if ( !treeList.contains( document.activeElement ) ) return;
+        // Only handle if focus is inside treeList on a tree-folder or tree-item
+        if ( !treeList.contains( active ) ) return;
+        if ( !active.classList.contains( 'tree-folder' ) && !active.classList.contains( 'tree-item' ) ) return;
 
-        const el = document.activeElement;
-        const isSummary = el.classList.contains( 'tree-folder' );
-        const isItem = el.classList.contains( 'tree-item' );
-        if ( !isSummary && !isItem ) return;
-
-        const items = getVisibleTreeItems();
-        const idx = items.indexOf( el );
+        const visible = getVisibleTreeItems();
+        const idx = visible.indexOf( active );
         if ( idx === -1 ) return;
 
         switch ( e.key ) {
           case 'ArrowDown': {
             e.preventDefault();
-            const next = items[ idx + 1 ];
+            const next = visible[ idx + 1 ];
             if ( next ) {
               next.focus();
               selectFileItem( next );
@@ -1033,7 +1143,7 @@
           }
           case 'ArrowUp': {
             e.preventDefault();
-            const prev = items[ idx - 1 ];
+            const prev = visible[ idx - 1 ];
             if ( prev ) {
               prev.focus();
               selectFileItem( prev );
@@ -1043,23 +1153,24 @@
           case 'Enter':
           case ' ': {
             e.preventDefault();
-            if ( isSummary ) {
-              el.parentElement.open = !el.parentElement.open;
+            if ( active.classList.contains( 'tree-folder' ) ) {
+              const details = active.parentElement;
+              details.open = !details.open;
             } else {
-              selectFileItem( el );
+              selectFileItem( active );
             }
             break;
           }
           case 'ArrowRight': {
             e.preventDefault();
-            if ( isSummary ) {
-              const details = el.parentElement;
+            if ( active.classList.contains( 'tree-folder' ) ) {
+              const details = active.parentElement;
               if ( !details.open ) {
                 details.open = true;
               } else {
                 // Move to first child
-                const firstChild = details.querySelector( ':scope > details > .tree-folder, :scope > .tree-item' );
-                if ( firstChild ) {
+                const firstChild = details.querySelector( '.tree-folder, .tree-item' );
+                if ( firstChild && firstChild !== active ) {
                   firstChild.focus();
                   selectFileItem( firstChild );
                 }
@@ -1069,23 +1180,23 @@
           }
           case 'ArrowLeft': {
             e.preventDefault();
-            if ( isSummary ) {
-              const details = el.parentElement;
+            if ( active.classList.contains( 'tree-folder' ) ) {
+              const details = active.parentElement;
               if ( details.open ) {
                 details.open = false;
               } else {
                 // Move to parent folder
                 const parentDetails = details.parentElement?.closest( 'details' );
                 if ( parentDetails ) {
-                  const parentSummary = parentDetails.querySelector( ':scope > .tree-folder' );
+                  const parentSummary = parentDetails.querySelector( ':scope > summary' );
                   if ( parentSummary ) parentSummary.focus();
                 }
               }
             } else {
               // File: move to parent folder
-              const parentDetails = el.closest( 'details' );
+              const parentDetails = active.closest( 'details' );
               if ( parentDetails ) {
-                const parentSummary = parentDetails.querySelector( ':scope > .tree-folder' );
+                const parentSummary = parentDetails.querySelector( ':scope > summary' );
                 if ( parentSummary ) parentSummary.focus();
               }
             }
@@ -1095,44 +1206,47 @@
       } );
     };
 
-    /* ── 23. Auto-open README ── */
+    /* ── 21. Auto-open README ── */
     const autoOpenReadme = () => {
       if ( !state.tree ) return;
 
       // Prefer root-level README
-      const readme = state.tree.find( ( f ) =>
-        f.type === 'blob' && /^readme\.(md|txt)$/i.test( f.path )
-      ) ?? state.tree.find( ( f ) =>
-        f.type === 'blob' && /readme\.(md|txt)$/i.test( f.path.split( '/' ).pop() )
+      const readme = state.tree.find( ( item ) =>
+        item.type === 'blob' && /^readme\.(md|txt)$/i.test( item.path )
+      ) || state.tree.find( ( item ) =>
+        item.type === 'blob' && /\/readme\.(md|txt)$/i.test( item.path )
       );
 
       if ( !readme ) return;
 
-      const treeList = document.getElementById( 'treeList' );
-      const item = treeList.querySelector( `[data-action="select-file"][data-path="${ CSS.escape( readme.path ) }"]` );
-      if ( item ) {
-        item.click();
-        item.scrollIntoView( { block: 'center', behavior: 'smooth' } );
+      const el = document.querySelector( `[data-action="select-file"][data-path="${ CSS.escape( readme.path ) }"]` );
+      if ( el ) {
+        el.classList.add( 'active' );
+        state.currentFilePath = readme.path;
+        const fileName = readme.path.split( '/' ).pop();
+        document.getElementById( 'contentTitle' ).textContent = escapeHTML( fileName );
+        document.getElementById( 'contentBody' ).innerHTML = `<p>Selected: ${ escapeHTML( readme.path ) }</p>`;
+        el.scrollIntoView( { block: 'center', behavior: 'smooth' } );
       }
     };
 
-    /* ── 24. scrollToTreeFolder ── */
+    /* ── 22. scrollToTreeFolder ── */
     const scrollToTreeFolder = ( folderPath ) => {
-      const details = document.querySelector( `details[data-folder-path="${ CSS.escape( folderPath ) }"]` );
-      if ( !details ) return;
+      const target = document.querySelector( `details[data-folder-path="${ CSS.escape( folderPath ) }"]` );
+      if ( !target ) return;
 
       // Open all ancestor <details>
-      let ancestor = details.parentElement?.closest( 'details' );
+      let ancestor = target.parentElement?.closest( 'details' );
       while ( ancestor ) {
         ancestor.open = true;
         ancestor = ancestor.parentElement?.closest( 'details' );
       }
 
-      details.open = true;
-      details.scrollIntoView( { block: 'center', behavior: 'smooth' } );
+      target.open = true;
+      target.scrollIntoView( { block: 'center', behavior: 'smooth' } );
     };
 
-    /* ── 25. init ── */
+    /* ── 23. init ── */
     const init = async () => {
       initAppearance();
       setupListeners();
@@ -1144,12 +1258,19 @@
       if ( state.owner && state.repo ) {
         updateHeaderFromConfig();
 
-        document.getElementById( 'treeList' ).innerHTML = '<p>Loading tree…</p>';
+        // Fetch tree and render
         await fetchTree();
+
+        // Auto-open README
         autoOpenReadme();
+
+        // Show Expand All button
         setupExpandAll();
-        setupTreeFilter();
+
+        // File selection via event delegation
         setupFileSelection();
+
+        // Keyboard navigation
         setupKeyboardNav();
       }
     };
