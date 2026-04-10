@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-09 12:00">
+  <meta name="revised" content="2026-04-09 14:30">
   <title>TooToo LT</title>
   <style>
     /* ── Custom Properties ── */
@@ -348,6 +348,7 @@
     <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode">🌙</button>
     <button id="btnFontDec" class="header-btn" title="Decrease Font Size">A−</button>
     <button id="btnFontInc" class="header-btn" title="Increase Font Size">A+</button>
+    <button id="btnHelp" class="header-btn" title="About this app">?</button>
     <button id="btnToken" class="header-btn" title="Set GitHub Personal Access Token">⚙️ Token</button>
     <div id="rateBadge" class="rate-limit-badge" title="API Rate Limit" aria-live="polite"></div>
   </header>
@@ -355,7 +356,7 @@
   <main>
 
     <div class="sidebar">
-      <div class="panel-header" title="Last updated: 2026-04-09 12:00">
+      <div class="panel-header" title="Last updated: 2026-04-09 14:30">
         <h3 id="hFiles">Files</h3>
         <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders">Expand
           All</button>
@@ -570,6 +571,56 @@
         const sz = Math.max( getFontSize() - 2, 10 );
         document.documentElement.style.setProperty( '--font-size', sz + 'px' );
         localStorage.setItem( storageKey( 'fontSize' ), sz + 'px' );
+      } );
+
+      // Help / About
+      document.getElementById( 'btnHelp' ).addEventListener( 'click', async () => {
+        const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
+        const repoUrl = state.owner && state.repo
+          ? `https://github.com/${ state.owner }/${ state.repo }`
+          : 'https://github.com/pushme-pullyou/tootoo';
+        const sourceUrl = repoUrl + '/tree/main/tootoo-2026-lt';
+        const token = localStorage.getItem( 'githubToken' );
+
+        // Fetch live rate limit from GitHub API
+        let rateLimitInfo = 'Unable to fetch';
+        try {
+          const headers = token ? { Authorization: `token ${ token }` } : {};
+          const res = await fetch( 'https://api.github.com/rate_limit', { headers } );
+          if ( res.ok ) {
+            const data = await res.json();
+            const core = data.resources.core;
+            const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
+            rateLimitInfo = `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })`;
+          }
+        } catch ( _ ) { /* offline or blocked */ }
+
+        const tokenStatus = token ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
+        const cb = document.getElementById( 'contentBody' );
+        cb.innerHTML = `
+          <h2>About TooToo LT</h2>
+          <p>A lightweight single-file GitHub repository browser.</p>
+          <ul>
+            <li><strong>Source code:</strong> <a href="${ escapeHTML( sourceUrl ) }" target="_blank" rel="noopener">${ escapeHTML( sourceUrl ) }</a></li>
+            <li><strong>Repository:</strong> <a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">${ escapeHTML( repoUrl ) }</a></li>
+            <li><strong>Copyright:</strong> pushme-pullyou</li>
+            <li><strong>License:</strong> MIT License</li>
+            <li><strong>Built:</strong> ${ escapeHTML( revised ) }</li>
+          </ul>
+          <h3>GitHub API</h3>
+          <ul>
+            <li><strong>Token:</strong> ${ escapeHTML( tokenStatus ) }</li>
+            <li><strong>Rate limit:</strong> ${ escapeHTML( rateLimitInfo ) }</li>
+          </ul>
+          <h3>Tips</h3>
+          <ul>
+            <li>Use the filter input in the sidebar to search file names</li>
+            <li>Click the title in the header to reload</li>
+            <li>Use <strong>A−</strong> / <strong>A+</strong> to adjust font size — helpful on phones and small screens</li>
+            <li>Click <strong>🌙</strong> to toggle dark mode — your choice is saved across visits</li>
+          </ul>
+        `;
+        document.getElementById( 'contentTitle' ).textContent = 'About';
       } );
 
       // Token prompt

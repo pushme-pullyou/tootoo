@@ -1,5 +1,6 @@
 # TooToo Agenda
 
+* 2026-04-09 ~ auto-configure repo, org, and gists based on URL ??
 * 2026-04-09 ~ Check out GitHub's MCP Server.
 * 2026-04-05 ~ DabDab: EditHub
 * Links to all your followers or stars givers
