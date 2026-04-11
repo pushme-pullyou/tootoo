@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-10 18:30">
+  <meta name="revised" content="2026-04-10 16:00">
   <title>TooToo LT</title>
   <style>
     /* ── Custom Properties ── */
@@ -1269,11 +1269,6 @@
       if ( state.owner && state.repo ) {
         updateHeaderFromConfig();
 
-        // Setup interactions (before fetch so listeners are ready for click/focus)
-        setupFileSelection();
-        setupExpandAll();
-        setupKeyboardNav();
-
         // Treeview: fetch & render
         await fetchTree();
 
@@ -1290,6 +1285,11 @@
         } else {
           autoSelectReadme();
         }
+
+        // Setup interactions
+        setupFileSelection();
+        setupExpandAll();
+        setupKeyboardNav();
       }
     };
 

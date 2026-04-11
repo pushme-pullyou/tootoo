@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-10 18:30">
+  <meta name="revised" content="2026-04-10 19:30">
   <title>TooToo LT</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link id="hljsTheme" rel="stylesheet"
@@ -1311,7 +1311,6 @@
     /* ── 24. Expand All / Collapse All ── */
     const setupExpandAll = () => {
       const btn = document.getElementById( 'btnExpandAll' );
-      btn.style.display = '';
       let expanded = false;
 
       btn.addEventListener( 'click', () => {
@@ -1447,8 +1446,8 @@
       } );
     };
 
-    /* ── 27. Auto-open README ── */
-    const autoOpenReadme = () => {
+    /* ── 27. Auto-select README ── */
+    const autoSelectReadme = () => {
       if ( !state.tree ) return;
 
       const readme = state.tree.find( ( item ) =>
@@ -1528,8 +1527,12 @@
       }
 
       if ( state.pagesEnabled ) {
-        // GitHub Pages renders .md files as HTML when the extension is omitted
-        const pagesPath = path.replace( /\.md$/i, '' );
+        // GitHub Pages / Jekyll renders .md as HTML; README.md becomes the directory index.html
+        const fileName = path.split( '/' ).pop();
+        const isReadme = /^readme\.md$/i.test( fileName );
+        const pagesPath = isReadme
+          ? path.slice( 0, path.length - fileName.length )  // strip filename → directory URL
+          : path.replace( /\.md$/i, '' );                   // strip .md extension
         const isUserPage = state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`;
         return isUserPage
           ? `https://${ state.owner }.github.io/${ pagesPath }`
@@ -1588,7 +1591,7 @@
       let errorHtml = '';
 
       try {
-        renderedHtml = marked.parse( text );
+        renderedHtml = DOMPurify.sanitize( marked.parse( text ) );
       } catch ( err ) {
         errorHtml = `<div class="md-error">⚠️ Markdown rendering failed: ${ escapeHTML( err.message ) }</div>`;
         renderedHtml = '';
@@ -2028,6 +2031,7 @@
         updateHeaderFromConfig();
         document.getElementById( 'contentBody' ).innerHTML = '<p>Loading tree…</p>';
         await fetchTree();
+        document.getElementById( 'btnExpandAll' ).style.display = '';
 
         // File open priority
         if ( location.hash.length > 1 ) {
@@ -2037,7 +2041,7 @@
           if ( lastPath ) {
             selectFile( lastPath, { skipHash: false } );
           } else {
-            autoOpenReadme();
+            autoSelectReadme();
           }
         }
 

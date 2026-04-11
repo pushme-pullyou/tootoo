@@ -356,14 +356,15 @@ Append the tree-fetching and rendering process to the **end** of the layout's ex
 The logic to append inside `init()`:
 
 ```
-1. Fetch default branch if state.branch is empty
-2. Set `#treeList.innerHTML = '<p>Loading tree…</p>'`
-3. Fetch tree from API
-4. renderTree(state.tree) — batched
-5. After all batches: check `storageKey('currentFile')` in localStorage — if a saved path exists, select that file (fall back to README if the file is no longer in the tree); otherwise auto-open README. Show Expand All button
-6. Set up filter input listener (debounced)
-7. Set up keyboard navigation listener
-8. Set up `/` shortcut
+1. Set up file selection listener (event delegation on #treeList)
+2. Set up Expand All button listener
+3. Set up keyboard navigation listener and `/` shortcut
+4. Fetch default branch if state.branch is empty
+5. Set `#treeList.innerHTML = '<p>Loading tree…</p>'`
+6. Fetch tree from API
+7. renderTree(state.tree) — batched
+8. After all batches: check `storageKey('currentFile')` in localStorage — if a saved path exists, select that file (fall back to README if the file is no longer in the tree); otherwise auto-open README. Show Expand All button
+9. Set up filter input listener (debounced)
 ```
 
 **Note**: `fetchTree()` should NOT call `autoSelectReadme()` internally — file restoration logic belongs in `init()` so it can check localStorage first.
