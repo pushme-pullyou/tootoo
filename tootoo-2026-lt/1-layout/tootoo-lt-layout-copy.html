@@ -487,7 +487,7 @@
 
       // Step 5: Fetch .git/config — try walking up the directory tree
       const gitConfigPrefixes = [ '', '../', '../../', '../../../', '../../../../' ];
-      const gitConfigRegex = /github\.com[:/]([^/\n]+)\/([^.\n]+)(\.git)?/;
+      const gitConfigRegex = /github\.com[:/]([^/\n]+)\/([^\s\n]+?)(?:\.git)?\s*$/m;
 
       // 5a: Use fetch on HTTP/HTTPS
       if ( location.protocol === 'http:' || location.protocol === 'https:' ) {

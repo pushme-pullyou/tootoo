@@ -748,7 +748,7 @@
       }
 
       const gitConfigPrefixes = [ '', '../', '../../', '../../../', '../../../../' ];
-      const gitConfigRegex = /github\.com[:/]([^/\n]+)\/([^.\n]+)(\.git)?/;
+      const gitConfigRegex = /github\.com[:/]([^/\n]+)\/([^\s\n]+?)(?:\.git)?\s*$/m;
 
       if ( location.protocol === 'http:' || location.protocol === 'https:' ) {
         for ( const prefix of gitConfigPrefixes ) {

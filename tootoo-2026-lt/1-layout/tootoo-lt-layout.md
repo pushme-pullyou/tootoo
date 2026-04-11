@@ -370,6 +370,7 @@ Returns a Promise (async function). Runs this cascade:
 3. **localStorage cache** → read `storageKey('repo')` JSON (`{owner, repo}`) — checked before `.git/config` to avoid noisy 404 console errors; early return if found
 4. **GitHub Pages URL** → if `location.hostname` ends with `.github.io`, extract owner from the hostname subdomain and repo from the first pathname segment (falls back to `owner.github.io` for user pages with no path segment); cache result to localStorage; early return if found
 5. **Fetch `.git/config`** → walk up the directory tree trying paths `''`, `'../'`, `'../../'`, `'../../../'`, `'../../../../'`; parse `github.com[:/]owner/repo` from remote URL; cache result to localStorage; early return if found
+   - The regex **must allow dots in repo names** (e.g. `owner.github.io`) while still stripping a trailing `.git` suffix. Use a lazy match anchored to end-of-line: `/github\.com[:/]([^/\n]+)\/([^\s\n]+?)(?:\.git)?\s*$/m`
    - **5a**: On HTTP/HTTPS, use `fetch()`
    - **5b**: On `file://`, use synchronous `XMLHttpRequest` (fetch is CORS-blocked on file://); check `xhr.status === 200 || xhr.status === 0` and `xhr.responseText` is non-empty
 6. **Show inline form** → render owner + repo input form in `#contentBody` using the `.repo-form` CSS class; return a new Promise that resolves when the user clicks "Set Repository"; form includes `id="inpOwner"`, `id="inpRepo"`, `id="btnSetRepo"` (class `primary`, `title="Set repository owner and name"`)

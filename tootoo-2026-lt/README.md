@@ -5,6 +5,7 @@ A lightweight single-file GitHub repository browser. Drop it into any repo folde
 * Live: <https://pushme-pullyou.github.io/tootoo/tootoo-2026-lt/>
 * Source: <https://github.com/https://pushme-pullyou/tootoo/tree/main/tootoo-2026-lt>
 * https://pushme-pullyou.github.io/tootoo/tootoo-2026-lt/?owner=obadawy&repo=lmsgsrv
+* https://pushme-pullyou.github.io/tootoo/tootoo-2026-lt/?owner=pushme-pullyou&repo=pushme-pullyou.github.io
 
 ## Features
 
