@@ -4,288 +4,544 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TooToo GitHub Browser</title>
+  <meta name="revised" content="2026-04-10 19:30">
+  <title>TooToo LT</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <link id="hljsTheme" rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
+    /* ── Custom Properties ── */
     :root {
-      --primary-bg: #f6f8fa;
+      --primary-bg: #f3f4f6;
       --secondary-bg: #ffffff;
-      --text-color: #24292f;
-      --border-color: #d0d7de;
-      --highlight-color: #0969da;
-      --hover-bg: #f3f4f6;
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      --text-color: #1f2937;
+      --border-color: #d1d5db;
+      --highlight-color: #2563eb;
+      --hover-bg: #e5e7eb;
+      --font-family: system-ui, -apple-system, sans-serif;
+      --sidebar-width: 300px;
+      --font-size: 16px;
     }
 
+    /* ── Dark Mode Overrides ── */
+    body.dark-mode {
+      --primary-bg: #1f2937;
+      --secondary-bg: #111827;
+      --text-color: #f3f4f6;
+      --border-color: #374151;
+      --highlight-color: #3b82f6;
+      --hover-bg: #374151;
+    }
+
+    /* ── Font size on html so rem units scale ── */
+    html {
+      font-size: var(--font-size);
+    }
+
+    /* ── Reset ── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    /* ── Body ── */
     body {
-      margin: 0;
-      font-family: var(--font-family);
-      color: var(--text-color);
-      background-color: var(--primary-bg);
       display: flex;
       flex-direction: column;
       height: 100vh;
+      margin: 0;
       overflow-x: hidden;
-    }
-
-    header {
-      padding: 1rem;
-      background-color: var(--secondary-bg);
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    input {
-      padding: 0.5rem;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      font-size: 1rem;
-    }
-
-    button {
-      padding: 0.5rem 1rem;
-      background-color: var(--highlight-color);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 1rem;
-      white-space: nowrap;
-    }
-
-    button:hover {
-      opacity: 0.9;
-    }
-
-    main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    .sidebar {
-      width: var(--sidebar-width, 250px);
-      flex-shrink: 0;
-      background-color: var(--secondary-bg);
-      padding: 0.5rem 0.5rem 1rem 1rem;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .resizer {
-      width: 8px;
-      cursor: col-resize;
-      background-color: var(--border-color);
-      flex-shrink: 0;
-      z-index: 10;
-      transition: background-color 0.2s;
-      touch-action: none;
-    }
-
-    .resizer:hover,
-    .resizer.resizing {
-      background-color: var(--highlight-color);
-    }
-
-    .content-area {
-      flex: 1;
-      min-width: 0;
-      padding: 1rem;
-      overflow-y: auto;
-      overflow-x: auto;
+      font-family: var(--font-family);
+      color: var(--text-color);
       background-color: var(--primary-bg);
     }
 
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    li {
-      padding: 0.1rem 0;
-    }
-
-    .repo-item {
-      cursor: pointer;
-      color: var(--highlight-color);
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-    }
-
-    .repo-item:hover {
-      background-color: var(--hover-bg);
-      text-decoration: underline;
-    }
-
-    .repo-meta {
+    /* ── Header ── */
+    header {
       display: flex;
-      gap: 0.5rem;
+      flex-direction: row;
+      flex-wrap: wrap;
       align-items: center;
-      font-size: 0.7rem;
-      color: #57606a;
-      margin-top: 0.05rem;
-      line-height: 1.2;
-      font-family: var(--font-family);
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--primary-bg);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      z-index: 10;
     }
 
-    .repo-lang-dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
+    #headerGitHub {
+      display: flex;
+      align-items: center;
+      color: var(--text-color);
+      text-decoration: none;
     }
 
-    .tree-item {
+    #headerTitle {
+      font-weight: bold;
+      font-size: 1.1rem;
+      text-decoration: none;
+      color: inherit;
       cursor: pointer;
+    }
+
+    /* ── Header Utility Buttons ── */
+    .header-btn {
+      background: var(--secondary-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .header-btn:hover {
+      opacity: 0.88;
+      transform: translateY(-1px);
+    }
+
+    .header-btn:active {
+      transform: translateY(0);
+    }
+
+    .dark-mode-btn {
+      margin-left: auto;
+    }
+
+    /* ── Rate limit badge ── */
+    .rate-limit-badge {
+      display: none;
+      font-size: 0.8rem;
       padding: 0.2rem 0.5rem;
       border-radius: 4px;
-      font-family: monospace;
-      white-space: nowrap;
+      background: var(--hover-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+    }
+
+    /* ── Main ── */
+    main {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-width);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--primary-bg);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    /* ── Panel Headers (shared) ── */
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--primary-bg);
+    }
+
+    .panel-header h3 {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    /* ── Content area sticky header ── */
+    .file-header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 0.5rem 1rem;
+      background: var(--primary-bg);
+    }
+
+    /* ── Filter wrap ── */
+    .filter-wrap {
+      position: relative;
+      margin: 0.4rem 0.5rem 0 0.5rem;
+    }
+
+    #treeFilter {
+      margin: 0;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.3rem 1.6rem 0.3rem 0.5rem;
+      font-size: 0.85rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--secondary-bg);
+      color: var(--text-color);
+      outline: none;
+    }
+
+    #treeFilter:focus {
+      border-color: var(--highlight-color);
+    }
+
+    #btnFilterClear {
+      position: absolute;
+      right: 0.3rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+      opacity: 0.5;
+      font-size: 0.9rem;
+      display: none;
+      padding: 0;
+    }
+
+    #btnFilterClear:hover {
+      opacity: 1;
+    }
+
+    /* ── Tree list ── */
+    #treeList {
+      padding: 0 0.5rem;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* ── Resizer ── */
+    .resizer {
+      width: 8px;
+      background: rgba(37, 99, 235, 0.7);
+      cursor: col-resize;
+      touch-action: none;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+
+    .resizer:hover,
+    .resizer.dragging {
+      background: var(--highlight-color);
+    }
+
+    /* ── Content Area ── */
+    .content-area {
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+      overflow-y: auto;
+      background: var(--secondary-bg);
+      position: relative;
+    }
+
+    #contentBody {
+      padding: 0 1rem 1rem 1rem;
+      background: var(--secondary-bg);
+    }
+
+    /* ── Action Buttons (primary / secondary) ── */
+    button.primary,
+    button.secondary {
+      background: var(--highlight-color);
+      color: #ffffff;
+      border: none;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button.primary:hover,
+    button.secondary:hover {
+      opacity: 0.88;
+      transform: translateY(-1px);
+    }
+
+    button.primary:active,
+    button.secondary:active {
+      transform: translateY(0);
+    }
+
+    /* ── Back to Top ── */
+    .back-to-top {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 20;
+      background-color: var(--highlight-color);
+      color: #ffffff;
+      border: none;
+      border-radius: 50%;
+      width: 2.5rem;
+      height: 2.5rem;
+      font-size: 1.2rem;
+      display: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Inline repo form ── */
+    .repo-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-width: 300px;
+      padding: 1rem;
+    }
+
+    .repo-form label {
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    .repo-form input {
+      padding: 0.4rem 0.5rem;
+      font-size: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--secondary-bg);
+      color: var(--text-color);
+      outline: none;
+    }
+
+    .repo-form input:focus {
+      border-color: var(--highlight-color);
+    }
+
+    /* ── Treeview ── */
+    .tree-folder {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-
-    .tree-item-label {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .tree-item-size {
-      opacity: 0.65;
-      flex-shrink: 0;
-      text-align: right;
-    }
-
-    .tree-item:hover {
-      background-color: var(--hover-bg);
-    }
-
-    .tree-folder {
+      padding: 0.2rem 0.4rem;
       cursor: pointer;
-      padding: 0.2rem;
       border-radius: 4px;
-      font-weight: bold;
       font-family: monospace;
+      font-size: 0.85rem;
       user-select: none;
+      list-style: none;
     }
 
-    .tree-folder:hover {
-      background-color: var(--hover-bg);
-    }
-
-    .tree-children {
-      margin-left: 1rem;
-    }
-
-    #navTree {
+    .tree-folder::-webkit-details-marker {
       display: none;
     }
 
-    pre {
-      background-color: var(--secondary-bg);
-      padding: 1rem;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      overflow-x: auto;
-      font-family: monospace;
-      white-space: pre-wrap;
+    .tree-folder:hover {
+      background: var(--hover-bg);
     }
 
-    .error {
-      color: #cf222e;
+    .tree-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.2rem 0.4rem 0.2rem 1.2rem;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+
+    .tree-item:hover {
+      background: var(--hover-bg);
+    }
+
+    .tree-item.active {
+      background: var(--highlight-color);
+      color: #fff;
+    }
+
+    .tree-item-size {
+      font-size: 0.75rem;
+      opacity: 0.6;
+      margin-left: 0.5rem;
+      white-space: nowrap;
+    }
+
+    details details {
+      padding-left: 0.8rem;
+    }
+
+    details {
+      padding-left: 0;
+    }
+
+    /* ── Content Viewer ── */
+    .markdown-body {
+      max-width: 700px;
+      line-height: 1.6;
+      word-wrap: break-word;
+    }
+
+    .markdown-body img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    pre {
+      max-width: 700px;
+      overflow-x: auto;
       padding: 1rem;
+      border-radius: 6px;
+      background: var(--secondary-bg);
+      border: 1px solid var(--border-color);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    body.dark-mode .markdown-body {
+      color: var(--text-color);
+    }
+
+    body.dark-mode pre {
+      background-color: var(--secondary-bg);
+    }
+
+    .panel-header.file-header {
+      background: var(--secondary-bg);
     }
 
     .file-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--border-color);
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: var(--primary-bg);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      background: var(--secondary-bg);
     }
 
     .file-title {
-      margin: 0;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      min-width: 0;
       flex-wrap: wrap;
     }
 
-    .file-title-path {
-      opacity: 0.7;
-      font-weight: normal;
-    }
-
-    .file-source-link {
-      color: var(--text-color);
-      text-decoration: none;
-      opacity: 0.7;
-      transform: translateY(2px);
-    }
-
-    .file-source-link:hover {
+    .file-title a.breadcrumb-link {
       color: var(--highlight-color);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .file-title a.breadcrumb-link:hover {
+      text-decoration: underline;
     }
 
     .file-actions {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.4rem;
+      align-items: center;
+      flex-shrink: 0;
     }
 
     .file-btn {
-      padding: 0.25rem 0.5rem;
-      font-size: 0.85rem;
-    }
-
-    .markdown-body {
-      padding: 1.5rem;
-      background: var(--secondary-bg);
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
       border: 1px solid var(--border-color);
-      border-radius: 4px;
-      line-height: 1.5;
-      overflow-x: auto;
+      background: var(--secondary-bg);
+      color: var(--text-color);
     }
 
-    .md-error {
-      padding: 0.5rem;
-      margin-bottom: 0.5rem;
-      background: #ffebee;
-      color: #c62828;
-      border: 1px solid #ffcdd2;
-      border-radius: 4px;
+    .file-btn:hover {
+      opacity: 0.88;
     }
 
     .media-content {
       max-width: 100%;
-      border: 1px solid var(--border-color);
       border-radius: 4px;
     }
 
     .iframe-content {
       width: 100%;
-      height: 80vh;
+      height: 70vh;
       border: 1px solid var(--border-color);
       border-radius: 4px;
+      background: #fff;
+    }
+
+    .xlsx-sheet table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    .xlsx-sheet td,
+    .xlsx-sheet th {
+      border: 1px solid var(--border-color);
+      padding: 0.3rem 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .xlsx-sheet th {
+      background: var(--primary-bg);
+      font-weight: bold;
+    }
+
+    .md-error {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    body.dark-mode .md-error {
+      background: #3a3000;
+      border-color: #665200;
+    }
+
+    .error-panel {
+      background: #fff0f0;
+      border: 2px solid #dc3545;
+      padding: 1rem;
+      border-radius: 6px;
+      margin: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .error-panel button {
+      margin-top: 0.5rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
       background: var(--secondary-bg);
+      cursor: pointer;
+    }
+
+    body.dark-mode .error-panel {
+      background: #2d0000;
+      border-color: #ff6b6b;
+      color: var(--text-color);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 25% !important;
+      }
+
+      .resizer {
+        width: 4px;
+      }
+
+      .file-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
     }
   </style>
 </head>
@@ -293,1367 +549,1512 @@
 <body>
 
   <header>
-    <strong style="cursor: pointer;"
-      onclick="history.replaceState(null, '', location.pathname + location.search); location.reload();"
-      title="Reload TooToo">TooToo</strong>
-    <input type="text" id="ownerInput" placeholder="Enter user or org name" autocomplete="off"
-      oninput="resetMainAction()" onfocus="this.value=''" onchange="handleFetchRepos()" list="recentUsers" />
-    <datalist id="recentUsers"></datalist>
-    <button
-      onclick="window.open('https://github.com/' + document.getElementById('ownerInput').value.trim(), '_blank', 'noopener')"
-      title="Open user's GitHub profile"
-      style="background: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 0.4rem; display: flex; align-items: center; justify-content: center;">
-      <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+    <a id="headerGitHub" href="#" title="View on GitHub">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
         <path
           d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z">
         </path>
       </svg>
-    </button>
-    <button id="btnMainAction" onclick="handleFetchRepos()">Get Repos</button>
-    <button id="btnGetOrgs" onclick="handleFetchOrgs()">Get Orgs</button>
-    <button id="btnGetGists" onclick="handleFetchGists()">Get Gists</button>
-    <button id="btnStats" onclick="handleFetchStats()">Stats</button>
-    <button id="btnDiscover" onclick="handleDiscover()"
-      style="background: var(--text-color); color: var(--primary-bg);">🌍 Discover</button>
-    <button id="btnToggleFolders" onclick="toggleAllFolders()" style="display: none;">Expand All</button>
-    <button onclick="promptForToken()"
-      style="margin-left: auto; background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color);">⚙️
-      Token</button>
+    </a>
+
+    <a id="headerTitle" href="#" title="Reload">TooToo LT</a>
+
+    <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode">🌙</button>
+    <button id="btnFontDec" class="header-btn" title="Decrease Font Size">A−</button>
+    <button id="btnFontInc" class="header-btn" title="Increase Font Size">A+</button>
+    <button id="btnHelp" class="header-btn" title="About this app">?</button>
+    <button id="btnToken" class="header-btn" title="Set GitHub Personal Access Token">⚙️ Token</button>
+    <div id="rateBadge" class="rate-limit-badge" title="API Rate Limit" aria-live="polite"></div>
   </header>
 
   <main>
+
     <div class="sidebar">
-      <div id="repoListContainer">
-        <h3 style="margin: 0 0 0.35rem 0; font-size: 0.95rem;">Repositories</h3>
-        <input type="text" id="filterInput" placeholder="Filter items..." oninput="filterList()"
-          style="width: 100%; box-sizing: border-box; margin-bottom: 0.25rem; padding: 0.3rem 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem;" />
-        <select id="sortSelect" onchange="sortRepoList()"
-          style="width: 100%; box-sizing: border-box; margin-bottom: 0.25rem; padding: 0.25rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.8rem; display: none;">
-          <option value="updated">Sort: Recently Updated</option>
-          <option value="stars">Sort: Stars</option>
-          <option value="name">Sort: Name</option>
-          <option value="pushed">Sort: Last Push</option>
-          <option value="size">Sort: Size</option>
-        </select>
-        <ul id="repoList"></ul>
+      <div class="panel-header" title="Last updated: 2026-04-10 10:30">
+        <h3 id="hFiles">Files</h3>
+        <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders">Expand
+          All</button>
       </div>
-      <div id="navTree">
-        <h3 style="margin: 0 0 0.35rem 0; font-size: 0.95rem;">Files</h3>
-        <div id="treeTruncatedWarning"
-          style="display:none; padding: 0.5rem; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; font-size: 0.85rem; border-radius: 4px; margin-top: 0.5rem;">
-          ⚠️ Repository too large. Tree truncated.</div>
-        <div style="margin-top: 1rem;" id="treeList"></div>
+      <div class="filter-wrap">
+        <input type="text" id="treeFilter" placeholder="Filter files…" title="Filter files by name">
+        <button id="btnFilterClear" title="Clear filter">✕</button>
+      </div>
+      <div id="treeList">
+        <!-- placeholder for future tree content -->
       </div>
     </div>
 
-    <div class="resizer" id="dragMe"></div>
+    <div class="resizer" id="resizer" title="Drag to Resize Sidebar"></div>
 
-    <div class="content-area" id="mainContent">
-      <p>Select a user/organization and click "Get Repos" to begin.</p>
+    <div class="content-area" id="contentArea">
+      <div class="panel-header file-header">
+        <h3 id="contentTitle">Content</h3>
+      </div>
+      <div id="contentBody">
+        <p>Awaiting repository detection...</p>
+      </div>
+
+      <button id="btnBackToTop" class="back-to-top" aria-label="Back to top" title="Back to Top">↑</button>
     </div>
+
   </main>
 
   <script>
-    // ── Security helpers (defined first — used throughout) ──────────────────
+    'use strict';
 
-    const escapeHTML = str => String( str ).replace( /[&<>'"]/g, tag => ( {
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-    } )[ tag ] );
-
-    const escapeAttribute = escapeHTML;
-
-    // ── CONFIG (only values that differ between copies) ───────────────────
-
-    const CONFIG = {
-      owner: 'theo-armour',
-      repo: 'sandbox',
-      branch: 'main',
-      localRepo: ''
+    /* ── 1. Utility ── */
+    const escapeHTML = ( str ) => {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return String( str ).replace( /[&<>"']/g, ( c ) => map[ c ] );
     };
 
-    // ── Application state ───────────────────────────────────────────────────
+    const GITHUB_SVG_ICON = '<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>';
+
+    /* ── 2. CONFIG & state ── */
+    const CONFIG = {
+      owner: '',
+      repo: '',
+      branch: '',
+    };
 
     const state = {
       owner: '',
       repo: '',
-      branch: 'main',
-      tree: [],
-      isGist: false,
+      branch: '',
+      tree: null,
       currentFilePath: '',
-      repoItems: [],
-      repoRenderer: null
+      pagesEnabled: null,
     };
 
-    const ghToken = localStorage.getItem( 'githubToken' ) || '';
-    const headers = ghToken ? { Authorization: `token ${ ghToken }` } : {};
+    /* ── 3. Extension constants ── */
+    const IMAGE_EXTS = [ 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico' ];
+    const AUDIO_EXTS = [ 'mp3', 'wav', 'ogg' ];
+    const VIDEO_EXTS = [ 'mp4', 'webm' ];
+    const SHEET_EXTS = [ 'xlsx', 'xls', 'csv', 'ods' ];
+    const STREAMABLE_EXTS = [ ...IMAGE_EXTS, ...AUDIO_EXTS, ...VIDEO_EXTS, 'pdf' ];
+    const NO_COPY_EXTS = [ ...STREAMABLE_EXTS, ...SHEET_EXTS ];
     const LARGE_FILE_WARNING_BYTES = 1024 * 1024;
     const approvedLargeFiles = new Set();
 
-    const languageColors = {
-      JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572A5', Java: '#b07219',
-      'C++': '#f34b7d', C: '#555555', 'C#': '#178600', Go: '#00ADD8', Rust: '#dea584',
-      Ruby: '#701516', PHP: '#4F5D95', Swift: '#F05138', Kotlin: '#A97BFF', Dart: '#00B4AB',
-      Shell: '#89e051', HTML: '#e34c26', CSS: '#563d7c', SCSS: '#c6538c', Vue: '#41b883',
-      Svelte: '#ff3e00', Lua: '#000080', R: '#198CE7', Jupyter: '#DA5B0B', Dockerfile: '#384d54',
-      Makefile: '#427819', Elixir: '#6e4a7e', Haskell: '#5e5086', Scala: '#c22d40',
-      Perl: '#0298c3', Zig: '#ec915c', Nim: '#ffc200', OCaml: '#3be133'
+    /* ── 4. Storage key helper ── */
+    const storageKey = ( suffix ) => `tootoo-lt:${ location.pathname }:${ suffix }`;
+
+    /* ── 5. Blob URL tracking ── */
+    const activeBlobUrls = new Set();
+    window.addEventListener( 'beforeunload', () => {
+      activeBlobUrls.forEach( ( url ) => URL.revokeObjectURL( url ) );
+    } );
+
+    const createBlobUrl = ( blob ) => {
+      const url = URL.createObjectURL( blob );
+      activeBlobUrls.add( url );
+      return url;
     };
 
-    let mainAbortController = null;
-    const getFetchOptions = ( reset = false ) => {
-      if ( reset ) {
-        if ( mainAbortController ) mainAbortController.abort();
-        mainAbortController = new AbortController();
+    const revokeAllBlobUrls = () => {
+      activeBlobUrls.forEach( ( url ) => URL.revokeObjectURL( url ) );
+      activeBlobUrls.clear();
+    };
+
+    /* ── 6. File text cache ── */
+    const fileTextCache = new Map();
+    const FILE_CACHE_LIMIT = 25;
+    const FILE_CACHE_MAX_CHARS = 300000;
+
+    const getFileCacheKey = ( path ) => `${ state.owner }/${ state.repo }/${ state.branch }/${ path }`;
+
+    const getCachedFileText = ( path ) => {
+      const key = getFileCacheKey( path );
+      if ( !fileTextCache.has( key ) ) return null;
+      const text = fileTextCache.get( key );
+      // LRU refresh: move to end
+      fileTextCache.delete( key );
+      fileTextCache.set( key, text );
+      return text;
+    };
+
+    const setCachedFileText = ( path, text ) => {
+      if ( text.length > FILE_CACHE_MAX_CHARS ) return;
+      const key = getFileCacheKey( path );
+      if ( fileTextCache.has( key ) ) fileTextCache.delete( key );
+      while ( fileTextCache.size >= FILE_CACHE_LIMIT ) {
+        const oldest = fileTextCache.keys().next().value;
+        fileTextCache.delete( oldest );
       }
-      return { headers, signal: mainAbortController?.signal };
+      fileTextCache.set( key, text );
+      persistFileCache();
     };
 
-    // ── DOM references ──────────────────────────────────────────────────────
+    const persistFileCache = () => {
+      try {
+        const arr = Array.from( fileTextCache.entries() );
+        localStorage.setItem( storageKey( 'fileTextCache' ), JSON.stringify( arr ) );
+      } catch ( _ ) { /* quota exceeded — ignore */ }
+    };
 
-    const ownerInput = document.getElementById( 'ownerInput' );
-    const repoList = document.getElementById( 'repoList' );
-    const repoListContainer = document.getElementById( 'repoListContainer' );
-    const navTree = document.getElementById( 'navTree' );
-    const treeList = document.getElementById( 'treeList' );
-    const mainContent = document.getElementById( 'mainContent' );
-    const btnMainAction = document.getElementById( 'btnMainAction' );
-    const btnToggleFolders = document.getElementById( 'btnToggleFolders' );
-    const recentUsersDataList = document.getElementById( 'recentUsers' );
+    const restoreFileCache = () => {
+      try {
+        const raw = localStorage.getItem( storageKey( 'fileTextCache' ) );
+        if ( !raw ) return;
+        const arr = JSON.parse( raw );
+        for ( const [ key, text ] of arr ) {
+          fileTextCache.set( key, text );
+        }
+      } catch ( _ ) { /* malformed — ignore */ }
+    };
 
-    // ── Utilities ───────────────────────────────────────────────────────────
+    /* ── 7. View preference helpers ── */
+    const getViewPrefKey = ( ext ) => storageKey( `viewPref:${ ext }` );
+    const getPreferredView = ( ext ) => localStorage.getItem( getViewPrefKey( ext ) ) || 'rendered';
+    const setPreferredView = ( ext, view ) => localStorage.setItem( getViewPrefKey( ext ), view );
 
-    const formatFileSize = bytes => {
-      if ( bytes == null || Number.isNaN( bytes ) ) return '';
+    /* ── 8. updateHeaderFromConfig ── */
+    const updateHeaderFromConfig = () => {
+      const label = `${ state.owner } / ${ state.repo }`;
+      document.title = label;
+      document.getElementById( 'headerTitle' ).textContent = label;
+      document.getElementById( 'headerGitHub' ).href = `https://github.com/${ state.owner }/${ state.repo }`;
+    };
+
+    /* ── 9. detectRepo ── */
+    const detectRepo = async () => {
+      const params = new URLSearchParams( location.search );
+      if ( params.get( 'owner' ) ) CONFIG.owner = params.get( 'owner' );
+      if ( params.get( 'repo' ) ) CONFIG.repo = params.get( 'repo' );
+      if ( params.get( 'branch' ) ) CONFIG.branch = params.get( 'branch' );
+
+      if ( CONFIG.owner && CONFIG.repo ) return;
+
+      const cached = localStorage.getItem( storageKey( 'repo' ) );
+      if ( cached ) {
+        try {
+          const parsed = JSON.parse( cached );
+          if ( parsed.owner && parsed.repo ) {
+            CONFIG.owner = parsed.owner;
+            CONFIG.repo = parsed.repo;
+            return;
+          }
+        } catch ( _ ) { /* ignore malformed cache */ }
+      }
+
+      if ( location.hostname.endsWith( '.github.io' ) ) {
+        const owner = location.hostname.split( '.' )[ 0 ];
+        const segments = location.pathname.split( '/' ).filter( Boolean );
+        const repo = segments[ 0 ] || `${ owner }.github.io`;
+        CONFIG.owner = owner;
+        CONFIG.repo = repo;
+        localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner, repo } ) );
+        return;
+      }
+
+      const gitConfigPrefixes = [ '', '../', '../../', '../../../', '../../../../' ];
+      const gitConfigRegex = /github\.com[:/]([^/\n]+)\/([^\s\n]+?)(?:\.git)?\s*$/m;
+
+      if ( location.protocol === 'http:' || location.protocol === 'https:' ) {
+        for ( const prefix of gitConfigPrefixes ) {
+          try {
+            const res = await fetch( `${ prefix }.git/config` );
+            if ( !res.ok ) continue;
+            const text = await res.text();
+            const match = text.match( gitConfigRegex );
+            if ( match ) {
+              CONFIG.owner = match[ 1 ];
+              CONFIG.repo = match[ 2 ];
+              localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
+              return;
+            }
+          } catch ( _ ) { /* network error */ }
+        }
+      }
+
+      if ( location.protocol === 'file:' ) {
+        for ( const prefix of gitConfigPrefixes ) {
+          try {
+            const xhr = new XMLHttpRequest();
+            xhr.open( 'GET', `${ prefix }.git/config`, false );
+            xhr.send( null );
+            if ( ( xhr.status === 200 || xhr.status === 0 ) && xhr.responseText ) {
+              const match = xhr.responseText.match( gitConfigRegex );
+              if ( match ) {
+                CONFIG.owner = match[ 1 ];
+                CONFIG.repo = match[ 2 ];
+                localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
+                return;
+              }
+            }
+          } catch ( _ ) { /* XHR blocked */ }
+        }
+      }
+
+      return new Promise( ( resolve ) => {
+        const cb = document.getElementById( 'contentBody' );
+        cb.innerHTML = `
+          <div class="repo-form">
+            <p>Could not auto-detect the repository. Please enter the details below.</p>
+            <label for="inpOwner">GitHub Owner</label>
+            <input id="inpOwner" type="text" placeholder="e.g. octocat" autocomplete="off">
+            <label for="inpRepo">Repository</label>
+            <input id="inpRepo" type="text" placeholder="e.g. hello-world" autocomplete="off">
+            <button id="btnSetRepo" class="primary" title="Set repository owner and name">Set Repository</button>
+          </div>
+        `;
+        document.getElementById( 'btnSetRepo' ).addEventListener( 'click', () => {
+          const owner = document.getElementById( 'inpOwner' ).value.trim();
+          const repo = document.getElementById( 'inpRepo' ).value.trim();
+          if ( !owner || !repo ) return;
+          CONFIG.owner = owner;
+          CONFIG.repo = repo;
+          localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner, repo } ) );
+          resolve();
+        } );
+      } );
+    };
+
+    /* ── 10. setHljsTheme ── */
+    const setHljsTheme = ( isDark ) => {
+      const link = document.getElementById( 'hljsTheme' );
+      link.href = isDark
+        ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
+        : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
+    };
+
+    /* ── 11. initAppearance ── */
+    const initAppearance = () => {
+      const isDark = localStorage.getItem( storageKey( 'darkMode' ) ) === 'true';
+      if ( isDark ) {
+        document.body.classList.add( 'dark-mode' );
+        document.getElementById( 'btnDarkMode' ).textContent = '☀️';
+      }
+      setHljsTheme( isDark );
+
+      const savedFontSize = localStorage.getItem( storageKey( 'fontSize' ) );
+      if ( savedFontSize ) {
+        document.documentElement.style.setProperty( '--font-size', savedFontSize );
+      }
+
+      const savedWidth = localStorage.getItem( storageKey( 'sidebarWidth' ) );
+      if ( savedWidth ) {
+        document.documentElement.style.setProperty( '--sidebar-width', savedWidth );
+      }
+    };
+
+    /* ── 12. setupListeners ── */
+    const setupListeners = () => {
+      const contentArea = document.getElementById( 'contentArea' );
+
+      // Dark mode toggle
+      document.getElementById( 'btnDarkMode' ).addEventListener( 'click', () => {
+        const isDark = document.body.classList.toggle( 'dark-mode' );
+        document.getElementById( 'btnDarkMode' ).textContent = isDark ? '☀️' : '🌙';
+        localStorage.setItem( storageKey( 'darkMode' ), isDark );
+        setHljsTheme( isDark );
+      } );
+
+      // Font size
+      const getFontSize = () => {
+        const val = getComputedStyle( document.documentElement ).getPropertyValue( '--font-size' );
+        return parseInt( val, 10 ) || 16;
+      };
+
+      document.getElementById( 'btnFontInc' ).addEventListener( 'click', () => {
+        const sz = Math.min( getFontSize() + 2, 28 );
+        document.documentElement.style.setProperty( '--font-size', sz + 'px' );
+        localStorage.setItem( storageKey( 'fontSize' ), sz + 'px' );
+      } );
+
+      document.getElementById( 'btnFontDec' ).addEventListener( 'click', () => {
+        const sz = Math.max( getFontSize() - 2, 10 );
+        document.documentElement.style.setProperty( '--font-size', sz + 'px' );
+        localStorage.setItem( storageKey( 'fontSize' ), sz + 'px' );
+      } );
+
+      // Help / About
+      document.getElementById( 'btnHelp' ).addEventListener( 'click', async () => {
+        const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
+        const repoUrl = state.owner && state.repo
+          ? `https://github.com/${ state.owner }/${ state.repo }`
+          : 'https://github.com/pushme-pullyou/tootoo';
+        const sourceUrl = repoUrl + '/tree/main/tootoo-2026-lt';
+        const token = getToken();
+
+        let rateLimitInfo = 'Unable to fetch';
+        try {
+          const res = await fetch( 'https://api.github.com/rate_limit', { headers: getAuthHeaders() } );
+          if ( res.ok ) {
+            const data = await res.json();
+            const core = data.resources.core;
+            const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
+            rateLimitInfo = `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })`;
+          }
+        } catch ( _ ) { /* offline or blocked */ }
+
+        const tokenStatus = token ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
+        const cb = document.getElementById( 'contentBody' );
+        cb.innerHTML = `
+          <h2>About TooToo LT</h2>
+          <p>A lightweight single-file GitHub repository browser.</p>
+          <ul>
+            <li><strong>Source code:</strong> <a href="${ escapeHTML( sourceUrl ) }" target="_blank" rel="noopener">${ escapeHTML( sourceUrl ) }</a></li>
+            <li><strong>Repository:</strong> <a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">${ escapeHTML( repoUrl ) }</a></li>
+            <li><strong>Copyright:</strong> pushme-pullyou authors</li>
+            <li><strong>License:</strong> MIT License</li>
+            <li><strong>Built:</strong> ${ escapeHTML( revised ) }</li>
+          </ul>
+          <h3>GitHub API</h3>
+          <ul>
+            <li><strong>Repo visibility:</strong> Public (private repos require a token)</li>
+            <li><strong>Token:</strong> ${ escapeHTML( tokenStatus ) }</li>
+            <li><strong>Rate limit:</strong> ${ escapeHTML( rateLimitInfo ) }</li>
+            <li><strong>GitHub Pages:</strong> Supported — auto-detects repos hosted on GitHub Pages</li>
+          </ul>
+          ${ ( () => {
+            const stats = getRepoStats();
+            if ( !stats ) return '<h3>Repository Statistics</h3><p>No tree data loaded yet.</p>';
+            const typesHtml = stats.topTypes.map( ( [ ext, count ] ) =>
+              `<li>${ escapeHTML( ext ) }: ${ count } file${ count !== 1 ? 's' : '' }</li>`
+            ).join( '' );
+            const largestHtml = stats.largest.map( ( f ) =>
+              `<li>${ escapeHTML( f.path ) } — ${ formatFileSize( f.size ) }</li>`
+            ).join( '' );
+            return `<h3>Repository Statistics</h3>
+              <ul>
+                <li><strong>Files:</strong> ${ stats.fileCount }</li>
+                <li><strong>Folders:</strong> ${ stats.folderCount }</li>
+                <li><strong>Total size:</strong> ${ formatFileSize( stats.totalSize ) }</li>
+              </ul>
+              <h4>Top file types</h4>
+              <ol>${ typesHtml }</ol>
+              <h4>Largest files</h4>
+              <ol>${ largestHtml }</ol>`;
+          } )() }
+          <h3>Tips</h3>
+          <ul>
+            <li>Use the filter input in the sidebar to search file names</li>
+            <li>Click the title in the header to reload</li>
+            <li>Use <strong>A−</strong> / <strong>A+</strong> to adjust font size — helpful on phones and small screens</li>
+            <li>Click <strong>🌙</strong> to toggle dark mode — your choice is saved across visits</li>
+          </ul>
+        `;
+
+        // Restore original panel header (selectFile replaces it with breadcrumbs)
+        const contentArea = document.getElementById( 'contentArea' );
+        const existingHeader = contentArea.querySelector( '.panel-header.file-header' );
+        const simpleHeader = document.createElement( 'div' );
+        simpleHeader.className = 'panel-header file-header';
+        simpleHeader.innerHTML = '<h3 id="contentTitle">About</h3>';
+        if ( existingHeader ) {
+          existingHeader.replaceWith( simpleHeader );
+        } else {
+          contentArea.insertBefore( simpleHeader, document.getElementById( 'contentBody' ) );
+        }
+      } );
+
+      // Token prompt
+      document.getElementById( 'btnToken' ).addEventListener( 'click', () => {
+        const current = localStorage.getItem( 'githubToken' ) || '';
+        const result = prompt( 'Enter your GitHub Personal Access Token (leave blank to clear):', current );
+        if ( result !== null ) {
+          localStorage.setItem( 'githubToken', result );
+          location.reload();
+        }
+      } );
+
+      // Resizable sidebar
+      const resizer = document.getElementById( 'resizer' );
+      let isResizing = false;
+
+      resizer.addEventListener( 'pointerdown', ( e ) => {
+        isResizing = true;
+        resizer.setPointerCapture( e.pointerId );
+        resizer.classList.add( 'dragging' );
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+      } );
+
+      resizer.addEventListener( 'pointermove', ( e ) => {
+        if ( !resizer.hasPointerCapture( e.pointerId ) ) return;
+        const newWidth = Math.min( Math.max( e.clientX, 100 ), window.innerWidth - 100 );
+        document.documentElement.style.setProperty( '--sidebar-width', newWidth + 'px' );
+      } );
+
+      resizer.addEventListener( 'pointerup', ( e ) => {
+        if ( !isResizing ) return;
+        isResizing = false;
+        resizer.releasePointerCapture( e.pointerId );
+        resizer.classList.remove( 'dragging' );
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        const currentWidth = getComputedStyle( document.documentElement ).getPropertyValue( '--sidebar-width' ).trim();
+        localStorage.setItem( storageKey( 'sidebarWidth' ), currentWidth );
+      } );
+
+      // Filter input (debounced)
+      const debouncedFilter = debounce( runFilter, 150 );
+      document.getElementById( 'treeFilter' ).addEventListener( 'input', debouncedFilter );
+
+      document.getElementById( 'btnFilterClear' ).addEventListener( 'click', () => {
+        document.getElementById( 'treeFilter' ).value = '';
+        document.getElementById( 'btnFilterClear' ).style.display = 'none';
+        runFilter();
+        document.getElementById( 'treeFilter' ).focus();
+      } );
+
+      // Back to top
+      const btnBackToTop = document.getElementById( 'btnBackToTop' );
+
+      contentArea.addEventListener( 'scroll', () => {
+        btnBackToTop.style.display = contentArea.scrollTop > 400 ? 'flex' : 'none';
+      } );
+
+      btnBackToTop.addEventListener( 'click', () => {
+        contentArea.scrollTo( { top: 0, behavior: 'smooth' } );
+      } );
+
+      // Header title reload — clears state first
+      document.getElementById( 'headerTitle' ).addEventListener( 'click', ( e ) => {
+        e.preventDefault();
+        localStorage.removeItem( storageKey( 'currentFile' ) );
+        try { history.replaceState( null, '', location.pathname + location.search ); } catch ( _ ) { /* file:// */ }
+        location.reload();
+      } );
+    };
+
+    /* ── 13. GitHub API helpers (Public API) ── */
+
+    const getToken = () => localStorage.getItem( 'githubToken' ) || '';
+
+    const getAuthHeaders = () => {
+      const headers = { Accept: 'application/vnd.github+json' };
+      const token = getToken();
+      if ( token ) headers.Authorization = `token ${ token }`;
+      return headers;
+    };
+
+    const updateRateBadge = ( response ) => {
+      const remaining = response.headers.get( 'X-RateLimit-Remaining' );
+      const limit = response.headers.get( 'X-RateLimit-Limit' );
+      if ( remaining !== null && limit !== null ) {
+        const badge = document.getElementById( 'rateBadge' );
+        badge.style.display = 'inline';
+        badge.textContent = `${ remaining }/${ limit }`;
+      }
+    };
+
+    let currentAbortController = null;
+
+    /* ── 14. File type icons ── */
+    const getFileIcon = ( fileName ) => {
+      const ext = fileName.includes( '.' ) ? '.' + fileName.split( '.' ).pop().toLowerCase() : '';
+      const iconMap = {
+        '.md': '📝',
+        '.js': '🟨', '.mjs': '🟨', '.cjs': '🟨',
+        '.ts': '🟦', '.tsx': '🟦',
+        '.py': '🐍',
+        '.html': '🌐', '.htm': '🌐',
+        '.css': '🎨', '.scss': '🎨', '.less': '🎨',
+        '.png': '🖼️', '.jpg': '🖼️', '.jpeg': '🖼️', '.gif': '🖼️', '.webp': '🖼️', '.svg': '🖼️', '.ico': '🖼️',
+        '.mp3': '🎵', '.wav': '🎵', '.ogg': '🎵',
+        '.mp4': '🎬', '.webm': '🎬',
+        '.pdf': '📕',
+        '.xlsx': '📊', '.xls': '📊', '.csv': '📊', '.ods': '📊',
+        '.yaml': '⚙️', '.yml': '⚙️', '.toml': '⚙️',
+        '.zip': '📦', '.tar': '📦', '.gz': '📦', '.7z': '📦',
+        '.json': '{ }',
+      };
+      return iconMap[ ext ] || '📄';
+    };
+
+    /* ── 15. File size formatting ── */
+    const formatFileSize = ( bytes ) => {
+      if ( bytes == null ) return '';
       if ( bytes < 1024 ) return `${ bytes } B`;
       if ( bytes < 1024 * 1024 ) return `${ ( bytes / 1024 ).toFixed( 1 ) } KB`;
       return `${ ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) } MB`;
     };
 
-    const getKnownFileSize = fileNode => {
-      if ( fileNode?.size != null ) return fileNode.size;
-      if ( fileNode?.fileNode?.size != null ) return fileNode.fileNode.size;
-      return null;
-    };
+    /* ── 16. Repository statistics ── */
+    const getRepoStats = () => {
+      if ( !state.tree ) return null;
+      const blobs = state.tree.filter( ( i ) => i.type === 'blob' );
+      const trees = state.tree.filter( ( i ) => i.type === 'tree' );
+      const totalSize = blobs.reduce( ( sum, i ) => sum + ( i.size || 0 ), 0 );
 
-    const getLargeFileApprovalKey = path => `${ state.owner }/${ state.repo }/${ state.branch }/${ path }`;
-
-    const confirmLargeFileLoad = ( path, size ) => {
-      if ( size == null || size < LARGE_FILE_WARNING_BYTES ) return true;
-      const key = getLargeFileApprovalKey( path );
-      if ( approvedLargeFiles.has( key ) ) return true;
-      const ok = window.confirm( `This file is ${ formatFileSize( size ) } and may take a while to load.\n\nLoad ${ path }?` );
-      if ( ok ) approvedLargeFiles.add( key );
-      return ok;
-    };
-
-    // ── Recent users ────────────────────────────────────────────────────────
-
-    const updateRecentUsers = newUser => {
-      let users = JSON.parse( localStorage.getItem( 'tootooRecentUsers' ) || '[]' );
-      if ( newUser ) {
-        users = [ newUser, ...users.filter( u => u !== newUser ) ].slice( 0, 10 );
-        localStorage.setItem( 'tootooRecentUsers', JSON.stringify( users ) );
+      // Count by extension
+      const extCounts = {};
+      for ( const b of blobs ) {
+        const name = b.path.split( '/' ).pop();
+        const ext = name.includes( '.' ) ? '.' + name.split( '.' ).pop().toLowerCase() : '(no ext)';
+        extCounts[ ext ] = ( extCounts[ ext ] || 0 ) + 1;
       }
-      recentUsersDataList.innerHTML = users.map( u =>
-        `<option value="${ escapeAttribute( u ) }">${ escapeAttribute( u ) }</option>`
-      ).join( '' );
+      const topTypes = Object.entries( extCounts )
+        .sort( ( a, b ) => b[ 1 ] - a[ 1 ] )
+        .slice( 0, 10 );
+
+      // Largest files
+      const largest = [ ...blobs ]
+        .sort( ( a, b ) => ( b.size || 0 ) - ( a.size || 0 ) )
+        .slice( 0, 5 );
+
+      return { fileCount: blobs.length, folderCount: trees.length, totalSize, topTypes, largest };
     };
 
-    // ── Token ───────────────────────────────────────────────────────────────
-
-    const promptForToken = () => {
-      const newToken = prompt( 'Enter GitHub Personal Access Token (for higher rate limits):\nLeave blank to clear.', ghToken );
-      if ( newToken !== null ) {
-        localStorage.setItem( 'githubToken', newToken.trim() );
-        location.reload();
-      }
-    };
-
-    // ── Hash routing ────────────────────────────────────────────────────────
-
-    const updateHash = () => {
-      let hash;
-      if ( state.isGist ) {
-        hash = `#gist/${ state.repo }${ state.currentFilePath ? '/' + state.currentFilePath : '' }`;
-      } else {
-        hash = `#${ state.owner }`;
-        if ( state.repo ) {
-          hash += `/${ state.repo }`;
-          if ( state.currentFilePath ) hash += `/${ state.currentFilePath }`;
+    /* ── 17. Build nested tree structure ── */
+    const buildNestedTree = ( flatTree ) => {
+      const root = { children: {} };
+      for ( const item of flatTree ) {
+        const parts = item.path.split( '/' );
+        if ( parts.some( ( p ) => p.startsWith( '.' ) ) ) continue;
+        let current = root;
+        for ( let i = 0; i < parts.length; i++ ) {
+          const part = parts[ i ];
+          if ( !current.children[ part ] ) {
+            current.children[ part ] = { children: {}, type: null, size: null, path: null };
+          }
+          if ( i === parts.length - 1 ) {
+            current.children[ part ].type = item.type;
+            current.children[ part ].size = item.size;
+            current.children[ part ].path = item.path;
+          }
+          current = current.children[ part ];
         }
       }
-      if ( location.hash !== hash ) history.pushState( null, '', hash );
+      return root;
     };
 
-    const handleHashChange = async () => {
-      const hash = location.hash.replace( /^#\/?/, '' );
-      if ( !hash ) { handleFetchRepos(); return; }
+    /* ── 18. Sort tree children: folders first, then alphabetical ── */
+    const sortedEntries = ( children ) =>
+      Object.entries( children ).sort( ( [ aName, aNode ], [ bName, bNode ] ) => {
+        const aIsFolder = aNode.type === 'tree' || Object.keys( aNode.children ).length > 0;
+        const bIsFolder = bNode.type === 'tree' || Object.keys( bNode.children ).length > 0;
+        if ( aIsFolder && !bIsFolder ) return -1;
+        if ( !aIsFolder && bIsFolder ) return 1;
+        return aName.toLowerCase().localeCompare( bName.toLowerCase() );
+      } );
 
-      const parts = hash.split( '/' );
+    /* ── 19. Generate HTML for a tree node ── */
+    const renderNode = ( name, node, parentPath ) => {
+      const fullPath = parentPath ? `${ parentPath }/${ name }` : name;
+      const isFolder = node.type === 'tree' || Object.keys( node.children ).length > 0;
 
-      if ( parts[ 0 ] === 'gist' ) {
-        const gistId = parts[ 1 ];
-        const fp = decodeURIComponent( parts.slice( 2 ).join( '/' ) );
-        if ( gistId && state.repo !== gistId ) await handleSelectGist( gistId, !fp );
-        if ( fp && state.currentFilePath !== fp ) await handleSelectFile( fp, false );
-        return;
+      if ( isFolder ) {
+        const childrenHtml = sortedEntries( node.children )
+          .map( ( [ childName, childNode ] ) => renderNode( childName, childNode, fullPath ) )
+          .join( '' );
+
+        return `<details data-folder-path="${ escapeHTML( fullPath ) }">` +
+          `<summary class="tree-folder" tabindex="0" title="${ escapeHTML( fullPath ) }">` +
+          `📁 <span class="folder-name">${ escapeHTML( name ) }</span>` +
+          `</summary>` +
+          childrenHtml +
+          `</details>`;
       }
 
-      const owner = parts[ 0 ];
-      const repo = parts[ 1 ];
-      const fp = decodeURIComponent( parts.slice( 2 ).join( '/' ) );
+      const icon = getFileIcon( name );
+      const sizeStr = formatFileSize( node.size );
+      const isReadme = /^readme/i.test( name );
+      const nameHtml = isReadme
+        ? `<strong>${ escapeHTML( name ) }</strong>`
+        : escapeHTML( name );
 
-      if ( owner && owner !== state.owner ) {
-        ownerInput.value = owner;
-        await handleFetchRepos( false );
-      }
-      if ( repo && state.repo !== repo ) await handleSelectRepo( repo, !fp );
-      if ( fp && state.currentFilePath !== fp ) await handleSelectFile( fp, false );
+      return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeHTML( fullPath ) }" title="${ escapeHTML( fullPath ) }">` +
+        `<span class="tree-item-name">${ icon } ${ nameHtml }</span>` +
+        `<span class="tree-item-size">${ escapeHTML( sizeStr ) }</span>` +
+        `</div>`;
     };
 
-    window.addEventListener( 'popstate', handleHashChange );
-    window.addEventListener( 'hashchange', handleHashChange );
+    /* ── 20. renderTree — batched rendering ── */
+    const renderTree = ( treeArray ) => {
+      const treeList = document.getElementById( 'treeList' );
+      treeList.innerHTML = '';
 
-    // ── Button state ────────────────────────────────────────────────────────
+      const nested = buildNestedTree( treeArray );
+      const rootEntries = sortedEntries( nested.children );
+      const batchSize = 120;
+      const total = rootEntries.length;
+      let rendered = 0;
 
-    const resetMainAction = () => {
-      btnMainAction.textContent = 'Get Repos';
-      btnMainAction.onclick = handleFetchRepos;
-      document.getElementById( 'btnGetOrgs' ).style.display = 'inline-block';
-      document.getElementById( 'btnGetGists' ).style.display = 'inline-block';
-    };
+      const statusEl = document.createElement( 'div' );
+      statusEl.id = 'treeRenderStatus';
+      statusEl.style.cssText = 'font-size: 0.85rem; color: var(--text-color); opacity: 0.7; padding: 0.3rem 0.5rem;';
+      treeList.appendChild( statusEl );
 
-    // ── Generic paginated list fetcher ──────────────────────────────────────
+      return new Promise( ( resolve ) => {
+        const renderBatch = () => {
+          const end = Math.min( rendered + batchSize, total );
+          let html = '';
+          for ( let i = rendered; i < end; i++ ) {
+            const [ name, node ] = rootEntries[ i ];
+            html += renderNode( name, node, '' );
+          }
+          const fragment = document.createElement( 'div' );
+          fragment.innerHTML = html;
+          while ( fragment.firstChild ) {
+            treeList.insertBefore( fragment.firstChild, statusEl );
+          }
+          rendered = end;
+          const pct = Math.round( ( rendered / total ) * 100 );
+          statusEl.textContent = `${ pct }% rendered…`;
+          if ( rendered < total ) {
+            setTimeout( renderBatch, 0 );
+          } else {
+            statusEl.remove();
+            resolve();
+          }
+        };
 
-    const fetchList = async config => {
-      const owner = ownerInput.value.trim();
-      if ( !owner ) return;
-
-      if ( config.page === 1 ) {
-        ownerInput.blur();
-        state.owner = owner;
-        state.isGist = config.isGist || false;
-        if ( config.onReset ) config.onReset();
-
-        mainContent.innerHTML = `<p>Loading ${ config.label.toLowerCase() }...</p>`;
-        repoList.innerHTML = '';
-        repoListContainer.querySelector( 'h3' ).textContent = config.label;
-        document.getElementById( 'filterInput' ).value = '';
-
-        repoListContainer.style.display = 'block';
-        navTree.style.display = 'none';
-        btnToggleFolders.style.display = 'none';
-        resetMainAction();
-      }
-
-      try {
-        const options = getFetchOptions( config.page === 1 );
-        const response = await fetch( config.url, options );
-        if ( !response.ok ) throw new Error( `Status: ${ response.status } - ${ response.statusText }` );
-
-        const items = await response.json();
-
-        const oldBtn = document.getElementById( config.btnId );
-        if ( oldBtn ) oldBtn.remove();
-
-        const html = items.map( config.itemRenderer ).join( '' );
-
-        if ( config.storeItems ) {
-          if ( config.page > 1 ) state.repoItems.push( ...items );
-          else state.repoItems = [ ...items ];
-          state.repoRenderer = config.itemRenderer;
-          document.getElementById( 'sortSelect' ).style.display = 'block';
+        if ( total === 0 ) {
+          statusEl.remove();
+          resolve();
         } else {
-          document.getElementById( 'sortSelect' ).style.display = 'none';
-        }
-
-        if ( config.page > 1 ) repoList.insertAdjacentHTML( 'beforeend', html );
-        else repoList.innerHTML = html;
-
-        updateRecentUsers( owner );
-        const count = repoList.querySelectorAll( '.repo-item' ).length;
-        let successHtml = `<p>Loaded ${ count } ${ config.label.toLowerCase() } for ${ owner } (up to page ${ config.page }). Select one to view contents.</p>`;
-
-        if ( config.page === 1 && config.onSuccessFirstPage ) {
-          const extra = await config.onSuccessFirstPage();
-          if ( extra ) successHtml += extra;
-        }
-
-        mainContent.innerHTML = successHtml;
-
-        if ( items.length === 100 ) {
-          repoList.insertAdjacentHTML( 'beforeend',
-            `<li id="${ config.btnId }" style="text-align: center; margin-top: 1rem;">` +
-            `<button type="button" data-action="${ config.onLoadMoreAction }" data-page="${ config.page + 1 }">${ config.loadMoreText }</button></li>` );
-        }
-      } catch ( error ) {
-        if ( error.name === 'AbortError' ) return;
-        if ( error.message.includes( '403' ) ) error.message += ' (Rate limit exceeded. Click "⚙️ Token" to increase limit.)';
-        mainContent.innerHTML = `<p class="error">Error fetching ${ config.label.toLowerCase() }: ${ escapeHTML( error.message ) }</p>`;
-      }
-    };
-
-    // ── Fetch repos ─────────────────────────────────────────────────────────
-
-    const handleFetchRepos = async ( doUpdateHash = true, page = 1 ) => {
-      await fetchList( {
-        page,
-        label: 'Repositories',
-        isGist: false,
-        url: `https://api.github.com/users/${ ownerInput.value.trim() }/repos?per_page=100&sort=updated&page=${ page }`,
-        btnId: 'btnLoadMoreRepos',
-        loadMoreText: 'Load More Repos',
-        onLoadMoreAction: 'load-more-repos',
-        storeItems: true,
-        onReset: () => {
-          state.repo = '';
-          state.currentFilePath = '';
-          if ( doUpdateHash ) updateHash();
-        },
-        itemRenderer: repo => {
-          const meta = [];
-          if ( repo.stargazers_count > 0 ) meta.push( `⭐${ repo.stargazers_count }` );
-          if ( repo.language ) {
-            const color = languageColors[ repo.language ] || '#586069';
-            meta.push( `<span class="repo-lang-dot" style="background:${ color }"></span>${ escapeHTML( repo.language ) }` );
-          }
-          if ( repo.has_pages ) meta.push( '🌐' );
-          if ( repo.pushed_at ) {
-            const days = Math.floor( ( Date.now() - new Date( repo.pushed_at ) ) / 86400000 );
-            meta.push( days === 0 ? 'today' : days === 1 ? '1d ago' : days < 30 ? `${ days }d ago` : days < 365 ? `${ Math.floor( days / 30 ) }mo ago` : `${ Math.floor( days / 365 ) }y ago` );
-          }
-          const desc = repo.description ? escapeAttribute( repo.description ) : '';
-          return `<li>
-            <div class="repo-item" data-action="select-repo" data-repo="${ escapeAttribute( repo.name ) }"${ desc ? ` title="${ desc }"` : '' }>
-              ${ escapeHTML( repo.name ) }
-              ${ meta.length ? `<div class="repo-meta">${ meta.join( ' ' ) }</div>` : '' }
-            </div>
-          </li>`;
-        },
-        onSuccessFirstPage: async () => handleFetchStats( true )
-      } );
-    };
-
-    // ── Fetch orgs ──────────────────────────────────────────────────────────
-
-    const handleFetchOrgs = async ( page = 1 ) => {
-      await fetchList( {
-        page,
-        label: 'Organizations',
-        isGist: false,
-        url: `https://api.github.com/users/${ ownerInput.value.trim() }/orgs?per_page=100&page=${ page }`,
-        btnId: 'btnLoadMoreOrgs',
-        loadMoreText: 'Load More Orgs',
-        onLoadMoreAction: 'load-more-orgs',
-        itemRenderer: org => `<li>
-          <div class="repo-item" data-action="select-owner" data-owner="${ escapeAttribute( org.login ) }">
-            ${ escapeHTML( org.login ) }
-          </div>
-        </li>`
-      } );
-    };
-
-    // ── Fetch gists ─────────────────────────────────────────────────────────
-
-    const handleFetchGists = async ( page = 1 ) => {
-      await fetchList( {
-        page,
-        label: 'Gists',
-        isGist: true,
-        url: `https://api.github.com/users/${ ownerInput.value.trim() }/gists?per_page=100&page=${ page }`,
-        btnId: 'btnLoadMoreGists',
-        loadMoreText: 'Load More Gists',
-        onLoadMoreAction: 'load-more-gists',
-        itemRenderer: gist => {
-          const files = Object.keys( gist.files );
-          const title = gist.description || ( files.length ? files[ 0 ] : 'gist' );
-          return `<li>
-            <div class="repo-item" data-action="select-gist" data-gist-id="${ escapeAttribute( gist.id ) }">
-              ${ escapeHTML( title ) }
-            </div>
-          </li>`;
+          renderBatch();
         }
       } );
     };
 
-    // ── Stats ───────────────────────────────────────────────────────────────
+    /* ── 21. fetchTree ── */
+    const fetchTree = async () => {
+      if ( currentAbortController ) currentAbortController.abort();
+      currentAbortController = new AbortController();
+      const signal = currentAbortController.signal;
 
-    const handleFetchStats = async ( returnHtml = false ) => {
-      const owner = ownerInput.value.trim();
-      if ( !owner ) return;
-      if ( !returnHtml ) mainContent.innerHTML = '<p>Loading statistics...</p>';
+      const treeList = document.getElementById( 'treeList' );
+      const headers = getAuthHeaders();
 
       try {
-        const options = { headers, signal: mainAbortController?.signal };
-        const isRepoLevel = state.repo && navTree.style.display !== 'none' && !state.isGist;
-        const url = isRepoLevel
-          ? `https://api.github.com/repos/${ owner }/${ state.repo }`
-          : `https://api.github.com/users/${ owner }`;
-
-        const response = await fetch( url, options );
-        if ( !response.ok ) throw new Error( `Status: ${ response.status } - ${ response.statusText }` );
-        const data = await response.json();
-
-        let languagesHtml = '';
-        if ( isRepoLevel ) {
-          const langResponse = await fetch( `https://api.github.com/repos/${ owner }/${ state.repo }/languages`, options );
-          if ( langResponse.ok ) {
-            const languages = await langResponse.json();
-            const entries = Object.entries( languages );
-            const total = entries.reduce( ( sum, [ , b ] ) => sum + b, 0 );
-            if ( entries.length && total > 0 ) {
-              languagesHtml = `<div style="margin-top: 1.5rem;">
-                <h3 style="margin: 0 0 0.75rem 0; font-size: 1rem;">Language Breakdown</h3>
-                <div style="display: grid; gap: 0.5rem;">
-                  ${ entries.sort( ( a, b ) => b[ 1 ] - a[ 1 ] ).map( ( [ lang, bytes ] ) => {
-                const pct = ( bytes / total * 100 );
-                return `<div style="display: grid; gap: 0.25rem;">
-                      <div style="display: flex; justify-content: space-between; gap: 1rem; font-size: 0.95rem;">
-                        <span><strong>${ escapeHTML( lang ) }</strong></span>
-                        <span>${ pct.toFixed( 1 ) }% · ${ bytes.toLocaleString() } bytes</span>
-                      </div>
-                      <div style="height: 0.55rem; background: var(--primary-bg); border-radius: 999px; overflow: hidden; border: 1px solid var(--border-color);">
-                        <div style="height: 100%; width: ${ pct.toFixed( 2 ) }%; background: var(--highlight-color);"></div>
-                      </div>
-                    </div>`;
-              } ).join( '' ) }
-                </div>
-              </div>`;
-            }
-          }
-        }
-
-        let html = `<div style="padding: 1.5rem; background: var(--secondary-bg); border: 1px solid var(--border-color); border-radius: 6px;">`;
-        if ( isRepoLevel ) {
-          html += `
-            <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
-              <img src="${ escapeAttribute( data.owner.avatar_url ) }" style="width: 48px; height: 48px; border-radius: 50%;">
-              <h2 style="margin: 0;">Repository: <a href="${ escapeAttribute( data.html_url ) }" target="_blank" style="color: var(--highlight-color); text-decoration: none;">${ escapeHTML( data.full_name ) }</a></h2>
-            </div>
-            ${ data.description ? `<p style="font-size: 1.1rem; color: #57606a; margin-bottom: 1.5rem;">${ escapeHTML( data.description ) }</p>` : '' }
-            <ul style="list-style: none; padding: 0; line-height: 2; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem;">
-              <li>⭐ <strong>Stars:</strong> ${ data.stargazers_count }</li>
-              <li>👁️ <strong>Watchers:</strong> ${ data.watchers_count }</li>
-              <li>🔀 <strong>Forks:</strong> ${ data.forks_count }</li>
-              <li>🐛 <strong>Open Issues:</strong> ${ data.open_issues_count }</li>
-              <li>💻 <strong>Language:</strong> ${ escapeHTML( data.language || 'N/A' ) }</li>
-              <li>⚖️ <strong>License:</strong> ${ data.license ? escapeHTML( data.license.name ) : 'None' }</li>
-              <li>🕒 <strong>Created:</strong> ${ new Date( data.created_at ).toLocaleDateString() }</li>
-              <li>🔄 <strong>Updated:</strong> ${ new Date( data.updated_at ).toLocaleDateString() }</li>
-              <li>📦 <strong>Size:</strong> ${ ( data.size / 1024 ).toFixed( 2 ) } MB</li>
-              ${ data.homepage ? `<li>🌐 <strong>Website:</strong> <a href="${ data.homepage.startsWith( 'http' ) ? escapeAttribute( data.homepage ) : 'http://' + escapeAttribute( data.homepage ) }" target="_blank" style="color: var(--highlight-color); text-decoration: none;">${ escapeHTML( data.homepage ) }</a></li>` : '' }
-              <li>📄 <strong>Pages:</strong> ${ data.has_pages ? 'Enabled' : 'Disabled' }</li>
-            </ul>`;
-
-          // ── Repository Stats from tree data ──
-          if ( state.tree.length ) {
-            const blobs = state.tree.filter( i => i.type === 'blob' );
-            const folders = state.tree.filter( i => i.type === 'tree' );
-            const totalSize = blobs.reduce( ( s, f ) => s + ( f.size || 0 ), 0 );
-
-            html += `
-              <h3 style="margin: 1.5rem 0 0.5rem 0; font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem;">Repository Stats</h3>
-              <ul style="list-style: none; padding: 0; line-height: 2;">
-                <li>📄 <strong>Files:</strong> ${ blobs.length.toLocaleString() }</li>
-                <li>📁 <strong>Folders:</strong> ${ folders.length.toLocaleString() }</li>
-                <li>📦 <strong>Total Size:</strong> ${ formatFileSize( totalSize ) }</li>
-              </ul>`;
-
-            // Files by type
-            const extMap = {};
-            blobs.forEach( f => {
-              const parts = f.path.split( '.' );
-              const ext = parts.length > 1 ? '.' + parts.pop().toLowerCase() : '(no ext)';
-              if ( !extMap[ ext ] ) extMap[ ext ] = { count: 0, size: 0 };
-              extMap[ ext ].count++;
-              extMap[ ext ].size += f.size || 0;
-            } );
-            const extEntries = Object.entries( extMap ).sort( ( a, b ) => b[ 1 ].count - a[ 1 ].count );
-
-            if ( extEntries.length ) {
-              html += `
-                <h3 style="margin: 1.5rem 0 0.5rem 0; font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem;">Files by Type</h3>
-                <table style="border-collapse: collapse; width: 100%; max-width: 500px; font-size: 0.95rem;">
-                  <thead><tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
-                    <th style="padding: 0.3rem 0.5rem;">Extension</th>
-                    <th style="padding: 0.3rem 0.5rem; text-align: right;">Count</th>
-                    <th style="padding: 0.3rem 0.5rem; text-align: right;">Size</th>
-                  </tr></thead>
-                  <tbody>
-                    ${ extEntries.map( ( [ ext, info ] ) =>
-                `<tr style="border-bottom: 1px solid var(--border-color);">
-                        <td style="padding: 0.3rem 0.5rem; font-family: monospace;">${ escapeHTML( ext ) }</td>
-                        <td style="padding: 0.3rem 0.5rem; text-align: right;">${ info.count }</td>
-                        <td style="padding: 0.3rem 0.5rem; text-align: right;">${ formatFileSize( info.size ) }</td>
-                      </tr>` ).join( '' ) }
-                  </tbody>
-                </table>`;
-            }
-
-            // Largest files (top 10)
-            const largest = [ ...blobs ].filter( f => f.size > 0 ).sort( ( a, b ) => b.size - a.size ).slice( 0, 10 );
-            if ( largest.length ) {
-              html += `
-                <h3 style="margin: 1.5rem 0 0.5rem 0; font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem;">Largest Files</h3>
-                <table style="border-collapse: collapse; width: 100%; max-width: 600px; font-size: 0.95rem;">
-                  <thead><tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
-                    <th style="padding: 0.3rem 0.5rem;">File</th>
-                    <th style="padding: 0.3rem 0.5rem; text-align: right;">Size</th>
-                  </tr></thead>
-                  <tbody>
-                    ${ largest.map( f => {
-                const name = f.path.split( '/' ).pop();
-                return `<tr style="border-bottom: 1px solid var(--border-color);">
-                        <td style="padding: 0.3rem 0.5rem;">
-                          <span style="color: var(--highlight-color); cursor: pointer;" onclick="handleSelectFile('${ escapeAttribute( f.path ) }')">${ escapeHTML( name ) }</span>
-                          <span style="font-size: 0.8rem; color: #57606a; margin-left: 0.5rem;">${ escapeHTML( f.path.includes( '/' ) ? f.path.substring( 0, f.path.lastIndexOf( '/' ) ) : '' ) }</span>
-                        </td>
-                        <td style="padding: 0.3rem 0.5rem; text-align: right; white-space: nowrap;">${ formatFileSize( f.size ) }</td>
-                      </tr>`;
-              } ).join( '' ) }
-                  </tbody>
-                </table>`;
-            }
-          }
-
-          html += languagesHtml;
-        } else {
-          // Fetch additional data in parallel: orgs + repos + contributions (GraphQL, token-only)
-          const contributionsQuery = ghToken ? fetch( 'https://api.github.com/graphql', {
-            method: 'POST',
-            headers: { Authorization: `bearer ${ ghToken }`, 'Content-Type': 'application/json' },
-            signal: options.signal,
-            body: JSON.stringify( {
-              query: `{
-              user(login: "${ owner.replace( /"/g, '\\"' ) }") {
-                contributionsCollection {
-                  totalCommitContributions
-                  totalPullRequestContributions
-                  totalIssueContributions
-                  totalPullRequestReviewContributions
-                  totalRepositoryContributions
-                  contributionCalendar {
-                    totalContributions
-                    weeks { contributionDays { contributionCount date color } }
-                  }
-                }
-              }
-            }` } )
-          } ).then( r => r.ok ? r.json() : null ).catch( () => null ) : Promise.resolve( null );
-
-          const [ orgsResp, reposResp, gqlData ] = await Promise.all( [
-            fetch( `https://api.github.com/users/${ owner }/orgs?per_page=100`, options ),
-            fetch( `https://api.github.com/users/${ owner }/repos?per_page=100&sort=updated`, options ),
-            contributionsQuery
-          ] );
-
-          const orgs = orgsResp.ok ? await orgsResp.json() : [];
-          const repos = reposResp.ok ? await reposResp.json() : [];
-
-          // Compute aggregate stats from repos
-          const totalStars = repos.reduce( ( s, r ) => s + ( r.stargazers_count || 0 ), 0 );
-          const totalForks = repos.reduce( ( s, r ) => s + ( r.forks_count || 0 ), 0 );
-          const thirtyDaysAgo = Date.now() - 30 * 86400000;
-          const activeRepos = repos.filter( r => new Date( r.pushed_at ) > thirtyDaysAgo ).length;
-
-          // Top languages by repo count
-          const langCounts = {};
-          repos.forEach( r => { if ( r.language ) langCounts[ r.language ] = ( langCounts[ r.language ] || 0 ) + 1; } );
-          const topLangs = Object.entries( langCounts ).sort( ( a, b ) => b[ 1 ] - a[ 1 ] );
-
-          // Recently updated repos (top 8)
-          const recentRepos = repos.slice( 0, 8 );
-
-          const relTime = dateStr => {
-            const days = Math.floor( ( Date.now() - new Date( dateStr ) ) / 86400000 );
-            if ( days === 0 ) return 'today';
-            if ( days === 1 ) return '1 day ago';
-            if ( days < 30 ) return `${ days } days ago`;
-            if ( days < 365 ) return `${ Math.floor( days / 30 ) }mo ago`;
-            return `${ Math.floor( days / 365 ) }y ago`;
-          };
-
-          // ── Profile header ──
-          html += `
-            <div style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem;">
-              <img src="${ escapeAttribute( data.avatar_url ) }" style="width: 80px; height: 80px; border-radius: 50%; box-shadow: 0 0 0 1px var(--border-color);">
-              <div>
-                <h2 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                  <a href="${ escapeAttribute( data.html_url ) }" target="_blank" style="color: var(--highlight-color); text-decoration: none;">${ escapeHTML( data.name || data.login ) }</a>
-                  <small style="color: #57606a; font-weight: normal;">(@${ escapeHTML( data.login ) })</small>
-                </h2>
-                ${ data.type === 'Organization' ? '<span style="background: #eef2f5; border: 1px solid #d0d7de; font-size: 0.8rem; padding: 0.1rem 0.4rem; border-radius: 12px; margin-top: 0.25rem; display: inline-block;">Organization</span>' : '' }
-              </div>
-            </div>
-            ${ data.bio ? `<p style="font-size: 1.1rem; color: #57606a; margin-bottom: 1.5rem;">${ escapeHTML( data.bio ) }</p>` : '' }`;
-
-          // ── Contributions (GraphQL, requires token) ──
-          const contrib = gqlData?.data?.user?.contributionsCollection;
-          if ( contrib ) {
-            const cal = contrib.contributionCalendar;
-
-            // Render contribution calendar grid (52 weeks × 7 days)
-            const weeksHtml = cal.weeks.map( week =>
-              `<g>${ week.contributionDays.map( ( day, di ) =>
-                `<rect width="10" height="10" x="0" y="${ di * 13 }" rx="2" ry="2" fill="${ escapeAttribute( day.color ) }" data-date="${ escapeAttribute( day.date ) }" data-count="${ day.contributionCount }"><title>${ escapeHTML( day.date ) }: ${ day.contributionCount } contributions</title></rect>`
-              ).join( '' ) }</g>`
-            ).map( ( g, wi ) => g.replace( '<g>', `<g transform="translate(${ wi * 14 }, 0)">` ) ).join( '' );
-
-            const svgWidth = cal.weeks.length * 14;
-
-            html += `
-              <h3 style="margin: 1.5rem 0 0.5rem 0; font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem;">Contributions</h3>
-              <div style="overflow-x: auto; padding: 0.5rem 0;">
-                <svg width="${ svgWidth }" height="104" style="display: block;">
-                  ${ weeksHtml }
-                </svg>
-              </div>
-              <p style="font-size: 0.95rem; color: #57606a; margin: 0.25rem 0 0 0;">${ cal.totalContributions.toLocaleString() } contributions in the last year</p>`;
-
-            // ── Achievements ──
-            html += `
-              <h3 style="margin: 1.5rem 0 0.5rem 0; font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem;">Achievements</h3>
-              <ul style="list-style: none; padding: 0; line-height: 2; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.25rem;">
-                <li>🔨 <strong>Total Commits:</strong> ${ contrib.totalCommitContributions.toLocaleString() }</li>
-                <li>🔀 <strong>Pull Requests:</strong> ${ contrib.totalPullRequestContributions }</li>
-                <li>🐛 <strong>Issues Opened:</strong> ${ contrib.totalIssueContributions }</li>
-                <li>👀 <strong>Code Reviews:</strong> ${ contrib.totalPullRequestReviewContributions }</li>
-                <li>📁 <strong>Repos Created:</strong> ${ contrib.totalRepositoryContributions }</li>
-              </ul>`;
-          } else if ( !ghToken ) {
-            html += `<p style="font-size: 0.85rem; color: #57606a; margin-top: 1rem; font-style: italic;">💡 Add a token via "⚙️ Token" to see contributions, achievements, and the contribution calendar.</p>`;
-          }
-
-          // ── Overview ──
-          html += `
-            <h3 style="margin: 1.5rem 0 0.5rem 0; font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem;">Overview</h3>
-            <ul style="list-style: none; padding: 0; line-height: 2; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.25rem;">
-              ${ data.location ? `<li>📍 <strong>Location:</strong> ${ escapeHTML( data.location ) }</li>` : '' }
-              <li>👥 <strong>Followers:</strong> ${ data.followers }</li>
-              <li>👤 <strong>Following:</strong> ${ data.following }</li>
-              <li>📁 <strong>Public Repos:</strong> ${ data.public_repos }</li>
-              <li>📝 <strong>Public Gists:</strong> ${ data.public_gists }</li>
-              <li>⭐ <strong>Total Stars Earned:</strong> ${ totalStars }</li>
-              <li>🍴 <strong>Total Forks:</strong> ${ totalForks }</li>
-              <li>🔥 <strong>Active Last 30 Days:</strong> ${ activeRepos } repos</li>
-              <li>🕒 <strong>Joined:</strong> ${ new Date( data.created_at ).toLocaleDateString() }</li>
-              ${ data.blog ? `<li>🌐 <strong>Website:</strong> <a href="${ data.blog.startsWith( 'http' ) ? escapeAttribute( data.blog ) : 'https://' + escapeAttribute( data.blog ) }" target="_blank" rel="noopener" style="color: var(--highlight-color); text-decoration: none;">${ escapeHTML( data.blog ) }</a></li>` : '' }
-              <li>🐙 <strong>GitHub:</strong> <a href="${ escapeAttribute( data.html_url ) }" target="_blank" rel="noopener" style="color: var(--highlight-color); text-decoration: none;">${ escapeHTML( data.html_url ) }</a></li>
-              ${ data.twitter_username ? `<li>🐦 <strong>Twitter:</strong> <a href="https://twitter.com/${ escapeAttribute( data.twitter_username ) }" target="_blank" rel="noopener" style="color: var(--highlight-color); text-decoration: none;">@${ escapeHTML( data.twitter_username ) }</a></li>` : '' }
-              ${ data.company ? `<li>🏢 <strong>Company:</strong> ${ escapeHTML( data.company ) }</li>` : '' }
-              ${ data.email ? `<li>📧 <strong>Email:</strong> <a href="mailto:${ escapeAttribute( data.email ) }" style="color: var(--highlight-color); text-decoration: none;">${ escapeHTML( data.email ) }</a></li>` : '' }
-            </ul>`;
-
-          // ── Organizations ──
-          if ( orgs.length ) {
-            html += `
-              <h3 style="margin: 1.5rem 0 0.5rem 0; font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem;">Organizations</h3>
-              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                ${ orgs.map( o => `<button onclick="ownerInput.value='${ escapeAttribute( o.login ) }'; handleFetchRepos()"
-                  style="background: var(--hover-bg); color: var(--highlight-color); border: 1px solid var(--border-color); padding: 0.3rem 0.75rem; font-size: 0.9rem;">
-                  ${ escapeHTML( o.login ) }</button>` ).join( '' ) }
-              </div>`;
-          }
-
-          // ── Top Languages ──
-          if ( topLangs.length ) {
-            html += `
-              <h3 style="margin: 1.5rem 0 0.5rem 0; font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem;">Top Languages</h3>
-              <table style="border-collapse: collapse; width: 100%; max-width: 400px; font-size: 0.95rem;">
-                <thead><tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
-                  <th style="padding: 0.3rem 0.5rem;">Language</th><th style="padding: 0.3rem 0.5rem; text-align: right;">Repos</th>
-                </tr></thead>
-                <tbody>
-                  ${ topLangs.map( ( [ lang, count ] ) => {
-              const color = languageColors[ lang ] || '#586069';
-              return `<tr style="border-bottom: 1px solid var(--border-color);">
-                      <td style="padding: 0.3rem 0.5rem;"><span class="repo-lang-dot" style="background:${ color }; margin-right: 0.4rem;"></span>${ escapeHTML( lang ) }</td>
-                      <td style="padding: 0.3rem 0.5rem; text-align: right;">${ count }</td>
-                    </tr>`;
-            } ).join( '' ) }
-                </tbody>
-              </table>`;
-          }
-
-          // ── Recently Updated ──
-          if ( recentRepos.length ) {
-            html += `
-              <h3 style="margin: 1.5rem 0 0.5rem 0; font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem;">Recently Updated</h3>
-              <table style="border-collapse: collapse; width: 100%; max-width: 500px; font-size: 0.95rem;">
-                <thead><tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
-                  <th style="padding: 0.3rem 0.5rem;">Repository</th><th style="padding: 0.3rem 0.5rem; text-align: right;">Updated</th>
-                </tr></thead>
-                <tbody>
-                  ${ recentRepos.map( r => `<tr style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: 0.3rem 0.5rem;">
-                      <span style="color: var(--highlight-color); cursor: pointer;" onclick="ownerInput.value='${ escapeAttribute( owner ) }'; handleSelectRepo('${ escapeAttribute( r.name ) }')">${ escapeHTML( r.name ) }</span>
-                      ${ r.stargazers_count ? ` <span style="font-size: 0.8rem; color: #57606a;">⭐${ r.stargazers_count }</span>` : '' }
-                    </td>
-                    <td style="padding: 0.3rem 0.5rem; text-align: right; color: #57606a;">${ relTime( r.pushed_at ) }</td>
-                  </tr>` ).join( '' ) }
-                </tbody>
-              </table>`;
-          }
-        }
-
-        html += `</div>`;
-        if ( returnHtml ) return html;
-        mainContent.innerHTML = html;
-      } catch ( error ) {
-        if ( error.name === 'AbortError' ) return returnHtml ? '' : undefined;
-        if ( error.message.includes( '403' ) ) error.message += ' (Rate limit exceeded. Click "⚙️ Token" to increase limit.)';
-        const msg = `<p class="error">Error fetching stats: ${ escapeHTML( error.message ) }</p>`;
-        if ( returnHtml ) return msg;
-        mainContent.innerHTML = msg;
-      }
-    };
-
-    // ── Select repo ─────────────────────────────────────────────────────────
-
-    const handleSelectRepo = async ( repoName, autoOpenReadme = true, branch = null ) => {
-      state.repo = repoName;
-      state.branch = branch || 'main';
-      state.currentFilePath = '';
-      if ( autoOpenReadme ) updateHash();
-      mainContent.innerHTML = `<p>Loading ${ escapeHTML( repoName ) }...</p>`;
-
-      try {
-        const options = getFetchOptions( true );
-
-        if ( !branch ) {
-          const repoResp = await fetch( `https://api.github.com/repos/${ state.owner }/${ state.repo }`, options );
-          if ( !repoResp.ok ) throw new Error( `Status: ${ repoResp.status } - ${ repoResp.statusText }` );
-          const repoData = await repoResp.json();
+        if ( !state.branch ) {
+          const repoRes = await fetch(
+            `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`,
+            { headers, signal }
+          );
+          updateRateBadge( repoRes );
+          if ( !repoRes.ok ) throw new Error( `Failed to fetch repo info: ${ repoRes.status }` );
+          const repoData = await repoRes.json();
           state.branch = repoData.default_branch;
         }
 
-        const branchesResp = await fetch( `https://api.github.com/repos/${ state.owner }/${ state.repo }/branches?per_page=100`, options );
-        let branchesHtml = '';
-        if ( branchesResp.ok ) {
-          const branches = await branchesResp.json();
-          branchesHtml = `<select data-repo="${ escapeAttribute( state.repo ) }"
-            onchange="handleSelectRepo(this.dataset.repo, true, this.value)"
-            style="margin-left: 0.5rem; padding: 0.2rem; border-radius: 4px; max-width: 120px;">
-            ${ branches.map( b =>
-            `<option value="${ escapeAttribute( b.name ) }"${ b.name === state.branch ? ' selected' : '' }>${ escapeHTML( b.name ) }</option>`
-          ).join( '' ) }
-          </select>`;
-        }
+        treeList.innerHTML = '<p>Loading tree…</p>';
 
-        const treeResp = await fetch( `https://api.github.com/repos/${ state.owner }/${ state.repo }/git/trees/${ state.branch }?recursive=1`, options );
-        if ( !treeResp.ok ) throw new Error( `Status: ${ treeResp.status } - ${ treeResp.statusText }` );
-        const treeData = await treeResp.json();
-
-        const warningEl = document.getElementById( 'treeTruncatedWarning' );
-        warningEl.style.display = treeData.truncated ? 'block' : 'none';
-        if ( treeData.truncated ) console.warn( 'Tree response is truncated.' );
-
-        state.tree = treeData.tree || [];
-
-        repoListContainer.style.display = 'none';
-        navTree.style.display = 'block';
-        navTree.querySelector( 'h3' ).innerHTML = `Files ${ branchesHtml }`;
-
-        btnMainAction.textContent = '← Back to Repos';
-        btnMainAction.onclick = handleBackToRepos;
-        document.getElementById( 'btnGetOrgs' ).style.display = 'none';
-        document.getElementById( 'btnGetGists' ).style.display = 'none';
-
-        btnToggleFolders.style.display = 'inline-block';
-        btnToggleFolders.textContent = 'Expand All';
-        btnToggleFolders.dataset.expanded = 'false';
-
-        renderTree( state.tree );
-
-        // Auto-open README — spec: hash is NOT updated for this auto-display
-        const readmeFile = state.tree.find( item =>
-          item.type === 'blob' && /^readme(\.md|\.txt)?$/i.test( item.path.split( '/' ).pop() )
+        const treeRes = await fetch(
+          `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/git/trees/${ encodeURIComponent( state.branch ) }?recursive=1`,
+          { headers, signal }
         );
+        updateRateBadge( treeRes );
 
-        if ( autoOpenReadme && readmeFile ) {
-          handleSelectFile( readmeFile.path, false );
-        } else if ( autoOpenReadme ) {
-          mainContent.innerHTML = `<p>Viewing repository: <strong>${ escapeHTML( repoName ) }</strong> (Branch: ${ escapeHTML( state.branch ) })</p>`;
-        }
-      } catch ( error ) {
-        if ( error.name === 'AbortError' ) return;
-        if ( error.message.includes( '403' ) ) error.message += ' (Rate limit exceeded. Click "⚙️ Token" to increase limit.)';
-        mainContent.innerHTML = `<p class="error">Error loading repo tree: ${ escapeHTML( error.message ) }</p>`;
-      }
-    };
-
-    // ── Select gist ─────────────────────────────────────────────────────────
-
-    const handleSelectGist = async ( gistId, autoOpenFile = true ) => {
-      state.repo = gistId;
-      state.branch = '';
-      state.isGist = true;
-      state.currentFilePath = '';
-      if ( autoOpenFile ) updateHash();
-      mainContent.innerHTML = '<p>Loading gist...</p>';
-
-      try {
-        const options = getFetchOptions( true );
-        const response = await fetch( `https://api.github.com/gists/${ gistId }`, options );
-        if ( !response.ok ) throw new Error( `Status: ${ response.status } - ${ response.statusText }` );
-
-        const gist = await response.json();
-        state.tree = Object.keys( gist.files ).map( filename => ( {
-          path: filename,
-          type: 'blob',
-          url: gist.files[ filename ].raw_url,
-          fileNode: gist.files[ filename ]
-        } ) );
-
-        repoListContainer.style.display = 'none';
-        navTree.style.display = 'block';
-
-        btnMainAction.textContent = '← Back to Gists';
-        btnMainAction.onclick = handleBackToRepos;
-        document.getElementById( 'btnGetOrgs' ).style.display = 'none';
-        document.getElementById( 'btnGetGists' ).style.display = 'none';
-
-        treeList.innerHTML = '';
-        renderTree( state.tree );
-
-        const firstFile = state.tree[ 0 ];
-        if ( autoOpenFile && firstFile ) handleSelectFile( firstFile.path, true );
-      } catch ( error ) {
-        if ( error.name === 'AbortError' ) return;
-        if ( error.message.includes( '403' ) ) error.message += ' (Rate limit exceeded. Click "⚙️ Token" to increase limit.)';
-        mainContent.innerHTML = `<p class="error">Error loading gist: ${ escapeHTML( error.message ) }</p>`;
-      }
-    };
-
-    // ── File content loading ─────────────────────────────────────────────────
-
-    const loadFileContent = async ( ext, url, path, signal ) => {
-      let renderedHtml = '';
-      let rawHtml = '';
-      let showToggles = false;
-      const fetchOpts = signal ? { signal } : {};
-
-      if ( [ 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico' ].includes( ext ) ) {
-        renderedHtml = `<img src="${ escapeAttribute( url ) }" class="media-content" alt="${ escapeAttribute( path ) }">`;
-        if ( ext === 'svg' ) {
-          const resp = await fetch( url, fetchOpts );
-          rawHtml = `<pre><code>${ escapeHTML( await resp.text() ) }</code></pre>`;
-          showToggles = true;
-        }
-      } else if ( [ 'mp3', 'wav', 'ogg' ].includes( ext ) ) {
-        renderedHtml = `<audio controls src="${ escapeAttribute( url ) }" style="width: 100%; margin-top: 1rem;"></audio>`;
-      } else if ( [ 'mp4', 'webm' ].includes( ext ) ) {
-        renderedHtml = `<video controls src="${ escapeAttribute( url ) }" class="media-content"></video>`;
-      } else if ( ext === 'pdf' ) {
-        const docUrl = `https://docs.google.com/viewer?url=${ encodeURIComponent( url ) }&embedded=true`;
-        renderedHtml = `<iframe src="${ escapeAttribute( docUrl ) }" class="iframe-content"></iframe>`;
-      } else {
-        const resp = await fetch( url, fetchOpts );
-        if ( !resp.ok ) throw new Error( 'Failed to load file content.' );
-        const text = await resp.text();
-        rawHtml = `<pre><code class="language-${ escapeAttribute( ext ) }">${ escapeHTML( text ) }</code></pre>`;
-
-        if ( ext === 'md' ) {
-          try {
-            renderedHtml = `<div class="markdown-body">${ DOMPurify.sanitize( marked.parse( text ) ) }</div>`;
-            showToggles = true;
-          } catch ( err ) {
-            console.error( 'Markdown render failed:', err );
-            renderedHtml = `<div class="md-error">⚠️ Failed to render Markdown. Showing raw text.</div>` + rawHtml;
-          }
-        } else if ( [ 'html', 'htm' ].includes( ext ) ) {
-          const blobUrl = URL.createObjectURL( new Blob( [ text ], { type: 'text/html' } ) );
-          renderedHtml = `<iframe src="${ blobUrl }" sandbox="allow-scripts" class="iframe-content"></iframe>`;
-          showToggles = true;
-        } else {
-          renderedHtml = rawHtml;
-        }
-      }
-
-      return { renderedHtml, rawHtml, showToggles };
-    };
-
-    // ── Rendered/Raw toggle ──────────────────────────────────────────────────
-
-    const toggleFileView = view => {
-      const viewRendered = document.getElementById( 'viewRendered' );
-      const viewRaw = document.getElementById( 'viewRaw' );
-      const btnRendered = document.getElementById( 'btnRendered' );
-      const btnRaw = document.getElementById( 'btnRaw' );
-
-      const isRaw = view === 'raw';
-      if ( viewRendered ) viewRendered.style.display = isRaw ? 'none' : 'block';
-      if ( viewRaw ) viewRaw.style.display = isRaw ? 'block' : 'none';
-      if ( btnRendered ) btnRendered.style.opacity = isRaw ? '0.5' : '1';
-      if ( btnRaw ) btnRaw.style.opacity = isRaw ? '1' : '0.5';
-    };
-
-    // ── Select file ──────────────────────────────────────────────────────────
-
-    const handleSelectFile = async ( path, doUpdateHash = true ) => {
-      try {
-        const fileNode = state.tree.find( item => item.path === path );
-        const knownSize = getKnownFileSize( fileNode );
-
-        if ( !confirmLargeFileLoad( path, knownSize ) ) {
-          mainContent.innerHTML = `<p>Skipped loading ${ escapeHTML( path ) }${ knownSize != null ? ` (${ formatFileSize( knownSize ) })` : '' }.</p>`;
+        if ( treeRes.status === 403 ) {
+          treeList.innerHTML = '<p style="color: red;">Rate limited. Add a GitHub token for higher limits.</p>';
           return;
         }
+        if ( !treeRes.ok ) throw new Error( `Failed to fetch tree: ${ treeRes.status }` );
 
-        state.currentFilePath = path;
-        if ( doUpdateHash ) updateHash();
-        mainContent.innerHTML = `<p>Loading file: ${ escapeHTML( path ) }...</p>`;
+        const treeData = await treeRes.json();
 
-        const options = getFetchOptions( true );
-        const url = ( state.isGist && fileNode?.url )
-          ? fileNode.url
-          : `https://raw.githubusercontent.com/${ state.owner }/${ state.repo }/${ state.branch }/${ path }`;
-        const ext = path.split( '.' ).pop().toLowerCase();
-
-        const githubLink = state.isGist
-          ? `https://gist.github.com/${ state.owner }/${ state.repo }#file-${ path.replace( /\./g, '-' ) }`
-          : `https://github.com/${ state.owner }/${ state.repo }/blob/${ state.branch }/${ path }`;
-
-        const newTabUrl = state.isGist
-          ? url
-          : `https://${ state.owner }.github.io/${ state.repo }/${ path }`;
-
-        const pathParts = path.split( '/' );
-        const fileName = pathParts.pop();
-        const repoLink = state.isGist
-          ? escapeHTML( state.repo )
-          : `<a href="#${ escapeAttribute( state.owner ) }/${ escapeAttribute( state.repo ) }"
-               style="color: var(--highlight-color); text-decoration: none; font-weight: normal; cursor: pointer;"
-               data-owner="${ escapeAttribute( state.owner ) }"
-               data-repo="${ escapeAttribute( state.repo ) }"
-               data-branch="${ escapeAttribute( state.branch ) }"
-               onclick="event.preventDefault(); history.pushState(null, '', '#' + this.dataset.owner + '/' + this.dataset.repo); handleSelectRepo(this.dataset.repo, false, this.dataset.branch)">${ escapeHTML( state.repo ) }</a>`;
-        const pathPrefix = pathParts.length ? pathParts.join( ' / ' ) + ' / ' : '';
-
-        const headerHtml = `
-          <div class="file-header">
-            <h3 class="file-title">
-              <span class="file-title-path">${ repoLink } / ${ pathPrefix }</span>${ escapeHTML( fileName ) }
-              <a href="${ escapeAttribute( githubLink ) }" target="_blank" rel="noopener" title="View on GitHub" class="file-source-link">
-                <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path>
-                </svg>
-              </a>
-            </h3>
-            <div class="file-actions">
-              <button onclick="window.open('${ escapeAttribute( newTabUrl ) }', '_blank', 'noopener')" class="file-btn" title="Open in new tab">New Tab</button>
-              <div id="fileViewToggles" class="file-actions" style="display: none;">
-                <button id="btnRendered" onclick="toggleFileView('rendered')" class="file-btn">Rendered</button>
-                <button id="btnRaw" onclick="toggleFileView('raw')" class="file-btn" style="opacity: 0.5;">Raw</button>
-              </div>
-            </div>
-          </div>`;
-
-        const { renderedHtml, rawHtml, showToggles } = await loadFileContent( ext, url, path, options.signal );
-
-        mainContent.innerHTML = `
-          ${ headerHtml }
-          <div id="viewRendered" style="display: block;">${ renderedHtml }</div>
-          ${ rawHtml ? `<div id="viewRaw" style="display: none;">${ rawHtml }</div>` : '' }`;
-
-        if ( showToggles ) document.getElementById( 'fileViewToggles' ).style.display = 'flex';
-
-        try {
-          if ( window.hljs ) hljs.highlightAll();
-        } catch ( e ) {
-          console.error( 'Syntax highlighting failed', e );
+        if ( treeData.truncated ) {
+          treeList.innerHTML = '';
+          const warning = document.createElement( 'div' );
+          warning.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; font-size: 0.85rem;';
+          warning.textContent = '⚠️ Repository tree is truncated. Some files may not appear.';
+          treeList.appendChild( warning );
         }
 
-        // Rewrite internal links in markdown
-        if ( ext === 'md' && !state.isGist ) {
-          const renderedView = document.getElementById( 'viewRendered' );
-          renderedView.querySelectorAll( 'a' ).forEach( a => {
-            const href = a.getAttribute( 'href' );
-            if ( !href ) return;
+        state.tree = treeData.tree;
+        await renderTree( state.tree );
 
-            const prefix = `https://github.com/${ state.owner }/${ state.repo }/blob/`;
-            if ( href.startsWith( prefix ) ) {
-              a.onclick = e => {
-                e.preventDefault();
-                let p = href.substring( prefix.length );
-                if ( p.startsWith( state.branch + '/' ) ) p = p.substring( state.branch.length + 1 );
-                else { const s = p.indexOf( '/' ); if ( s !== -1 ) p = p.substring( s + 1 ); }
-                handleSelectFile( decodeURIComponent( p ) );
-              };
-            } else if ( !href.startsWith( 'http://' ) && !href.startsWith( 'https://' ) && !href.startsWith( 'mailto:' ) && !href.startsWith( '#' ) ) {
-              a.onclick = e => {
-                e.preventDefault();
-                const [ relativePath ] = href.split( '#' );
-                const currentDir = path.includes( '/' ) ? path.split( '/' ).slice( 0, -1 ) : [];
-                const resolved = [ ...currentDir ];
-                relativePath.split( '/' ).forEach( seg => {
-                  if ( !seg || seg === '.' ) return;
-                  if ( seg === '..' ) { resolved.pop(); return; }
-                  resolved.push( seg );
-                } );
-                if ( resolved.length ) handleSelectFile( decodeURIComponent( resolved.join( '/' ) ) );
-              };
-            } else if ( !href.startsWith( '#' ) ) {
-              a.target = '_blank';
-              a.rel = 'noopener';
+      } catch ( err ) {
+        if ( err.name === 'AbortError' ) return;
+        treeList.innerHTML = `<p style="color: red;">${ escapeHTML( err.message ) }</p>`;
+      }
+    };
+
+    /* ── 22. Filter logic ── */
+    const runFilter = () => {
+      const query = document.getElementById( 'treeFilter' ).value.trim().toLowerCase();
+      const treeList = document.getElementById( 'treeList' );
+      const btnFilterClear = document.getElementById( 'btnFilterClear' );
+
+      btnFilterClear.style.display = query ? 'block' : 'none';
+
+      const items = treeList.querySelectorAll( '.tree-item' );
+      const folders = treeList.querySelectorAll( 'details' );
+
+      if ( !query ) {
+        items.forEach( ( el ) => { el.style.display = ''; } );
+        folders.forEach( ( el ) => { el.style.display = ''; } );
+        return;
+      }
+
+      items.forEach( ( el ) => {
+        const path = ( el.dataset.path || '' ).toLowerCase();
+        el.style.display = path.includes( query ) ? '' : 'none';
+      } );
+
+      const foldersArr = Array.from( folders ).reverse();
+      foldersArr.forEach( ( details ) => {
+        const hasVisible = details.querySelector( '.tree-item:not([style*="display: none"])' );
+        if ( hasVisible ) {
+          details.style.display = '';
+          details.open = true;
+        } else {
+          details.style.display = 'none';
+        }
+      } );
+    };
+
+    /* ── 23. Debounce helper ── */
+    const debounce = ( fn, ms ) => {
+      let timer;
+      return ( ...args ) => {
+        clearTimeout( timer );
+        timer = setTimeout( () => fn( ...args ), ms );
+      };
+    };
+
+    /* ── 24. Expand All / Collapse All ── */
+    const setupExpandAll = () => {
+      const btn = document.getElementById( 'btnExpandAll' );
+      let expanded = false;
+
+      btn.addEventListener( 'click', () => {
+        const allDetails = document.getElementById( 'treeList' ).querySelectorAll( 'details' );
+        expanded = !expanded;
+        allDetails.forEach( ( d ) => { d.open = expanded; } );
+        btn.textContent = expanded ? 'Collapse All' : 'Expand All';
+      } );
+    };
+
+    /* ── 25. File selection (event delegation) — calls selectFile ── */
+    const setupFileSelection = () => {
+      document.getElementById( 'treeList' ).addEventListener( 'click', ( e ) => {
+        const target = e.target.closest( '[data-action="select-file"]' );
+        if ( !target ) return;
+        selectFile( target.dataset.path );
+      } );
+    };
+
+    /* ── 26. Keyboard navigation ── */
+    const getVisibleTreeItems = () => {
+      const treeList = document.getElementById( 'treeList' );
+      const all = treeList.querySelectorAll( '.tree-folder, .tree-item' );
+      return Array.from( all ).filter( ( el ) => {
+        if ( el.style.display === 'none' ) return false;
+
+        if ( el.classList.contains( 'tree-folder' ) ) {
+          const ownDetails = el.parentElement;
+          if ( ownDetails && ownDetails.style.display === 'none' ) return false;
+          let ancestor = ownDetails?.parentElement;
+          while ( ancestor && ancestor !== treeList ) {
+            if ( ancestor.tagName === 'DETAILS' ) {
+              if ( !ancestor.open || ancestor.style.display === 'none' ) return false;
             }
-          } );
+            ancestor = ancestor.parentElement;
+          }
+          return true;
         }
-      } catch ( error ) {
-        if ( error.name === 'AbortError' ) return;
-        mainContent.innerHTML = `<p class="error">Error: ${ escapeHTML( error.message ) }</p>`;
-      }
-    };
 
-    // ── Back to repos ────────────────────────────────────────────────────────
-
-    const handleBackToRepos = () => {
-      state.repo = '';
-      state.currentFilePath = '';
-      updateHash();
-      repoListContainer.style.display = 'block';
-      navTree.style.display = 'none';
-      resetMainAction();
-      btnToggleFolders.style.display = 'none';
-      mainContent.innerHTML = '<p>Select a repository.</p>';
-    };
-
-    // ── Tree rendering ────────────────────────────────────────────────────────
-    // Spec: folders sorted before files, then alphabetically within each group
-
-    const renderTree = tree => {
-      const root = {};
-      tree.forEach( item => {
-        const parts = item.path.split( '/' );
-        let node = root;
-        parts.forEach( ( part, i ) => {
-          if ( !node[ part ] ) {
-            node[ part ] = {
-              _item: i === parts.length - 1 ? item : { type: 'tree', path: parts.slice( 0, i + 1 ).join( '/' ) },
-              _children: {}
-            };
+        let ancestor = el.parentElement;
+        while ( ancestor && ancestor !== treeList ) {
+          if ( ancestor.tagName === 'DETAILS' ) {
+            if ( !ancestor.open || ancestor.style.display === 'none' ) return false;
           }
-          node = node[ part ]._children;
-        } );
-      } );
-
-      const buildHtml = node => {
-        const keys = Object.keys( node );
-        // Sort: folders before files, then alphabetically within each group
-        keys.sort( ( a, b ) => {
-          const aIsFolder = node[ a ]._item.type === 'tree';
-          const bIsFolder = node[ b ]._item.type === 'tree';
-          if ( aIsFolder !== bIsFolder ) return aIsFolder ? -1 : 1;
-          return a.localeCompare( b );
-        } );
-
-        return keys.map( key => {
-          const child = node[ key ];
-          const item = child._item;
-
-          if ( item.type === 'tree' ) {
-            return `<details>
-              <summary class="tree-folder" tabindex="0">📁 ${ escapeHTML( key ) }</summary>
-              <div class="tree-children">${ buildHtml( child._children ) }</div>
-            </details>`;
-          }
-
-          const sizeLabel = item.size != null
-            ? `<span class="tree-item-size">${ formatFileSize( item.size ) }</span>`
-            : '';
-          return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeAttribute( item.path ) }">
-            <span class="tree-item-label">📄 ${ escapeHTML( key ) }</span>
-            ${ sizeLabel }
-          </div>`;
-        } ).join( '' );
-      };
-
-      treeList.innerHTML = buildHtml( root );
-    };
-
-    // ── Expand/Collapse all ───────────────────────────────────────────────────
-
-    const toggleAllFolders = () => {
-      const expand = btnToggleFolders.dataset.expanded !== 'true';
-      btnToggleFolders.dataset.expanded = expand.toString();
-      btnToggleFolders.textContent = expand ? 'Collapse All' : 'Expand All';
-      document.querySelectorAll( '#treeList details' ).forEach( d => {
-        if ( expand ) d.setAttribute( 'open', '' );
-        else d.removeAttribute( 'open' );
-      } );
-    };
-
-    // ── Filter & sort repo list ────────────────────────────────────────────────
-
-    let filterTimeout;
-    const filterList = () => {
-      clearTimeout( filterTimeout );
-      filterTimeout = setTimeout( () => {
-        const filter = document.getElementById( 'filterInput' ).value.toLowerCase();
-        document.querySelectorAll( '#repoList li' ).forEach( li => {
-          li.style.display = li.textContent.toLowerCase().includes( filter ) ? '' : 'none';
-        } );
-      }, 250 );
-    };
-
-    const sortRepoList = () => {
-      if ( !state.repoItems.length || !state.repoRenderer ) return;
-      const sortBy = document.getElementById( 'sortSelect' ).value;
-      const sorted = [ ...state.repoItems ];
-      const comparators = {
-        updated: ( a, b ) => new Date( b.updated_at ) - new Date( a.updated_at ),
-        stars: ( a, b ) => ( b.stargazers_count || 0 ) - ( a.stargazers_count || 0 ),
-        name: ( a, b ) => a.name.localeCompare( b.name ),
-        pushed: ( a, b ) => new Date( b.pushed_at || 0 ) - new Date( a.pushed_at || 0 ),
-        size: ( a, b ) => ( b.size || 0 ) - ( a.size || 0 )
-      };
-      sorted.sort( comparators[ sortBy ] || comparators.updated );
-      repoList.innerHTML = sorted.map( state.repoRenderer ).join( '' );
-      filterList();
-    };
-
-    // ── Discover ──────────────────────────────────────────────────────────────
-
-    const handleDiscover = () => {
-      repoListContainer.style.display = 'none';
-      navTree.style.display = 'none';
-      btnToggleFolders.style.display = 'none';
-      document.getElementById( 'btnGetOrgs' ).style.display = 'none';
-      document.getElementById( 'btnGetGists' ).style.display = 'none';
-
-      btnMainAction.textContent = '← Back to Search';
-      btnMainAction.onclick = () => {
-        resetMainAction();
-        if ( ownerInput.value.trim() ) handleFetchRepos();
-        else { repoListContainer.style.display = 'block'; mainContent.innerHTML = ''; }
-      };
-
-      const curated = {
-        'Creative Coding & 3D': [ 'mrdoob', 'pmndrs', 'greggman', 'd3', 'playcanvas' ],
-        'Massive Orgs': [ 'microsoft', 'google', 'nasa', 'vercel', 'freeCodeCamp' ],
-        'Prolific Devs': [ 'sindresorhus', 'tj', 'torvalds', 'ruanyf', 'gaearon' ]
-      };
-
-      const listsHtml = Object.entries( curated ).map( ( [ category, users ] ) => `
-        <div style="margin-bottom: 1.5rem;">
-          <h4 style="margin: 0 0 0.5rem 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem;">${ escapeHTML( category ) }</h4>
-          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            ${ users.map( u => `<button onclick="ownerInput.value='${ escapeAttribute( u ) }'; handleFetchRepos()"
-              style="background: var(--hover-bg); color: var(--highlight-color); border: 1px solid var(--border-color);">${ escapeHTML( u ) }</button>` ).join( '' ) }
-          </div>
-        </div>` ).join( '' );
-
-      mainContent.innerHTML = `
-        <div style="padding: 1.5rem; background: var(--secondary-bg); border: 1px solid var(--border-color); border-radius: 6px; max-width: 800px; margin: 0 auto; line-height: 1.6;">
-          <h2 style="margin-top: 0;">🌍 Discover Interesting Accounts</h2>
-          <p style="color: #57606a;">Not sure who to look up? Try one of the methods below to explore GitHub.</p>
-
-          <div style="margin-top: 2rem;">
-            <h3 style="margin-bottom: 1rem;">🎲 Roll the Dice</h3>
-            <button onclick="handleRandomUser()" style="font-size: 1.1rem; padding: 0.75rem 1.5rem; background: var(--text-color);">Surprise Me (Random User)</button>
-            <p style="font-size: 0.9rem; color: #57606a; margin-top: 0.5rem;">Fetches a completely random account ID from GitHub's database of users.</p>
-          </div>
-
-          <div style="margin-top: 2rem;">
-            <h3 style="margin-bottom: 1rem;">⭐ Curated Suggestions</h3>
-            ${ listsHtml }
-          </div>
-
-          <div style="margin-top: 2rem;">
-            <h3 style="margin-bottom: 1rem;">🔥 API Search</h3>
-            <button onclick="handleSearchTopUsers()" style="background: var(--hover-bg); color: var(--text-color); border: 1px solid var(--border-color);">Fetch Top Followed Global Users</button>
-          </div>
-        </div>`;
-    };
-
-    const handleRandomUser = async () => {
-      mainContent.innerHTML = '<p>Loading a random user...</p>';
-      try {
-        const options = getFetchOptions( true );
-        for ( let attempt = 0; attempt < 8; attempt++ ) {
-          const randomId = Math.floor( Math.random() * 100000000 ) + 1;
-          const response = await fetch( `https://api.github.com/user/${ randomId }`, options );
-          if ( response.ok ) {
-            const data = await response.json();
-            if ( data.login ) { ownerInput.value = data.login; handleFetchRepos(); return; }
-          } else if ( response.status !== 404 ) {
-            throw new Error( `HTTP ${ response.status }` );
-          }
-        }
-        mainContent.innerHTML = '<p class="error">Unable to find a random user after several attempts. Try again.</p>';
-      } catch ( error ) {
-        if ( error.name === 'AbortError' ) return;
-        mainContent.innerHTML = `<p class="error">Error: ${ escapeHTML( error.message ) }</p>`;
-      }
-    };
-
-    const handleSearchTopUsers = async () => {
-      mainContent.innerHTML = '<p>Searching GitHub for the most followed accounts...</p>';
-      try {
-        const options = getFetchOptions( true );
-        const response = await fetch( 'https://api.github.com/search/users?q=followers:>20000&sort=followers&order=desc&per_page=30', options );
-        if ( !response.ok ) throw new Error( `HTTP ${ response.status }` );
-        const data = await response.json();
-
-        const cardsHtml = data.items.map( user => `
-          <div style="background: var(--secondary-bg); border: 1px solid var(--border-color); padding: 1rem; border-radius: 6px; text-align: center; cursor: pointer; transition: background 0.2s;"
-               data-login="${ escapeAttribute( user.login ) }"
-               onclick="ownerInput.value=this.dataset.login; handleFetchRepos();"
-               onmouseover="this.style.background='var(--hover-bg)'"
-               onmouseout="this.style.background='var(--secondary-bg)'">
-            <img src="${ escapeAttribute( user.avatar_url ) }" style="width: 64px; height: 64px; border-radius: 50%; margin-bottom: 0.5rem; border: 1px solid var(--border-color);">
-            <div style="font-weight: bold; color: var(--highlight-color); font-size: 1.1rem;">${ escapeHTML( user.login ) }</div>
-          </div>` ).join( '' );
-
-        mainContent.innerHTML = `<div style="padding: 1rem;">
-          <h3 style="margin-top: 0;">Top Followed Global Users</h3>
-          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">${ cardsHtml }</div>
-        </div>`;
-      } catch ( error ) {
-        if ( error.name === 'AbortError' ) return;
-        mainContent.innerHTML = `<p class="error">Error searching users: ${ escapeHTML( error.message ) }</p>`;
-      }
-    };
-
-    // ── Event delegation ──────────────────────────────────────────────────────
-
-    repoList.addEventListener( 'click', e => {
-      const el = e.target.closest( '[data-action]' );
-      if ( !el ) return;
-      const { action } = el.dataset;
-      if ( action === 'select-repo' ) handleSelectRepo( el.dataset.repo );
-      else if ( action === 'select-owner' ) { ownerInput.value = el.dataset.owner; handleFetchRepos(); }
-      else if ( action === 'select-gist' ) handleSelectGist( el.dataset.gistId );
-      else if ( action === 'load-more-repos' ) handleFetchRepos( false, Number( el.dataset.page ) );
-      else if ( action === 'load-more-orgs' ) handleFetchOrgs( Number( el.dataset.page ) );
-      else if ( action === 'load-more-gists' ) handleFetchGists( Number( el.dataset.page ) );
-    } );
-
-    treeList.addEventListener( 'click', e => {
-      const el = e.target.closest( '[data-action="select-file"]' );
-      if ( el ) handleSelectFile( el.dataset.path );
-    } );
-
-    // ── Keyboard navigation in tree ────────────────────────────────────────────
-
-    document.addEventListener( 'keydown', e => {
-      const active = document.activeElement;
-      if ( !active || ( !active.classList.contains( 'tree-folder' ) && !active.classList.contains( 'tree-item' ) ) ) return;
-      if ( ![ 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', ' ' ].includes( e.key ) ) return;
-      if ( e.key !== 'Enter' || active.classList.contains( 'tree-item' ) ) e.preventDefault();
-
-      const getVisible = () => Array.from( document.querySelectorAll( '.tree-folder, .tree-item' ) ).filter( node => {
-        if ( node.offsetWidth === 0 && node.offsetHeight === 0 ) return false;
-        let p = node.parentElement;
-        while ( p ) {
-          if ( p.tagName === 'DETAILS' && !p.open ) {
-            if ( !( node.parentElement === p && node.tagName === 'SUMMARY' ) ) return false;
-          }
-          p = p.parentElement;
+          ancestor = ancestor.parentElement;
         }
         return true;
       } );
+    };
 
-      const autoLoadFile = el => {
-        if ( el.classList.contains( 'tree-item' ) && el.dataset.path ) {
-          handleSelectFile( el.dataset.path );
-        }
-      };
+    const selectFileItem = ( el ) => {
+      if ( !el.classList.contains( 'tree-item' ) ) return;
+      selectFile( el.dataset.path );
+    };
 
-      if ( e.key === 'ArrowDown' ) {
-        const nodes = getVisible(), idx = nodes.indexOf( active );
-        if ( idx >= 0 && idx < nodes.length - 1 ) { nodes[ idx + 1 ].focus(); autoLoadFile( nodes[ idx + 1 ] ); }
-      } else if ( e.key === 'ArrowUp' ) {
-        const nodes = getVisible(), idx = nodes.indexOf( active );
-        if ( idx > 0 ) { nodes[ idx - 1 ].focus(); autoLoadFile( nodes[ idx - 1 ] ); }
-      } else if ( e.key === 'ArrowRight' && active.classList.contains( 'tree-folder' ) ) {
-        const details = active.parentElement;
-        if ( !details.open ) { details.open = true; }
-        else { const nodes = getVisible(), idx = nodes.indexOf( active ); if ( idx >= 0 && idx < nodes.length - 1 ) nodes[ idx + 1 ].focus(); }
-      } else if ( e.key === 'ArrowLeft' ) {
-        if ( active.classList.contains( 'tree-folder' ) ) {
-          const details = active.parentElement;
-          if ( details.open ) { details.open = false; }
-          else { const pd = details.parentElement.closest( 'details' ); if ( pd ) pd.querySelector( '.tree-folder' ).focus(); }
-        } else {
-          const pd = active.closest( 'details' );
-          if ( pd ) pd.querySelector( '.tree-folder' ).focus();
+    const setupKeyboardNav = () => {
+      document.addEventListener( 'keydown', ( e ) => {
+        const treeList = document.getElementById( 'treeList' );
+        const active = document.activeElement;
+
+        if ( e.key === '/' && active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' ) {
+          e.preventDefault();
+          document.getElementById( 'treeFilter' ).focus();
+          return;
         }
-      } else if ( e.key === 'Enter' || e.key === ' ' ) {
-        if ( active.classList.contains( 'tree-item' ) ) {
-          const filePath = active.dataset.path;
-          if ( filePath ) handleSelectFile( filePath );
-        } else if ( e.key === ' ' ) {
-          active.parentElement.open = !active.parentElement.open;
+
+        if ( !treeList.contains( active ) ) return;
+        if ( !active.classList.contains( 'tree-folder' ) && !active.classList.contains( 'tree-item' ) ) return;
+
+        const visible = getVisibleTreeItems();
+        const idx = visible.indexOf( active );
+        if ( idx === -1 ) return;
+
+        switch ( e.key ) {
+          case 'ArrowDown': {
+            e.preventDefault();
+            const next = visible[ idx + 1 ];
+            if ( next ) { next.focus(); selectFileItem( next ); }
+            break;
+          }
+          case 'ArrowUp': {
+            e.preventDefault();
+            const prev = visible[ idx - 1 ];
+            if ( prev ) { prev.focus(); selectFileItem( prev ); }
+            break;
+          }
+          case 'Enter':
+          case ' ': {
+            e.preventDefault();
+            if ( active.classList.contains( 'tree-folder' ) ) {
+              active.parentElement.open = !active.parentElement.open;
+            } else {
+              selectFileItem( active );
+            }
+            break;
+          }
+          case 'ArrowRight': {
+            e.preventDefault();
+            if ( active.classList.contains( 'tree-folder' ) ) {
+              const details = active.parentElement;
+              if ( !details.open ) {
+                details.open = true;
+              } else {
+                const firstChild = details.querySelector( '.tree-folder, .tree-item' );
+                if ( firstChild && firstChild !== active ) { firstChild.focus(); selectFileItem( firstChild ); }
+              }
+            }
+            break;
+          }
+          case 'ArrowLeft': {
+            e.preventDefault();
+            if ( active.classList.contains( 'tree-folder' ) ) {
+              const details = active.parentElement;
+              if ( details.open ) {
+                details.open = false;
+              } else {
+                const parentDetails = details.parentElement?.closest( 'details' );
+                if ( parentDetails ) {
+                  const parentSummary = parentDetails.querySelector( ':scope > summary' );
+                  if ( parentSummary ) parentSummary.focus();
+                }
+              }
+            } else {
+              const parentDetails = active.closest( 'details' );
+              if ( parentDetails ) {
+                const parentSummary = parentDetails.querySelector( ':scope > summary' );
+                if ( parentSummary ) parentSummary.focus();
+              }
+            }
+            break;
+          }
+        }
+      } );
+    };
+
+    /* ── 27. Auto-select README ── */
+    const autoSelectReadme = () => {
+      if ( !state.tree ) return;
+
+      const readme = state.tree.find( ( item ) =>
+        item.type === 'blob' && /^readme\.(md|txt)$/i.test( item.path )
+      ) || state.tree.find( ( item ) =>
+        item.type === 'blob' && /^readme\.(md|txt)$/i.test( item.path.split( '/' ).pop() )
+      );
+
+      if ( !readme ) return;
+
+      selectFile( readme.path, { skipHash: true } );
+      const el = document.querySelector( `[data-action="select-file"][data-path="${ CSS.escape( readme.path ) }"]` );
+      if ( el ) el.scrollIntoView( { block: 'center', behavior: 'smooth' } );
+    };
+
+    /* ── 28. scrollToTreeFolder ── */
+    const scrollToTreeFolder = ( folderPath ) => {
+      const target = document.querySelector( `details[data-folder-path="${ CSS.escape( folderPath ) }"]` );
+      if ( !target ) return;
+
+      let ancestor = target.parentElement?.closest( 'details' );
+      while ( ancestor ) {
+        ancestor.open = true;
+        ancestor = ancestor.parentElement?.closest( 'details' );
+      }
+      target.open = true;
+      target.scrollIntoView( { block: 'center', behavior: 'smooth' } );
+    };
+
+    /* ── 29. resetToHome ── */
+    const resetToHome = async () => {
+      localStorage.removeItem( storageKey( 'currentFile' ) );
+      state.currentFilePath = '';
+      state.tree = null;
+      try { history.replaceState( null, '', location.pathname + location.search ); } catch ( _ ) { /* file:// */ }
+      await fetchTree();
+    };
+
+    /* ── 30. Hash routing ── */
+    const updateHash = ( path ) => {
+      try {
+        history.pushState( null, '', '#' + encodeURIComponent( path ) );
+      } catch ( _ ) { /* file:// */ }
+    };
+
+    const handleHashChange = async () => {
+      const hash = location.hash.slice( 1 );
+      if ( !hash ) return;
+      const path = decodeURIComponent( hash );
+      if ( !state.tree ) {
+        document.getElementById( 'contentBody' ).innerHTML = '<p>Loading tree…</p>';
+        await fetchTree();
+      }
+      const found = state.tree?.find( ( item ) => item.path === path && item.type === 'blob' );
+      if ( found ) {
+        selectFile( path, { skipHash: true } );
+      } else {
+        document.getElementById( 'contentBody' ).innerHTML =
+          '<p>File not found: <code>' + escapeHTML( path ) + '</code></p>';
+      }
+    };
+
+    /* ── 31. getNewTabUrl — GitHub Pages or raw fallback ── */
+    const getNewTabUrl = async ( path ) => {
+      if ( state.pagesEnabled === null ) {
+        try {
+          const headers = getAuthHeaders();
+          const res = await fetch(
+            `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/pages`,
+            { headers }
+          );
+          updateRateBadge( res );
+          state.pagesEnabled = res.ok;
+        } catch ( _ ) {
+          state.pagesEnabled = false;
         }
       }
+
+      if ( state.pagesEnabled ) {
+        // GitHub Pages / Jekyll renders .md as HTML; README.md becomes the directory index.html
+        const fileName = path.split( '/' ).pop();
+        const isReadme = /^readme\.md$/i.test( fileName );
+        const pagesPath = isReadme
+          ? path.slice( 0, path.length - fileName.length )  // strip filename → directory URL
+          : path.replace( /\.md$/i, '' );                   // strip .md extension
+        const isUserPage = state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`;
+        return isUserPage
+          ? `https://${ state.owner }.github.io/${ pagesPath }`
+          : `https://${ state.owner }.github.io/${ state.repo }/${ pagesPath }`;
+      }
+
+      return `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
+    };
+
+    /* ── 32. buildFileHeader — breadcrumbs + action buttons ── */
+    const buildFileHeader = ( path, ext ) => {
+      const segments = path.split( '/' );
+      const fileName = segments.pop();
+
+      let breadcrumbHtml = `<a class="breadcrumb-link" data-action="reset-home" title="Go to repo root">${ escapeHTML( state.repo ) }</a>`;
+      let folderPath = '';
+      for ( const seg of segments ) {
+        folderPath = folderPath ? `${ folderPath }/${ seg }` : seg;
+        breadcrumbHtml += ` / <a class="breadcrumb-link" data-action="scroll-folder" data-folder="${ escapeHTML( folderPath ) }" title="${ escapeHTML( folderPath ) }">${ escapeHTML( seg ) }</a>`;
+      }
+      breadcrumbHtml += ` / <strong>${ escapeHTML( fileName ) }</strong>`;
+
+      const githubUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/blob/${ encodeURIComponent( state.branch ) }/${ path }`;
+
+      const hasToggle = [ 'md', 'html', 'htm', 'svg' ].includes( ext );
+      const hasCopy = !NO_COPY_EXTS.includes( ext );
+      const preferredView = hasToggle ? getPreferredView( ext ) : 'rendered';
+
+      let actionsHtml = '';
+      if ( hasToggle ) {
+        const renderedOpacity = preferredView === 'rendered' ? '1' : '0.5';
+        const rawOpacity = preferredView === 'raw' ? '1' : '0.5';
+        actionsHtml += `<button class="file-btn" data-action="view-rendered" style="opacity:${ renderedOpacity }" title="Show rendered view">Rendered</button>`;
+        actionsHtml += `<button class="file-btn" data-action="view-raw" style="opacity:${ rawOpacity }" title="Show raw source">Raw</button>`;
+      }
+      if ( hasCopy ) {
+        actionsHtml += `<button class="file-btn" data-action="copy-file" title="Copy file contents to clipboard">📋 Copy</button>`;
+      }
+      actionsHtml += `<button class="file-btn" data-action="new-tab" data-path="${ escapeHTML( path ) }" title="Open in new tab">↗ New Tab</button>`;
+
+      return `<div class="panel-header file-header">` +
+        `<div class="file-title">` +
+        `<a href="${ escapeHTML( githubUrl ) }" target="_blank" rel="noopener" title="View on GitHub">${ GITHUB_SVG_ICON }</a>` +
+        `<span id="breadcrumbs">${ breadcrumbHtml }</span>` +
+        `</div>` +
+        `<div class="file-actions">${ actionsHtml }</div>` +
+        `</div>`;
+    };
+
+    /* ── 33. Content rendering helpers ── */
+
+    const renderMarkdown = ( text, filePath ) => {
+      const ext = filePath.split( '.' ).pop().toLowerCase();
+      const preferredView = getPreferredView( ext );
+      let renderedHtml;
+      let errorHtml = '';
+
+      try {
+        renderedHtml = DOMPurify.sanitize( marked.parse( text ) );
+      } catch ( err ) {
+        errorHtml = `<div class="md-error">⚠️ Markdown rendering failed: ${ escapeHTML( err.message ) }</div>`;
+        renderedHtml = '';
+      }
+
+      const renderedDisplay = preferredView === 'rendered' ? '' : 'display:none';
+      const rawDisplay = preferredView === 'raw' ? '' : 'display:none';
+
+      document.getElementById( 'contentBody' ).innerHTML =
+        errorHtml +
+        `<div class="markdown-body" id="viewRendered" style="${ renderedDisplay }">${ renderedHtml }</div>` +
+        `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( text ) }</pre>`;
+
+      // Rewrite links inside .markdown-body
+      const mdBody = document.getElementById( 'viewRendered' );
+      if ( mdBody ) {
+        const currentDir = filePath.includes( '/' ) ? filePath.substring( 0, filePath.lastIndexOf( '/' ) ) : '';
+        mdBody.querySelectorAll( 'a[href]' ).forEach( ( a ) => {
+          const href = a.getAttribute( 'href' );
+          if ( !href ) return;
+
+          // Anchor links — leave as-is
+          if ( href.startsWith( '#' ) ) return;
+
+          // GitHub blob links
+          const blobMatch = href.match( /github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/ );
+          if ( blobMatch && blobMatch[ 1 ] === state.owner && blobMatch[ 2 ] === state.repo ) {
+            a.removeAttribute( 'href' );
+            a.style.cursor = 'pointer';
+            a.style.color = 'var(--highlight-color)';
+            a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( blobMatch[ 4 ] ); } );
+            return;
+          }
+
+          // External links
+          if ( href.startsWith( 'http://' ) || href.startsWith( 'https://' ) || href.startsWith( '//' ) ) {
+            a.setAttribute( 'target', '_blank' );
+            a.setAttribute( 'rel', 'noopener' );
+            return;
+          }
+
+          // Relative paths
+          const resolved = currentDir ? currentDir + '/' + href : href;
+          const normalized = resolved.split( '/' ).reduce( ( acc, part ) => {
+            if ( part === '..' ) acc.pop();
+            else if ( part !== '.' && part !== '' ) acc.push( part );
+            return acc;
+          }, [] ).join( '/' );
+
+          a.removeAttribute( 'href' );
+          a.style.cursor = 'pointer';
+          a.style.color = 'var(--highlight-color)';
+          a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( normalized ); } );
+        } );
+      }
+    };
+
+    const renderCode = ( text, ext ) => {
+      const skipHighlight = text.length > 500 * 1024;
+      if ( skipHighlight ) {
+        document.getElementById( 'contentBody' ).innerHTML =
+          `<pre><code>${ escapeHTML( text ) }</code></pre>`;
+      } else {
+        const code = document.createElement( 'code' );
+        code.textContent = text;
+        try { hljs.highlightElement( code ); } catch ( _ ) { /* fallback plain */ }
+        const pre = document.createElement( 'pre' );
+        pre.appendChild( code );
+        document.getElementById( 'contentBody' ).innerHTML = '';
+        document.getElementById( 'contentBody' ).appendChild( pre );
+      }
+    };
+
+    const renderHtml = ( text, filePath, ext ) => {
+      const preferredView = getPreferredView( ext );
+      const blob = new Blob( [ text ], { type: 'text/html' } );
+      const url = createBlobUrl( blob );
+
+      const renderedDisplay = preferredView === 'rendered' ? '' : 'display:none';
+      const rawDisplay = preferredView === 'raw' ? '' : 'display:none';
+
+      document.getElementById( 'contentBody' ).innerHTML =
+        `<div id="viewRendered" style="${ renderedDisplay }"><iframe class="iframe-content" sandbox="allow-scripts" src="${ escapeHTML( url ) }"></iframe></div>` +
+        `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( text ) }</pre>`;
+    };
+
+    const renderImage = ( url, alt ) => {
+      document.getElementById( 'contentBody' ).innerHTML =
+        `<img class="media-content" src="${ escapeHTML( url ) }" alt="${ escapeHTML( alt ) }">`;
+    };
+
+    const renderSvg = ( text ) => {
+      const preferredView = getPreferredView( 'svg' );
+      const blob = new Blob( [ text ], { type: 'image/svg+xml' } );
+      const url = createBlobUrl( blob );
+
+      const renderedDisplay = preferredView === 'rendered' ? '' : 'display:none';
+      const rawDisplay = preferredView === 'raw' ? '' : 'display:none';
+
+      document.getElementById( 'contentBody' ).innerHTML =
+        `<div id="viewRendered" style="${ renderedDisplay }"><img class="media-content" src="${ escapeHTML( url ) }" alt="SVG"></div>` +
+        `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( text ) }</pre>`;
+    };
+
+    const renderAudio = ( url ) => {
+      document.getElementById( 'contentBody' ).innerHTML =
+        `<audio controls class="media-content" src="${ escapeHTML( url ) }">Your browser does not support audio.</audio>`;
+    };
+
+    const renderVideo = ( url ) => {
+      document.getElementById( 'contentBody' ).innerHTML =
+        `<video controls class="media-content" src="${ escapeHTML( url ) }">Your browser does not support video.</video>`;
+    };
+
+    const renderPdf = ( url ) => {
+      document.getElementById( 'contentBody' ).innerHTML =
+        `<iframe class="iframe-content" src="${ escapeHTML( url ) }"></iframe>`;
+    };
+
+    const renderSpreadsheet = async ( data ) => {
+      try {
+        const workbook = XLSX.read( data, { type: 'array' } );
+        let html = '';
+        for ( const sheetName of workbook.SheetNames ) {
+          const sheetHtml = XLSX.utils.sheet_to_html( workbook.Sheets[ sheetName ] );
+          html += `<div class="xlsx-sheet"><h3>${ escapeHTML( sheetName ) }</h3>${ sheetHtml }</div>`;
+        }
+        document.getElementById( 'contentBody' ).innerHTML = DOMPurify.sanitize( html );
+      } catch ( err ) {
+        document.getElementById( 'contentBody' ).innerHTML =
+          `<p style="color: red;">Failed to parse spreadsheet: ${ escapeHTML( err.message ) }</p>`;
+      }
+    };
+
+    /* ── 34. fetchFileText — text content fetch ── */
+    const fetchFileText = async ( path, signal ) => {
+      const cached = getCachedFileText( path );
+      if ( cached !== null ) return cached;
+
+      let text;
+      const token = getToken();
+
+      if ( token ) {
+        const headers = { ...getAuthHeaders(), Accept: 'application/vnd.github.raw+json' };
+        const res = await fetch(
+          `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/contents/${ path }?ref=${ encodeURIComponent( state.branch ) }`,
+          { headers, signal }
+        );
+        updateRateBadge( res );
+        if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
+        text = await res.text();
+      } else {
+        const res = await fetch(
+          `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`,
+          { signal }
+        );
+        if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
+        text = await res.text();
+      }
+
+      setCachedFileText( path, text );
+      return text;
+    };
+
+    /* ── 35. fetchFileBlob — binary content fetch ── */
+    const fetchFileBlob = async ( path, signal, mimeType ) => {
+      const token = getToken();
+      let blob;
+
+      if ( token ) {
+        const headers = { ...getAuthHeaders(), Accept: 'application/vnd.github.raw+json' };
+        const res = await fetch(
+          `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/contents/${ path }?ref=${ encodeURIComponent( state.branch ) }`,
+          { headers, signal }
+        );
+        updateRateBadge( res );
+        if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
+        blob = await res.blob();
+      } else {
+        const res = await fetch(
+          `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`,
+          { signal }
+        );
+        if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
+        blob = await res.blob();
+      }
+
+      if ( mimeType ) {
+        blob = new Blob( [ blob ], { type: mimeType } );
+      }
+
+      return createBlobUrl( blob );
+    };
+
+    /* ── 36. selectFile — main function ── */
+    let lastRawText = '';
+
+    const selectFile = async ( path, { skipHash = false } = {} ) => {
+      // Abort in-flight
+      if ( currentAbortController ) currentAbortController.abort();
+      currentAbortController = new AbortController();
+      const signal = currentAbortController.signal;
+
+      // Revoke old blob URLs
+      revokeAllBlobUrls();
+      lastRawText = '';
+
+      // Look up file in tree
+      const treeItem = state.tree?.find( ( item ) => item.path === path && item.type === 'blob' );
+      const fileSize = treeItem?.size || 0;
+      const ext = path.includes( '.' ) ? path.split( '.' ).pop().toLowerCase() : '';
+      const isStreamable = STREAMABLE_EXTS.includes( ext );
+
+      // Large file protection
+      if ( fileSize > LARGE_FILE_WARNING_BYTES && !isStreamable && !approvedLargeFiles.has( path ) ) {
+        const sizeMB = ( fileSize / ( 1024 * 1024 ) ).toFixed( 1 );
+        if ( !window.confirm( `This file is ${ sizeMB } MB. Load anyway?` ) ) return;
+        approvedLargeFiles.add( path );
+      }
+
+      // Update active tree item — open parent folders, highlight, focus, scroll into view
+      const prevActive = document.querySelector( '.tree-item.active' );
+      if ( prevActive ) prevActive.classList.remove( 'active' );
+      const treeEl = document.querySelector( `[data-action="select-file"][data-path="${ CSS.escape( path ) }"]` );
+      if ( treeEl ) {
+        // Open all ancestor <details> so the item is visible
+        let ancestor = treeEl.closest( 'details' );
+        while ( ancestor ) {
+          ancestor.open = true;
+          ancestor = ancestor.parentElement?.closest( 'details' );
+        }
+        treeEl.classList.add( 'active' );
+        treeEl.scrollIntoView( { block: 'center', behavior: 'smooth' } );
+        treeEl.focus();
+      }
+
+      state.currentFilePath = path;
+
+      // Build file header
+      const contentArea = document.getElementById( 'contentArea' );
+      const existingHeader = contentArea.querySelector( '.panel-header.file-header' );
+      const newHeader = document.createElement( 'div' );
+      newHeader.innerHTML = buildFileHeader( path, ext );
+      const headerEl = newHeader.firstElementChild;
+      if ( existingHeader ) {
+        existingHeader.replaceWith( headerEl );
+      } else {
+        contentArea.insertBefore( headerEl, document.getElementById( 'contentBody' ) );
+      }
+
+      // Show loading
+      document.getElementById( 'contentBody' ).innerHTML = '<p>Loading…</p>';
+
+      try {
+        // Render by type
+        if ( ext === 'md' ) {
+          const text = await fetchFileText( path, signal );
+          lastRawText = text;
+          renderMarkdown( text, path );
+
+        } else if ( ext === 'html' || ext === 'htm' ) {
+          const text = await fetchFileText( path, signal );
+          lastRawText = text;
+          renderHtml( text, path, ext );
+
+        } else if ( ext === 'svg' ) {
+          // Always blob-fetch for rendering, but also get text for raw toggle
+          const text = await fetchFileText( path, signal );
+          lastRawText = text;
+          renderSvg( text );
+
+        } else if ( IMAGE_EXTS.includes( ext ) && ext !== 'svg' ) {
+          const token = getToken();
+          if ( token ) {
+            const url = await fetchFileBlob( path, signal );
+            renderImage( url, path.split( '/' ).pop() );
+          } else {
+            const directUrl = `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
+            renderImage( directUrl, path.split( '/' ).pop() );
+          }
+
+        } else if ( AUDIO_EXTS.includes( ext ) ) {
+          const token = getToken();
+          if ( token ) {
+            const url = await fetchFileBlob( path, signal );
+            renderAudio( url );
+          } else {
+            const directUrl = `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
+            renderAudio( directUrl );
+          }
+
+        } else if ( VIDEO_EXTS.includes( ext ) ) {
+          const token = getToken();
+          if ( token ) {
+            const url = await fetchFileBlob( path, signal );
+            renderVideo( url );
+          } else {
+            const directUrl = `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
+            renderVideo( directUrl );
+          }
+
+        } else if ( ext === 'pdf' ) {
+          const url = await fetchFileBlob( path, signal, 'application/pdf' );
+          renderPdf( url );
+
+        } else if ( SHEET_EXTS.includes( ext ) ) {
+          const blobUrl = await fetchFileBlob( path, signal );
+          const res = await fetch( blobUrl );
+          const arrayBuf = await res.arrayBuffer();
+          await renderSpreadsheet( new Uint8Array( arrayBuf ) );
+
+        } else {
+          // Code / text / everything else
+          const text = await fetchFileText( path, signal );
+          lastRawText = text;
+          renderCode( text, ext );
+        }
+      } catch ( err ) {
+        if ( err.name === 'AbortError' ) return;
+        document.getElementById( 'contentBody' ).innerHTML =
+          `<p style="color: red;">${ escapeHTML( err.message ) }</p>`;
+      }
+
+      // Update hash
+      if ( !skipHash ) {
+        updateHash( path );
+      }
+
+      // Save last file path
+      localStorage.setItem( storageKey( 'currentFile' ), path );
+
+      // Scroll content area to top
+      contentArea.scrollTo( { top: 0 } );
+    };
+
+    /* ── 37. setupContentActions — breadcrumb delegation, Copy, New Tab, view toggle ── */
+    const setupContentActions = () => {
+      const contentArea = document.getElementById( 'contentArea' );
+
+      contentArea.addEventListener( 'click', async ( e ) => {
+        // Breadcrumb: scroll to folder
+        const folderLink = e.target.closest( '[data-action="scroll-folder"]' );
+        if ( folderLink ) { scrollToTreeFolder( folderLink.dataset.folder ); return; }
+
+        // Breadcrumb: reset home
+        const homeLink = e.target.closest( '[data-action="reset-home"]' );
+        if ( homeLink ) { resetToHome(); return; }
+
+        // View toggle: rendered
+        const renderedBtn = e.target.closest( '[data-action="view-rendered"]' );
+        if ( renderedBtn ) {
+          const viewRendered = document.getElementById( 'viewRendered' );
+          const viewRaw = document.getElementById( 'viewRaw' );
+          if ( viewRendered ) viewRendered.style.display = '';
+          if ( viewRaw ) viewRaw.style.display = 'none';
+          renderedBtn.style.opacity = '1';
+          const rawBtn = contentArea.querySelector( '[data-action="view-raw"]' );
+          if ( rawBtn ) rawBtn.style.opacity = '0.5';
+          const ext = state.currentFilePath.split( '.' ).pop().toLowerCase();
+          setPreferredView( ext, 'rendered' );
+          return;
+        }
+
+        // View toggle: raw
+        const rawBtn = e.target.closest( '[data-action="view-raw"]' );
+        if ( rawBtn ) {
+          const viewRendered = document.getElementById( 'viewRendered' );
+          const viewRaw = document.getElementById( 'viewRaw' );
+          if ( viewRendered ) viewRendered.style.display = 'none';
+          if ( viewRaw ) viewRaw.style.display = '';
+          rawBtn.style.opacity = '1';
+          const rendBtn = contentArea.querySelector( '[data-action="view-rendered"]' );
+          if ( rendBtn ) rendBtn.style.opacity = '0.5';
+          const ext = state.currentFilePath.split( '.' ).pop().toLowerCase();
+          setPreferredView( ext, 'raw' );
+          return;
+        }
+
+        // Copy
+        const copyBtn = e.target.closest( '[data-action="copy-file"]' );
+        if ( copyBtn && lastRawText ) {
+          try {
+            await navigator.clipboard.writeText( lastRawText );
+            const origText = copyBtn.textContent;
+            copyBtn.textContent = '✓ Copied';
+            setTimeout( () => { copyBtn.textContent = origText; }, 1500 );
+          } catch ( _ ) { /* clipboard blocked */ }
+          return;
+        }
+
+        // New Tab
+        const newTabBtn = e.target.closest( '[data-action="new-tab"]' );
+        if ( newTabBtn ) {
+          const filePath = newTabBtn.dataset.path;
+          const url = await getNewTabUrl( filePath );
+          window.open( url, '_blank', 'noopener' );
+          return;
+        }
+      } );
+    };
+
+    /* ── 38. Global error handlers ── */
+    window.addEventListener( 'error', ( event ) => {
+      const panel = document.createElement( 'div' );
+      panel.className = 'error-panel';
+      panel.innerHTML = `<p>⚠️ Error: ${ escapeHTML( event.message || 'Unknown error' ) }</p><button onclick="location.reload()" title="Reload page">Reload</button>`;
+      document.body.appendChild( panel );
     } );
 
-    // ── Resizable sidebar ─────────────────────────────────────────────────────
-
-    const dragMe = document.getElementById( 'dragMe' );
-    const sidebar = document.querySelector( '.sidebar' );
-    let isResizing = false;
-
-    dragMe.addEventListener( 'pointerdown', e => {
-      isResizing = true;
-      dragMe.classList.add( 'resizing' );
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-      dragMe.setPointerCapture( e.pointerId );
+    window.addEventListener( 'unhandledrejection', ( event ) => {
+      const panel = document.createElement( 'div' );
+      panel.className = 'error-panel';
+      panel.innerHTML = `<p>⚠️ Unhandled error: ${ escapeHTML( event.reason?.message || String( event.reason ) || 'Unknown' ) }</p><button onclick="location.reload()" title="Reload page">Reload</button>`;
+      document.body.appendChild( panel );
     } );
 
-    document.addEventListener( 'pointermove', e => {
-      if ( !isResizing ) return;
-      const newWidth = e.clientX - sidebar.getBoundingClientRect().left;
-      if ( newWidth > 40 ) sidebar.style.setProperty( '--sidebar-width', newWidth + 'px' );
-    } );
+    /* ── 39. init ── */
+    const init = async () => {
+      initAppearance();
+      setupListeners();
+      setupExpandAll();
+      setupKeyboardNav();
+      setupFileSelection();
+      setupContentActions();
+      restoreFileCache();
 
-    document.addEventListener( 'pointerup', e => {
-      if ( !isResizing ) return;
-      isResizing = false;
-      dragMe.classList.remove( 'resizing' );
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      dragMe.releasePointerCapture( e.pointerId );
-    } );
+      window.addEventListener( 'popstate', handleHashChange );
+      window.addEventListener( 'hashchange', handleHashChange );
 
-    // ── Global error handlers ─────────────────────────────────────────────────
+      await detectRepo();
 
-    const errorPanel = ( title, msg ) => `
-      <div style="padding: 1.5rem; background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; border-radius: 6px; margin: 1rem;">
-        <h3 style="margin-top: 0;">⚠️ ${ title }</h3>
-        <p>${ escapeHTML( msg ) }</p>
-        <button onclick="location.reload()" style="margin-top: 1rem; background: #c62828; color: white;">Reload Page</button>
-      </div>`;
+      state.owner = CONFIG.owner;
+      state.repo = CONFIG.repo;
+      state.branch = CONFIG.branch;
 
-    window.addEventListener( 'error', event => {
-      mainContent.innerHTML = errorPanel(
-        'Unexpected Error',
-        event.error ? event.error.message : event.message
-      );
-    } );
+      if ( state.owner && state.repo ) {
+        updateHeaderFromConfig();
+        document.getElementById( 'contentBody' ).innerHTML = '<p>Loading tree…</p>';
+        await fetchTree();
+        document.getElementById( 'btnExpandAll' ).style.display = '';
 
-    window.addEventListener( 'unhandledrejection', event => {
-      if ( event.reason?.name === 'AbortError' ) return;
-      mainContent.innerHTML = errorPanel(
-        'Unexpected Async Error',
-        event.reason ? event.reason.message : 'Unknown error'
-      );
-    } );
+        // File open priority
+        if ( location.hash.length > 1 ) {
+          await handleHashChange();
+        } else {
+          const lastPath = localStorage.getItem( storageKey( 'currentFile' ) );
+          if ( lastPath ) {
+            selectFile( lastPath, { skipHash: false } );
+          } else {
+            autoSelectReadme();
+          }
+        }
 
-    // ── Init ──────────────────────────────────────────────────────────────────
+        // Fallback focus: if no file was selected, focus the first visible tree item
+        if ( !document.querySelector( '.tree-item.active' ) ) {
+          const first = document.querySelector( '#treeList .tree-item, #treeList .tree-folder' );
+          if ( first ) first.focus();
+        }
+      }
+    };
 
-    ownerInput.value = CONFIG.owner;
-    state.owner = CONFIG.owner;
-    updateRecentUsers();
-    if ( location.hash ) {
-      handleHashChange();
-    } else {
-      handleFetchRepos();
-    }
+    init();
   </script>
-
 </body>
 
 </html>
