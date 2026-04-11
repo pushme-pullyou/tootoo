@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-10 19:30">
+  <meta name="revised" content="2026-04-10 21:30">
   <title>TooToo LT</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link id="hljsTheme" rel="stylesheet"
@@ -717,7 +717,19 @@
     };
 
     /* ── 9. detectRepo ── */
+    const isLocal = location.protocol !== 'https:';
+
+    const getLocalPrefix = () => {
+      const pathParts = location.pathname.split( '/' ).filter( Boolean );
+      // last part is the HTML filename; everything before it is directory depth
+      const depth = pathParts.length - 1;
+      return depth > 0 ? '../'.repeat( depth ) : '';
+    };
+
+    const localPrefix = isLocal ? getLocalPrefix() : '';
+
     const detectRepo = async () => {
+
       const params = new URLSearchParams( location.search );
       if ( params.get( 'owner' ) ) CONFIG.owner = params.get( 'owner' );
       if ( params.get( 'repo' ) ) CONFIG.repo = params.get( 'repo' );
@@ -1571,6 +1583,9 @@
       if ( hasCopy ) {
         actionsHtml += `<button class="file-btn" data-action="copy-file" title="Copy file contents to clipboard">📋 Copy</button>`;
       }
+      if ( isLocal ) {
+        actionsHtml += `<button class="file-btn" data-action="open-local" data-path="${ escapeHTML( path ) }" title="Open local file in new tab">📂 Local</button>`;
+      }
       actionsHtml += `<button class="file-btn" data-action="new-tab" data-path="${ escapeHTML( path ) }" title="Open in new tab">↗ New Tab</button>`;
 
       return `<div class="panel-header file-header">` +
@@ -1732,6 +1747,15 @@
       if ( cached !== null ) return cached;
 
       let text;
+
+      if ( isLocal ) {
+        const res = await fetch( `${ localPrefix }${ path }`, { signal } );
+        if ( !res.ok ) throw new Error( `Failed to fetch local file: ${ res.status }` );
+        text = await res.text();
+        setCachedFileText( path, text );
+        return text;
+      }
+
       const token = getToken();
 
       if ( token ) {
@@ -1758,6 +1782,14 @@
 
     /* ── 35. fetchFileBlob — binary content fetch ── */
     const fetchFileBlob = async ( path, signal, mimeType ) => {
+      if ( isLocal ) {
+        const res = await fetch( `${ localPrefix }${ path }`, { signal } );
+        if ( !res.ok ) throw new Error( `Failed to fetch local file: ${ res.status }` );
+        let blob = await res.blob();
+        if ( mimeType ) blob = new Blob( [ blob ], { type: mimeType } );
+        return createBlobUrl( blob );
+      }
+
       const token = getToken();
       let blob;
 
@@ -1864,8 +1896,9 @@
           renderSvg( text );
 
         } else if ( IMAGE_EXTS.includes( ext ) && ext !== 'svg' ) {
-          const token = getToken();
-          if ( token ) {
+          if ( isLocal ) {
+            renderImage( `${ localPrefix }${ path }`, path.split( '/' ).pop() );
+          } else if ( getToken() ) {
             const url = await fetchFileBlob( path, signal );
             renderImage( url, path.split( '/' ).pop() );
           } else {
@@ -1874,8 +1907,9 @@
           }
 
         } else if ( AUDIO_EXTS.includes( ext ) ) {
-          const token = getToken();
-          if ( token ) {
+          if ( isLocal ) {
+            renderAudio( `${ localPrefix }${ path }` );
+          } else if ( getToken() ) {
             const url = await fetchFileBlob( path, signal );
             renderAudio( url );
           } else {
@@ -1884,8 +1918,9 @@
           }
 
         } else if ( VIDEO_EXTS.includes( ext ) ) {
-          const token = getToken();
-          if ( token ) {
+          if ( isLocal ) {
+            renderVideo( `${ localPrefix }${ path }` );
+          } else if ( getToken() ) {
             const url = await fetchFileBlob( path, signal );
             renderVideo( url );
           } else {
@@ -1979,6 +2014,14 @@
             copyBtn.textContent = '✓ Copied';
             setTimeout( () => { copyBtn.textContent = origText; }, 1500 );
           } catch ( _ ) { /* clipboard blocked */ }
+          return;
+        }
+
+        // Open Local
+        const localBtn = e.target.closest( '[data-action="open-local"]' );
+        if ( localBtn && isLocal ) {
+          const filePath = localBtn.dataset.path;
+          window.open( localPrefix + filePath, '_blank' );
           return;
         }
 

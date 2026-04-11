@@ -1,5 +1,7 @@
 # TooToo LT
 
+2026-04-10
+
 A lightweight single-file GitHub repository browser. Drop it into any repo folder and it auto-detects the repository — or run it on GitHub Pages.
 
 * Live: <https://pushme-pullyou.github.io/tootoo/tootoo-2026-lt/>
