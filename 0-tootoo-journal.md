@@ -30,7 +30,7 @@ code-clean.jpg 213.8 KB
 
 All the items in the GitHub user profile.
 
-###  Contributions
+### ontributions
 * GitHub style Contributions graphic
 * contributions in the last year 6,000
 
