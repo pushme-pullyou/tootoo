@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-20 22:30">
+  <meta name="revised" content="2026-04-20 23:15">
   <title>TooToo LT</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link id="hljsTheme" rel="stylesheet"
@@ -611,6 +611,11 @@
       const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
       return String( str ).replace( /[&<>"']/g, ( c ) => map[ c ] );
     };
+
+    // Per-segment URI encoding; keeps '/' separators intact so repo paths
+    // containing spaces, '#', '%', etc. produce valid GitHub URLs.
+    const encodePath = ( path ) =>
+      path.split( '/' ).map( encodeURIComponent ).join( '/' );
 
     const GITHUB_SVG_ICON = '<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>';
 
@@ -1316,16 +1321,15 @@
 
         const treeData = await treeRes.json();
 
-        if ( treeData.truncated ) {
-          treeList.innerHTML = '';
-          const warning = document.createElement( 'div' );
-          warning.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; font-size: 0.85rem;';
-          warning.textContent = '⚠️ Repository tree is truncated. Some files may not appear.';
-          treeList.appendChild( warning );
-        }
-
         state.tree = treeData.tree;
         await renderTree( state.tree );
+
+        if ( treeData.truncated ) {
+          const warning = document.createElement( 'div' );
+          warning.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; padding: 0.5rem; border-radius: 4px; margin: 0 0.5rem 0.5rem 0.5rem; font-size: 0.85rem;';
+          warning.textContent = '⚠️ Repository tree is truncated. Some files may not appear.';
+          treeList.insertBefore( warning, treeList.firstChild );
+        }
 
       } catch ( err ) {
         if ( err.name === 'AbortError' ) return;
@@ -1601,13 +1605,14 @@
         const pagesPath = isReadme
           ? path.slice( 0, path.length - fileName.length )  // strip filename → directory URL
           : path.replace( /\.md$/i, '' );                   // strip .md extension
+        const encodedPagesPath = encodePath( pagesPath );
         const isUserPage = state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`;
         return isUserPage
-          ? `https://${ state.owner }.github.io/${ pagesPath }`
-          : `https://${ state.owner }.github.io/${ state.repo }/${ pagesPath }`;
+          ? `https://${ state.owner }.github.io/${ encodedPagesPath }`
+          : `https://${ state.owner }.github.io/${ state.repo }/${ encodedPagesPath }`;
       }
 
-      return `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
+      return `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
     };
 
     /* ── 32. buildFileHeader — breadcrumbs + action buttons ── */
@@ -1623,7 +1628,7 @@
       }
       breadcrumbHtml += ` / <strong>${ escapeHTML( fileName ) }</strong>`;
 
-      const githubUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/blob/${ encodeURIComponent( state.branch ) }/${ path }`;
+      const githubUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/blob/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
 
       const hasToggle = [ 'md', 'html', 'htm', 'svg' ].includes( ext );
       const hasCopy = !NO_COPY_EXTS.includes( ext );
@@ -1706,8 +1711,11 @@
             return;
           }
 
-          // Relative paths
-          const resolved = currentDir ? currentDir + '/' + href : href;
+          // Relative paths — root-relative ('/foo') resolves from repo root, not currentDir
+          const isRootRelative = href.startsWith( '/' );
+          const resolved = isRootRelative
+            ? href.slice( 1 )
+            : ( currentDir ? currentDir + '/' + href : href );
           const normalized = resolved.split( '/' ).reduce( ( acc, part ) => {
             if ( part === '..' ) acc.pop();
             else if ( part !== '.' && part !== '' ) acc.push( part );
@@ -1802,7 +1810,7 @@
     /* ── 33b. Local-first helpers ── */
     const localUrlFor = ( path ) => {
       if ( !state.localMode || state.localBase === null ) return null;
-      return state.localBase + path.split( '/' ).map( encodeURIComponent ).join( '/' );
+      return state.localBase + encodePath( path );
     };
 
     const probeLocalMode = async () => {
@@ -1822,7 +1830,7 @@
 
       for ( const base of candidateBases ) {
         try {
-          const url = base + probe.path.split( '/' ).map( encodeURIComponent ).join( '/' );
+          const url = base + encodePath( probe.path );
           const res = await fetch( url );
           if ( !res.ok ) continue;
           const text = await res.text();
@@ -1858,7 +1866,7 @@
       if ( token ) {
         const headers = { ...getAuthHeaders(), Accept: 'application/vnd.github.raw+json' };
         const res = await fetch(
-          `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/contents/${ path }?ref=${ encodeURIComponent( state.branch ) }`,
+          `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/contents/${ encodePath( path ) }?ref=${ encodeURIComponent( state.branch ) }`,
           { headers, signal }
         );
         updateRateBadge( res );
@@ -1866,7 +1874,7 @@
         text = await res.text();
       } else {
         const res = await fetch(
-          `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`,
+          `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`,
           { signal }
         );
         if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
@@ -1901,7 +1909,7 @@
       if ( token ) {
         const headers = { ...getAuthHeaders(), Accept: 'application/vnd.github.raw+json' };
         const res = await fetch(
-          `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/contents/${ path }?ref=${ encodeURIComponent( state.branch ) }`,
+          `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/contents/${ encodePath( path ) }?ref=${ encodeURIComponent( state.branch ) }`,
           { headers, signal }
         );
         updateRateBadge( res );
@@ -1909,7 +1917,7 @@
         blob = await res.blob();
       } else {
         const res = await fetch(
-          `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`,
+          `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`,
           { signal }
         );
         if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
@@ -2009,7 +2017,7 @@
             const url = await fetchFileBlob( path, signal );
             renderImage( url, path.split( '/' ).pop() );
           } else {
-            const directUrl = `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
+            const directUrl = `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
             renderImage( directUrl, path.split( '/' ).pop() );
           }
 
@@ -2022,7 +2030,7 @@
             const url = await fetchFileBlob( path, signal );
             renderAudio( url );
           } else {
-            const directUrl = `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
+            const directUrl = `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
             renderAudio( directUrl );
           }
 
@@ -2035,7 +2043,7 @@
             const url = await fetchFileBlob( path, signal );
             renderVideo( url );
           } else {
-            const directUrl = `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
+            const directUrl = `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
             renderVideo( directUrl );
           }
 
