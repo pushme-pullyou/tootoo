@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-20 22:30">
+  <meta name="revised" content="2026-04-10 19:30">
   <title>TooToo LT</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link id="hljsTheme" rel="stylesheet"
@@ -344,15 +344,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.2rem 0.4rem;
+      padding: 0.2rem 0.4rem 0.2rem 1.2rem;
       cursor: pointer;
       border-radius: 4px;
       font-family: monospace;
       font-size: 0.85rem;
-    }
-
-    details .tree-item {
-      padding-left: 1.2rem;
     }
 
     .tree-item:hover {
@@ -574,7 +570,7 @@
   <main>
 
     <div class="sidebar">
-      <div class="panel-header" id="filesPanelHeader">
+      <div class="panel-header" title="Last updated: 2026-04-10 10:30">
         <h3 id="hFiles">Files</h3>
         <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders">Expand
           All</button>
@@ -628,8 +624,6 @@
       tree: null,
       currentFilePath: '',
       pagesEnabled: null,
-      localBase: null,   // prefix from app to repo root (e.g. '../' or ''); null = unknown
-      localMode: false,  // true when a probe confirmed local file reads work
     };
 
     /* ── 3. Extension constants ── */
@@ -691,29 +685,12 @@
       persistFileCache();
     };
 
-    const persistFileCacheNow = () => {
+    const persistFileCache = () => {
       try {
         const arr = Array.from( fileTextCache.entries() );
         localStorage.setItem( storageKey( 'fileTextCache' ), JSON.stringify( arr ) );
       } catch ( _ ) { /* quota exceeded — ignore */ }
     };
-
-    let persistFileCacheTimer = null;
-    const persistFileCache = () => {
-      if ( persistFileCacheTimer ) clearTimeout( persistFileCacheTimer );
-      persistFileCacheTimer = setTimeout( () => {
-        persistFileCacheTimer = null;
-        persistFileCacheNow();
-      }, 1000 );
-    };
-
-    window.addEventListener( 'beforeunload', () => {
-      if ( persistFileCacheTimer ) {
-        clearTimeout( persistFileCacheTimer );
-        persistFileCacheTimer = null;
-        persistFileCacheNow();
-      }
-    } );
 
     const restoreFileCache = () => {
       try {
@@ -783,7 +760,6 @@
             if ( match ) {
               CONFIG.owner = match[ 1 ];
               CONFIG.repo = match[ 2 ];
-              state.localBase = prefix;
               localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
               return;
             }
@@ -802,7 +778,6 @@
               if ( match ) {
                 CONFIG.owner = match[ 1 ];
                 CONFIG.repo = match[ 2 ];
-                state.localBase = prefix;
                 localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
                 return;
               }
@@ -974,57 +949,14 @@
         }
       } );
 
-      // Token inline form
+      // Token prompt
       document.getElementById( 'btnToken' ).addEventListener( 'click', () => {
         const current = localStorage.getItem( 'githubToken' ) || '';
-        const hasToken = current.length > 0;
-        const cb = document.getElementById( 'contentBody' );
-
-        // Replace file header with a simple one
-        const existingHeader = contentArea.querySelector( '.panel-header.file-header' );
-        const simpleHeader = document.createElement( 'div' );
-        simpleHeader.className = 'panel-header file-header';
-        simpleHeader.innerHTML = '<h3 id="contentTitle">GitHub Token</h3>';
-        if ( existingHeader ) {
-          existingHeader.replaceWith( simpleHeader );
-        } else {
-          contentArea.insertBefore( simpleHeader, cb );
+        const result = prompt( 'Enter your GitHub Personal Access Token (leave blank to clear):', current );
+        if ( result !== null ) {
+          localStorage.setItem( 'githubToken', result );
+          location.reload();
         }
-
-        cb.innerHTML = `
-          <div class="repo-form">
-            <p>Your GitHub Personal Access Token is stored in this browser's localStorage only. It is never sent anywhere except api.github.com.</p>
-            <label for="inpToken">Token${ hasToken ? ' (currently set)' : '' }</label>
-            <input id="inpToken" type="password" placeholder="${ hasToken ? '•••••••• (leave blank to keep)' : 'ghp_…' }" autocomplete="off" spellcheck="false">
-            <label><input id="inpTokenShow" type="checkbox"> Show token</label>
-            <div style="display: flex; gap: 0.5rem;">
-              <button id="btnTokenSave" class="primary" title="Save token and reload">Save</button>
-              <button id="btnTokenClear" class="secondary" title="Clear stored token">Clear</button>
-            </div>
-          </div>
-        `;
-
-        const inp = document.getElementById( 'inpToken' );
-        inp.focus();
-
-        document.getElementById( 'inpTokenShow' ).addEventListener( 'change', ( e ) => {
-          inp.type = e.target.checked ? 'text' : 'password';
-        } );
-
-        const save = () => {
-          const value = inp.value;
-          if ( value === '' && hasToken ) return; // leave existing token untouched
-          localStorage.setItem( 'githubToken', value );
-          location.reload();
-        };
-
-        document.getElementById( 'btnTokenSave' ).addEventListener( 'click', save );
-        inp.addEventListener( 'keydown', ( e ) => { if ( e.key === 'Enter' ) save(); } );
-
-        document.getElementById( 'btnTokenClear' ).addEventListener( 'click', () => {
-          localStorage.removeItem( 'githubToken' );
-          location.reload();
-        } );
       } );
 
       // Resizable sidebar
@@ -1684,14 +1616,9 @@
           // Anchor links — leave as-is
           if ( href.startsWith( '#' ) ) return;
 
-          // GitHub blob links — rewrite only when owner/repo/branch all match the current view
+          // GitHub blob links
           const blobMatch = href.match( /github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/ );
-          if (
-            blobMatch &&
-            blobMatch[ 1 ] === state.owner &&
-            blobMatch[ 2 ] === state.repo &&
-            blobMatch[ 3 ] === state.branch
-          ) {
+          if ( blobMatch && blobMatch[ 1 ] === state.owner && blobMatch[ 2 ] === state.repo ) {
             a.removeAttribute( 'href' );
             a.style.cursor = 'pointer';
             a.style.color = 'var(--highlight-color)';
@@ -1799,56 +1726,8 @@
       }
     };
 
-    /* ── 33b. Local-first helpers ── */
-    const localUrlFor = ( path ) => {
-      if ( !state.localMode || state.localBase === null ) return null;
-      return state.localBase + path.split( '/' ).map( encodeURIComponent ).join( '/' );
-    };
-
-    const probeLocalMode = async () => {
-      if ( !state.tree ) return;
-
-      // Pick a small text-ish file to probe. Skip binaries to keep the test cheap.
-      const probe = state.tree.find( ( item ) =>
-        item.type === 'blob' &&
-        item.size && item.size > 0 && item.size < 20000 &&
-        /\.(md|txt|json|js|mjs|cjs|ts|tsx|html|htm|css|yml|yaml|toml|xml|csv)$/i.test( item.path )
-      );
-      if ( !probe ) return;
-
-      const candidateBases = state.localBase !== null
-        ? [ state.localBase ]
-        : [ '', '../', '../../', '../../../', '../../../../' ];
-
-      for ( const base of candidateBases ) {
-        try {
-          const url = base + probe.path.split( '/' ).map( encodeURIComponent ).join( '/' );
-          const res = await fetch( url );
-          if ( !res.ok ) continue;
-          const text = await res.text();
-          if ( text.length > 0 ) {
-            state.localBase = base;
-            state.localMode = true;
-            return;
-          }
-        } catch ( _ ) { /* try next */ }
-      }
-    };
-
     /* ── 34. fetchFileText — text content fetch ── */
     const fetchFileText = async ( path, signal ) => {
-      // Local-first: bypass cache so uncommitted edits show immediately
-      const localUrl = localUrlFor( path );
-      if ( localUrl ) {
-        try {
-          const res = await fetch( localUrl, { signal } );
-          if ( res.ok ) return await res.text();
-        } catch ( err ) {
-          if ( err.name === 'AbortError' ) throw err;
-          /* fall through to GitHub */
-        }
-      }
-
       const cached = getCachedFileText( path );
       if ( cached !== null ) return cached;
 
@@ -1879,22 +1758,6 @@
 
     /* ── 35. fetchFileBlob — binary content fetch ── */
     const fetchFileBlob = async ( path, signal, mimeType ) => {
-      // Local-first
-      const localUrl = localUrlFor( path );
-      if ( localUrl ) {
-        try {
-          const res = await fetch( localUrl, { signal } );
-          if ( res.ok ) {
-            let blob = await res.blob();
-            if ( mimeType ) blob = new Blob( [ blob ], { type: mimeType } );
-            return createBlobUrl( blob );
-          }
-        } catch ( err ) {
-          if ( err.name === 'AbortError' ) throw err;
-          /* fall through to GitHub */
-        }
-      }
-
       const token = getToken();
       let blob;
 
@@ -2001,11 +1864,8 @@
           renderSvg( text );
 
         } else if ( IMAGE_EXTS.includes( ext ) && ext !== 'svg' ) {
-          const localUrl = localUrlFor( path );
           const token = getToken();
-          if ( localUrl ) {
-            renderImage( localUrl, path.split( '/' ).pop() );
-          } else if ( token ) {
+          if ( token ) {
             const url = await fetchFileBlob( path, signal );
             renderImage( url, path.split( '/' ).pop() );
           } else {
@@ -2014,11 +1874,8 @@
           }
 
         } else if ( AUDIO_EXTS.includes( ext ) ) {
-          const localUrl = localUrlFor( path );
           const token = getToken();
-          if ( localUrl ) {
-            renderAudio( localUrl );
-          } else if ( token ) {
+          if ( token ) {
             const url = await fetchFileBlob( path, signal );
             renderAudio( url );
           } else {
@@ -2027,11 +1884,8 @@
           }
 
         } else if ( VIDEO_EXTS.includes( ext ) ) {
-          const localUrl = localUrlFor( path );
           const token = getToken();
-          if ( localUrl ) {
-            renderVideo( localUrl );
-          } else if ( token ) {
+          if ( token ) {
             const url = await fetchFileBlob( path, signal );
             renderVideo( url );
           } else {
@@ -2156,10 +2010,6 @@
 
     /* ── 39. init ── */
     const init = async () => {
-      // Sync Files-panel tooltip with the meta revised marker
-      const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
-      document.getElementById( 'filesPanelHeader' ).title = `Last updated: ${ revised }`;
-
       initAppearance();
       setupListeners();
       setupExpandAll();
@@ -2182,9 +2032,6 @@
         document.getElementById( 'contentBody' ).innerHTML = '<p>Loading tree…</p>';
         await fetchTree();
         document.getElementById( 'btnExpandAll' ).style.display = '';
-
-        // Probe for local file access; enables fetching uncommitted edits
-        await probeLocalMode();
 
         // File open priority
         if ( location.hash.length > 1 ) {

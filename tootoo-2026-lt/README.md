@@ -1,6 +1,6 @@
 # TooToo LT
 
-2026-04-10
+2026-04-20 22:14
 
 A lightweight single-file GitHub repository browser. Drop it into any repo folder and it auto-detects the repository — or run it on GitHub Pages.
 
