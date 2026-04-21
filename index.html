@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-10 19:30">
+  <meta name="revised" content="2026-04-20 23:45 ff">
   <title>TooToo LT</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link id="hljsTheme" rel="stylesheet"
@@ -344,11 +344,15 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.2rem 0.4rem 0.2rem 1.2rem;
+      padding: 0.2rem 0.4rem;
       cursor: pointer;
       border-radius: 4px;
       font-family: monospace;
       font-size: 0.85rem;
+    }
+
+    details .tree-item {
+      padding-left: 1.2rem;
     }
 
     .tree-item:hover {
@@ -570,7 +574,7 @@
   <main>
 
     <div class="sidebar">
-      <div class="panel-header" title="Last updated: 2026-04-10 10:30">
+      <div class="panel-header" id="filesPanelHeader">
         <h3 id="hFiles">Files</h3>
         <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders">Expand
           All</button>
@@ -608,6 +612,15 @@
       return String( str ).replace( /[&<>"']/g, ( c ) => map[ c ] );
     };
 
+    const encodePath = ( path ) =>
+      path.split( '/' ).map( encodeURIComponent ).join( '/' );
+
+    const rawUrl = ( path ) =>
+      `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
+
+    const contentsApiUrl = ( path ) =>
+      `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/contents/${ encodePath( path ) }?ref=${ encodeURIComponent( state.branch ) }`;
+
     const GITHUB_SVG_ICON = '<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>';
 
     /* ── 2. CONFIG & state ── */
@@ -624,6 +637,8 @@
       tree: null,
       currentFilePath: '',
       pagesEnabled: null,
+      localBase: null,   // prefix from app to repo root (e.g. '../' or ''); null = unknown
+      localMode: false,  // true when a probe confirmed local file reads work
     };
 
     /* ── 3. Extension constants ── */
@@ -685,12 +700,29 @@
       persistFileCache();
     };
 
-    const persistFileCache = () => {
+    const persistFileCacheNow = () => {
       try {
         const arr = Array.from( fileTextCache.entries() );
         localStorage.setItem( storageKey( 'fileTextCache' ), JSON.stringify( arr ) );
       } catch ( _ ) { /* quota exceeded — ignore */ }
     };
+
+    let persistFileCacheTimer = null;
+    const persistFileCache = () => {
+      if ( persistFileCacheTimer ) clearTimeout( persistFileCacheTimer );
+      persistFileCacheTimer = setTimeout( () => {
+        persistFileCacheTimer = null;
+        persistFileCacheNow();
+      }, 1000 );
+    };
+
+    window.addEventListener( 'beforeunload', () => {
+      if ( persistFileCacheTimer ) {
+        clearTimeout( persistFileCacheTimer );
+        persistFileCacheTimer = null;
+        persistFileCacheNow();
+      }
+    } );
 
     const restoreFileCache = () => {
       try {
@@ -760,6 +792,7 @@
             if ( match ) {
               CONFIG.owner = match[ 1 ];
               CONFIG.repo = match[ 2 ];
+              state.localBase = prefix;
               localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
               return;
             }
@@ -778,6 +811,7 @@
               if ( match ) {
                 CONFIG.owner = match[ 1 ];
                 CONFIG.repo = match[ 2 ];
+                state.localBase = prefix;
                 localStorage.setItem( storageKey( 'repo' ), JSON.stringify( { owner: CONFIG.owner, repo: CONFIG.repo } ) );
                 return;
               }
@@ -949,14 +983,57 @@
         }
       } );
 
-      // Token prompt
+      // Token inline form
       document.getElementById( 'btnToken' ).addEventListener( 'click', () => {
         const current = localStorage.getItem( 'githubToken' ) || '';
-        const result = prompt( 'Enter your GitHub Personal Access Token (leave blank to clear):', current );
-        if ( result !== null ) {
-          localStorage.setItem( 'githubToken', result );
-          location.reload();
+        const hasToken = current.length > 0;
+        const cb = document.getElementById( 'contentBody' );
+
+        // Replace file header with a simple one
+        const existingHeader = contentArea.querySelector( '.panel-header.file-header' );
+        const simpleHeader = document.createElement( 'div' );
+        simpleHeader.className = 'panel-header file-header';
+        simpleHeader.innerHTML = '<h3 id="contentTitle">GitHub Token</h3>';
+        if ( existingHeader ) {
+          existingHeader.replaceWith( simpleHeader );
+        } else {
+          contentArea.insertBefore( simpleHeader, cb );
         }
+
+        cb.innerHTML = `
+          <div class="repo-form">
+            <p>Your GitHub Personal Access Token is stored in this browser's localStorage only. It is never sent anywhere except api.github.com.</p>
+            <label for="inpToken">Token${ hasToken ? ' (currently set)' : '' }</label>
+            <input id="inpToken" type="password" placeholder="${ hasToken ? '•••••••• (leave blank to keep)' : 'ghp_…' }" autocomplete="off" spellcheck="false">
+            <label><input id="inpTokenShow" type="checkbox"> Show token</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <button id="btnTokenSave" class="primary" title="Save token and reload">Save</button>
+              <button id="btnTokenClear" class="secondary" title="Clear stored token">Clear</button>
+            </div>
+          </div>
+        `;
+
+        const inp = document.getElementById( 'inpToken' );
+        inp.focus();
+
+        document.getElementById( 'inpTokenShow' ).addEventListener( 'change', ( e ) => {
+          inp.type = e.target.checked ? 'text' : 'password';
+        } );
+
+        const save = () => {
+          const value = inp.value;
+          if ( value === '' && hasToken ) return; // leave existing token untouched
+          localStorage.setItem( 'githubToken', value );
+          location.reload();
+        };
+
+        document.getElementById( 'btnTokenSave' ).addEventListener( 'click', save );
+        inp.addEventListener( 'keydown', ( e ) => { if ( e.key === 'Enter' ) save(); } );
+
+        document.getElementById( 'btnTokenClear' ).addEventListener( 'click', () => {
+          localStorage.removeItem( 'githubToken' );
+          location.reload();
+        } );
       } );
 
       // Resizable sidebar
@@ -1248,16 +1325,15 @@
 
         const treeData = await treeRes.json();
 
-        if ( treeData.truncated ) {
-          treeList.innerHTML = '';
-          const warning = document.createElement( 'div' );
-          warning.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; font-size: 0.85rem;';
-          warning.textContent = '⚠️ Repository tree is truncated. Some files may not appear.';
-          treeList.appendChild( warning );
-        }
-
         state.tree = treeData.tree;
         await renderTree( state.tree );
+
+        if ( treeData.truncated ) {
+          const warning = document.createElement( 'div' );
+          warning.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; padding: 0.5rem; border-radius: 4px; margin: 0 0.5rem 0.5rem 0.5rem; font-size: 0.85rem;';
+          warning.textContent = '⚠️ Repository tree is truncated. Some files may not appear.';
+          treeList.insertBefore( warning, treeList.firstChild );
+        }
 
       } catch ( err ) {
         if ( err.name === 'AbortError' ) return;
@@ -1533,13 +1609,14 @@
         const pagesPath = isReadme
           ? path.slice( 0, path.length - fileName.length )  // strip filename → directory URL
           : path.replace( /\.md$/i, '' );                   // strip .md extension
+        const encodedPagesPath = encodePath( pagesPath );
         const isUserPage = state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`;
         return isUserPage
-          ? `https://${ state.owner }.github.io/${ pagesPath }`
-          : `https://${ state.owner }.github.io/${ state.repo }/${ pagesPath }`;
+          ? `https://${ state.owner }.github.io/${ encodedPagesPath }`
+          : `https://${ state.owner }.github.io/${ state.repo }/${ encodedPagesPath }`;
       }
 
-      return `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
+      return rawUrl( path );
     };
 
     /* ── 32. buildFileHeader — breadcrumbs + action buttons ── */
@@ -1555,7 +1632,7 @@
       }
       breadcrumbHtml += ` / <strong>${ escapeHTML( fileName ) }</strong>`;
 
-      const githubUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/blob/${ encodeURIComponent( state.branch ) }/${ path }`;
+      const githubUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/blob/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
 
       const hasToggle = [ 'md', 'html', 'htm', 'svg' ].includes( ext );
       const hasCopy = !NO_COPY_EXTS.includes( ext );
@@ -1616,9 +1693,14 @@
           // Anchor links — leave as-is
           if ( href.startsWith( '#' ) ) return;
 
-          // GitHub blob links
+          // GitHub blob links — rewrite only when owner/repo/branch all match the current view
           const blobMatch = href.match( /github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/ );
-          if ( blobMatch && blobMatch[ 1 ] === state.owner && blobMatch[ 2 ] === state.repo ) {
+          if (
+            blobMatch &&
+            blobMatch[ 1 ] === state.owner &&
+            blobMatch[ 2 ] === state.repo &&
+            blobMatch[ 3 ] === state.branch
+          ) {
             a.removeAttribute( 'href' );
             a.style.cursor = 'pointer';
             a.style.color = 'var(--highlight-color)';
@@ -1633,8 +1715,11 @@
             return;
           }
 
-          // Relative paths
-          const resolved = currentDir ? currentDir + '/' + href : href;
+          // Relative paths — root-relative ('/foo') resolves from repo root, not currentDir
+          const isRootRelative = href.startsWith( '/' );
+          const resolved = isRootRelative
+            ? href.slice( 1 )
+            : ( currentDir ? currentDir + '/' + href : href );
           const normalized = resolved.split( '/' ).reduce( ( acc, part ) => {
             if ( part === '..' ) acc.pop();
             else if ( part !== '.' && part !== '' ) acc.push( part );
@@ -1726,8 +1811,56 @@
       }
     };
 
+    /* ── 33b. Local-first helpers ── */
+    const localUrlFor = ( path ) => {
+      if ( !state.localMode || state.localBase === null ) return null;
+      return state.localBase + encodePath( path );
+    };
+
+    const probeLocalMode = async () => {
+      if ( !state.tree ) return;
+
+      // Pick a small text-ish file to probe. Skip binaries to keep the test cheap.
+      const probe = state.tree.find( ( item ) =>
+        item.type === 'blob' &&
+        item.size && item.size > 0 && item.size < 20000 &&
+        /\.(md|txt|json|js|mjs|cjs|ts|tsx|html|htm|css|yml|yaml|toml|xml|csv)$/i.test( item.path )
+      );
+      if ( !probe ) return;
+
+      const candidateBases = state.localBase !== null
+        ? [ state.localBase ]
+        : [ '', '../', '../../', '../../../', '../../../../' ];
+
+      for ( const base of candidateBases ) {
+        try {
+          const url = base + encodePath( probe.path );
+          const res = await fetch( url );
+          if ( !res.ok ) continue;
+          const text = await res.text();
+          if ( text.length > 0 ) {
+            state.localBase = base;
+            state.localMode = true;
+            return;
+          }
+        } catch ( _ ) { /* try next */ }
+      }
+    };
+
     /* ── 34. fetchFileText — text content fetch ── */
     const fetchFileText = async ( path, signal ) => {
+      // Local-first: bypass cache so uncommitted edits show immediately
+      const localUrl = localUrlFor( path );
+      if ( localUrl ) {
+        try {
+          const res = await fetch( localUrl, { signal } );
+          if ( res.ok ) return await res.text();
+        } catch ( err ) {
+          if ( err.name === 'AbortError' ) throw err;
+          /* fall through to GitHub */
+        }
+      }
+
       const cached = getCachedFileText( path );
       if ( cached !== null ) return cached;
 
@@ -1736,18 +1869,12 @@
 
       if ( token ) {
         const headers = { ...getAuthHeaders(), Accept: 'application/vnd.github.raw+json' };
-        const res = await fetch(
-          `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/contents/${ path }?ref=${ encodeURIComponent( state.branch ) }`,
-          { headers, signal }
-        );
+        const res = await fetch( contentsApiUrl( path ), { headers, signal } );
         updateRateBadge( res );
         if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
         text = await res.text();
       } else {
-        const res = await fetch(
-          `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`,
-          { signal }
-        );
+        const res = await fetch( rawUrl( path ), { signal } );
         if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
         text = await res.text();
       }
@@ -1758,23 +1885,33 @@
 
     /* ── 35. fetchFileBlob — binary content fetch ── */
     const fetchFileBlob = async ( path, signal, mimeType ) => {
+      // Local-first
+      const localUrl = localUrlFor( path );
+      if ( localUrl ) {
+        try {
+          const res = await fetch( localUrl, { signal } );
+          if ( res.ok ) {
+            let blob = await res.blob();
+            if ( mimeType ) blob = new Blob( [ blob ], { type: mimeType } );
+            return createBlobUrl( blob );
+          }
+        } catch ( err ) {
+          if ( err.name === 'AbortError' ) throw err;
+          /* fall through to GitHub */
+        }
+      }
+
       const token = getToken();
       let blob;
 
       if ( token ) {
         const headers = { ...getAuthHeaders(), Accept: 'application/vnd.github.raw+json' };
-        const res = await fetch(
-          `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/contents/${ path }?ref=${ encodeURIComponent( state.branch ) }`,
-          { headers, signal }
-        );
+        const res = await fetch( contentsApiUrl( path ), { headers, signal } );
         updateRateBadge( res );
         if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
         blob = await res.blob();
       } else {
-        const res = await fetch(
-          `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`,
-          { signal }
-        );
+        const res = await fetch( rawUrl( path ), { signal } );
         if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
         blob = await res.blob();
       }
@@ -1784,6 +1921,13 @@
       }
 
       return createBlobUrl( blob );
+    };
+
+    const resolveMediaUrl = async ( path, signal ) => {
+      const localUrl = localUrlFor( path );
+      if ( localUrl ) return localUrl;
+      if ( getToken() ) return await fetchFileBlob( path, signal );
+      return rawUrl( path );
     };
 
     /* ── 36. selectFile — main function ── */
@@ -1864,34 +2008,16 @@
           renderSvg( text );
 
         } else if ( IMAGE_EXTS.includes( ext ) && ext !== 'svg' ) {
-          const token = getToken();
-          if ( token ) {
-            const url = await fetchFileBlob( path, signal );
-            renderImage( url, path.split( '/' ).pop() );
-          } else {
-            const directUrl = `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
-            renderImage( directUrl, path.split( '/' ).pop() );
-          }
+          const url = await resolveMediaUrl( path, signal );
+          renderImage( url, path.split( '/' ).pop() );
 
         } else if ( AUDIO_EXTS.includes( ext ) ) {
-          const token = getToken();
-          if ( token ) {
-            const url = await fetchFileBlob( path, signal );
-            renderAudio( url );
-          } else {
-            const directUrl = `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
-            renderAudio( directUrl );
-          }
+          const url = await resolveMediaUrl( path, signal );
+          renderAudio( url );
 
         } else if ( VIDEO_EXTS.includes( ext ) ) {
-          const token = getToken();
-          if ( token ) {
-            const url = await fetchFileBlob( path, signal );
-            renderVideo( url );
-          } else {
-            const directUrl = `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ path }`;
-            renderVideo( directUrl );
-          }
+          const url = await resolveMediaUrl( path, signal );
+          renderVideo( url );
 
         } else if ( ext === 'pdf' ) {
           const url = await fetchFileBlob( path, signal, 'application/pdf' );
@@ -2010,6 +2136,10 @@
 
     /* ── 39. init ── */
     const init = async () => {
+      // Sync Files-panel tooltip with the meta revised marker
+      const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
+      document.getElementById( 'filesPanelHeader' ).title = `Last updated: ${ revised }`;
+
       initAppearance();
       setupListeners();
       setupExpandAll();
@@ -2032,6 +2162,9 @@
         document.getElementById( 'contentBody' ).innerHTML = '<p>Loading tree…</p>';
         await fetchTree();
         document.getElementById( 'btnExpandAll' ).style.display = '';
+
+        // Probe for local file access; enables fetching uncommitted edits
+        await probeLocalMode();
 
         // File open priority
         if ( location.hash.length > 1 ) {
