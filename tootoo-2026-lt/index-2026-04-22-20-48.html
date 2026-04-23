@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-22 14:00">
+  <meta name="revised" content="2026-04-21 00:30 ff">
   <title>TooToo LT</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link id="hljsTheme" rel="stylesheet"
@@ -594,13 +594,11 @@
 
     <a id="headerTitle" href="#" title="Reload" aria-label="Reload page">TooToo LT</a>
 
-    <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode"
-      aria-label="Toggle dark mode">🌙</button>
+    <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode" aria-label="Toggle dark mode">🌙</button>
     <button id="btnFontDec" class="header-btn" title="Decrease Font Size" aria-label="Decrease font size">A−</button>
     <button id="btnFontInc" class="header-btn" title="Increase Font Size" aria-label="Increase font size">A+</button>
     <button id="btnHelp" class="header-btn" title="About this app" aria-label="About this app">?</button>
-    <button id="btnToken" class="header-btn" title="Set GitHub Personal Access Token"
-      aria-label="Set GitHub personal access token">⚙️ Token</button>
+    <button id="btnToken" class="header-btn" title="Set GitHub Personal Access Token" aria-label="Set GitHub personal access token">⚙️ Token</button>
     <div id="rateBadge" class="rate-limit-badge" title="API Rate Limit" aria-live="polite"></div>
   </header>
 
@@ -609,8 +607,7 @@
     <div class="sidebar">
       <div class="panel-header" id="filesPanelHeader">
         <h3 id="hFiles">Files</h3>
-        <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders"
-          aria-label="Expand all folders">Expand
+        <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders" aria-label="Expand all folders">Expand
           All</button>
       </div>
       <div class="filter-wrap">
@@ -1759,13 +1756,8 @@
           // Anchor links — leave as-is
           if ( href.startsWith( '#' ) ) return;
 
-          // Strip fragment before path resolution (in-page anchors not supported in this viewer)
-          const fragIdx = href.indexOf( '#' );
-          const hrefPath = fragIdx >= 0 ? href.slice( 0, fragIdx ) : href;
-          if ( !hrefPath ) return;
-
           // GitHub blob links — rewrite only when owner/repo/branch all match the current view
-          const blobMatch = hrefPath.match( /github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/ );
+          const blobMatch = href.match( /github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/ );
           if (
             blobMatch &&
             blobMatch[ 1 ] === state.owner &&
@@ -1780,17 +1772,17 @@
           }
 
           // External links
-          if ( hrefPath.startsWith( 'http://' ) || hrefPath.startsWith( 'https://' ) || hrefPath.startsWith( '//' ) ) {
+          if ( href.startsWith( 'http://' ) || href.startsWith( 'https://' ) || href.startsWith( '//' ) ) {
             a.setAttribute( 'target', '_blank' );
             a.setAttribute( 'rel', 'noopener' );
             return;
           }
 
           // Relative paths — root-relative ('/foo') resolves from repo root, not currentDir
-          const isRootRelative = hrefPath.startsWith( '/' );
+          const isRootRelative = href.startsWith( '/' );
           const resolved = isRootRelative
-            ? hrefPath.slice( 1 )
-            : ( currentDir ? currentDir + '/' + hrefPath : hrefPath );
+            ? href.slice( 1 )
+            : ( currentDir ? currentDir + '/' + href : href );
           const normalized = resolved.split( '/' ).reduce( ( acc, part ) => {
             if ( part === '..' ) acc.pop();
             else if ( part !== '.' && part !== '' ) acc.push( part );
@@ -2131,11 +2123,11 @@
       contentArea.addEventListener( 'click', async ( e ) => {
         // Breadcrumb: scroll to folder
         const folderLink = e.target.closest( '[data-action="scroll-folder"]' );
-        if ( folderLink ) { e.preventDefault(); scrollToTreeFolder( folderLink.dataset.folder ); return; }
+        if ( folderLink ) { scrollToTreeFolder( folderLink.dataset.folder ); return; }
 
         // Breadcrumb: reset home
         const homeLink = e.target.closest( '[data-action="reset-home"]' );
-        if ( homeLink ) { e.preventDefault(); resetToHome(); return; }
+        if ( homeLink ) { resetToHome(); return; }
 
         // View toggle: rendered
         const renderedBtn = e.target.closest( '[data-action="view-rendered"]' );
