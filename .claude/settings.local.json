@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(gh pr list --repo theo-armour/sandbox)"
+      "Bash(gh pr list --repo theo-armour/sandbox)",
+      "Bash(grep -n -E \"^\\\\s*\\(/\\\\*|//|function |const |let |<body|<main|<header|<footer|<div id=|<section\\)\" \"G:/My Drive/2026-theo-github/pushme-pullyou-tootoo/tootoo-2026-lt/index.html\")"
     ]
   }
 }
