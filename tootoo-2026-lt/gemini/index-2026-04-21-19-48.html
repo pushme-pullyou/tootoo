@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TooToo LT</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <link id="hljsTheme" rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #24292f;
+      --header-bg: #f6f8fa;
+      --border-color: #d0d7de;
+      --hover-bg: #f3f4f6;
+      --highlight-color: #0969da;
+      --highlight-text: #ffffff;
+      --sidebar-width: 300px;
+      --font-size: 14px;
+      --radius: 6px;
+    }
+
+    body.dark-mode {
+      --bg-color: #0d1117;
+      --text-color: #c9d1d9;
+      --header-bg: #161b22;
+      --border-color: #30363d;
+      --hover-bg: #21262d;
+      --highlight-color: #1f6feb;
+      --highlight-text: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: var(--font-size);
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    a {
+      color: var(--highlight-color);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background-color: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+      gap: 1rem;
+    }
+
+    .header-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      flex-grow: 1;
+      cursor: pointer;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    button {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: var(--hover-bg);
+      transform: translateY(-1px);
+    }
+
+    main {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    aside {
+      width: var(--sidebar-width);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-color);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .resizer {
+      width: 5px;
+      background-color: var(--border-color);
+      cursor: col-resize;
+      flex-shrink: 0;
+      transition: background-color 0.2s;
+    }
+
+    .resizer:hover,
+    .resizer.dragging {
+      background-color: var(--highlight-color);
+    }
+
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .filter-box {
+      padding: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .filter-box input {
+      flex: 1;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    .tree-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    details {
+      padding-left: 1rem;
+    }
+
+    summary.tree-folder {
+      cursor: pointer;
+      list-style: none;
+      padding: 0.2rem 0;
+      user-select: none;
+      border-radius: var(--radius);
+    }
+
+    summary.tree-folder::-webkit-details-marker {
+      display: none;
+    }
+
+    summary.tree-folder:hover {
+      background-color: var(--hover-bg);
+    }
+
+    .tree-item {
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tree-item:hover {
+      background-color: var(--hover-bg);
+    }
+
+    .tree-item.active {
+      background-color: var(--highlight-color);
+      color: var(--highlight-text);
+    }
+
+    .file-header {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      background-color: var(--header-bg);
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .breadcrumb {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .breadcrumb span {
+      cursor: pointer;
+      color: var(--highlight-color);
+    }
+
+    .breadcrumb span:hover {
+      text-decoration: underline;
+    }
+
+    .file-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .file-content {
+      flex: 1;
+      overflow: auto;
+      padding: 1rem;
+    }
+
+    .markdown-body {
+      font-family: inherit;
+      line-height: 1.6;
+    }
+
+    .markdown-body img {
+      max-width: 100%;
+      box-sizing: content-box;
+    }
+
+    pre {
+      background-color: var(--header-bg);
+      padding: 1rem;
+      border-radius: var(--radius);
+      overflow: auto;
+    }
+
+    iframe.preview-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+
+    .error-panel {
+      border: 1px solid red;
+      background: #ffe6e6;
+      color: #cc0000;
+      padding: 1rem;
+      margin: 1rem;
+      border-radius: var(--radius);
+    }
+
+    body.dark-mode .error-panel {
+      background: #4d0000;
+      color: #ff9999;
+    }
+
+    .token-form {
+      display: none;
+      position: absolute;
+      top: 3rem;
+      right: 1rem;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 100;
+    }
+
+    .token-form.visible {
+      display: block;
+    }
+
+    .token-form input {
+      margin-bottom: 0.5rem;
+      padding: 0.25rem;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      aside {
+        width: 25% !important;
+      }
+
+      .file-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .resizer {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <a id="header-gh-link" href="#" target="_blank" title="Open on GitHub">
+      <svg height="24" viewBox="0 0 16 16" width="24" fill="currentColor">
+        <path
+          d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">
+        </path>
+      </svg>
+    </a>
+    <div id="header-title" class="header-title">TooToo LT</div>
+    <div class="header-controls">
+      <button id="btn-theme" title="Toggle Dark Mode">🌙</button>
+      <button id="btn-font-dec" title="Decrease Font">A−</button>
+      <button id="btn-font-inc" title="Increase Font">A+</button>
+      <button id="btn-token" title="GitHub Token">⚙️ Token</button>
+    </div>
+  </header>
+
+  <div id="token-form" class="token-form">
+    <label>GitHub Personal Access Token:<br>
+      <input type="password" id="input-token" placeholder="ghp_...">
+    </label>
+    <div>
+      <label><input type="checkbox" id="chk-show-token"> Show</label>
+    </div>
+    <div style="margin-top:0.5rem; display:flex; gap:0.5rem">
+      <button id="btn-save-token">Save</button>
+      <button id="btn-clear-token">Clear</button>
+      <button id="btn-close-token">Close</button>
+    </div>
+  </div>
+
+  <main>
+    <aside id="sidebar">
+      <div class="filter-box">
+        <input type="text" id="input-filter" placeholder="Filter files...">
+        <button id="btn-clear-filter" title="Clear filter">✕</button>
+      </div>
+      <div class="tree-container" id="tree-root"></div>
+    </aside>
+
+    <div class="resizer" id="resizer"></div>
+
+    <div class="content-area">
+      <div class="file-header" id="file-header" style="display:none">
+        <a id="file-gh-link" href="#" target="_blank" title="View on GitHub">
+          <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor">
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">
+            </path>
+          </svg>
+        </a>
+        <div id="breadcrumb" class="breadcrumb"></div>
+        <div class="file-actions">
+          <button id="btn-toggle-view" style="display:none">Raw</button>
+          <button id="btn-copy">📋 Copy</button>
+          <button id="btn-new-tab">↗ New Tab</button>
+        </div>
+      </div>
+      <div class="file-content" id="file-content">
+        <div style="padding: 2rem; text-align: center; color: var(--border-color);">
+          Select a file to view
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const CONFIG = {};
+    const state = {
+      owner: '',
+      repo: '',
+      branch: '',
+      tree: [],
+      flatTree: {},
+      currentFile: null,
+      lastRawText: '',
+      cache: new Map(),
+      blobUrls: new Set(),
+      abortController: null,
+      darkMode: false,
+      fontSize: 14,
+      sidebarWidth: 300,
+      viewRendered: true
+    };
+
+    const getStoreKey = ( key ) => `tootoo-lt:${ location.pathname }:${ key }`;
+    const tokenKey = 'githubToken';
+
+    const elements = {
+      themeBtn: document.getElementById( 'btn-theme' ),
+      fontDecBtn: document.getElementById( 'btn-font-dec' ),
+      fontIncBtn: document.getElementById( 'btn-font-inc' ),
+      tokenBtn: document.getElementById( 'btn-token' ),
+      headerTitle: document.getElementById( 'header-title' ),
+      headerGhLink: document.getElementById( 'header-gh-link' ),
+      resizer: document.getElementById( 'resizer' ),
+      sidebar: document.getElementById( 'sidebar' ),
+      treeRoot: document.getElementById( 'tree-root' ),
+      filterInput: document.getElementById( 'input-filter' ),
+      clearFilterBtn: document.getElementById( 'btn-clear-filter' ),
+      fileHeader: document.getElementById( 'file-header' ),
+      breadcrumb: document.getElementById( 'breadcrumb' ),
+      fileGhLink: document.getElementById( 'file-gh-link' ),
+      toggleViewBtn: document.getElementById( 'btn-toggle-view' ),
+      copyBtn: document.getElementById( 'btn-copy' ),
+      newTabBtn: document.getElementById( 'btn-new-tab' ),
+      fileContent: document.getElementById( 'file-content' ),
+      tokenForm: document.getElementById( 'token-form' ),
+      inputToken: document.getElementById( 'input-token' ),
+      chkShowToken: document.getElementById( 'chk-show-token' ),
+      saveTokenBtn: document.getElementById( 'btn-save-token' ),
+      clearTokenBtn: document.getElementById( 'btn-clear-token' ),
+      closeTokenBtn: document.getElementById( 'btn-close-token' ),
+      hljsTheme: document.getElementById( 'hljsTheme' )
+    };
+
+    const icons = {
+      md: '📝', js: '🟨', mjs: '🟨', cjs: '🟨', ts: '🟦', tsx: '🟦',
+      py: '🐍', html: '🌐', htm: '🌐', css: '🎨', scss: '🎨', less: '🎨',
+      png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', webp: '🖼️', svg: '🖼️', ico: '🖼️',
+      pdf: '📕', json: '{ }', default: '📄'
+    };
+
+    const escapeHTML = ( str ) => typeof str === 'string' ?
+      str.replace( /[&<>'"]/g, tag => ( { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ tag ] ) ) : str;
+    const encodePath = ( path ) => path.split( '/' ).map( encodeURIComponent ).join( '/' );
+
+    const showError = ( msg ) => {
+      const div = document.createElement( 'div' );
+      div.className = 'error-panel';
+      div.innerHTML = `<strong>Error:</strong> ${ escapeHTML( msg ) } <br><button onclick="location.reload()" style="margin-top:0.5rem;">Reload</button>`;
+      document.body.appendChild( div );
+    };
+
+    window.addEventListener( 'error', e => showError( e.message ) );
+    window.addEventListener( 'unhandledrejection', e => showError( e.reason?.message || e.reason ) );
+
+    const apiFetch = async ( url, asBlob = false ) => {
+      if ( state.abortController ) state.abortController.abort();
+      state.abortController = new AbortController();
+      const token = localStorage.getItem( tokenKey );
+      const headers = { 'Accept': asBlob ? 'application/vnd.github.raw' : 'application/vnd.github+json' };
+      if ( token ) headers[ 'Authorization' ] = `token ${ token }`;
+
+      const res = await fetch( url, { headers, signal: state.abortController.signal } );
+      if ( !res.ok ) throw new Error( `HTTP ${ res.status }: ${ res.statusText }` );
+      return asBlob ? res.blob() : res.json();
+    };
+
+    const detectRepo = async () => {
+      const params = new URLSearchParams( window.location.search );
+      state.owner = params.get( 'owner' );
+      state.repo = params.get( 'repo' );
+      state.branch = params.get( 'branch' );
+
+      if ( !state.owner || !state.repo ) {
+        try {
+          const cached = JSON.parse( localStorage.getItem( getStoreKey( 'repo' ) ) || 'null' );
+          if ( cached ) { state.owner = cached.owner; state.repo = cached.repo; state.branch = cached.branch; }
+        } catch ( e ) { }
+      }
+
+      if ( !state.owner || !state.repo ) {
+        const host = location.hostname;
+        if ( host.endsWith( '.github.io' ) ) {
+          state.owner = host.split( '.' )[ 0 ];
+          const parts = location.pathname.split( '/' ).filter( Boolean );
+          state.repo = parts[ 0 ] || `${ state.owner }.github.io`;
+        }
+      }
+
+      if ( !state.owner || !state.repo ) {
+        const result = prompt( "Enter GitHub owner/repo (e.g., octocat/Hello-World):" );
+        if ( result && result.includes( '/' ) ) {
+          [ state.owner, state.repo ] = result.split( '/' );
+        }
+      }
+
+      if ( state.owner && state.repo ) {
+        localStorage.setItem( getStoreKey( 'repo' ), JSON.stringify( { owner: state.owner, repo: state.repo, branch: state.branch } ) );
+      }
+    };
+
+    const updateTheme = () => {
+      document.body.classList.toggle( 'dark-mode', state.darkMode );
+      elements.themeBtn.textContent = state.darkMode ? '☀️' : '🌙';
+      elements.hljsTheme.href = state.darkMode ?
+        'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css' :
+        'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
+      localStorage.setItem( getStoreKey( 'darkMode' ), state.darkMode );
+    };
+
+    const updateFontSize = () => {
+      document.documentElement.style.setProperty( '--font-size', `${ state.fontSize }px` );
+      localStorage.setItem( getStoreKey( 'fontSize' ), state.fontSize );
+    };
+
+    const updateSidebarWidth = () => {
+      document.documentElement.style.setProperty( '--sidebar-width', `${ state.sidebarWidth }px` );
+      localStorage.setItem( getStoreKey( 'sidebarWidth' ), state.sidebarWidth );
+    };
+
+    const buildTree = ( files ) => {
+      const root = { name: 'root', children: {}, files: [], path: '' };
+      files.forEach( file => {
+        const parts = file.path.split( '/' );
+        if ( parts.some( p => p.startsWith( '.' ) ) ) return;
+        let current = root;
+        parts.forEach( ( part, i ) => {
+          if ( i === parts.length - 1 ) {
+            if ( file.type === 'blob' ) current.files.push( { ...file, name: part } );
+          } else {
+            if ( !current.children[ part ] ) current.children[ part ] = { name: part, children: {}, files: [], path: parts.slice( 0, i + 1 ).join( '/' ) };
+            current = current.children[ part ];
+          }
+        } );
+        state.flatTree[ file.path ] = file;
+      } );
+      return root;
+    };
+
+    const renderTreeItem = ( file ) => {
+      const ext = file.name.split( '.' ).pop().toLowerCase();
+      const icon = icons[ ext ] || icons.default;
+      const isBold = /^readme/i.test( file.name );
+      return `<div class="tree-item" data-action="select-file" data-path="${ escapeHTML( file.path ) }" title="${ escapeHTML( file.path ) }">
+            ${ icon } <span style="${ isBold ? 'font-weight:bold' : '' }">${ escapeHTML( file.name ) }</span>
+        </div>`;
+    };
+
+    const renderTreeNodes = ( node ) => {
+      let html = '';
+      const folders = Object.values( node.children ).sort( ( a, b ) => a.name.localeCompare( b.name ) );
+      const files = node.files.sort( ( a, b ) => a.name.localeCompare( b.name ) );
+
+      folders.forEach( f => {
+        html += `<details data-folder="${ escapeHTML( f.path ) }">
+                <summary class="tree-folder">📁 ${ escapeHTML( f.name ) }</summary>
+                ${ renderTreeNodes( f ) }
+            </details>`;
+      } );
+      files.forEach( f => { html += renderTreeItem( f ); } );
+      return html;
+    };
+
+    const loadTree = async () => {
+      if ( !state.owner || !state.repo ) return;
+      elements.headerTitle.textContent = `${ state.owner } / ${ state.repo }`;
+      elements.headerGhLink.href = `https://github.com/${ state.owner }/${ state.repo }`;
+      try {
+        if ( !state.branch ) {
+          const repoInfo = await apiFetch( `https://api.github.com/repos/${ state.owner }/${ state.repo }` );
+          state.branch = repoInfo.default_branch;
+        }
+        const treeData = await apiFetch( `https://api.github.com/repos/${ state.owner }/${ state.repo }/git/trees/${ state.branch }?recursive=1` );
+        const root = buildTree( treeData.tree || [] );
+        elements.treeRoot.innerHTML = renderTreeNodes( root );
+
+        // Re-apply filter if any
+        if ( elements.filterInput.value ) filterTree();
+      } catch ( e ) {
+        elements.treeRoot.innerHTML = `<div style="color:red; padding:1rem">${ escapeHTML( e.message ) }<br/>Rate limited? Add token.</div>`;
+      }
+    };
+
+    const revokeBlobs = () => {
+      state.blobUrls.forEach( url => URL.revokeObjectURL( url ) );
+      state.blobUrls.clear();
+    };
+
+    const fetchContent = async ( path, asBlob = false ) => {
+      const cacheKey = `${ path }:${ asBlob }`;
+      if ( state.cache.has( cacheKey ) ) return state.cache.get( cacheKey );
+
+      const token = localStorage.getItem( tokenKey );
+      let result;
+      if ( token && asBlob ) {
+        result = await apiFetch( `https://api.github.com/repos/${ state.owner }/${ state.repo }/contents/${ path }?ref=${ state.branch }`, true );
+      } else if ( token && !asBlob ) {
+        const res = await fetch( `https://api.github.com/repos/${ state.owner }/${ state.repo }/contents/${ path }?ref=${ state.branch }`, {
+          headers: { 'Accept': 'application/vnd.github.raw+json', 'Authorization': `token ${ token }` }
+        } );
+        if ( !res.ok ) throw new Error( "Fetch failed" );
+        result = await res.text();
+      } else {
+        const res = await fetch( `https://raw.githubusercontent.com/${ state.owner }/${ state.repo }/${ state.branch }/${ path }` );
+        if ( !res.ok ) throw new Error( "Fetch failed" );
+        result = asBlob ? await res.blob() : await res.text();
+      }
+
+      if ( state.cache.size >= 25 ) {
+        const first = state.cache.keys().next().value;
+        state.cache.delete( first );
+      }
+      if ( result && ( !result.length || result.length <= 300000 ) ) {
+        state.cache.set( cacheKey, result );
+      }
+      return result;
+    };
+
+    const renderMarkdown = ( text, path ) => {
+      const basePath = path.substring( 0, path.lastIndexOf( '/' ) );
+      let html = marked.parse( text );
+      html = DOMPurify.sanitize( html );
+
+      const div = document.createElement( 'div' );
+      div.innerHTML = html;
+      div.querySelectorAll( 'a' ).forEach( a => {
+        const href = a.getAttribute( 'href' );
+        if ( !href || href.startsWith( '#' ) ) return;
+        if ( href.startsWith( 'http' ) ) {
+          a.target = '_blank';
+          a.rel = 'noopener';
+        } else if ( href.includes( `/blob/${ state.branch }/` ) ) {
+          try {
+            const localPath = decodeURIComponent( href.split( `/blob/${ state.branch }/` )[ 1 ] );
+            a.removeAttribute( 'href' );
+            a.style.cursor = 'pointer';
+            a.onclick = ( e ) => { e.preventDefault(); selectFile( localPath ); };
+          } catch ( e ) { }
+        } else {
+          let resolved = href;
+          if ( !href.startsWith( '/' ) ) {
+            const parts = ( basePath ? basePath.split( '/' ) : [] ).concat( href.split( '/' ) );
+            const finalParts = [];
+            for ( const p of parts ) {
+              if ( p === '..' ) finalParts.pop();
+              else if ( p !== '.' && p ) finalParts.push( p );
+            }
+            resolved = finalParts.join( '/' );
+          } else {
+            resolved = href.substring( 1 );
+          }
+          a.removeAttribute( 'href' );
+          a.style.cursor = 'pointer';
+          a.onclick = ( e ) => { e.preventDefault(); selectFile( resolved ); };
+        }
+      } );
+      return div.innerHTML;
+    };
+
+    const selectFile = async ( path ) => {
+      if ( !path ) return;
+      try {
+        state.currentFile = path;
+        localStorage.setItem( getStoreKey( 'currentFile' ), path );
+        history.replaceState( null, '', '#' + encodePath( path ) );
+
+        document.querySelectorAll( '.tree-item.active' ).forEach( el => el.classList.remove( 'active' ) );
+        const treeItem = document.querySelector( `.tree-item[data-path="${ CSS.escape( path ) }"]` );
+        if ( treeItem ) {
+          treeItem.classList.add( 'active' );
+          let parent = treeItem.closest( 'details' );
+          while ( parent ) { parent.open = true; parent = parent.parentElement.closest( 'details' ); }
+          treeItem.scrollIntoView( { block: 'nearest' } );
+        }
+
+        elements.fileHeader.style.display = 'flex';
+        elements.fileGhLink.href = `https://github.com/${ state.owner }/${ state.repo }/blob/${ state.branch }/${ encodePath( path ) }`;
+
+        const parts = path.split( '/' );
+        let bread = `<span onclick="selectFile('')">${ state.repo }</span> / `;
+        let acc = '';
+        parts.forEach( ( p, i ) => {
+          acc += ( i > 0 ? '/' : '' ) + p;
+          if ( i === parts.length - 1 ) bread += `<strong>${ escapeHTML( p ) }</strong>`;
+          else bread += `<span onclick="document.querySelector('details[data-folder=\\'${ CSS.escape( acc ) }\\']')?.scrollIntoView({block:'center'})">${ escapeHTML( p ) }</span> / `;
+        } );
+        elements.breadcrumb.innerHTML = bread;
+
+        elements.fileContent.innerHTML = 'Loading...';
+        revokeBlobs();
+
+        const ext = path.split( '.' ).pop().toLowerCase();
+        const isRendererable = [ 'md', 'html', 'htm' ].includes( ext );
+        const isImage = [ 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico' ].includes( ext );
+
+        elements.toggleViewBtn.style.display = isRendererable ? 'block' : 'none';
+        elements.toggleViewBtn.textContent = state.viewRendered ? 'Raw' : 'Rendered';
+
+        if ( isImage ) {
+          const token = localStorage.getItem( tokenKey );
+          let src = `https://raw.githubusercontent.com/${ state.owner }/${ state.repo }/${ state.branch }/${ encodePath( path ) }`;
+          if ( token ) {
+            const blob = await fetchContent( path, true );
+            src = URL.createObjectURL( blob );
+            state.blobUrls.add( src );
+          }
+          state.lastRawText = '';
+          elements.fileContent.innerHTML = `<img src="${ src }" alt="${ escapeHTML( path ) }" style="max-width:100%; height:auto; display:block; margin:auto;">`;
+          if ( ext === 'svg' && !state.viewRendered ) {
+            const text = await fetchContent( path, false );
+            state.lastRawText = text;
+            renderCode( text, ext );
+          }
+        } else {
+          const text = await fetchContent( path, false );
+          state.lastRawText = text;
+
+          if ( isRendererable && state.viewRendered ) {
+            if ( ext === 'md' ) {
+              elements.fileContent.innerHTML = `<div class="markdown-body">${ renderMarkdown( text, path ) }</div>`;
+            } else if ( ext === 'html' || ext === 'htm' ) {
+              const blob = new Blob( [ text ], { type: 'text/html' } );
+              const url = URL.createObjectURL( blob );
+              state.blobUrls.add( url );
+              elements.fileContent.innerHTML = `<iframe class="preview-frame" sandbox="allow-scripts" src="${ url }"></iframe>`;
+            }
+          } else {
+            renderCode( text, ext );
+          }
+        }
+      } catch ( e ) {
+        if ( e.name === 'AbortError' ) return;
+        elements.fileContent.innerHTML = `<div style="color:red; padding:1rem">Failed to load ${ escapeHTML( path ) }: ${ escapeHTML( e.message ) }</div>`;
+      }
+    };
+
+    const renderCode = ( text, ext ) => {
+      if ( text.length > 500000 ) {
+        elements.fileContent.innerHTML = `<pre><code>${ escapeHTML( text ) }</code></pre>`;
+        return;
+      }
+      const validLang = hljs.getLanguage( ext ) ? ext : 'plaintext';
+      const highlighted = hljs.highlight( text, { language: validLang } ).value;
+      elements.fileContent.innerHTML = `<pre><code class="hljs ${ validLang }">${ highlighted }</code></pre>`;
+    };
+
+    const filterTree = () => {
+      const q = elements.filterInput.value.toLowerCase();
+      document.querySelectorAll( '.tree-item' ).forEach( el => {
+        const match = el.dataset.path.toLowerCase().includes( q );
+        el.style.display = match ? 'block' : 'none';
+      } );
+      document.querySelectorAll( 'details' ).forEach( details => {
+        if ( !q ) { details.open = false; details.style.display = 'block'; return; }
+        const hasVisibleChild = Array.from( details.querySelectorAll( '.tree-item' ) ).some( el => el.style.display !== 'none' );
+        details.style.display = hasVisibleChild ? 'block' : 'none';
+        if ( hasVisibleChild ) details.open = true;
+      } );
+    };
+
+    // Resizer logic
+    let isResizing = false;
+    elements.resizer.addEventListener( 'mousedown', ( e ) => {
+      isResizing = true;
+      document.body.style.cursor = 'col-resize';
+      elements.resizer.classList.add( 'dragging' );
+    } );
+    window.addEventListener( 'mousemove', ( e ) => {
+      if ( !isResizing ) return;
+      let nw = e.clientX;
+      if ( nw < 100 ) nw = 100;
+      if ( nw > window.innerWidth - 100 ) nw = window.innerWidth - 100;
+      state.sidebarWidth = nw;
+      updateSidebarWidth();
+    } );
+    window.addEventListener( 'mouseup', () => {
+      if ( isResizing ) {
+        isResizing = false;
+        document.body.style.cursor = '';
+        elements.resizer.classList.remove( 'dragging' );
+      }
+    } );
+
+    const init = async () => {
+      state.darkMode = localStorage.getItem( getStoreKey( 'darkMode' ) ) === 'true';
+      state.fontSize = parseInt( localStorage.getItem( getStoreKey( 'fontSize' ) ) ) || 14;
+      state.sidebarWidth = parseInt( localStorage.getItem( getStoreKey( 'sidebarWidth' ) ) ) || 300;
+
+      updateTheme();
+      updateFontSize();
+      updateSidebarWidth();
+
+      elements.themeBtn.onclick = () => { state.darkMode = !state.darkMode; updateTheme(); };
+      elements.fontDecBtn.onclick = () => { state.fontSize = Math.max( 10, state.fontSize - 2 ); updateFontSize(); };
+      elements.fontIncBtn.onclick = () => { state.fontSize = Math.min( 28, state.fontSize + 2 ); updateFontSize(); };
+
+      elements.tokenBtn.onclick = () => {
+        elements.tokenForm.classList.toggle( 'visible' );
+        elements.inputToken.value = localStorage.getItem( tokenKey ) || '';
+      };
+      elements.chkShowToken.onchange = ( e ) => elements.inputToken.type = e.target.checked ? 'text' : 'password';
+      elements.saveTokenBtn.onclick = () => {
+        localStorage.setItem( tokenKey, elements.inputToken.value.trim() );
+        location.reload();
+      };
+      elements.clearTokenBtn.onclick = () => {
+        localStorage.removeItem( tokenKey );
+        location.reload();
+      };
+      elements.closeTokenBtn.onclick = () => elements.tokenForm.classList.remove( 'visible' );
+
+      elements.headerTitle.onclick = () => {
+        state.currentFile = null;
+        localStorage.removeItem( getStoreKey( 'currentFile' ) );
+        history.pushState( null, '', location.pathname + location.search );
+        elements.fileHeader.style.display = 'none';
+        elements.fileContent.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--border-color);">Select a file to view</div>';
+        loadTree();
+      };
+
+      elements.treeRoot.onclick = ( e ) => {
+        const item = e.target.closest( '.tree-item' );
+        if ( item ) selectFile( item.dataset.path );
+      };
+
+      elements.filterInput.oninput = () => {
+        clearTimeout( state.filterTo );
+        state.filterTo = setTimeout( filterTree, 150 );
+      };
+      elements.clearFilterBtn.onclick = () => {
+        elements.filterInput.value = '';
+        filterTree();
+      };
+
+      elements.toggleViewBtn.onclick = () => {
+        state.viewRendered = !state.viewRendered;
+        selectFile( state.currentFile );
+      };
+
+      elements.copyBtn.onclick = () => {
+        navigator.clipboard.writeText( state.lastRawText );
+        const orig = elements.copyBtn.textContent;
+        elements.copyBtn.textContent = '✓ Copied';
+        setTimeout( () => elements.copyBtn.textContent = orig, 1500 );
+      };
+
+      elements.newTabBtn.onclick = () => {
+        if ( !state.currentFile ) return;
+        window.open( `https://raw.githubusercontent.com/${ state.owner }/${ state.repo }/${ state.branch }/${ encodePath( state.currentFile ) }`, '_blank' );
+      };
+
+      window.addEventListener( 'hashchange', () => {
+        const h = location.hash.substring( 1 );
+        if ( h && h !== encodePath( state.currentFile || '' ) ) selectFile( decodeURIComponent( h ) );
+      } );
+      window.addEventListener( 'beforeunload', revokeBlobs );
+
+      await detectRepo();
+
+      if ( state.owner && state.repo ) {
+        document.title = `${ state.owner }/${ state.repo } - TooToo LT`;
+        await loadTree();
+
+        let initialPath = location.hash ? decodeURIComponent( location.hash.substring( 1 ) ) : localStorage.getItem( getStoreKey( 'currentFile' ) );
+        if ( !initialPath && state.flatTree ) {
+          const readmes = Object.keys( state.flatTree ).filter( p => /^readme/i.test( p.split( '/' ).pop() ) );
+          const rootReadme = readmes.find( p => !p.includes( '/' ) );
+          initialPath = rootReadme || readmes[ 0 ];
+        }
+        if ( initialPath ) selectFile( initialPath );
+      }
+    };
+
+    init();
+  </script>
+</body>
+
+</html>

@@ -547,44 +547,13 @@
         gap: 0.5rem;
       }
     }
-
-    /* Accessibility helpers */
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    .skip-link {
-      position: absolute;
-      left: 0.5rem;
-      top: -40px;
-      z-index: 1000;
-      padding: 0.4rem 0.8rem;
-      background: var(--highlight-color);
-      color: #fff;
-      text-decoration: none;
-      border-radius: 4px;
-    }
-
-    .skip-link:focus {
-      top: 0.5rem;
-    }
   </style>
 </head>
 
 <body>
 
-  <a class="skip-link" href="#mainContent">Skip to content</a>
-
   <header>
-    <a id="headerGitHub" href="#" title="View on GitHub" aria-label="View on GitHub">
+    <a id="headerGitHub" href="#" title="View on GitHub">
       <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
         <path
           d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z">
@@ -592,28 +561,27 @@
       </svg>
     </a>
 
-    <a id="headerTitle" href="#" title="Reload" aria-label="Reload page">TooToo LT</a>
+    <a id="headerTitle" href="#" title="Reload">TooToo LT</a>
 
-    <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode" aria-label="Toggle dark mode">🌙</button>
-    <button id="btnFontDec" class="header-btn" title="Decrease Font Size" aria-label="Decrease font size">A−</button>
-    <button id="btnFontInc" class="header-btn" title="Increase Font Size" aria-label="Increase font size">A+</button>
-    <button id="btnHelp" class="header-btn" title="About this app" aria-label="About this app">?</button>
-    <button id="btnToken" class="header-btn" title="Set GitHub Personal Access Token" aria-label="Set GitHub personal access token">⚙️ Token</button>
+    <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode">🌙</button>
+    <button id="btnFontDec" class="header-btn" title="Decrease Font Size">A−</button>
+    <button id="btnFontInc" class="header-btn" title="Increase Font Size">A+</button>
+    <button id="btnHelp" class="header-btn" title="About this app">?</button>
+    <button id="btnToken" class="header-btn" title="Set GitHub Personal Access Token">⚙️ Token</button>
     <div id="rateBadge" class="rate-limit-badge" title="API Rate Limit" aria-live="polite"></div>
   </header>
 
-  <main id="mainContent">
+  <main>
 
     <div class="sidebar">
       <div class="panel-header" id="filesPanelHeader">
         <h3 id="hFiles">Files</h3>
-        <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders" aria-label="Expand all folders">Expand
+        <button id="btnExpandAll" class="secondary" style="display: none;" title="Expand All Folders">Expand
           All</button>
       </div>
       <div class="filter-wrap">
-        <label for="treeFilter" class="sr-only">Filter files by name</label>
         <input type="text" id="treeFilter" placeholder="Filter files…" title="Filter files by name">
-        <button id="btnFilterClear" title="Clear filter" aria-label="Clear filter">✕</button>
+        <button id="btnFilterClear" title="Clear filter">✕</button>
       </div>
       <div id="treeList">
         <!-- placeholder for future tree content -->
@@ -1685,11 +1653,11 @@
       const segments = path.split( '/' );
       const fileName = segments.pop();
 
-      let breadcrumbHtml = `<a class="breadcrumb-link" href="#" data-action="reset-home" title="Go to repo root" aria-label="Go to repo root">${ escapeHTML( state.repo ) }</a>`;
+      let breadcrumbHtml = `<a class="breadcrumb-link" data-action="reset-home" title="Go to repo root">${ escapeHTML( state.repo ) }</a>`;
       let folderPath = '';
       for ( const seg of segments ) {
         folderPath = folderPath ? `${ folderPath }/${ seg }` : seg;
-        breadcrumbHtml += ` / <a class="breadcrumb-link" href="#" data-action="scroll-folder" data-folder="${ escapeHTML( folderPath ) }" title="${ escapeHTML( folderPath ) }" aria-label="Scroll to folder ${ escapeHTML( folderPath ) }">${ escapeHTML( seg ) }</a>`;
+        breadcrumbHtml += ` / <a class="breadcrumb-link" data-action="scroll-folder" data-folder="${ escapeHTML( folderPath ) }" title="${ escapeHTML( folderPath ) }">${ escapeHTML( seg ) }</a>`;
       }
       breadcrumbHtml += ` / <strong>${ escapeHTML( fileName ) }</strong>`;
 
@@ -1701,21 +1669,19 @@
 
       let actionsHtml = '';
       if ( hasToggle ) {
-        const renderedPressed = preferredView === 'rendered';
-        const rawPressed = preferredView === 'raw';
-        const renderedOpacity = renderedPressed ? '1' : '0.5';
-        const rawOpacity = rawPressed ? '1' : '0.5';
-        actionsHtml += `<button class="file-btn" data-action="view-rendered" style="opacity:${ renderedOpacity }" title="Show rendered view" aria-pressed="${ renderedPressed }">Rendered</button>`;
-        actionsHtml += `<button class="file-btn" data-action="view-raw" style="opacity:${ rawOpacity }" title="Show raw source" aria-pressed="${ rawPressed }">Raw</button>`;
+        const renderedOpacity = preferredView === 'rendered' ? '1' : '0.5';
+        const rawOpacity = preferredView === 'raw' ? '1' : '0.5';
+        actionsHtml += `<button class="file-btn" data-action="view-rendered" style="opacity:${ renderedOpacity }" title="Show rendered view">Rendered</button>`;
+        actionsHtml += `<button class="file-btn" data-action="view-raw" style="opacity:${ rawOpacity }" title="Show raw source">Raw</button>`;
       }
       if ( hasCopy ) {
-        actionsHtml += `<button class="file-btn" data-action="copy-file" title="Copy file contents to clipboard" aria-label="Copy file contents to clipboard">📋 Copy</button>`;
+        actionsHtml += `<button class="file-btn" data-action="copy-file" title="Copy file contents to clipboard">📋 Copy</button>`;
       }
-      actionsHtml += `<button class="file-btn" data-action="new-tab" data-path="${ escapeHTML( path ) }" title="Open in new tab" aria-label="Open in new tab">↗ New Tab</button>`;
+      actionsHtml += `<button class="file-btn" data-action="new-tab" data-path="${ escapeHTML( path ) }" title="Open in new tab">↗ New Tab</button>`;
 
       return `<div class="panel-header file-header">` +
         `<div class="file-title">` +
-        `<a href="${ escapeHTML( githubUrl ) }" target="_blank" rel="noopener" title="View on GitHub" aria-label="View this file on GitHub">${ GITHUB_SVG_ICON }</a>` +
+        `<a href="${ escapeHTML( githubUrl ) }" target="_blank" rel="noopener" title="View on GitHub">${ GITHUB_SVG_ICON }</a>` +
         `<span id="breadcrumbs">${ breadcrumbHtml }</span>` +
         `</div>` +
         `<div class="file-actions">${ actionsHtml }</div>` +
@@ -1831,7 +1797,7 @@
         `<img class="media-content" src="${ escapeHTML( url ) }" alt="${ escapeHTML( alt ) }">`;
     };
 
-    const renderSvg = ( text, fileName = 'SVG image' ) => {
+    const renderSvg = ( text ) => {
       const preferredView = getPreferredView( 'svg' );
       const blob = new Blob( [ text ], { type: 'image/svg+xml' } );
       const url = createBlobUrl( blob );
@@ -1840,7 +1806,7 @@
       const rawDisplay = preferredView === 'raw' ? '' : 'display:none';
 
       document.getElementById( 'contentBody' ).innerHTML =
-        `<div id="viewRendered" style="${ renderedDisplay }"><img class="media-content" src="${ escapeHTML( url ) }" alt="${ escapeHTML( fileName ) }"></div>` +
+        `<div id="viewRendered" style="${ renderedDisplay }"><img class="media-content" src="${ escapeHTML( url ) }" alt="SVG"></div>` +
         `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( text ) }</pre>`;
     };
 
@@ -2068,7 +2034,7 @@
           // Always blob-fetch for rendering, but also get text for raw toggle
           const text = await fetchFileText( path, signal );
           lastRawText = text;
-          renderSvg( text, path.split( '/' ).pop() );
+          renderSvg( text );
 
         } else if ( IMAGE_EXTS.includes( ext ) && ext !== 'svg' ) {
           const url = await resolveMediaUrl( path, signal );

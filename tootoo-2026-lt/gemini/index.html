@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TooToo LT</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <link id="hljsTheme" rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #24292f;
+      --header-bg: #f6f8fa;
+      --border-color: #d0d7de;
+      --hover-bg: #f3f4f6;
+      --highlight-color: #0969da;
+      --sidebar-width: 300px;
+      --font-size: 16px;
+    }
+
+    body.dark-mode {
+      --bg-color: #0d1117;
+      --text-color: #c9d1d9;
+      --header-bg: #161b22;
+      --border-color: #30363d;
+      --hover-bg: #21262d;
+      --highlight-color: #58a6ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: var(--font-size);
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    a {
+      color: var(--highlight-color);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+
+    .title {
+      font-weight: bold;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .header-btns {
+      display: flex;
+      gap: 0.5rem;
+      position: relative;
+    }
+
+    button {
+      background: var(--header-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      border-radius: 6px;
+      padding: 0.25rem 0.5rem;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    button:hover {
+      background: var(--hover-bg);
+      transform: translateY(-1px);
+    }
+
+    main {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    aside {
+      width: var(--sidebar-width);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .resizer {
+      width: 4px;
+      background: var(--border-color);
+      cursor: col-resize;
+      flex-shrink: 0;
+      touch-action: none;
+    }
+
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .filter {
+      padding: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .filter input {
+      flex: 1;
+      padding: 0.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    .tree {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    details {
+      padding-left: 1rem;
+    }
+
+    summary.tree-folder {
+      cursor: pointer;
+      padding: 0.25rem;
+      list-style: none;
+      border-radius: 4px;
+      user-select: none;
+    }
+
+    summary.tree-folder::-webkit-details-marker {
+      display: none;
+    }
+
+    summary.tree-folder:hover,
+    .tree-item:hover {
+      background: var(--hover-bg);
+    }
+
+    .tree-item {
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 4px;
+      margin-left: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: none;
+    }
+
+    .tree-item.active {
+      background: var(--highlight-color);
+      color: #fff;
+    }
+
+    .readme-file {
+      font-weight: bold;
+    }
+
+    .file-actions {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+      gap: 0.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .breadcrumb {
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .breadcrumb span {
+      cursor: pointer;
+      color: var(--highlight-color);
+    }
+
+    .breadcrumb span:hover {
+      text-decoration: underline;
+    }
+
+    .view-area {
+      flex: 1;
+      overflow: auto;
+      padding: 1rem;
+      position: relative;
+    }
+
+    #viewRendered {
+      max-width: 900px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    #viewRendered img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    #viewRaw {
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 0;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    #form-repo,
+    #form-token {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: 6px;
+      margin: 1rem auto;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    #form-token {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin: 0.5rem 0 0 0;
+      z-index: 20;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    #form-repo input,
+    #form-token input {
+      padding: 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    .error-panel {
+      border: 1px solid #d73a49;
+      background: #ffeef0;
+      color: #b31d28;
+      padding: 1rem;
+      margin: 1rem;
+      border-radius: 6px;
+    }
+
+    body.dark-mode .error-panel {
+      background: #4a0f16;
+      color: #ff7b72;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--highlight-color);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+      aside {
+        width: 25% !important;
+      }
+
+      .file-actions {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      header {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <a id="btn-gh-home" href="#" target="_blank" title="GitHub Repo">
+      <svg height="24" viewBox="0 0 16 16" width="24" fill="currentColor">
+        <path
+          d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">
+        </path>
+      </svg>
+    </a>
+    <div id="repo-title" class="title">TooToo LT</div>
+    <div class="header-btns">
+      <button id="btn-theme" title="Toggle dark mode">🌙</button>
+      <button id="btn-font-dec" title="Decrease font size">A−</button>
+      <button id="btn-font-inc" title="Increase font size">A+</button>
+      <button id="btn-token" title="Set GitHub token">⚙️ Token</button>
+
+      <div id="form-token">
+        <label style="font-weight:bold; margin-bottom: 0.5rem; display:block;">GitHub Token</label>
+        <input type="password" id="inp-token" placeholder="ghp_...">
+        <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem;">
+          <input type="checkbox" id="chk-token-show"> Show token
+        </label>
+        <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+          <button id="btn-token-save">Save</button>
+          <button id="btn-token-clear">Clear</button>
+          <button id="btn-token-close">Close</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <aside id="sidebar">
+      <div class="filter">
+        <input type="text" id="inp-filter" placeholder="Filter files...">
+        <button id="btn-filter-clear" title="Clear filter">✕</button>
+      </div>
+      <div id="tree" class="tree"></div>
+    </aside>
+
+    <div id="resizer" class="resizer"></div>
+
+    <div class="content-area" id="content-area">
+      <div id="file-actions" class="file-actions" style="display:none;">
+        <a id="btn-gh-file" href="#" target="_blank" title="View on GitHub" style="color:var(--text-color);">
+          <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor">
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">
+            </path>
+          </svg>
+        </a>
+        <div id="breadcrumb" class="breadcrumb"></div>
+        <button id="btn-toggle-view" style="display:none;" data-action="toggle-view">Raw / Rendered</button>
+        <button data-action="copy">📋 Copy</button>
+        <button data-action="new-tab">↗ New Tab</button>
+      </div>
+
+      <div id="view" class="view-area">
+        <div id="viewRendered" style="display:none;"></div>
+        <pre id="viewRaw" style="display:none;"><code></code></pre>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast">✓ Copied</div>
+
+  <script>
+    const CONFIG = { owner: '', repo: '', branch: '' };
+    const state = {
+      darkMode: false,
+      fontSize: 16,
+      sidebarWidth: 300,
+      tree: [],
+      currentFile: '',
+      lastRawText: '',
+      cache: new Map(),
+      blobUrls: new Set(),
+      contentFetchController: null,
+      filterTimer: null
+    };
+
+    const getPrefKey = suffix => `tootoo-lt:${ location.pathname }:${ suffix }`;
+    const escapeHTML = str => {
+      const p = document.createElement( 'p' );
+      p.appendChild( document.createTextNode( str ) );
+      return p.innerHTML;
+    };
+    const encodePath = path => path.split( '/' ).map( encodeURIComponent ).join( '/' );
+
+    const $ = id => document.getElementById( id );
+
+    const init = async () => {
+      state.darkMode = localStorage.getItem( getPrefKey( 'darkMode' ) ) === 'true';
+      state.fontSize = parseInt( localStorage.getItem( getPrefKey( 'fontSize' ) ), 10 ) || 16;
+      state.sidebarWidth = parseInt( localStorage.getItem( getPrefKey( 'sidebarWidth' ) ), 10 ) || 300;
+
+      applyTheme();
+      applyFontSize();
+      applySidebarWidth();
+
+      setupListeners();
+
+      try {
+        await detectRepo();
+        $( 'repo-title' ).textContent = `${ CONFIG.owner } / ${ CONFIG.repo }`;
+        $( 'btn-gh-home' ).href = `https://github.com/${ CONFIG.owner }/${ CONFIG.repo }`;
+        await fetchTree();
+        autoSelectFile();
+      } catch ( err ) {
+        showError( err );
+      }
+    };
+
+    const applyTheme = () => {
+      document.body.classList.toggle( 'dark-mode', state.darkMode );
+      $( 'btn-theme' ).textContent = state.darkMode ? '☀️' : '🌙';
+      $( 'hljsTheme' ).href = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github${ state.darkMode ? '-dark' : '' }.min.css`;
+    };
+
+    const applyFontSize = () => document.documentElement.style.setProperty( '--font-size', `${ state.fontSize }px` );
+    const applySidebarWidth = () => document.documentElement.style.setProperty( '--sidebar-width', `${ state.sidebarWidth }px` );
+
+    const setupListeners = () => {
+      $( 'btn-theme' ).addEventListener( 'click', () => {
+        state.darkMode = !state.darkMode;
+        localStorage.setItem( getPrefKey( 'darkMode' ), state.darkMode );
+        applyTheme();
+      } );
+
+      $( 'btn-font-dec' ).addEventListener( 'click', () => {
+        state.fontSize = Math.max( 10, state.fontSize - 2 );
+        localStorage.setItem( getPrefKey( 'fontSize' ), state.fontSize );
+        applyFontSize();
+      } );
+
+      $( 'btn-font-inc' ).addEventListener( 'click', () => {
+        state.fontSize = Math.min( 28, state.fontSize + 2 );
+        localStorage.setItem( getPrefKey( 'fontSize' ), state.fontSize );
+        applyFontSize();
+      } );
+
+      // Token handler
+      $( 'btn-token' ).addEventListener( 'click', () => {
+        const f = $( 'form-token' );
+        f.style.display = f.style.display === 'flex' ? 'none' : 'flex';
+        $( 'inp-token' ).value = localStorage.getItem( 'githubToken' ) || '';
+      } );
+      $( 'btn-token-close' ).addEventListener( 'click', () => $( 'form-token' ).style.display = 'none' );
+      $( 'chk-token-show' ).addEventListener( 'change', e => $( 'inp-token' ).type = e.target.checked ? 'text' : 'password' );
+      $( 'btn-token-save' ).addEventListener( 'click', () => {
+        localStorage.setItem( 'githubToken', $( 'inp-token' ).value.trim() );
+        location.reload();
+      } );
+      $( 'btn-token-clear' ).addEventListener( 'click', () => {
+        localStorage.removeItem( 'githubToken' );
+        location.reload();
+      } );
+
+      $( 'repo-title' ).addEventListener( 'click', () => {
+        localStorage.removeItem( getPrefKey( 'currentFile' ) );
+        location.hash = '';
+        location.reload();
+      } );
+
+      // Filter handler
+      $( 'inp-filter' ).addEventListener( 'input', e => {
+        clearTimeout( state.filterTimer );
+        state.filterTimer = setTimeout( () => runFilter( e.target.value.toLowerCase() ), 150 );
+      } );
+      $( 'btn-filter-clear' ).addEventListener( 'click', () => {
+        $( 'inp-filter' ).value = '';
+        runFilter( '' );
+      } );
+
+      // Resizer
+      const resizer = $( 'resizer' );
+      resizer.addEventListener( 'pointerdown', e => {
+        resizer.setPointerCapture( e.pointerId );
+        const startX = e.clientX;
+        const startW = state.sidebarWidth;
+        const onMove = ev => {
+          let w = startW + ( ev.clientX - startX );
+          w = Math.max( 100, Math.min( w, window.innerWidth - 100 ) );
+          state.sidebarWidth = w;
+          applySidebarWidth();
+        };
+        const onUp = ev => {
+          localStorage.setItem( getPrefKey( 'sidebarWidth' ), state.sidebarWidth );
+          resizer.removeEventListener( 'pointermove', onMove );
+          resizer.removeEventListener( 'pointerup', onUp );
+          resizer.releasePointerCapture( ev.pointerId );
+        };
+        resizer.addEventListener( 'pointermove', onMove );
+        resizer.addEventListener( 'pointerup', onUp );
+      } );
+
+      // Breadcrumb / Actions delegation
+      $( 'content-area' ).addEventListener( 'click', async e => {
+        const t = e.target.closest( '[data-action]' );
+        if ( !t ) return;
+        const action = t.getAttribute( 'data-action' );
+
+        if ( action === 'reset-home' ) {
+          localStorage.removeItem( getPrefKey( 'currentFile' ) );
+          location.hash = '';
+          autoSelectFile();
+        } else if ( action === 'scroll-folder' ) {
+          const fp = t.getAttribute( 'data-folder' );
+          const details = Array.from( $( 'tree' ).querySelectorAll( 'details' ) );
+          const target = details.find( d => d.querySelector( '.tree-folder' ).nextElementSibling.getAttribute( 'data-base' ) === fp || d.querySelector( '.tree-folder' ).textContent.includes( fp.split( '/' ).pop() ) );
+          if ( target ) {
+            let p = target;
+            while ( p && p.tagName === 'DETAILS' ) { p.open = true; p = p.parentElement.closest( 'details' ); }
+            target.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+          }
+        } else if ( action === 'toggle-view' ) {
+          const vr = $( 'viewRendered' );
+          const vw = $( 'viewRaw' );
+          const isRaw = vw.style.display !== 'none';
+          vr.style.display = isRaw ? 'block' : 'none';
+          vw.style.display = isRaw ? 'none' : 'block';
+
+          const ext = getExt( state.currentFile );
+          localStorage.setItem( getPrefKey( `viewPref:${ ext }` ), isRaw ? 'rendered' : 'raw' );
+        } else if ( action === 'copy' ) {
+          try {
+            await navigator.clipboard.writeText( state.lastRawText );
+            const ts = $( 'toast' );
+            ts.style.opacity = 1;
+            setTimeout( () => ts.style.opacity = 0, 1500 );
+          } catch ( err ) {
+            alert( 'Clipboard write failed' );
+          }
+        } else if ( action === 'new-tab' ) {
+          window.open( `https://raw.githubusercontent.com/${ CONFIG.owner }/${ CONFIG.repo }/${ CONFIG.branch }/${ encodePath( state.currentFile ) }`, '_blank' );
+        }
+      } );
+
+      window.addEventListener( 'popstate', () => {
+        if ( location.hash.length > 1 ) {
+          const path = decodeURIComponent( location.hash.substring( 1 ) );
+          if ( path !== state.currentFile ) selectFile( path );
+        }
+      } );
+      window.addEventListener( 'beforeunload', () => {
+        state.blobUrls.forEach( u => URL.revokeObjectURL( u ) );
+      } );
+
+      // Arrow key navigation
+      document.addEventListener( 'keydown', e => {
+        if ( e.key === 'ArrowUp' || e.key === 'ArrowDown' ) {
+          if ( [ 'INPUT', 'TEXTAREA' ].includes( document.activeElement.tagName ) ) return;
+
+          const items = Array.from( document.querySelectorAll( '.tree-item' ) ).filter( el => el.offsetParent !== null );
+          if ( !items.length ) return;
+
+          e.preventDefault();
+          const curr = items.findIndex( el => el.classList.contains( 'active' ) );
+          let nextIdx = 0;
+
+          if ( curr > -1 ) {
+            nextIdx = e.key === 'ArrowDown' ? curr + 1 : curr - 1;
+            nextIdx = Math.max( 0, Math.min( items.length - 1, nextIdx ) );
+          }
+
+          if ( nextIdx !== curr && items[ nextIdx ] ) items[ nextIdx ].click();
+        }
+      } );
+    };
+
+    const runFilter = q => {
+      const items = $( 'tree' ).querySelectorAll( '.tree-item' );
+      items.forEach( el => {
+        el.style.display = ( q === '' || el.dataset.path.toLowerCase().includes( q ) ) ? '' : 'none';
+      } );
+
+      const folders = Array.from( $( 'tree' ).querySelectorAll( 'details' ) ).reverse();
+      if ( q === '' ) {
+        folders.forEach( f => f.style.display = '' );
+      } else {
+        folders.forEach( f => {
+          const hasVisChild = Array.from( f.querySelectorAll( '.tree-item' ) ).some( i => i.style.display !== 'none' );
+          f.style.display = hasVisChild ? '' : 'none';
+          if ( hasVisChild ) f.open = true;
+        } );
+      }
+    };
+
+    const detectRepo = () => new Promise( resolve => {
+      const p = new URLSearchParams( location.search );
+      if ( p.get( 'owner' ) && p.get( 'repo' ) ) {
+        CONFIG.owner = p.get( 'owner' ); CONFIG.repo = p.get( 'repo' ); CONFIG.branch = p.get( 'branch' ) || '';
+        return resolve();
+      }
+
+      try {
+        const c = JSON.parse( localStorage.getItem( getPrefKey( 'repo' ) ) );
+        if ( c && c.owner && c.repo ) {
+          Object.assign( CONFIG, c );
+          return resolve();
+        }
+      } catch ( e ) { }
+
+      if ( location.hostname.endsWith( '.github.io' ) ) {
+        CONFIG.owner = location.hostname.split( '.' )[ 0 ];
+        const seg = location.pathname.split( '/' ).filter( Boolean )[ 0 ];
+        CONFIG.repo = seg || `${ CONFIG.owner }.github.io`;
+        return resolve();
+      }
+
+      const form = document.createElement( 'div' );
+      form.id = 'form-repo';
+      form.innerHTML = `
+        <h3 style="margin:0 0 0.5rem 0">Enter Repository</h3>
+        <input type="text" id="inp-repo-owner" placeholder="Owner">
+        <input type="text" id="inp-repo-name" placeholder="Repository">
+        <button id="btn-repo-set" style="margin-top:0.5rem; background:var(--highlight-color); color:white;">Set</button>
+      `;
+      $( 'view' ).appendChild( form );
+      $( 'btn-repo-set' ).addEventListener( 'click', () => {
+        CONFIG.owner = $( 'inp-repo-owner' ).value.trim();
+        CONFIG.repo = $( 'inp-repo-name' ).value.trim();
+        if ( CONFIG.owner && CONFIG.repo ) {
+          localStorage.setItem( getPrefKey( 'repo' ), JSON.stringify( CONFIG ) );
+          form.remove();
+          resolve();
+        }
+      } );
+    } );
+
+    const apiFetch = async ( url, asBlob = false ) => {
+      const token = localStorage.getItem( 'githubToken' );
+      const headers = { 'Accept': asBlob ? 'application/vnd.github.raw+json' : 'application/vnd.github+json' };
+      if ( token ) headers[ 'Authorization' ] = `token ${ token }`;
+      const res = await fetch( url, { headers } );
+      if ( res.status === 403 ) throw new Error( "Rate limited. Add a GitHub token for higher limits." );
+      if ( !res.ok ) throw new Error( `HTTP ${ res.status } ${ res.statusText }` );
+      return asBlob ? res.blob() : res.json();
+    };
+
+    const fetchTree = async () => {
+      $( 'tree' ).innerHTML = 'Loading...';
+      if ( !CONFIG.branch ) {
+        const repoInfo = await apiFetch( `https://api.github.com/repos/${ CONFIG.owner }/${ CONFIG.repo }` );
+        CONFIG.branch = repoInfo.default_branch;
+        localStorage.setItem( getPrefKey( 'repo' ), JSON.stringify( CONFIG ) );
+      }
+
+      const treeData = await apiFetch( `https://api.github.com/repos/${ CONFIG.owner }/${ CONFIG.repo }/git/trees/${ CONFIG.branch }?recursive=1` );
+      state.tree = treeData.tree.filter( t => t.type === 'blob' && !t.path.split( '/' ).some( s => s.startsWith( '.' ) ) );
+
+      const root = { folders: {}, files: [] };
+      state.tree.forEach( t => {
+        const segs = t.path.split( '/' );
+        const name = segs.pop();
+        let curr = root;
+        segs.forEach( s => {
+          if ( !curr.folders[ s ] ) curr.folders[ s ] = { folders: {}, files: [] };
+          curr = curr.folders[ s ];
+        } );
+        curr.files.push( { name, path: t.path } );
+      } );
+
+      $( 'tree' ).innerHTML = '';
+
+      const getIcon = path => {
+        const ext = getExt( path );
+        const map = { md: '📝', js: '🟨', mjs: '🟨', cjs: '🟨', ts: '🟦', tsx: '🟦', py: '🐍', html: '🌐', htm: '🌐', css: '🎨', scss: '🎨', less: '🎨', json: '{ }', pdf: '📕' };
+        if ( map[ ext ] ) return map[ ext ];
+        if ( /^(png|jpg|jpeg|gif|webp|ico|svg)$/i.test( ext ) ) return '🖼️';
+        return '📄';
+      };
+
+      const domRoot = document.createDocumentFragment();
+      const renderDir = ( node, container, basePath = '' ) => {
+        Object.keys( node.folders ).sort( ( a, b ) => a.localeCompare( b ) ).forEach( f => {
+          const d = document.createElement( 'details' );
+          const s = document.createElement( 'summary' );
+          s.className = 'tree-folder';
+          s.textContent = `📁 ${ f }`;
+          d.appendChild( s );
+          const cd = document.createElement( 'div' );
+          cd.setAttribute( 'data-base', basePath ? `${ basePath }/${ f }` : f );
+          renderDir( node.folders[ f ], cd, basePath ? `${ basePath }/${ f }` : f );
+          d.appendChild( cd );
+          container.appendChild( d );
+        } );
+        node.files.sort( ( a, b ) => a.name.localeCompare( b ) ).forEach( file => {
+          const div = document.createElement( 'div' );
+          div.className = `tree-item ${ /^readme/i.test( file.name ) ? 'readme-file' : '' }`;
+          div.textContent = `${ getIcon( file.name ) } ${ file.name }`;
+          div.dataset.path = file.path;
+          div.onclick = () => selectFile( file.path );
+          container.appendChild( div );
+        } );
+      };
+      renderDir( root, domRoot );
+      $( 'tree' ).appendChild( domRoot );
+    };
+
+    const autoSelectFile = () => {
+      let target = '';
+      if ( location.hash.length > 1 ) {
+        target = decodeURIComponent( location.hash.substring( 1 ) );
+      } else if ( localStorage.getItem( getPrefKey( 'currentFile' ) ) ) {
+        target = localStorage.getItem( getPrefKey( 'currentFile' ) );
+      } else {
+        const rmd = state.tree.find( t => /^readme\.md$/i.test( t.path.split( '/' ).pop() ) );
+        if ( rmd ) target = rmd.path;
+        else if ( state.tree.length ) target = state.tree[ 0 ].path;
+      }
+      if ( target ) selectFile( target );
+    };
+
+    const getExt = path => ( path.includes( '.' ) ? path.split( '.' ).pop().toLowerCase() : '' );
+
+    const selectFile = async path => {
+      try {
+        if ( state.contentFetchController ) state.contentFetchController.abort();
+        state.contentFetchController = new AbortController();
+
+        state.blobUrls.forEach( u => URL.revokeObjectURL( u ) );
+        state.blobUrls.clear();
+
+        Array.from( $( 'tree' ).querySelectorAll( '.active' ) ).forEach( e => e.classList.remove( 'active' ) );
+        const el = $( 'tree' ).querySelector( `[data-path="${ CSS.escape( path ) }"]` );
+        if ( el ) {
+          el.classList.add( 'active' );
+          let p = el.parentElement;
+          while ( p && p.tagName !== 'ASIDE' ) {
+            if ( p.tagName === 'DETAILS' ) p.open = true;
+            p = p.parentElement;
+          }
+          el.scrollIntoView( { behavior: 'smooth', block: 'nearest' } );
+        }
+
+        state.currentFile = path;
+        localStorage.setItem( getPrefKey( 'currentFile' ), path );
+        if ( location.hash !== `#${ encodePath( path ) }` ) {
+          history.pushState( null, '', `#${ encodePath( path ) }` );
+        }
+
+        $( 'file-actions' ).style.display = 'flex';
+        $( 'btn-gh-file' ).href = `https://github.com/${ CONFIG.owner }/${ CONFIG.repo }/blob/${ CONFIG.branch }/${ encodePath( path ) }`;
+
+        let bcHTML = `<span data-action="reset-home">${ CONFIG.repo }</span> / `;
+        const segs = path.split( '/' );
+        segs.forEach( ( seg, i ) => {
+          if ( i === segs.length - 1 ) bcHTML += `<strong>${ escapeHTML( seg ) }</strong>`;
+          else bcHTML += `<span data-action="scroll-folder" data-folder="${ escapeHTML( segs.slice( 0, i + 1 ).join( '/' ) ) }">${ escapeHTML( seg ) }</span> / `;
+        } );
+        $( 'breadcrumb' ).innerHTML = bcHTML;
+
+        // Render UI prep
+        $( 'viewRendered' ).innerHTML = '';
+        $( 'viewRaw' ).innerHTML = '';
+        $( 'viewRendered' ).style.display = 'none';
+        $( 'viewRaw' ).style.display = 'block';
+
+        const ext = getExt( path );
+        const preferRendered = localStorage.getItem( getPrefKey( `viewPref:${ ext }` ) ) !== 'raw';
+        const toggleBtn = $( 'btn-toggle-view' );
+
+        let isImg = /^(png|jpg|jpeg|gif|webp|ico)$/i.test( ext );
+        const hasRenderedView = /^(md|html|htm|svg)$/i.test( ext );
+        if ( hasRenderedView ) {
+          toggleBtn.style.display = 'block';
+          if ( preferRendered ) {
+            $( 'viewRendered' ).style.display = 'block';
+            $( 'viewRaw' ).style.display = 'none';
+          }
+        } else {
+          toggleBtn.style.display = 'none';
+          if ( isImg ) {
+            $( 'viewRendered' ).style.display = 'block';
+            $( 'viewRaw' ).style.display = 'none';
+          }
+        }
+
+        let contentObj;
+        if ( state.cache.has( path ) ) {
+          contentObj = state.cache.get( path );
+        } else {
+          const token = localStorage.getItem( 'githubToken' );
+          if ( isImg && !token ) {
+            contentObj = { type: 'img', url: `https://raw.githubusercontent.com/${ CONFIG.owner }/${ CONFIG.repo }/${ CONFIG.branch }/${ encodePath( path ) }` };
+          } else {
+            const url = token ? `https://api.github.com/repos/${ CONFIG.owner }/${ CONFIG.repo }/contents/${ encodePath( path ) }?ref=${ CONFIG.branch }`
+              : `https://raw.githubusercontent.com/${ CONFIG.owner }/${ CONFIG.repo }/${ CONFIG.branch }/${ encodePath( path ) }`;
+
+            const reqInit = { signal: state.contentFetchController.signal };
+            if ( token ) reqInit.headers = { 'Accept': 'application/vnd.github.raw+json', 'Authorization': `token ${ token }` };
+
+            const req = await fetch( url, reqInit );
+            if ( !req.ok ) {
+              if ( req.status === 403 ) throw new Error( "Rate limited. Add a GitHub token for higher limits." );
+              throw new Error( `HTTP ${ req.status } ${ req.statusText }` );
+            }
+            const blob = await req.blob();
+
+            if ( isImg ) {
+              const u = URL.createObjectURL( blob );
+              state.blobUrls.add( u );
+              contentObj = { type: 'img', url: u };
+            } else {
+              const text = await blob.text();
+              contentObj = { type: 'text', text };
+            }
+          }
+          if ( contentObj.text && contentObj.text.length < 300000 ) {
+            if ( state.cache.size >= 25 ) {
+              const firstKey = state.cache.keys().next().value;
+              state.cache.delete( firstKey );
+            }
+            state.cache.set( path, contentObj );
+          }
+        }
+
+        if ( contentObj.type === 'img' ) {
+          state.lastRawText = '';
+          $( 'viewRendered' ).innerHTML = `<img src="${ contentObj.url }" alt="${ escapeHTML( path ) }">`;
+          return;
+        }
+
+        const text = contentObj.text;
+        state.lastRawText = text;
+
+        if ( ext === 'md' ) {
+          $( 'viewRaw' ).textContent = text;
+          $( 'viewRendered' ).innerHTML = DOMPurify.sanitize( marked.parse( text ) );
+
+          $( 'viewRendered' ).querySelectorAll( 'a' ).forEach( a => {
+            const href = a.getAttribute( 'href' );
+            if ( !href || href.startsWith( '#' ) ) return;
+            if ( /^https?:\/\//i.test( href ) ) {
+              if ( href.includes( `github.com/${ CONFIG.owner }/${ CONFIG.repo }/blob/${ CONFIG.branch }/` ) ) {
+                const navPath = decodeURIComponent( href.split( `blob/${ CONFIG.branch }/` )[ 1 ] );
+                a.removeAttribute( 'href' );
+                a.style.cursor = 'pointer';
+                a.onclick = () => selectFile( navPath );
+              } else {
+                a.target = '_blank';
+                a.rel = 'noopener';
+              }
+            } else {
+              // try relative res
+              const segs = path.split( '/' );
+              segs.pop();
+              const destBase = href.startsWith( '/' ) ? '' : segs.join( '/' );
+              const norm = href.startsWith( '/' ) ? href.substring( 1 ) : ( destBase ? destBase + '/' + href : href );
+
+              // simple resolution
+              const parts = norm.split( '/' );
+              const res = [];
+              parts.forEach( p => { if ( p === '..' ) res.pop(); else if ( p !== '.' ) res.push( p ); } );
+              const finalPath = res.join( '/' );
+
+              a.removeAttribute( 'href' );
+              a.style.cursor = 'pointer';
+              a.onclick = () => selectFile( finalPath );
+            }
+          } );
+        } else if ( ext === 'html' || ext === 'htm' ) {
+          $( 'viewRaw' ).textContent = text;
+          const blob = new Blob( [ text ], { type: 'text/html' } );
+          const u = URL.createObjectURL( blob );
+          state.blobUrls.add( u );
+          $( 'viewRendered' ).innerHTML = `<iframe sandbox="allow-scripts" src="${ u }"></iframe>`;
+        } else if ( ext === 'svg' ) {
+          $( 'viewRaw' ).textContent = text;
+          const blob = new Blob( [ text ], { type: 'image/svg+xml' } );
+          const u = URL.createObjectURL( blob );
+          state.blobUrls.add( u );
+          $( 'viewRendered' ).innerHTML = `<img src="${ u }" alt="svg">`;
+        } else {
+          $( 'viewRaw' ).textContent = text;
+          if ( text.length <= 500000 ) {
+            $( 'viewRaw' ).innerHTML = '';
+            const cEl = document.createElement( 'code' );
+            cEl.textContent = text;
+            cEl.className = `language-${ ext }`;
+            $( 'viewRaw' ).appendChild( cEl );
+            hljs.highlightElement( cEl );
+          }
+        }
+
+      } catch ( e ) {
+        if ( e.name !== 'AbortError' ) showError( e );
+      }
+    };
+
+    const showError = err => {
+      console.error( err );
+      $( 'viewRendered' ).style.display = 'none';
+      $( 'viewRaw' ).style.display = 'block';
+      $( 'viewRaw' ).innerHTML = `<div class="error-panel">${ escapeHTML( err.message || String( err ) ) }</div>`;
+    };
+
+    window.addEventListener( 'error', e => showError( e.error || e.message ) );
+    window.addEventListener( 'unhandledrejection', e => showError( e.reason ) );
+
+    init();
+  </script>
+</body>
+
+</html>
