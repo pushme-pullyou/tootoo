@@ -10,9 +10,9 @@ Release: R-2026-04-22
 * theo-armour / 2026
 * theo-armour / agenda
 * theo-armour / pages
-* sandbox
-* aa
-
+* theo-armour / sandbox
+* theo-armour / aa
+* heritage-happenings / tech)
 
 ### 2026-04-09
 
