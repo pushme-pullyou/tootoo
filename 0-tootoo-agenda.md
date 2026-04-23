@@ -1,5 +1,17 @@
 # TooToo Agenda
 
+## Agenda
+
+* Allow private repos to open with gat
+* tooltips show keys
+* expand all same color
+* don't use .archive files for checking
+
+
+
+## Journal
+
+* 2026-04-10
 * 2026-04-09 ~ auto-configure repo, org, and gists based on URL ??
 * 2026-04-09 ~ Check out GitHub's MCP Server.
 * 2026-04-05 ~ DabDab: EditHub
@@ -8,8 +20,3 @@
 * TooToo AtLarge for multiple users and/or multiple websites ~ ViewHub
 * 2026-04-09 ~ copy TooToo LT over to here name? name ~ tootoo-2026-lt?
 * 2026-04-09 ~ Build at least the skeleton of the README.
-
-
-## Journal
-
-* 2026-04-10

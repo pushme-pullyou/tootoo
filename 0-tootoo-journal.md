@@ -5,14 +5,15 @@
 
 Release: R-2026-04-22
 
-* pushme-pullyou / tootoo
-* pushme-pullyou / assets
-* theo-armour / 2026
+* pushme-pullyou / tootoo ~ https://pushme-pullyou.github.io/tootoo/#README.md
+* pushme-pullyou / assets ~ https://pushme-pullyou.github.io/assets/
+* theo-armour / 2026 ~ https://theo-armour.github.io/2026/
 * theo-armour / agenda
-* theo-armour / pages
-* theo-armour / sandbox
-* theo-armour / aa
-* heritage-happenings / tech)
+* theo-armour / pages ~ https://theo-armour.github.io/pages/
+* theo-armour / qdata
+* theo-armour / sandbox ~ https://theo-armour.github.io/sandbox/
+* theo-armour / aa ~ https://theo-armour.github.io/aa/
+* heritage-happenings / tech ~ https://heritage-happenings.github.io/tech/
 
 ### 2026-04-09
 
