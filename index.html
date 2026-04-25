@@ -24,6 +24,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.1/dist/purify.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <!-- Pure helpers shared with tootoo-test.html — kept external so tests
+       always exercise the same code the app does. -->
+  <!-- <script src="tootoo-helpers.js"></script> -->
   <style>
     /* ── Custom Properties ── */
     :root {
@@ -674,14 +677,10 @@
   <script>
     'use strict';
 
-    /* ── 1. Utility ── */
-    const escapeHTML = ( str ) => {
-      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-      return String( str ).replace( /[&<>"']/g, ( c ) => map[ c ] );
-    };
-
-    const encodePath = ( path ) =>
-      path.split( '/' ).map( encodeURIComponent ).join( '/' );
+    /* ── 1. Utility ──
+       escapeHTML, encodePath, RATE_LIMIT_MESSAGE, and resolveRepoPath
+       are defined in tootoo-helpers.js (loaded above). They're shared
+       with the test harness in tootoo-test.html. */
 
     const rawUrl = ( path ) =>
       `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
@@ -743,7 +742,6 @@
     const NO_COPY_EXTS = [ ...STREAMABLE_EXTS, ...SHEET_EXTS ];
     const LARGE_FILE_WARNING_BYTES = 1024 * 1024;
     const approvedLargeFiles = new Set();
-    const RATE_LIMIT_MESSAGE = 'Rate limited. Add a GitHub token for higher limits.';
 
     /* ── 4. Storage key helper ── */
     const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }:${ location.pathname }:${ suffix }`;
@@ -1925,18 +1923,6 @@
       const mdBody = document.getElementById( 'viewRendered' );
       if ( mdBody ) {
         const currentDir = filePath.includes( '/' ) ? filePath.substring( 0, filePath.lastIndexOf( '/' ) ) : '';
-        const resolveRepoPath = ( targetPath ) => {
-          const isRootRelative = targetPath.startsWith( '/' );
-          const resolved = isRootRelative
-            ? targetPath.slice( 1 )
-            : ( currentDir ? currentDir + '/' + targetPath : targetPath );
-
-          return resolved.split( '/' ).reduce( ( acc, part ) => {
-            if ( part === '..' ) acc.pop();
-            else if ( part !== '.' && part !== '' ) acc.push( part );
-            return acc;
-          }, [] ).join( '/' );
-        };
 
         mdBody.querySelectorAll( 'a[href]' ).forEach( ( a ) => {
           const href = a.getAttribute( 'href' );
@@ -1973,7 +1959,7 @@
           }
 
           // Relative paths — root-relative ('/foo') resolves from repo root, not currentDir
-          const normalized = resolveRepoPath( hrefPath );
+          const normalized = resolveRepoPath( hrefPath, currentDir );
 
           a.removeAttribute( 'href' );
           a.style.cursor = 'pointer';
@@ -2000,7 +1986,7 @@
           const srcPath = fragIdx >= 0 ? src.slice( 0, fragIdx ) : src;
           if ( !srcPath ) return;
 
-          const normalized = resolveRepoPath( srcPath );
+          const normalized = resolveRepoPath( srcPath, currentDir );
           const resolvedSrc = await resolveMediaUrl( normalized, signal );
           img.setAttribute( 'src', resolvedSrc );
           img.setAttribute( 'loading', 'lazy' );
