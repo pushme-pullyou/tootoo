@@ -9,9 +9,9 @@
 
 ## What This Repo Is
 
-TooToo LT is now the primary TooToo in this repository. The older/full TooToo files have been moved to their own separate repository.
+TooToo (formerly "TooToo LT") is the canonical app in this repository. The older/full TooToo files have been moved to their own separate repository.
 
-TooToo LT is a lightweight single-file GitHub repository browser. A `CONFIG` object at the top of the script sets `owner`, `repo`, and `branch`. The app auto-detects those values from GitHub Pages URLs, `.git/config` files, URL query parameters, or localStorage.
+TooToo is a lightweight single-file GitHub repository browser. A `CONFIG` object at the top of the script sets `owner`, `repo`, and `branch`. The app auto-detects those values from GitHub Pages URLs, `.git/config` files, URL query parameters, or localStorage.
 
 Key file: [`index.html`](index.html) — the canonical current version.
 
@@ -44,4 +44,4 @@ Before saving edits to the canonical app, create or update a dated backup snapsh
 
 ## Multi-Repo Note
 
-Older/full TooToo files have moved to their own repository. Do not apply TooToo LT fixes to old copies unless the task explicitly asks for cross-repo synchronization.
+Older/full TooToo files have moved to their own repository. Do not apply TooToo fixes to old copies unless the task explicitly asks for cross-repo synchronization.

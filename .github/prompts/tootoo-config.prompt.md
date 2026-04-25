@@ -1,6 +1,6 @@
 ---
 mode: ask
-description: Generate a pre-configured TooToo LT instance for a specific GitHub repo
+description: Generate a pre-configured TooToo instance for a specific GitHub repo
 ---
 
 # TooToo Config

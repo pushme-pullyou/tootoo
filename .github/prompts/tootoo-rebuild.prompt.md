@@ -1,11 +1,11 @@
 ---
 mode: agent
-description: Rebuild or extend TooToo LT in staged passes using the current root index.html
+description: Rebuild or extend TooToo in staged passes using the current root index.html
 ---
 
 # TooToo Rebuild
 
-Rebuild or extend the current TooToo LT app in staged passes.
+Rebuild or extend the current TooToo app in staged passes.
 
 ## Inputs
 
@@ -52,4 +52,4 @@ Rebuild or extend the current TooToo LT app in staged passes.
 
 ## Deliverable
 
-Complete the requested TooToo LT change in the current repo using staged edits to the existing root `index.html`, not a full blind rewrite.
+Complete the requested TooToo change in the current repo using staged edits to the existing root `index.html`, not a full blind rewrite.

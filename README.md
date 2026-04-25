@@ -43,6 +43,48 @@ const CONFIG = {
 };
 ```
 
+## Fork & Customize
+
+Want your own TooToo pointing at your own repo? It takes about a minute.
+
+1. **Fork** this repository on GitHub (top-right of the repo page).
+2. **Edit `CONFIG`** at the top of the `<script>` block in [`index.html`](index.html):
+
+   ```js
+   const CONFIG = {
+     owner: 'your-github-username',
+     repo: 'your-repo-name',
+     branch: '',   // leave empty to use the default branch
+   };
+   ```
+
+3. **Customize the chrome** (optional):
+   * `<title>TooToo</title>` in `<head>` — the browser tab name
+   * `<a id="headerTitle" ...>TooToo</a>` in `<header>` — the visible app name
+   * The inline SVG favicon (`<link rel="icon" ...>` in `<head>`) — change the colors or letters
+4. **Enable Pages**: in your fork's *Settings → Pages*, deploy from the `main` branch root. Your fork will be live at `https://<you>.github.io/<your-fork>/`.
+
+You don't have to set `CONFIG` at all if you'd rather keep auto-detection — TooToo finds the repo from the GitHub Pages URL automatically. Hardcoding `CONFIG` is just a shortcut for forks that want to skip detection or pre-load a specific repo.
+
+For forks that want to add features or change behavior, see [`FORKING.md`](FORKING.md) — it covers the architecture, where each render pipeline lives, and the gotchas (file://, rate limits, blob lifecycle).
+
+### localStorage keys
+
+TooToo stores everything in the browser's `localStorage`. All keys except the GitHub token are scoped per `location.pathname`, so two TooToo instances on the same origin keep separate state.
+
+| Key | Purpose |
+| --- | --- |
+| `tootoo:<pathname>:repo` | Detected owner / repo / default branch |
+| `tootoo:<pathname>:darkMode` | Dark mode on/off |
+| `tootoo:<pathname>:fontSize` | Font size override (px) |
+| `tootoo:<pathname>:sidebarWidth` | Last sidebar width (px) |
+| `tootoo:<pathname>:fileTextCache` | LRU cache of recently viewed file contents |
+| `tootoo:<pathname>:viewPref:<ext>` | Rendered / Raw toggle per file extension |
+| `tootoo:<pathname>:currentFile:<owner>/<repo>/<branch>` | Last-opened file in that repo |
+| `githubToken` | GitHub Personal Access Token (un-prefixed; shared across every TooToo instance on the origin) |
+
+To wipe state, run `localStorage.clear()` in DevTools, or remove keys individually with `localStorage.removeItem('...')`.
+
 ## Constraints
 
 * Vanilla JavaScript — no frameworks, no build tools, no Node.js
@@ -86,7 +128,7 @@ MIT — Copyright pushme-pullyou
 * 2026-04-25 — Repo breadcrumb now resets to a true home state instead of leaving the previously opened file view onscreen
 * 2026-04-25 — Last-opened file persistence is now scoped per owner/repo/branch and ignores stale paths not present in the current tree
 * 2026-04-25 — Markdown now resolves relative image paths against the current file location in the repository browser
-* 2026-04-25 — TooToo LT is now the primary TooToo in this repo; older/full TooToo files moved to their own repository
+* 2026-04-25 — Renamed: the app is now simply "TooToo" (the previous "LT" suffix is dropped); older/full TooToo files moved to their own repository
 * 2026-04-25 — Added backup rule for dated `index.html` snapshots before app edits
 * 2026-04-25 — HTML rendered previews now use a strict sandbox so repository scripts do not run by default
 * 2026-04-09 — Help button with live rate limit, tips section

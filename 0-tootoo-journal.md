@@ -1,4 +1,4 @@
-# TooToo LT — Development Journal
+# TooToo — Development Journal
 
 
 ## 2026-04-25

@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: Apply a focused staged merge into the current TooToo LT index.html
+description: Apply a focused staged merge into the current TooToo index.html
 ---
 
 # TooToo Merge
@@ -9,7 +9,7 @@ Merge a focused change, prototype, or external HTML slice back into the current 
 
 ## Instructions
 
-Use this prompt when you already have a source change you want merged into the canonical TooToo LT app without rewriting unrelated parts.
+Use this prompt when you already have a source change you want merged into the canonical TooToo app without rewriting unrelated parts.
 
 1. Read the source file or source folder the user names: `${input:source:Source file or folder to merge from, e.g. test-cases/sample-page.html}`
 2. Read the canonical app at `index.html`

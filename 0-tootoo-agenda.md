@@ -1,4 +1,4 @@
-# TooToo LT — Agenda
+# TooToo — Agenda
 
 * About shows number of branches, not just the default branch
 
