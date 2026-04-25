@@ -1,8 +1,10 @@
 # TooToo LT — Development Journal
 
 
-## 2026-04-22
+## 2026-04-25
 
+* Moved tootoo not "LT" to its own repo: gubgub
+* cleaned up folders
 
 
 
