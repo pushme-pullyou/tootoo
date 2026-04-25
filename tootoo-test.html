@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="revised" content="2026-04-25 12:40">
+  <title>TooToo Tests</title>
+  <style>
+    :root {
+      --pass: #1a7f37;
+      --fail: #cf222e;
+      --bg: #f6f8fa;
+      --border: #d0d7de;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      color: #1f2328;
+    }
+    h1 { margin-top: 0; }
+    .summary {
+      padding: 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    .summary.all-pass { border-color: var(--pass); }
+    .summary.has-fail { border-color: var(--fail); }
+    .group { margin-bottom: 1.5rem; }
+    .group h2 { font-size: 1rem; margin-bottom: 0.5rem; }
+    details {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 0.25rem;
+      padding: 0.5rem 0.75rem;
+      background: white;
+    }
+    details.fail { border-color: var(--fail); background: #fff5f5; }
+    details.pass { border-color: var(--pass); }
+    summary { cursor: pointer; font-family: var(--mono); font-size: 0.9rem; }
+    .pass summary::before { content: "✅ "; }
+    .fail summary::before { content: "❌ "; }
+    pre {
+      background: var(--bg);
+      padding: 0.5rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      overflow-x: auto;
+      margin: 0.5rem 0 0;
+    }
+    .label { font-weight: 600; font-size: 0.8rem; color: #57606a; }
+    code { font-family: var(--mono); }
+    footer { margin-top: 2rem; font-size: 0.85rem; color: #57606a; }
+  </style>
+</head>
+<body>
+  <h1>🧪 TooToo Tests</h1>
+  <p>Standalone test harness for pure helpers mirrored from <a href="index.html">index.html</a>. Open this file directly (file://) — no server needed.</p>
+
+  <div id="summary" class="summary">Running…</div>
+  <div id="results"></div>
+
+  <footer>
+    <strong>⚠️ Drift warning:</strong> the helpers under test are <em>copies</em> of those in <code>index.html</code>. If you change a helper there, paste the new version into the marked block below and reload.
+  </footer>
+
+  <script>
+    /* ────────────────────────────────────────────────────────────
+       BEGIN: copies of pure helpers from index.html
+       Keep in sync with the corresponding section in index.html.
+       ──────────────────────────────────────────────────────────── */
+
+    const escapeHTML = ( str ) => {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return String( str ).replace( /[&<>"']/g, ( c ) => map[ c ] );
+    };
+
+    const encodePath = ( path ) =>
+      path.split( '/' ).map( encodeURIComponent ).join( '/' );
+
+    const RATE_LIMIT_MESSAGE = 'Rate limited. Add a GitHub token for higher limits.';
+
+    // CONFIG/state stubs so the helpers behave as in index.html
+    const CONFIG = { owner: '', repo: '', branch: '' };
+    const state = { owner: '', repo: '', branch: '' };
+
+    const storageKey = ( suffix ) => `tootoo-lt:${ location.pathname }:${ suffix }`;
+
+    const getCurrentFileKey = () => {
+      const owner = state.owner || CONFIG.owner || '';
+      const repo = state.repo || CONFIG.repo || '';
+      const branch = state.branch || CONFIG.branch || '';
+      return storageKey( `currentFile:${ owner }/${ repo }/${ branch }` );
+    };
+
+    // Path resolver — extracted from renderMarkdown's resolveRepoPath
+    const resolveRepoPath = ( targetPath, currentDir = '' ) => {
+      const isRootRelative = targetPath.startsWith( '/' );
+      const resolved = isRootRelative
+        ? targetPath.slice( 1 )
+        : ( currentDir ? currentDir + '/' + targetPath : targetPath );
+      return resolved.split( '/' ).reduce( ( acc, part ) => {
+        if ( part === '..' ) acc.pop();
+        else if ( part !== '.' && part !== '' ) acc.push( part );
+        return acc;
+      }, [] ).join( '/' );
+    };
+
+    // URL-param-vs-CONFIG-defaults check, simplified from applyParams logic
+    const urlOverridesDefaults = ( params, defaults ) => {
+      // returns the effective {owner, repo, branch}
+      const owner = params.get( 'owner' ) || defaults.owner || '';
+      const repo  = params.get( 'repo' )  || defaults.repo  || '';
+      const branch = params.get( 'branch' ) || defaults.branch || '';
+      return { owner, repo, branch };
+    };
+
+    /* ────────────────────────────────────────────────────────────
+       END: copies of helpers
+       ──────────────────────────────────────────────────────────── */
+
+    /* ── Tiny test runner ── */
+    const tests = [];
+    const test = ( group, name, fn ) => tests.push( { group, name, fn } );
+    const assertEqual = ( actual, expected ) => {
+      const a = JSON.stringify( actual );
+      const e = JSON.stringify( expected );
+      if ( a !== e ) throw { actual: a, expected: e };
+    };
+
+    /* ── 1. resolveRepoPath ── */
+    test( 'resolveRepoPath', 'simple relative from root', () => {
+      assertEqual( resolveRepoPath( 'foo.md', '' ), 'foo.md' );
+    } );
+    test( 'resolveRepoPath', 'relative joined to currentDir', () => {
+      assertEqual( resolveRepoPath( 'img.png', 'docs/assets' ), 'docs/assets/img.png' );
+    } );
+    test( 'resolveRepoPath', 'root-relative ignores currentDir', () => {
+      assertEqual( resolveRepoPath( '/README.md', 'docs/assets' ), 'README.md' );
+    } );
+    test( 'resolveRepoPath', '../ pops a segment', () => {
+      assertEqual( resolveRepoPath( '../img.png', 'docs/assets' ), 'docs/img.png' );
+    } );
+    test( 'resolveRepoPath', '../../ pops two segments', () => {
+      assertEqual( resolveRepoPath( '../../img.png', 'docs/assets' ), 'img.png' );
+    } );
+    test( 'resolveRepoPath', './ is a no-op', () => {
+      assertEqual( resolveRepoPath( './foo.md', 'docs' ), 'docs/foo.md' );
+    } );
+    test( 'resolveRepoPath', 'collapses double slashes', () => {
+      assertEqual( resolveRepoPath( 'a//b/c.md', '' ), 'a/b/c.md' );
+    } );
+    test( 'resolveRepoPath', 'pops past root safely', () => {
+      // In repo terms, `../` from root should just stay at root (no error)
+      assertEqual( resolveRepoPath( '../foo', '' ), 'foo' );
+    } );
+
+    /* ── 2. getCurrentFileKey ── */
+    test( 'getCurrentFileKey', 'shape includes owner/repo/branch', () => {
+      state.owner = 'octocat';
+      state.repo = 'hello';
+      state.branch = 'main';
+      const key = getCurrentFileKey();
+      if ( !key.endsWith( ':currentFile:octocat/hello/main' ) ) {
+        throw { actual: key, expected: '…:currentFile:octocat/hello/main' };
+      }
+    } );
+    test( 'getCurrentFileKey', 'falls back to CONFIG when state empty', () => {
+      state.owner = ''; state.repo = ''; state.branch = '';
+      CONFIG.owner = 'fallback'; CONFIG.repo = 'r'; CONFIG.branch = 'dev';
+      const key = getCurrentFileKey();
+      if ( !key.endsWith( ':currentFile:fallback/r/dev' ) ) {
+        throw { actual: key, expected: '…:currentFile:fallback/r/dev' };
+      }
+      CONFIG.owner = ''; CONFIG.repo = ''; CONFIG.branch = '';
+    } );
+    test( 'getCurrentFileKey', 'differs across repos (per-repo memory)', () => {
+      state.owner = 'a'; state.repo = 'one'; state.branch = 'main';
+      const k1 = getCurrentFileKey();
+      state.repo = 'two';
+      const k2 = getCurrentFileKey();
+      if ( k1 === k2 ) throw { actual: k1, expected: 'different from ' + k2 };
+    } );
+
+    /* ── 3. URL params override CONFIG_DEFAULTS ── */
+    test( 'urlOverridesDefaults', 'URL wins when present', () => {
+      const params = new URLSearchParams( '?owner=u&repo=r&branch=b' );
+      const defaults = { owner: 'D_O', repo: 'D_R', branch: 'D_B' };
+      assertEqual( urlOverridesDefaults( params, defaults ), { owner: 'u', repo: 'r', branch: 'b' } );
+    } );
+    test( 'urlOverridesDefaults', 'defaults fill missing params', () => {
+      const params = new URLSearchParams( '?owner=u' );
+      const defaults = { owner: 'D_O', repo: 'D_R', branch: 'D_B' };
+      assertEqual( urlOverridesDefaults( params, defaults ), { owner: 'u', repo: 'D_R', branch: 'D_B' } );
+    } );
+    test( 'urlOverridesDefaults', 'all empty when nothing set', () => {
+      const params = new URLSearchParams( '' );
+      assertEqual( urlOverridesDefaults( params, {} ), { owner: '', repo: '', branch: '' } );
+    } );
+
+    /* ── 4. storageKey round-trip ── */
+    test( 'storageKey', 'round-trip set/get/remove', () => {
+      const key = storageKey( 'test-roundtrip' );
+      localStorage.setItem( key, 'hello' );
+      assertEqual( localStorage.getItem( key ), 'hello' );
+      localStorage.removeItem( key );
+      assertEqual( localStorage.getItem( key ), null );
+    } );
+    test( 'storageKey', 'namespaced by pathname', () => {
+      const key = storageKey( 'x' );
+      if ( !key.startsWith( 'tootoo-lt:' ) ) {
+        throw { actual: key, expected: 'starts with tootoo-lt:' };
+      }
+    } );
+
+    /* ── 5. escapeHTML / RATE_LIMIT_MESSAGE safety ── */
+    test( 'escapeHTML', 'escapes < > & " \'', () => {
+      assertEqual( escapeHTML( `<a href="x">'&'</a>` ), '&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;' );
+    } );
+    test( 'escapeHTML', 'plain text passes through', () => {
+      assertEqual( escapeHTML( RATE_LIMIT_MESSAGE ), RATE_LIMIT_MESSAGE );
+    } );
+    test( 'escapeHTML', 'numbers and undefined survive', () => {
+      assertEqual( escapeHTML( 42 ), '42' );
+      assertEqual( escapeHTML( undefined ), 'undefined' );
+    } );
+
+    /* ── 6. encodePath ── */
+    test( 'encodePath', 'encodes each segment but keeps slashes', () => {
+      assertEqual( encodePath( 'docs/my file.md' ), 'docs/my%20file.md' );
+    } );
+    test( 'encodePath', 'encodes special chars', () => {
+      assertEqual( encodePath( 'a/b?c.md' ), 'a/b%3Fc.md' );
+    } );
+
+    /* ── Run ── */
+    const run = () => {
+      const results = document.getElementById( 'results' );
+      const groups = {};
+      let passed = 0, failed = 0;
+
+      tests.forEach( ( t ) => {
+        let ok = true, info = null;
+        try { t.fn(); } catch ( err ) { ok = false; info = err; }
+        if ( ok ) passed++; else failed++;
+
+        if ( !groups[ t.group ] ) {
+          const wrap = document.createElement( 'div' );
+          wrap.className = 'group';
+          wrap.innerHTML = `<h2>${ escapeHTML( t.group ) }</h2>`;
+          results.appendChild( wrap );
+          groups[ t.group ] = wrap;
+        }
+
+        const det = document.createElement( 'details' );
+        det.className = ok ? 'pass' : 'fail';
+        if ( !ok ) det.open = true;
+        const sum = document.createElement( 'summary' );
+        sum.textContent = t.name;
+        det.appendChild( sum );
+        if ( !ok && info ) {
+          const body = document.createElement( 'div' );
+          body.innerHTML =
+            `<div class="label">expected</div><pre>${ escapeHTML( info.expected ?? '(threw)' ) }</pre>` +
+            `<div class="label">actual</div><pre>${ escapeHTML( info.actual ?? String( info.message || info ) ) }</pre>`;
+          det.appendChild( body );
+        }
+        groups[ t.group ].appendChild( det );
+      } );
+
+      const summary = document.getElementById( 'summary' );
+      summary.textContent = `${ passed } passed · ${ failed } failed · ${ tests.length } total`;
+      summary.classList.add( failed === 0 ? 'all-pass' : 'has-fail' );
+    };
+
+    run();
+  </script>
+</body>
+</html>
