@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-25 10:40">
+  <meta name="revised" content="2026-04-25 12:26">
   <title>TooToo LT</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -675,6 +675,12 @@
       branch: '',
     };
 
+    const CONFIG_DEFAULTS = {
+      owner: CONFIG.owner,
+      repo: CONFIG.repo,
+      branch: CONFIG.branch,
+    };
+
     const state = {
       owner: '',
       repo: '',
@@ -695,9 +701,24 @@
     const NO_COPY_EXTS = [ ...STREAMABLE_EXTS, ...SHEET_EXTS ];
     const LARGE_FILE_WARNING_BYTES = 1024 * 1024;
     const approvedLargeFiles = new Set();
+    const RATE_LIMIT_MESSAGE = 'Rate limited. Add a GitHub token for higher limits.';
 
     /* ── 4. Storage key helper ── */
     const storageKey = ( suffix ) => `tootoo-lt:${ location.pathname }:${ suffix }`;
+
+    const getCurrentFileKey = () => {
+      const owner = state.owner || CONFIG.owner || '';
+      const repo = state.repo || CONFIG.repo || '';
+      const branch = state.branch || CONFIG.branch || '';
+      return storageKey( `currentFile:${ owner }/${ repo }/${ branch }` );
+    };
+
+    const clearCurrentFilePreference = () => {
+      try {
+        localStorage.removeItem( getCurrentFileKey() );
+        localStorage.removeItem( storageKey( 'currentFile' ) );
+      } catch ( _ ) { /* storage disabled */ }
+    };
 
     /* ── 5. Blob URL tracking ── */
     const activeBlobUrls = new Set();
@@ -813,7 +834,7 @@
       if ( params.get( 'repo' ) ) CONFIG.repo = params.get( 'repo' );
       if ( params.get( 'branch' ) ) CONFIG.branch = params.get( 'branch' );
 
-      if ( CONFIG.owner && CONFIG.repo ) return;
+      if ( params.get( 'owner' ) && params.get( 'repo' ) ) return;
 
       const cached = localStorage.getItem( storageKey( 'repo' ) );
       if ( cached ) {
@@ -888,6 +909,13 @@
             return;
           }
         }
+      }
+
+      if ( CONFIG_DEFAULTS.owner && CONFIG_DEFAULTS.repo ) {
+        CONFIG.owner = CONFIG_DEFAULTS.owner;
+        CONFIG.repo = CONFIG_DEFAULTS.repo;
+        if ( !CONFIG.branch && CONFIG_DEFAULTS.branch ) CONFIG.branch = CONFIG_DEFAULTS.branch;
+        return;
       }
 
       return new Promise( ( resolve ) => {
@@ -981,10 +1009,11 @@
       // Help / About
       document.getElementById( 'btnHelp' ).addEventListener( 'click', async () => {
         const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
+        const appRepoUrl = 'https://github.com/pushme-pullyou/tootoo';
         const repoUrl = state.owner && state.repo
           ? `https://github.com/${ state.owner }/${ state.repo }`
-          : 'https://github.com/pushme-pullyou/tootoo';
-        const sourceUrl = repoUrl + '/tree/main/tootoo-2026-lt';
+          : appRepoUrl;
+        const sourceUrl = appRepoUrl;
         const token = getToken();
 
         let rateLimitInfo = 'Unable to fetch';
@@ -1187,7 +1216,7 @@
       // Header title reload — clears state first
       document.getElementById( 'headerTitle' ).addEventListener( 'click', ( e ) => {
         e.preventDefault();
-        localStorage.removeItem( storageKey( 'currentFile' ) );
+        clearCurrentFilePreference();
         try { history.replaceState( null, '', location.pathname + location.search ); } catch ( _ ) { /* file:// */ }
         location.reload();
       } );
@@ -1404,6 +1433,10 @@
             { headers, signal }
           );
           updateRateBadge( repoRes );
+          if ( repoRes.status === 403 ) {
+            treeList.innerHTML = `<p style="color: red;">${ escapeHTML( RATE_LIMIT_MESSAGE ) }</p>`;
+            return;
+          }
           if ( !repoRes.ok ) throw new Error( `Failed to fetch repo info: ${ repoRes.status }` );
           const repoData = await repoRes.json();
           state.branch = repoData.default_branch;
@@ -1421,7 +1454,7 @@
         updateRateBadge( treeRes );
 
         if ( treeRes.status === 403 ) {
-          treeList.innerHTML = '<p style="color: red;">Rate limited. Add a GitHub token for higher limits.</p>';
+          treeList.innerHTML = `<p style="color: red;">${ escapeHTML( RATE_LIMIT_MESSAGE ) }</p>`;
           return;
         }
         if ( !treeRes.ok ) throw new Error( `Failed to fetch tree: ${ treeRes.status }` );
@@ -1658,9 +1691,27 @@
 
     /* ── 29. resetToHome ── */
     const resetToHome = async () => {
-      localStorage.removeItem( storageKey( 'currentFile' ) );
+      clearCurrentFilePreference();
       state.currentFilePath = '';
       state.tree = null;
+      const prevActive = document.querySelector( '.tree-item.active' );
+      if ( prevActive ) prevActive.classList.remove( 'active' );
+
+      const contentArea = document.getElementById( 'contentArea' );
+      const existingHeader = contentArea.querySelector( '.panel-header.file-header' );
+      const simpleHeader = document.createElement( 'div' );
+      simpleHeader.className = 'panel-header file-header';
+      simpleHeader.innerHTML = '<h3 id="contentTitle">Content</h3>';
+      if ( existingHeader ) {
+        existingHeader.replaceWith( simpleHeader );
+      } else {
+        contentArea.insertBefore( simpleHeader, document.getElementById( 'contentBody' ) );
+      }
+
+      document.getElementById( 'contentBody' ).innerHTML =
+        '<p>Select a file from the sidebar to view its contents.</p>';
+      contentArea.scrollTo( { top: 0 } );
+
       try { history.replaceState( null, '', location.pathname + location.search ); } catch ( _ ) { /* file:// */ }
       await fetchTree();
     };
@@ -1773,7 +1824,7 @@
 
     /* ── 33. Content rendering helpers ── */
 
-    const renderMarkdown = ( text, filePath ) => {
+    const renderMarkdown = async ( text, filePath, signal ) => {
       const ext = filePath.split( '.' ).pop().toLowerCase();
       const preferredView = getPreferredView( ext );
       let renderedHtml;
@@ -1798,6 +1849,19 @@
       const mdBody = document.getElementById( 'viewRendered' );
       if ( mdBody ) {
         const currentDir = filePath.includes( '/' ) ? filePath.substring( 0, filePath.lastIndexOf( '/' ) ) : '';
+        const resolveRepoPath = ( targetPath ) => {
+          const isRootRelative = targetPath.startsWith( '/' );
+          const resolved = isRootRelative
+            ? targetPath.slice( 1 )
+            : ( currentDir ? currentDir + '/' + targetPath : targetPath );
+
+          return resolved.split( '/' ).reduce( ( acc, part ) => {
+            if ( part === '..' ) acc.pop();
+            else if ( part !== '.' && part !== '' ) acc.push( part );
+            return acc;
+          }, [] ).join( '/' );
+        };
+
         mdBody.querySelectorAll( 'a[href]' ).forEach( ( a ) => {
           const href = a.getAttribute( 'href' );
           if ( !href ) return;
@@ -1833,21 +1897,38 @@
           }
 
           // Relative paths — root-relative ('/foo') resolves from repo root, not currentDir
-          const isRootRelative = hrefPath.startsWith( '/' );
-          const resolved = isRootRelative
-            ? hrefPath.slice( 1 )
-            : ( currentDir ? currentDir + '/' + hrefPath : hrefPath );
-          const normalized = resolved.split( '/' ).reduce( ( acc, part ) => {
-            if ( part === '..' ) acc.pop();
-            else if ( part !== '.' && part !== '' ) acc.push( part );
-            return acc;
-          }, [] ).join( '/' );
+          const normalized = resolveRepoPath( hrefPath );
 
           a.removeAttribute( 'href' );
           a.style.cursor = 'pointer';
           a.style.color = 'var(--highlight-color)';
           a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( normalized ); } );
         } );
+
+        const images = Array.from( mdBody.querySelectorAll( 'img[src]' ) );
+        await Promise.all( images.map( async ( img ) => {
+          const src = img.getAttribute( 'src' );
+          if ( !src ) return;
+
+          if (
+            src.startsWith( 'http://' ) ||
+            src.startsWith( 'https://' ) ||
+            src.startsWith( '//' ) ||
+            src.startsWith( 'data:' ) ||
+            src.startsWith( 'blob:' )
+          ) {
+            return;
+          }
+
+          const fragIdx = src.indexOf( '#' );
+          const srcPath = fragIdx >= 0 ? src.slice( 0, fragIdx ) : src;
+          if ( !srcPath ) return;
+
+          const normalized = resolveRepoPath( srcPath );
+          const resolvedSrc = await resolveMediaUrl( normalized, signal );
+          img.setAttribute( 'src', resolvedSrc );
+          img.setAttribute( 'loading', 'lazy' );
+        } ) );
       }
     };
 
@@ -1988,6 +2069,7 @@
         const headers = { ...getAuthHeaders(), Accept: 'application/vnd.github.raw+json' };
         const res = await fetch( contentsApiUrl( path ), { headers, signal } );
         updateRateBadge( res );
+        if ( res.status === 403 ) throw new Error( RATE_LIMIT_MESSAGE );
         if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
         text = await res.text();
       } else {
@@ -2025,6 +2107,7 @@
         const headers = { ...getAuthHeaders(), Accept: 'application/vnd.github.raw+json' };
         const res = await fetch( contentsApiUrl( path ), { headers, signal } );
         updateRateBadge( res );
+        if ( res.status === 403 ) throw new Error( RATE_LIMIT_MESSAGE );
         if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
         blob = await res.blob();
       } else {
@@ -2111,7 +2194,7 @@
         if ( ext === 'md' ) {
           const text = await fetchFileText( path, signal );
           lastRawText = text;
-          renderMarkdown( text, path );
+          await renderMarkdown( text, path, signal );
 
         } else if ( ext === 'html' || ext === 'htm' ) {
           const text = await fetchFileText( path, signal );
@@ -2164,7 +2247,8 @@
       }
 
       // Save last file path
-      localStorage.setItem( storageKey( 'currentFile' ), path );
+      localStorage.setItem( getCurrentFileKey(), path );
+      try { localStorage.removeItem( storageKey( 'currentFile' ) ); } catch ( _ ) { /* storage disabled */ }
 
       // Scroll content area to top
       contentArea.scrollTo( { top: 0 } );
@@ -2287,10 +2371,16 @@
         if ( location.hash.length > 1 ) {
           await handleHashChange();
         } else {
-          const lastPath = localStorage.getItem( storageKey( 'currentFile' ) );
-          if ( lastPath ) {
-            selectFile( lastPath, { skipHash: false } );
+          const currentFileKey = getCurrentFileKey();
+          const lastPath = localStorage.getItem( currentFileKey );
+          const lastPathExists = lastPath && state.tree?.some( ( item ) => item.path === lastPath && item.type === 'blob' );
+
+          if ( lastPathExists ) {
+            await selectFile( lastPath, { skipHash: false } );
           } else {
+            if ( lastPath ) {
+              try { localStorage.removeItem( currentFileKey ); } catch ( _ ) { /* storage disabled */ }
+            }
             autoSelectReadme();
           }
         }
