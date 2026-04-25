@@ -1,8 +1,8 @@
-# TooToo LT
+# TooToo
 
-2026-04-25 12:26
+2026-04-25 13:46
 
-TooToo LT is now the primary TooToo in this repository. The older/full TooToo files have moved to their own repository.
+TooToo is now the primary TooToo in this repository. The older/full TooToo files have moved to their own repository.
 
 A lightweight single-file GitHub repository browser. Drop it into any repo folder and it auto-detects the repository — or run it on GitHub Pages.
 
@@ -72,6 +72,14 @@ MIT — Copyright pushme-pullyou
 
 ## Change Log
 
+* 2026-04-25 — Pinned CDN versions (marked@12.0.2, dompurify@3.4.1, xlsx@0.20.3) to insulate against upstream breakage
+* 2026-04-25 — Auto-open the About page when no root-level README exists, instead of hunting for a nested README
+* 2026-04-25 — `probeLocalMode` now respects the abort signal so probes stop when the user navigates away mid-load
+* 2026-04-25 — Filter and visible-tree-item logic now use an `.is-hidden` class instead of inline-style sniffing
+* 2026-04-25 — View-toggle buttons (Rendered/Raw) drive their styling from `aria-pressed` instead of inline `style="opacity:..."`
+* 2026-04-25 — Removed duplicate `/` keyboard handler; merged the two `beforeunload` listeners
+* 2026-04-25 — Active tree-item scroll uses `behavior: 'auto'` so rapid keyboard navigation no longer fights smooth-scroll
+* 2026-04-25 — `renderCode` now always builds via `textContent`, skipping the escape pass for very large files
 * 2026-04-25 — Configured defaults now act as a fallback after repo auto-detection instead of short-circuiting URL, cache, Pages, and .git/config detection
 * 2026-04-25 — 403 responses in repo-info and authenticated file fetches now surface the same rate-limit warning used by tree loading
 * 2026-04-25 — About now links to the canonical root TooToo source instead of the removed `tootoo-2026-lt` subfolder

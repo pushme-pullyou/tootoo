@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(gh pr list --repo theo-armour/sandbox)",
-      "Bash(grep -n -E \"^\\\\s*\\(/\\\\*|//|function |const |let |<body|<main|<header|<footer|<div id=|<section\\)\" \"G:/My Drive/2026-theo-github/pushme-pullyou-tootoo/tootoo-2026-lt/index.html\")"
+      "Bash(grep -n -E \"^\\\\s*\\(/\\\\*|//|function |const |let |<body|<main|<header|<footer|<div id=|<section\\)\" \"G:/My Drive/2026-theo-github/pushme-pullyou-tootoo/tootoo-2026-lt/index.html\")",
+      "Bash(curl -s https://registry.npmjs.org/marked/latest)",
+      "Bash(curl -s https://registry.npmjs.org/dompurify/latest)",
+      "Bash(curl -s https://registry.npmjs.org/dompurify)",
+      "Bash(curl -sI \"https://cdn.jsdelivr.net/npm/marked@18.0.2/marked.min.js\")",
+      "Bash(curl -sI \"https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js\")"
     ]
   }
 }
