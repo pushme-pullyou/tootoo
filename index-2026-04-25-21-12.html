@@ -902,63 +902,22 @@
     /* ── 8. updateHeaderFromConfig ──
        The top header identifies *where this app instance lives* — the
        owner/repo serving the HTML. On GitHub Pages that's parsed from
-       the URL; on file:// we read .git/config from the surrounding
-       repo; otherwise we fall back to CONFIG.sourceRepoUrl. The header
-       does not follow the currently browsed repo (the lower-panel
+       the URL; off Pages we fall back to CONFIG.sourceRepoUrl. The
+       header does not follow the currently browsed repo (the lower-panel
        breadcrumbs do that). */
-    const APP_ORIGIN = { owner: '', repo: '', url: '.' };
-
-    const detectAppOrigin = async () => {
-      // GitHub Pages: subdomain = owner, first path segment = repo
+    const detectAppOrigin = () => {
       if ( location.hostname.endsWith( '.github.io' ) ) {
         const owner = location.hostname.split( '.' )[ 0 ];
         const segments = location.pathname.split( '/' ).filter( Boolean );
         const repo = segments[ 0 ] || `${ owner }.github.io`;
-        APP_ORIGIN.owner = owner;
-        APP_ORIGIN.repo = repo;
-        APP_ORIGIN.url = `https://github.com/${ owner }/${ repo }`;
-        return;
+        return { owner, repo, url: `https://github.com/${ owner }/${ repo }` };
       }
-
-      // file://: walk up looking for .git/config
-      if ( location.protocol === 'file:' ) {
-        const prefixes = [ '', '../', '../../', '../../../', '../../../../' ];
-        const gitRegex = /github\.com[:/]([^/\n]+)\/([^\s\n]+?)(?:\.git)?\s*$/m;
-        for ( const prefix of prefixes ) {
-          let text = null;
-          try {
-            const res = await fetch( `${ prefix }.git/config` );
-            if ( res.ok ) text = await res.text();
-          } catch ( _ ) { /* fetch blocked on file:// in some browsers */ }
-          if ( text === null ) {
-            try {
-              const xhr = new XMLHttpRequest();
-              xhr.open( 'GET', `${ prefix }.git/config`, false );
-              xhr.send( null );
-              if ( ( xhr.status === 200 || xhr.status === 0 ) && xhr.responseText ) {
-                text = xhr.responseText;
-              }
-            } catch ( _ ) { /* XHR also blocked */ }
-          }
-          if ( !text ) continue;
-          const m = text.match( gitRegex );
-          if ( m ) {
-            APP_ORIGIN.owner = m[ 1 ];
-            APP_ORIGIN.repo = m[ 2 ];
-            APP_ORIGIN.url = `https://github.com/${ m[ 1 ] }/${ m[ 2 ] }`;
-            return;
-          }
-        }
-      }
-
-      // Fallback: CONFIG.sourceRepoUrl
       const m = ( CONFIG.sourceRepoUrl || '' ).match( /github\.com\/([^/]+)\/([^/?#]+)/ );
-      if ( m ) {
-        APP_ORIGIN.owner = m[ 1 ];
-        APP_ORIGIN.repo = m[ 2 ];
-        APP_ORIGIN.url = CONFIG.sourceRepoUrl;
-      }
+      if ( m ) return { owner: m[ 1 ], repo: m[ 2 ], url: CONFIG.sourceRepoUrl };
+      return { owner: '', repo: '', url: '.' };
     };
+
+    const APP_ORIGIN = detectAppOrigin();
 
     const updateHeaderFromConfig = () => {
       const label = APP_ORIGIN.owner && APP_ORIGIN.repo
@@ -2476,7 +2435,6 @@
       // Brand the page from APP_ORIGIN (where this app instance is hosted).
       // Header is independent of which repo gets browsed, so do this once
       // up front and it stays correct for the whole session.
-      await detectAppOrigin();
       updateHeaderFromConfig();
 
       initAppearance();
