@@ -1,11 +1,14 @@
 # TooToo — Development Journal
 
 
+
+
 ## 2026-04-25
 
 * Moved tootoo not "LT" to its own repo: gubgub
 * cleaned up folders
-
+* tags added: github-pages-website repository-browser markdown-viewer vanilla-javascript
+single-file github-api static-site markdown
 
 
 
