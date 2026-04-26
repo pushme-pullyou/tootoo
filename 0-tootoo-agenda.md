@@ -1,14 +1,12 @@
 # TooToo — Agenda
 
+## Agenda
+
 * About shows number of branches, not just the default branch
+* Can run if dependency fails to load, just show error message and disable features that rely on it
 
-## 2026-04-25
 
-* emphasize cursor keys
-* Explain no file editor
-* figure out How to handle huge numbers of files like in Linux.
-
-## 2026-04-10
+## More
 A few ideas that fit the vanilla JS / single-file constraints:
 
 **High value, low effort:**

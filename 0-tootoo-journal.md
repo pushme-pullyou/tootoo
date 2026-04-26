@@ -1,9 +1,36 @@
 # TooToo — Development Journal
 
 
+## 2026-04-26
+
+## Why TooToo?
+
+A blog post forteach
+* Run a large and maintain a large number of site
+* Archivable
+* Free, open source, no vendor lock-in
+* No backend, no database, no server costs
+* Can be used for any repository, not just GitHub Pages
+* Can be used for any branch, not just the default branch
+* Can be used for any file, not just markdown files
+* Can be used for any repository, not just the user's own repositories
+* Can be used for any repository, not just public repositories
+* Easy-peasy code ~ no dev-ops skills required
+* Fast and responsive, even with large repositories
+* Can be used offline, without an internet connection
+* Same code everywhere
+
+
 
 
 ## 2026-04-25
+
+* Set up a blog
+* emphasize cursor keys
+* Explain no file editor
+* figure out How to handle huge numbers of files like in Linux.
+
+### Done
 
 * Many changes ~ looking good
 * Moved tootoo not "LT" to its own repo: gubgub
