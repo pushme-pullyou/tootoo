@@ -2,9 +2,9 @@
 
 2026-04-25 19:45
 
-TooToo is now the primary TooToo in this repository. The older/full TooToo files have moved to their own repository.
-
 A lightweight single-file GitHub repository browser. Drop it into any repo folder and it auto-detects the repository — or run it on GitHub Pages.
+
+TooToo is now the primary TooToo in this repository. The older/full TooToo files have moved to their own repository.
 
 * Live: <https://pushme-pullyou.github.io/tootoo/>
 * Source: <https://github.com/pushme-pullyou/tootoo>

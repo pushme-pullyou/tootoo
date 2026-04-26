@@ -900,32 +900,21 @@
     const setPreferredView = ( ext, view ) => localStorage.setItem( getViewPrefKey( ext ), view );
 
     /* ── 8. updateHeaderFromConfig ──
-       The top header identifies *where this app instance lives* — the
-       owner/repo serving the HTML. On GitHub Pages that's parsed from
-       the URL; off Pages we fall back to CONFIG.sourceRepoUrl. The
-       header does not follow the currently browsed repo (the lower-panel
-       breadcrumbs do that). */
-    const detectAppOrigin = () => {
-      if ( location.hostname.endsWith( '.github.io' ) ) {
-        const owner = location.hostname.split( '.' )[ 0 ];
-        const segments = location.pathname.split( '/' ).filter( Boolean );
-        const repo = segments[ 0 ] || `${ owner }.github.io`;
-        return { owner, repo, url: `https://github.com/${ owner }/${ repo }` };
-      }
-      const m = ( CONFIG.sourceRepoUrl || '' ).match( /github\.com\/([^/]+)\/([^/?#]+)/ );
-      if ( m ) return { owner: m[ 1 ], repo: m[ 2 ], url: CONFIG.sourceRepoUrl };
-      return { owner: '', repo: '', url: '.' };
-    };
-
-    const APP_ORIGIN = detectAppOrigin();
+       The top header always identifies the *original* owner/repo for
+       this TooToo instance (parsed from CONFIG.sourceRepoUrl). It does
+       not change when a different repo is loaded — the lower-panel
+       breadcrumbs do that job. Clicking the header still returns home. */
+    const sourceRepoMatch = ( CONFIG.sourceRepoUrl || '' ).match( /github\.com\/([^/]+)\/([^/?#]+)/ );
+    const SOURCE_OWNER = sourceRepoMatch ? sourceRepoMatch[ 1 ] : '';
+    const SOURCE_REPO = sourceRepoMatch ? sourceRepoMatch[ 2 ] : '';
 
     const updateHeaderFromConfig = () => {
-      const label = APP_ORIGIN.owner && APP_ORIGIN.repo
-        ? `${ APP_ORIGIN.owner } / ${ APP_ORIGIN.repo }`
+      const label = SOURCE_OWNER && SOURCE_REPO
+        ? `${ SOURCE_OWNER } / ${ SOURCE_REPO }`
         : CONFIG.appName;
       document.title = label;
       document.getElementById( 'headerTitle' ).textContent = label;
-      document.getElementById( 'headerGitHub' ).href = APP_ORIGIN.url;
+      document.getElementById( 'headerGitHub' ).href = CONFIG.sourceRepoUrl || '.';
     };
 
     /* ── 9. detectRepo ── */
@@ -1320,11 +1309,17 @@
         contentArea.scrollTo( { top: 0, behavior: reduce ? 'auto' : 'smooth' } );
       } );
 
-      // Header title click — reload the page as-is (preserves URL params
-      // and hash so the user lands back on the same repo+file they opened).
+      // Header title click — return to the *original* repo (drop URL overrides
+      // and the cached repo so detection runs fresh against CONFIG / Pages URL).
       document.getElementById( 'headerTitle' ).addEventListener( 'click', ( e ) => {
         e.preventDefault();
-        location.reload();
+        clearCurrentFilePreference();
+        try { localStorage.removeItem( storageKey( 'repo' ) ); } catch ( _ ) { /* storage disabled */ }
+        if ( location.search || location.hash ) {
+          location.replace( location.pathname );
+        } else {
+          location.reload();
+        }
       } );
     };
 
@@ -2432,10 +2427,9 @@
       // Migrate any legacy tootoo-lt:* keys before reading appearance/state
       migrateStorageKeys();
 
-      // Brand the page from APP_ORIGIN (where this app instance is hosted).
-      // Header is independent of which repo gets browsed, so do this once
-      // up front and it stays correct for the whole session.
-      updateHeaderFromConfig();
+      // Brand the page from CONFIG.appName before repo detection runs
+      document.title = CONFIG.appName;
+      document.getElementById( 'headerTitle' ).textContent = CONFIG.appName;
 
       initAppearance();
       setupListeners();
