@@ -9,8 +9,8 @@
 * cleaned up folders
 * tags added: github-pages-website repository-browser markdown-viewer vanilla-javascript
 single-file github-api static-site markdown
-
-
+* https://chatgpt.com/s/m_69eda263d77881918084f5310fa3f661
+* https://chatgpt.com/s/m_69eda33430108191a961e493c5486b4e
 
 ## 2026-04-10
 
