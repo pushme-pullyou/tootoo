@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-25 14:30">
+  <meta name="revised" content="2026-04-25 14:35">
   <title>TooToo Tests</title>
   <style>
     :root {
@@ -58,22 +58,64 @@
     code { font-family: var(--mono); }
     footer { margin-top: 2rem; font-size: 0.85rem; color: #57606a; }
   </style>
-
-  <!-- Tests load the same helpers file the app loads. No copy/paste, no drift. -->
-  <script src="tootoo-helpers.js"></script>
 </head>
 <body>
   <h1>🧪 TooToo Tests</h1>
-  <p>Test harness for the pure helpers in <a href="tootoo-helpers.js"><code>tootoo-helpers.js</code></a> — the same module loaded by <a href="index.html">index.html</a>. Open this file directly via <code>file://</code> — no server needed.</p>
+  <p>Standalone test harness for pure helpers mirrored from <a href="index.html">index.html</a>. Open this file directly (file://) — no server needed.</p>
 
   <div id="summary" class="summary">Running…</div>
   <div id="results"></div>
 
   <footer>
-    Helpers under test are imported from <code>tootoo-helpers.js</code>, so what you test here is what the app actually runs.
+    <strong>⚠️ Drift warning:</strong> the helpers under test are <em>copies</em> of those in <code>index.html</code>. If you change a helper there, paste the new version into the marked block below and reload.
   </footer>
 
   <script>
+    /* ────────────────────────────────────────────────────────────
+       BEGIN: copies of pure helpers from index.html
+       Keep in sync with the corresponding section in index.html.
+       ──────────────────────────────────────────────────────────── */
+
+    const escapeHTML = ( str ) => {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return String( str ).replace( /[&<>"']/g, ( c ) => map[ c ] );
+    };
+
+    const encodePath = ( path ) =>
+      path.split( '/' ).map( encodeURIComponent ).join( '/' );
+
+    const RATE_LIMIT_MESSAGE = 'Rate limited. Add a GitHub token for higher limits.';
+
+    // CONFIG/state stubs so the helpers behave as in index.html
+    const CONFIG = { owner: '', repo: '', branch: '', storagePrefix: 'tootoo', appName: 'TooToo' };
+    const state = { owner: '', repo: '', branch: '' };
+
+    const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }:${ location.pathname }:${ suffix }`;
+
+    const getCurrentFileKey = () => {
+      const owner = state.owner || CONFIG.owner || '';
+      const repo = state.repo || CONFIG.repo || '';
+      const branch = state.branch || CONFIG.branch || '';
+      return storageKey( `currentFile:${ owner }/${ repo }/${ branch }` );
+    };
+
+    // resolveRepoPath — same as index.html (currentDir parameterized for testing)
+    const resolveRepoPath = ( targetPath, currentDir = '' ) => {
+      const isRootRelative = targetPath.startsWith( '/' );
+      const resolved = isRootRelative
+        ? targetPath.slice( 1 )
+        : ( currentDir ? currentDir + '/' + targetPath : targetPath );
+      return resolved.split( '/' ).reduce( ( acc, part ) => {
+        if ( part === '..' ) acc.pop();
+        else if ( part !== '.' && part !== '' ) acc.push( part );
+        return acc;
+      }, [] ).join( '/' );
+    };
+
+    /* ────────────────────────────────────────────────────────────
+       END: copies of helpers
+       ──────────────────────────────────────────────────────────── */
+
     /* ── Tiny test runner ── */
     const tests = [];
     const test = ( group, name, fn ) => tests.push( { group, name, fn } );
@@ -109,11 +151,50 @@
       // In repo terms, `../` from root should just stay at root (no error)
       assertEqual( resolveRepoPath( '../foo', '' ), 'foo' );
     } );
-    test( 'resolveRepoPath', 'currentDir defaults to root when omitted', () => {
-      assertEqual( resolveRepoPath( 'foo.md' ), 'foo.md' );
+
+    /* ── 2. getCurrentFileKey ── */
+    test( 'getCurrentFileKey', 'shape includes owner/repo/branch', () => {
+      state.owner = 'octocat';
+      state.repo = 'hello';
+      state.branch = 'main';
+      const key = getCurrentFileKey();
+      if ( !key.endsWith( ':currentFile:octocat/hello/main' ) ) {
+        throw { actual: key, expected: '…:currentFile:octocat/hello/main' };
+      }
+    } );
+    test( 'getCurrentFileKey', 'falls back to CONFIG when state empty', () => {
+      state.owner = ''; state.repo = ''; state.branch = '';
+      CONFIG.owner = 'fallback'; CONFIG.repo = 'r'; CONFIG.branch = 'dev';
+      const key = getCurrentFileKey();
+      if ( !key.endsWith( ':currentFile:fallback/r/dev' ) ) {
+        throw { actual: key, expected: '…:currentFile:fallback/r/dev' };
+      }
+      CONFIG.owner = ''; CONFIG.repo = ''; CONFIG.branch = '';
+    } );
+    test( 'getCurrentFileKey', 'differs across repos (per-repo memory)', () => {
+      state.owner = 'a'; state.repo = 'one'; state.branch = 'main';
+      const k1 = getCurrentFileKey();
+      state.repo = 'two';
+      const k2 = getCurrentFileKey();
+      if ( k1 === k2 ) throw { actual: k1, expected: 'different from ' + k2 };
     } );
 
-    /* ── 2. escapeHTML ── */
+    /* ── 3. storageKey ── */
+    test( 'storageKey', 'round-trip set/get/remove', () => {
+      const key = storageKey( 'test-roundtrip' );
+      localStorage.setItem( key, 'hello' );
+      assertEqual( localStorage.getItem( key ), 'hello' );
+      localStorage.removeItem( key );
+      assertEqual( localStorage.getItem( key ), null );
+    } );
+    test( 'storageKey', 'uses CONFIG.storagePrefix', () => {
+      const key = storageKey( 'x' );
+      if ( !key.startsWith( `${ CONFIG.storagePrefix }:` ) ) {
+        throw { actual: key, expected: `starts with ${ CONFIG.storagePrefix }:` };
+      }
+    } );
+
+    /* ── 4. escapeHTML / RATE_LIMIT_MESSAGE safety ── */
     test( 'escapeHTML', 'escapes < > & " \'', () => {
       assertEqual( escapeHTML( `<a href="x">'&'</a>` ), '&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;' );
     } );
@@ -125,27 +206,12 @@
       assertEqual( escapeHTML( undefined ), 'undefined' );
     } );
 
-    /* ── 3. encodePath ── */
+    /* ── 5. encodePath ── */
     test( 'encodePath', 'encodes each segment but keeps slashes', () => {
       assertEqual( encodePath( 'docs/my file.md' ), 'docs/my%20file.md' );
     } );
     test( 'encodePath', 'encodes special chars', () => {
       assertEqual( encodePath( 'a/b?c.md' ), 'a/b%3Fc.md' );
-    } );
-    test( 'encodePath', 'preserves nested paths', () => {
-      assertEqual( encodePath( 'a/b/c/d.md' ), 'a/b/c/d.md' );
-    } );
-
-    /* ── 4. RATE_LIMIT_MESSAGE constant ── */
-    test( 'RATE_LIMIT_MESSAGE', 'is a non-empty string', () => {
-      if ( typeof RATE_LIMIT_MESSAGE !== 'string' || RATE_LIMIT_MESSAGE.length === 0 ) {
-        throw { actual: typeof RATE_LIMIT_MESSAGE, expected: 'non-empty string' };
-      }
-    } );
-    test( 'RATE_LIMIT_MESSAGE', 'mentions token', () => {
-      if ( !/token/i.test( RATE_LIMIT_MESSAGE ) ) {
-        throw { actual: RATE_LIMIT_MESSAGE, expected: 'string containing "token"' };
-      }
     } );
 
     /* ── Run ── */

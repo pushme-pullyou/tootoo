@@ -2,6 +2,8 @@
 
 * About shows number of branches, not just the default branch
 
+## 2026-04-25
+
 ## 2026-04-10
 A few ideas that fit the vanilla JS / single-file constraints:
 
