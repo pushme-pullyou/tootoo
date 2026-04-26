@@ -1,6 +1,6 @@
 # TooToo
 
-2026-04-25 13:46
+2026-04-25 19:45
 
 TooToo is now the primary TooToo in this repository. The older/full TooToo files have moved to their own repository.
 
@@ -124,6 +124,8 @@ MIT — Copyright pushme-pullyou
 
 ## Change Log
 
+* 2026-04-25 — Top header now permanently identifies the TooToo app (via `CONFIG.appName` and new `CONFIG.sourceRepoUrl`); the loaded repo's owner/branch moved into the lower-panel breadcrumbs with external GitHub links
+* 2026-04-25 — Token panel auto-opens on rate-limit (403) with explanation of why a token is needed and where to get one
 * 2026-04-25 — Pinned CDN versions (marked@12.0.2, dompurify@3.4.1, xlsx@0.20.3) to insulate against upstream breakage
 * 2026-04-25 — Auto-open the About page when no root-level README exists, instead of hunting for a nested README
 * 2026-04-25 — `probeLocalMode` now respects the abort signal so probes stop when the user navigates away mid-load

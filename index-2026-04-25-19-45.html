@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-25 19:45">
+  <meta name="revised" content="2026-04-25 12:26">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -900,19 +900,13 @@
     const setPreferredView = ( ext, view ) => localStorage.setItem( getViewPrefKey( ext ), view );
 
     /* ── 8. updateHeaderFromConfig ──
-       The header label shows the currently loaded owner/repo so users
-       always see what they're viewing. Clicking the label resets back
-       to the original (CONFIG defaults / auto-detected) repo — that
-       behavior lives in the headerTitle click handler in setupListeners. */
+       The top header always identifies the TooToo *app* (its own source
+       repo + name), not whatever repo is currently being browsed. The
+       lower-panel breadcrumbs identify the loaded repo. */
     const updateHeaderFromConfig = () => {
-      const label = state.owner && state.repo
-        ? `${ state.owner } / ${ state.repo }`
-        : CONFIG.appName;
-      document.title = label;
-      document.getElementById( 'headerTitle' ).textContent = label;
-      document.getElementById( 'headerGitHub' ).href = state.owner && state.repo
-        ? `https://github.com/${ state.owner }/${ state.repo }`
-        : CONFIG.sourceRepoUrl;
+      document.title = CONFIG.appName;
+      document.getElementById( 'headerTitle' ).textContent = CONFIG.appName;
+      document.getElementById( 'headerGitHub' ).href = CONFIG.sourceRepoUrl;
     };
 
     /* ── 9. detectRepo ── */
@@ -1307,14 +1301,12 @@
         contentArea.scrollTo( { top: 0, behavior: reduce ? 'auto' : 'smooth' } );
       } );
 
-      // Header title click — return to the *original* repo (drop URL overrides
-      // and the cached repo so detection runs fresh against CONFIG / Pages URL).
+      // Header title reload — clears state first
       document.getElementById( 'headerTitle' ).addEventListener( 'click', ( e ) => {
         e.preventDefault();
         clearCurrentFilePreference();
-        try { localStorage.removeItem( storageKey( 'repo' ) ); } catch ( _ ) { /* storage disabled */ }
-        try { history.replaceState( null, '', location.pathname ); } catch ( _ ) { /* file:// */ }
-        location.href = location.pathname;
+        try { history.replaceState( null, '', location.pathname + location.search ); } catch ( _ ) { /* file:// */ }
+        location.reload();
       } );
     };
 
