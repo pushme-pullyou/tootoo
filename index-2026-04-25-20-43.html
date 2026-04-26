@@ -1315,11 +1315,8 @@
         e.preventDefault();
         clearCurrentFilePreference();
         try { localStorage.removeItem( storageKey( 'repo' ) ); } catch ( _ ) { /* storage disabled */ }
-        if ( location.search || location.hash ) {
-          location.replace( location.pathname );
-        } else {
-          location.reload();
-        }
+        try { history.replaceState( null, '', location.pathname ); } catch ( _ ) { /* file:// */ }
+        location.href = location.pathname;
       } );
     };
 
@@ -1794,9 +1791,32 @@
       target.scrollIntoView( { block: 'center', behavior: 'smooth' } );
     };
 
-    /* ── 29. (resetToHome removed — was only called by the deprecated
-       breadcrumb reset-home action; the top-header click now handles the
-       "back to original repo" flow with a full reload.) ── */
+    /* ── 29. resetToHome ── */
+    const resetToHome = async () => {
+      clearCurrentFilePreference();
+      state.currentFilePath = '';
+      state.tree = null;
+      const prevActive = document.querySelector( '.tree-item.active' );
+      if ( prevActive ) prevActive.classList.remove( 'active' );
+
+      const contentArea = document.getElementById( 'contentArea' );
+      const existingHeader = contentArea.querySelector( '.panel-header.file-header' );
+      const simpleHeader = document.createElement( 'div' );
+      simpleHeader.className = 'panel-header file-header';
+      simpleHeader.innerHTML = '<h3 id="contentTitle">Content</h3>';
+      if ( existingHeader ) {
+        existingHeader.replaceWith( simpleHeader );
+      } else {
+        contentArea.insertBefore( simpleHeader, document.getElementById( 'contentBody' ) );
+      }
+
+      document.getElementById( 'contentBody' ).innerHTML =
+        '<p>Select a file from the sidebar to view its contents.</p>';
+      contentArea.scrollTo( { top: 0 } );
+
+      try { history.replaceState( null, '', location.pathname + location.search ); } catch ( _ ) { /* file:// */ }
+      await fetchTree();
+    };
 
     /* ── 30. Hash routing ── */
     const updateHash = ( path ) => {
@@ -1869,6 +1889,7 @@
 
       const ownerUrl = `https://github.com/${ encodeURIComponent( state.owner ) }`;
       const repoUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`;
+      const branchUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/tree/${ encodeURIComponent( state.branch ) }`;
 
       // Breadcrumbs identify the file fully: owner / repo @ branch / folder / file.
       // The owner, repo, and branch segments link out to GitHub (the top header
@@ -1877,7 +1898,6 @@
         `<a class="breadcrumb-link" href="${ escapeHTML( ownerUrl ) }" target="_blank" rel="noopener" title="Open ${ escapeHTML( state.owner ) } on GitHub" aria-label="Open ${ escapeHTML( state.owner ) } on GitHub">${ escapeHTML( state.owner ) }</a>` +
         ` / <a class="breadcrumb-link" href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener" title="Open ${ escapeHTML( state.repo ) } on GitHub" aria-label="Open ${ escapeHTML( state.repo ) } on GitHub">${ escapeHTML( state.repo ) }</a>`;
       if ( state.branch ) {
-        const branchUrl = `${ repoUrl }/tree/${ encodeURIComponent( state.branch ) }`;
         breadcrumbHtml += ` @ <a class="breadcrumb-link" href="${ escapeHTML( branchUrl ) }" target="_blank" rel="noopener" title="Open the ${ escapeHTML( state.branch ) } branch on GitHub" aria-label="Open the ${ escapeHTML( state.branch ) } branch on GitHub">${ escapeHTML( state.branch ) }</a>`;
       }
       let folderPath = '';
@@ -2347,6 +2367,10 @@
         // Breadcrumb: scroll to folder
         const folderLink = e.target.closest( '[data-action="scroll-folder"]' );
         if ( folderLink ) { e.preventDefault(); scrollToTreeFolder( folderLink.dataset.folder ); return; }
+
+        // Breadcrumb: reset home
+        const homeLink = e.target.closest( '[data-action="reset-home"]' );
+        if ( homeLink ) { e.preventDefault(); resetToHome(); return; }
 
         // View toggle: rendered
         const renderedBtn = e.target.closest( '[data-action="view-rendered"]' );
