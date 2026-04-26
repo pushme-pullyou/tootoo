@@ -900,21 +900,19 @@
     const setPreferredView = ( ext, view ) => localStorage.setItem( getViewPrefKey( ext ), view );
 
     /* ── 8. updateHeaderFromConfig ──
-       The top header always identifies the *original* owner/repo for
-       this TooToo instance (parsed from CONFIG.sourceRepoUrl). It does
-       not change when a different repo is loaded — the lower-panel
-       breadcrumbs do that job. Clicking the header still returns home. */
-    const sourceRepoMatch = ( CONFIG.sourceRepoUrl || '' ).match( /github\.com\/([^/]+)\/([^/?#]+)/ );
-    const SOURCE_OWNER = sourceRepoMatch ? sourceRepoMatch[ 1 ] : '';
-    const SOURCE_REPO = sourceRepoMatch ? sourceRepoMatch[ 2 ] : '';
-
+       The header label shows the currently loaded owner/repo so users
+       always see what they're viewing. Clicking the label resets back
+       to the original (CONFIG defaults / auto-detected) repo — that
+       behavior lives in the headerTitle click handler in setupListeners. */
     const updateHeaderFromConfig = () => {
-      const label = SOURCE_OWNER && SOURCE_REPO
-        ? `${ SOURCE_OWNER } / ${ SOURCE_REPO }`
+      const label = state.owner && state.repo
+        ? `${ state.owner } / ${ state.repo }`
         : CONFIG.appName;
       document.title = label;
       document.getElementById( 'headerTitle' ).textContent = label;
-      document.getElementById( 'headerGitHub' ).href = CONFIG.sourceRepoUrl || '.';
+      document.getElementById( 'headerGitHub' ).href = state.owner && state.repo
+        ? `https://github.com/${ state.owner }/${ state.repo }`
+        : CONFIG.sourceRepoUrl;
     };
 
     /* ── 9. detectRepo ── */
