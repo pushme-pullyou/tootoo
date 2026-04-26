@@ -8,9 +8,18 @@ A lightweight single-file GitHub repository browser. Drop it into any repo folde
 
 * Live: <https://pushme-pullyou.github.io/tootoo/>
 * Source: <https://github.com/pushme-pullyou/tootoo>
-* 
-* <https://pushme-pullyou.github.io/tootoo/?owner=obadawy&repo=lmsgsrv>
+* https://pushme-pullyou.github.io/tootoo/?owner=octocat&repo=hello-world
 * <https://pushme-pullyou.github.io/tootoo/?owner=pushme-pullyou&repo=pushme-pullyou.github.io>
+* https://pushme-pullyou.github.io/tootoo/?owner=microsoft&repo=vscode
+* https://pushme-pullyou.github.io/tootoo/?owner=facebook&repo=react#packages/react/README.md
+* https://pushme-pullyou.github.io/tootoo/?owner=torvalds&repo=linux&branch=master
+* https://pushme-pullyou.github.io/tootoo/?owner=anthropics&repo=claude-code
+* https://pushme-pullyou.github.io/tootoo/?owner=d3&repo=d3#API.md
+* https://pushme-pullyou.github.io/tootoo/?owner=xai-org&repo=grok-1
+* https://pushme-pullyou.github.io/tootoo/?owner=xai-org&repo=grok-prover-v1
+* https://pushme-pullyou.github.io/tootoo/?owner=openai&repo=openai-cookbook
+* https://pushme-pullyou.github.io/tootoo/?owner=openai&repo=whisper
+* https://pushme-pullyou.github.io/tootoo/?owner=openai&repo=openai-python
 
 ## Features
 
