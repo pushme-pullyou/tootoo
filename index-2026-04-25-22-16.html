@@ -1360,19 +1360,11 @@
         contentArea.scrollTo( { top: 0, behavior: reduce ? 'auto' : 'smooth' } );
       } );
 
-      // Header title click — return to the *original* repo for this app
-      // instance: clear the deep-link hash, the URL query overrides, the
-      // cached repo, and the last-opened-file preference, then reload.
+      // Header title click — reload the page as-is (preserves URL params
+      // and hash so the user lands back on the same repo+file they opened).
       document.getElementById( 'headerTitle' ).addEventListener( 'click', ( e ) => {
         e.preventDefault();
-        clearCurrentFilePreference();
-        try { localStorage.removeItem( storageKey( 'repo' ) ); } catch ( _ ) { /* storage disabled */ }
-        const cleanUrl = location.pathname;
-        if ( location.search || location.hash ) {
-          location.replace( cleanUrl );
-        } else {
-          location.reload();
-        }
+        location.reload();
       } );
     };
 
