@@ -6,7 +6,7 @@
 
 **Browse any GitHub repo in your browser. Zero install. One HTML file.**
 
-![TooToo screenshot](docs/screenshot.png)
+![TooToo screenshot](https://pushme-pullyou.github.io/tootoo/tootoo-screenshot.png)
 
 > *(Replace `docs/screenshot.png` with a real screenshot — best showing the file tree, a rendered Markdown file, and dark mode.)*
 
