@@ -4,6 +4,10 @@
 
 ## 2026-04-25
 
+* emphasize cursor keys
+* Explain no file editor
+* figure out How to handle huge numbers of files like in Linux.
+
 ## 2026-04-10
 A few ideas that fit the vanilla JS / single-file constraints:
 
