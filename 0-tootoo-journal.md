@@ -1,11 +1,13 @@
 # TooToo — Development Journal
 
+* pp/assets
 
+* Theo Armour/aa
 ## 2026-04-26
 
 ## Why TooToo?
 
-A blog post forteach
+A blog post for each
 * Run a large and maintain a large number of site
 * Archivable
 * Free, open source, no vendor lock-in
@@ -19,8 +21,6 @@ A blog post forteach
 * Fast and responsive, even with large repositories
 * Can be used offline, without an internet connection
 * Same code everywhere
-
-
 
 
 ## 2026-04-25
