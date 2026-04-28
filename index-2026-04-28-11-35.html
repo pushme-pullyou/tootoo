@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-28 11:45">
+  <meta name="revised" content="2026-04-28 11:20">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -681,8 +681,6 @@
 
     const encodePath = ( path ) =>
       path.split( '/' ).map( encodeURIComponent ).join( '/' );
-
-    const displayTreeName = ( name ) => name.replace( /-/g, ' ' );
 
     // Resolve a Markdown link target against the current file's directory.
     const resolveRepoPath = ( targetPath, currentDir = '' ) => {
@@ -1497,7 +1495,6 @@
     const renderNode = ( name, node, parentPath ) => {
       const fullPath = parentPath ? `${ parentPath }/${ name }` : name;
       const isFolder = node.type === 'tree' || Object.keys( node.children ).length > 0;
-      const displayName = displayTreeName( name );
 
       if ( isFolder ) {
         const childrenHtml = sortedEntries( node.children )
@@ -1506,7 +1503,7 @@
 
         return `<details data-folder-path="${ escapeHTML( fullPath ) }">` +
           `<summary class="tree-folder" tabindex="0" title="${ escapeHTML( fullPath ) }">` +
-          `📁 <span class="folder-name">${ escapeHTML( displayName ) }</span>` +
+          `📁 <span class="folder-name">${ escapeHTML( name ) }</span>` +
           `</summary>` +
           childrenHtml +
           `</details>`;
@@ -1516,8 +1513,8 @@
       const sizeStr = formatFileSize( node.size );
       const isReadme = /^readme/i.test( name );
       const nameHtml = isReadme
-        ? `<strong>${ escapeHTML( displayName ) }</strong>`
-        : escapeHTML( displayName );
+        ? `<strong>${ escapeHTML( name ) }</strong>`
+        : escapeHTML( name );
 
       return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeHTML( fullPath ) }" title="${ escapeHTML( fullPath ) }">` +
         `<span class="tree-item-name">${ icon } ${ nameHtml }</span>` +
