@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-28 12:15">
+  <meta name="revised" content="2026-04-28 11:45">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -765,7 +765,6 @@
 
     /* ── 4. Storage key helper ── */
     const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }:${ location.pathname }:${ suffix }`;
-    const tokenStorageKey = () => storageKey( 'githubToken' );
 
     // One-time migration: rename legacy `tootoo-lt:*` keys to the current prefix.
     // Safe to keep indefinitely — no-op once the user's localStorage is migrated.
@@ -788,18 +787,6 @@
           localStorage.removeItem( oldKey );
         }
       } catch ( _ ) { /* storage disabled or quota exceeded */ }
-    };
-
-    // One-time migration: move legacy global token key to namespaced storage.
-    const migrateTokenStorage = () => {
-      try {
-        const scopedKey = tokenStorageKey();
-        const legacyToken = localStorage.getItem( 'githubToken' );
-        if ( legacyToken && localStorage.getItem( scopedKey ) === null ) {
-          localStorage.setItem( scopedKey, legacyToken );
-        }
-        localStorage.removeItem( 'githubToken' );
-      } catch ( _ ) { /* storage disabled */ }
     };
 
     const getCurrentFileKey = () => {
@@ -1121,7 +1108,7 @@
     const showTokenPanel = ( reasonHtml = '' ) => {
       const cb = document.getElementById( 'contentBody' );
       const contentArea = document.getElementById( 'contentArea' );
-      const current = getToken();
+      const current = localStorage.getItem( 'githubToken' ) || '';
       const hasToken = current.length > 0;
 
       const existingHeader = contentArea.querySelector( '.panel-header.file-header' );
@@ -1167,7 +1154,7 @@
       const save = () => {
         const value = inp.value;
         if ( value === '' && hasToken ) return; // leave existing token untouched
-        localStorage.setItem( tokenStorageKey(), value );
+        localStorage.setItem( 'githubToken', value );
         clearFileCache();
         location.reload();
       };
@@ -1176,7 +1163,6 @@
       inp.addEventListener( 'keydown', ( e ) => { if ( e.key === 'Enter' ) save(); } );
 
       document.getElementById( 'btnTokenClear' ).addEventListener( 'click', () => {
-        localStorage.removeItem( tokenStorageKey() );
         localStorage.removeItem( 'githubToken' );
         clearFileCache();
         location.reload();
@@ -1192,7 +1178,6 @@
             if ( k && k.startsWith( prefix ) ) toRemove.push( k );
           }
           for ( const k of toRemove ) localStorage.removeItem( k );
-          localStorage.removeItem( tokenStorageKey() );
           localStorage.removeItem( 'githubToken' );
         } catch ( _ ) { /* storage disabled */ }
         location.reload();
@@ -1395,7 +1380,7 @@
 
     /* ── 13. GitHub API helpers (Public API) ── */
 
-    const getToken = () => localStorage.getItem( tokenStorageKey() ) || localStorage.getItem( 'githubToken' ) || '';
+    const getToken = () => localStorage.getItem( 'githubToken' ) || '';
 
     const getAuthHeaders = () => {
       const headers = { Accept: 'application/vnd.github+json' };
@@ -1652,13 +1637,10 @@
     };
 
     /* ── 22. Filter logic ── */
-    let preFilterOpenState = null;
-
     const runFilter = () => {
       const query = document.getElementById( 'treeFilter' ).value.trim().toLowerCase();
       const treeList = document.getElementById( 'treeList' );
       const btnFilterClear = document.getElementById( 'btnFilterClear' );
-      const normalizedQuery = query.replace( /[-\s]+/g, ' ' );
 
       btnFilterClear.style.display = query ? 'block' : 'none';
 
@@ -1668,31 +1650,12 @@
       if ( !query ) {
         items.forEach( ( el ) => { el.classList.remove( 'is-hidden' ); } );
         folders.forEach( ( el ) => { el.classList.remove( 'is-hidden' ); } );
-        if ( preFilterOpenState ) {
-          folders.forEach( ( details ) => {
-            const key = details.dataset.folderPath || '';
-            if ( preFilterOpenState.has( key ) ) {
-              details.open = preFilterOpenState.get( key );
-            }
-          } );
-          preFilterOpenState = null;
-        }
         return;
-      }
-
-      if ( preFilterOpenState === null ) {
-        preFilterOpenState = new Map();
-        folders.forEach( ( details ) => {
-          const key = details.dataset.folderPath || '';
-          preFilterOpenState.set( key, details.open );
-        } );
       }
 
       items.forEach( ( el ) => {
         const path = ( el.dataset.path || '' ).toLowerCase();
-        const normalizedPath = path.replace( /[-\s]+/g, ' ' );
-        const matches = path.includes( query ) || normalizedPath.includes( normalizedQuery );
-        el.classList.toggle( 'is-hidden', !matches );
+        el.classList.toggle( 'is-hidden', !path.includes( query ) );
       } );
 
       const foldersArr = Array.from( folders ).reverse();
@@ -2521,7 +2484,6 @@
 
       // Migrate any legacy tootoo-lt:* keys before reading appearance/state
       migrateStorageKeys();
-      migrateTokenStorage();
 
       // Brand the page from APP_ORIGIN (where this app instance is hosted).
       // Header is independent of which repo gets browsed, so do this once
