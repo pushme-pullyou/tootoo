@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-28 12:25">
+  <meta name="revised" content="2026-04-28 12:15">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1544,7 +1544,6 @@
     const renderTree = ( treeArray ) => {
       const treeList = document.getElementById( 'treeList' );
       treeList.innerHTML = '';
-      preFilterOpenState = null;
 
       const nested = buildNestedTree( treeArray );
       const rootEntries = sortedEntries( nested.children );
@@ -1671,7 +1670,7 @@
         folders.forEach( ( el ) => { el.classList.remove( 'is-hidden' ); } );
         if ( preFilterOpenState ) {
           folders.forEach( ( details ) => {
-            const key = details.dataset.folderPath;
+            const key = details.dataset.folderPath || '';
             if ( preFilterOpenState.has( key ) ) {
               details.open = preFilterOpenState.get( key );
             }
@@ -1684,7 +1683,7 @@
       if ( preFilterOpenState === null ) {
         preFilterOpenState = new Map();
         folders.forEach( ( details ) => {
-          const key = details.dataset.folderPath;
+          const key = details.dataset.folderPath || '';
           preFilterOpenState.set( key, details.open );
         } );
       }
