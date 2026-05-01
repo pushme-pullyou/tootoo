@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Single File](https://img.shields.io/badge/single--file-vanilla%20JS-orange)](index.html)
 
-**Browse any GitHub repo in your browser. Zero install. One HTML file.**
+**Navigate any GitHub repo in your browser. Zero install. Single HTML file.**
 
 ![TooToo screenshot](https://pushme-pullyou.github.io/tootoo/tootoo-screenshot.jpeg)
 

@@ -1,8 +1,7 @@
 # TooToo — Development Journal
 
-* pp/assets
 
-* Theo Armour/aa
+
 ## 2026-04-26
 
 ## Why TooToo?

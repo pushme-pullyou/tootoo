@@ -2,7 +2,33 @@
 
 ## Agenda
 
+### App
+
+* favicon to GitHub organization
+* User theming
+* Make sure all the different code sections are relevant and are factual.
+* That the numbering of sections is relevant
+
+### Sidebar
+
+* Much better filters
+* Add keystroke to initiate sidebar scrolling
+* If there are multiple branches add a branch selector to the sidebar
+* Add a footer to the sidebar with copyright and license info, and a link go to top
+* Control B to Toggle sidebar
+
+### About
+* 2026-04-30 About: add copyright and license info, and a link to the GitHub repo
+* 2026-04-30 About ~ rejig: repo, tips, about TT ~ click again to return
 * About shows number of branches, not just the default branch
+* Token: click to return
+
+### Content
+
+* 2026-04-30 Display notebooks?
+
+## Code
+
 * Can run if dependency fails to load, just show error message and disable features that rely on it
 
 
