@@ -151,6 +151,7 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 * 2026-05-18 — Restored repo-local agent guidance as `AGENTS.md` with `CLAUDE.md` as a small pointer file, so TooToo-specific workflow rules are active again
 * 2026-05-18 — File-content cache now uses sessionStorage instead of localStorage; legacy persistent file-cache entries are cleared on restore/reset
 * 2026-05-18 — Markdown link rewriting now keeps custom schemes intact, avoids treating query strings/fragments as filenames, and handles GitHub blob links on branches containing `/`
+* 2026-05-18 — New Tab now opens data/media files such as `.csv` and extensionless files through raw URLs instead of GitHub Pages, and opens the tab synchronously to avoid popup blockers
 * 2026-04-25 — Top-header label and GitHub icon now derive from `APP_ORIGIN` (where this app instance is hosted), independent of the currently browsed repo; on `file://` it reads the surrounding `.git/config`
 * 2026-04-25 — Token panel auto-opens on rate-limit (403) with explanation of why a token is needed and where to get one
 * 2026-04-25 — Pinned CDN versions (marked@12.0.2, dompurify@3.4.1, xlsx@0.20.3) to insulate against upstream breakage

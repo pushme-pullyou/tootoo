@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-18 20:55">
+  <meta name="revised" content="2026-05-18 21:22">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1314,7 +1314,7 @@
           <h3>Tips</h3>
           <ul>
             <li>Press <kbd>/</kbd> to jump to the file filter, then press <kbd>Esc</kbd> to clear it.</li>
-            <li>Use arrow keys in the file tree; <kbd>Enter</kbd> or <kbd>Space</kbd> opens files and toggles folders.</li>
+            <li>Press <kbd>F</kbd> to focus the file tree, then use arrow keys; <kbd>Enter</kbd> or <kbd>Space</kbd> opens files and toggles folders.</li>
             <li>Deep-link directly to a file by adding <code>#path/to/file.md</code> to the URL.</li>
             <li>Drop <code>index.html</code> next to a local Git checkout and open it with <code>file://</code> to browse without using API quota.</li>
             <li>Add a GitHub token when large repos stop loading, rate limits appear, or you need private repo access.</li>
@@ -1811,6 +1811,17 @@
           return;
         }
 
+        if ( e.key.toLowerCase() === 'f' && active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' ) {
+          const visible = getVisibleTreeItems();
+          const activeItem = treeList.querySelector( '.tree-item.active' );
+          const target = visible.includes( activeItem ) ? activeItem : visible[ 0 ];
+          if ( target ) {
+            e.preventDefault();
+            target.focus();
+          }
+          return;
+        }
+
         if ( !treeList.contains( active ) ) return;
         if ( !active.classList.contains( 'tree-folder' ) && !active.classList.contains( 'tree-item' ) ) return;
 
@@ -1950,8 +1961,14 @@
       }
     };
 
-    /* ── 31. getNewTabUrl — GitHub Pages or raw fallback ── */
+    /* ── 31. getNewTabUrl — GitHub Pages for page-like files, raw fallback for data/media/extensionless ── */
     const getNewTabUrl = async ( path ) => {
+      const fileName = path.split( '/' ).pop();
+      const ext = fileName.includes( '.' ) ? fileName.split( '.' ).pop().toLowerCase() : '';
+      const canUsePages = [ 'md', 'html', 'htm' ].includes( ext );
+      // CSV, data/media, and extensionless files should open as raw content, not as GitHub Pages routes.
+      if ( !canUsePages ) return rawUrl( path );
+
       if ( state.pagesEnabled === null ) {
         try {
           const headers = getAuthHeaders();
@@ -1968,7 +1985,6 @@
 
       if ( state.pagesEnabled ) {
         // GitHub Pages / Jekyll renders .md as HTML; README.md becomes the directory index.html
-        const fileName = path.split( '/' ).pop();
         const isReadme = /^readme\.md$/i.test( fileName );
         const pagesPath = isReadme
           ? path.slice( 0, path.length - fileName.length )  // strip filename → directory URL
@@ -2522,8 +2538,14 @@
         const newTabBtn = e.target.closest( '[data-action="new-tab"]' );
         if ( newTabBtn ) {
           const filePath = newTabBtn.dataset.path;
+          const tab = window.open( '', '_blank' );
+          if ( tab ) tab.opener = null;
           const url = await getNewTabUrl( filePath );
-          window.open( url, '_blank', 'noopener' );
+          if ( tab ) {
+            tab.location = url;
+          } else {
+            window.open( url, '_blank', 'noopener' );
+          }
           return;
         }
       } );
