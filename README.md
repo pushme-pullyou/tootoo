@@ -124,6 +124,32 @@ To wipe state, click ⚙️ Token → **Reset all TooToo data**, or clear both `
 * Static hosting only — GitHub Pages or open from `file://`
 * External CDN deps: marked, highlight.js, DOMPurify, SheetJS
 
+## Roadmap
+
+TooToo stays intentionally small: single-file, vanilla JavaScript, static hosting, and `file://` friendly. These ideas are candidates, not promises.
+
+### Next
+
+* Add better text search: search within the current file first, then loaded/cached text files, with optional rate-limit-aware search across small repo text files.
+* Improve New Tab choices: keep page-like files on GitHub Pages when useful, and open data/media/extensionless files as raw content.
+* Add richer previews for common data files, starting with friendlier `.csv` and `.json` views.
+* Add visible local-mode/rate-limit status so users know whether TooToo is reading local files, raw GitHub files, or the GitHub API.
+* Expand keyboard help, including `/` for filter, `F` for file tree focus, arrows for navigation, and Rendered/Raw toggles.
+
+### Later
+
+* Improve Markdown navigation: README anchors, relative links with query/hash, and GitHub folder links.
+* Add search results with matching file paths, line snippets, next/previous navigation, and clear filename-vs-content search modes.
+* Add share/copy actions for deep links, raw URLs, and GitHub URLs.
+* Polish mobile behavior with an easier sidebar toggle and simpler header layout.
+* Expand `test-cases/` for CSV, extensionless files, Markdown links, text search, and New Tab routing.
+
+### Maybe
+
+* Lightweight image/file metadata panels.
+* Optional JSON tree viewer.
+* More fork-customization helpers for app name, favicon, storage prefix, and source repo URL.
+
 ## Project Structure
 
 ```text
@@ -135,6 +161,7 @@ CLAUDE.md                     ← Claude-specific pointer file
 0-tootoo-agenda.md            ← priorities and ideas
 0-tootoo-journal.md           ← development notes
 tootoo-test.html              ← standalone test harness for pure helpers
+tootoo-test-load.html         ← manual GitHub raw-file load tester for this repo
 test-cases/                   ← file rendering fixtures (with index README)
 sample-folders-and-files/     ← sample local tree content
 .archive/                     ← older snapshots

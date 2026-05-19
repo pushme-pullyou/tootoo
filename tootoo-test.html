@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-25 14:35">
+  <meta name="revised" content="2026-05-18 21:36">
   <title>TooToo Tests</title>
   <style>
     :root {
@@ -67,7 +67,7 @@
   <div id="results"></div>
 
   <footer>
-    <strong>⚠️ Drift warning:</strong> the helpers under test are <em>copies</em> of those in <code>index.html</code>. If you change a helper there, paste the new version into the marked block below and reload.
+    <strong>⚠️ Drift warning:</strong> the helpers under test are <em>copies</em> of those in <code>index.html</code>. Keep the copied helper block below in sync with URL/path helpers, storage helpers, and New Tab routing, then reload this file.
   </footer>
 
   <script>
@@ -84,13 +84,30 @@
     const encodePath = ( path ) =>
       path.split( '/' ).map( encodeURIComponent ).join( '/' );
 
+    const splitPathParts = ( targetPath ) => {
+      const hashIndex = targetPath.indexOf( '#' );
+      const beforeHash = hashIndex >= 0 ? targetPath.slice( 0, hashIndex ) : targetPath;
+      const hash = hashIndex >= 0 ? targetPath.slice( hashIndex ) : '';
+      const queryIndex = beforeHash.indexOf( '?' );
+      return {
+        path: queryIndex >= 0 ? beforeHash.slice( 0, queryIndex ) : beforeHash,
+        query: queryIndex >= 0 ? beforeHash.slice( queryIndex ) : '',
+        hash,
+      };
+    };
+
+    const hasUrlScheme = ( value ) => /^[a-z][a-z0-9+.-]*:/i.test( value );
+
     const RATE_LIMIT_MESSAGE = 'Rate limited. Add a GitHub token for higher limits.';
 
     // CONFIG/state stubs so the helpers behave as in index.html
     const CONFIG = { owner: '', repo: '', branch: '', storagePrefix: 'tootoo', appName: 'TooToo' };
-    const state = { owner: '', repo: '', branch: '' };
+    const state = { owner: '', repo: '', branch: '', pagesEnabled: null };
 
     const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }:${ location.pathname }:${ suffix }`;
+
+    const rawUrl = ( path ) =>
+      `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
 
     const getCurrentFileKey = () => {
       const owner = state.owner || CONFIG.owner || '';
@@ -110,6 +127,28 @@
         else if ( part !== '.' && part !== '' ) acc.push( part );
         return acc;
       }, [] ).join( '/' );
+    };
+
+    const getNewTabUrl = async ( path ) => {
+      const fileName = path.split( '/' ).pop();
+      const ext = fileName.includes( '.' ) ? fileName.split( '.' ).pop().toLowerCase() : '';
+      const canUsePages = [ 'md', 'html', 'htm' ].includes( ext );
+      // CSV, data/media, and extensionless files should open as raw content, not as GitHub Pages routes.
+      if ( !canUsePages ) return rawUrl( path );
+
+      if ( state.pagesEnabled ) {
+        const isReadme = /^readme\.md$/i.test( fileName );
+        const pagesPath = isReadme
+          ? path.slice( 0, path.length - fileName.length )
+          : path.replace( /\.md$/i, '' );
+        const encodedPagesPath = encodePath( pagesPath );
+        const isUserPage = state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`;
+        return isUserPage
+          ? `https://${ state.owner }.github.io/${ encodedPagesPath }`
+          : `https://${ state.owner }.github.io/${ state.repo }/${ encodedPagesPath }`;
+      }
+
+      return rawUrl( path );
     };
 
     /* ────────────────────────────────────────────────────────────
@@ -214,15 +253,85 @@
       assertEqual( encodePath( 'a/b?c.md' ), 'a/b%3Fc.md' );
     } );
 
+    /* ── 6. splitPathParts / hasUrlScheme ── */
+    test( 'splitPathParts', 'plain path has empty query and hash', () => {
+      assertEqual( splitPathParts( 'docs/file.md' ), { path: 'docs/file.md', query: '', hash: '' } );
+    } );
+    test( 'splitPathParts', 'separates query and hash', () => {
+      assertEqual( splitPathParts( 'data/file.csv?raw=true#top' ), { path: 'data/file.csv', query: '?raw=true', hash: '#top' } );
+    } );
+    test( 'splitPathParts', 'hash-only path keeps path clean', () => {
+      assertEqual( splitPathParts( 'docs/file.md#section-2' ), { path: 'docs/file.md', query: '', hash: '#section-2' } );
+    } );
+    test( 'splitPathParts', 'query-only path keeps query separate', () => {
+      assertEqual( splitPathParts( 'img/photo.png?size=large' ), { path: 'img/photo.png', query: '?size=large', hash: '' } );
+    } );
+    test( 'hasUrlScheme', 'detects common external schemes', () => {
+      assertEqual( hasUrlScheme( 'mailto:hello@example.com' ), true );
+      assertEqual( hasUrlScheme( 'tel:+15551234567' ), true );
+      assertEqual( hasUrlScheme( 'data:text/plain,hello' ), true );
+      assertEqual( hasUrlScheme( 'https://example.com' ), true );
+    } );
+    test( 'hasUrlScheme', 'relative paths are not schemes', () => {
+      assertEqual( hasUrlScheme( 'docs/file.md' ), false );
+      assertEqual( hasUrlScheme( '../file.md' ), false );
+      assertEqual( hasUrlScheme( '/README.md' ), false );
+    } );
+
+    /* ── 7. getNewTabUrl ── */
+    test( 'getNewTabUrl', 'csv uses raw URL even when Pages is enabled', async () => {
+      state.owner = 'octocat'; state.repo = 'hello-world'; state.branch = 'main'; state.pagesEnabled = true;
+      assertEqual(
+        await getNewTabUrl( 'data/table.csv' ),
+        'https://raw.githubusercontent.com/octocat/hello-world/main/data/table.csv'
+      );
+    } );
+    test( 'getNewTabUrl', 'extensionless file uses raw URL even when Pages is enabled', async () => {
+      state.owner = 'octocat'; state.repo = 'hello-world'; state.branch = 'main'; state.pagesEnabled = true;
+      assertEqual(
+        await getNewTabUrl( 'LICENSE' ),
+        'https://raw.githubusercontent.com/octocat/hello-world/main/LICENSE'
+      );
+    } );
+    test( 'getNewTabUrl', 'markdown uses Pages path when Pages is enabled', async () => {
+      state.owner = 'octocat'; state.repo = 'hello-world'; state.branch = 'main'; state.pagesEnabled = true;
+      assertEqual(
+        await getNewTabUrl( 'docs/guide.md' ),
+        'https://octocat.github.io/hello-world/docs/guide'
+      );
+    } );
+    test( 'getNewTabUrl', 'root README becomes Pages directory URL', async () => {
+      state.owner = 'octocat'; state.repo = 'hello-world'; state.branch = 'main'; state.pagesEnabled = true;
+      assertEqual(
+        await getNewTabUrl( 'README.md' ),
+        'https://octocat.github.io/hello-world/'
+      );
+    } );
+    test( 'getNewTabUrl', 'user page repo omits repo segment', async () => {
+      state.owner = 'octocat'; state.repo = 'octocat.github.io'; state.branch = 'main'; state.pagesEnabled = true;
+      assertEqual(
+        await getNewTabUrl( 'docs/guide.md' ),
+        'https://octocat.github.io/docs/guide'
+      );
+    } );
+    test( 'getNewTabUrl', 'page-like file falls back to raw when Pages is disabled', async () => {
+      state.owner = 'octocat'; state.repo = 'hello-world'; state.branch = 'main'; state.pagesEnabled = false;
+      assertEqual(
+        await getNewTabUrl( 'docs/guide.md' ),
+        'https://raw.githubusercontent.com/octocat/hello-world/main/docs/guide.md'
+      );
+    } );
+
     /* ── Run ── */
-    const run = () => {
+    const run = async () => {
+      const started = performance.now();
       const results = document.getElementById( 'results' );
       const groups = {};
       let passed = 0, failed = 0;
 
-      tests.forEach( ( t ) => {
+      for ( const t of tests ) {
         let ok = true, info = null;
-        try { t.fn(); } catch ( err ) { ok = false; info = err; }
+        try { await t.fn(); } catch ( err ) { ok = false; info = err; }
         if ( ok ) passed++; else failed++;
 
         if ( !groups[ t.group ] ) {
@@ -247,10 +356,12 @@
           det.appendChild( body );
         }
         groups[ t.group ].appendChild( det );
-      } );
+      }
 
+      const elapsed = Math.round( performance.now() - started );
+      const finished = new Date().toLocaleTimeString();
       const summary = document.getElementById( 'summary' );
-      summary.textContent = `${ passed } passed · ${ failed } failed · ${ tests.length } total`;
+      summary.textContent = `${ passed } passed · ${ failed } failed · ${ tests.length } total · finished ${ finished } · ${ elapsed } ms`;
       summary.classList.add( failed === 0 ? 'all-pass' : 'has-fail' );
     };
 
