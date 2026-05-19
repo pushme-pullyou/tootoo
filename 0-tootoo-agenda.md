@@ -4,13 +4,15 @@
 
 ### App
 
-* favicon to GitHub organization
+* 2026-05-19 PDF opens in new tab instead of downloading
+* Favicon to GitHub organization
 * User theming
 * Make sure all the different code sections are relevant and are factual.
 * That the numbering of sections is relevant
 
 ### Sidebar
 
+* 2026-05-19 file size slides under filename, not in a separate column
 * Much better filters
 * Add keystroke to initiate sidebar scrolling
 * If there are multiple branches add a branch selector to the sidebar
