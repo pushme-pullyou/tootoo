@@ -12,10 +12,14 @@ Copy TooToo's index.html to another folder.
 Usage:
   ./copy-index-to-folder.sh "/g/My Drive/path/to/destination-folder"
 
+  ./copy-index-to-folder.sh"
+
 Examples:
   ./copy-index-to-folder.sh "/g/My Drive/2026-theo-github/some-other-repo"
   ./copy-index-to-folder.sh "G:\My Drive\2026-theo-github\some-other-repo"
 
+  ./copy-index-to-folder.sh "G:\My Drive\2026-theo-github\theo-armour-aa"
+  
 Notes:
   - Run this from Git Bash or a bash-compatible terminal on Windows.
   - If the destination already has index.html, this script backs it up first.
