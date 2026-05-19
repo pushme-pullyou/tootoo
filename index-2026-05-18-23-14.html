@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-18 23:14">
+  <meta name="revised" content="2026-04-28 12:25">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1200,9 +1200,6 @@
     };
 
     const RATE_LIMIT_REASON_HTML = '<div class="error-panel">⚠️ <strong>GitHub API rate limit reached.</strong> You\'ve exceeded the anonymous request quota and cannot load more files until you add a token below or wait for the limit to reset.</div>';
-    const PRIVATE_REPO_MESSAGE = 'GitHub returned 404. If this is a private repository, enter a GitHub access token with Contents: Read permission below.';
-    const privateRepoReasonHtml = () =>
-      `<div class="error-panel">⚠️ <strong>GitHub returned 404.</strong> If this is a private repository, enter a GitHub access token with <em>Contents: Read</em> permission below. If you already have a token saved, make sure it is scoped to ${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }.</div>`;
 
     /* ── 12. setupListeners ── */
     const setupListeners = () => {
@@ -1614,11 +1611,6 @@
             showTokenPanel( RATE_LIMIT_REASON_HTML );
             return;
           }
-          if ( repoRes.status === 404 ) {
-            treeList.innerHTML = `<p style="color: red;">${ escapeHTML( PRIVATE_REPO_MESSAGE ) }</p>`;
-            showTokenPanel( privateRepoReasonHtml() );
-            return;
-          }
           if ( !repoRes.ok ) throw new Error( `Failed to fetch repo info: ${ repoRes.status }` );
           const repoData = await repoRes.json();
           state.branch = repoData.default_branch;
@@ -1638,11 +1630,6 @@
         if ( treeRes.status === 403 ) {
           treeList.innerHTML = `<p style="color: red;">${ escapeHTML( RATE_LIMIT_MESSAGE ) }</p>`;
           showTokenPanel( RATE_LIMIT_REASON_HTML );
-          return;
-        }
-        if ( treeRes.status === 404 ) {
-          treeList.innerHTML = `<p style="color: red;">${ escapeHTML( PRIVATE_REPO_MESSAGE ) }</p>`;
-          showTokenPanel( privateRepoReasonHtml() );
           return;
         }
         if ( !treeRes.ok ) throw new Error( `Failed to fetch tree: ${ treeRes.status }` );
@@ -2262,12 +2249,10 @@
         const res = await fetch( contentsApiUrl( path ), { headers, signal } );
         updateRateBadge( res );
         if ( res.status === 403 ) throw new Error( RATE_LIMIT_MESSAGE );
-        if ( res.status === 404 ) throw new Error( PRIVATE_REPO_MESSAGE );
         if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
         text = await res.text();
       } else {
         const res = await fetch( rawUrl( path ), { signal } );
-        if ( res.status === 404 ) throw new Error( PRIVATE_REPO_MESSAGE );
         if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
         text = await res.text();
       }
@@ -2302,12 +2287,10 @@
         const res = await fetch( contentsApiUrl( path ), { headers, signal } );
         updateRateBadge( res );
         if ( res.status === 403 ) throw new Error( RATE_LIMIT_MESSAGE );
-        if ( res.status === 404 ) throw new Error( PRIVATE_REPO_MESSAGE );
         if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
         blob = await res.blob();
       } else {
         const res = await fetch( rawUrl( path ), { signal } );
-        if ( res.status === 404 ) throw new Error( PRIVATE_REPO_MESSAGE );
         if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
         blob = await res.blob();
       }
@@ -2435,10 +2418,6 @@
         if ( err.name === 'AbortError' ) return;
         if ( err.message === RATE_LIMIT_MESSAGE ) {
           showTokenPanel( RATE_LIMIT_REASON_HTML );
-          return;
-        }
-        if ( err.message === PRIVATE_REPO_MESSAGE ) {
-          showTokenPanel( privateRepoReasonHtml() );
           return;
         }
         document.getElementById( 'contentBody' ).innerHTML =
