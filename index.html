@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-04-28 12:25">
+  <meta name="revised" content="2026-05-18 20:55">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1313,10 +1313,14 @@
           } )() }
           <h3>Tips</h3>
           <ul>
-            <li>Use the filter input in the sidebar to search file names</li>
-            <li>Click the title in the header to reload</li>
-            <li>Use <strong>A−</strong> / <strong>A+</strong> to adjust font size — helpful on phones and small screens</li>
-            <li>Click <strong>🌙</strong> to toggle dark mode — your choice is saved across visits</li>
+            <li>Press <kbd>/</kbd> to jump to the file filter, then press <kbd>Esc</kbd> to clear it.</li>
+            <li>Use arrow keys in the file tree; <kbd>Enter</kbd> or <kbd>Space</kbd> opens files and toggles folders.</li>
+            <li>Deep-link directly to a file by adding <code>#path/to/file.md</code> to the URL.</li>
+            <li>Drop <code>index.html</code> next to a local Git checkout and open it with <code>file://</code> to browse without using API quota.</li>
+            <li>Add a GitHub token when large repos stop loading, rate limits appear, or you need private repo access.</li>
+            <li>Rendered/Raw view choices are remembered per file type for Markdown, HTML, and SVG files.</li>
+            <li>Use <strong>A−</strong> / <strong>A+</strong> for small screens, and <strong>🌙</strong> to save your dark-mode preference.</li>
+            <li>Use <strong>Reset all ${ escapeHTML( CONFIG.appName ) } data</strong> if the app remembers an old repo, token, width, or view preference.</li>
           </ul>
         `;
 

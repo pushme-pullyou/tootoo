@@ -49,7 +49,7 @@
 * **Resizable sidebar** — drag to resize, width saved across visits
 * **Font size controls** — A−/A+ buttons, helpful on phones
 * **GitHub token support** — optional PAT for private repos and higher rate limits (5,000/hr vs 60/hr)
-* **File text cache** — LRU in-memory + localStorage cache to reduce API calls
+* **File text cache** — LRU in-memory + sessionStorage cache to reduce API calls without persisting file contents after the tab session
 * **Hash routing** — deep-link to any file via `#path/to/file`
 * **Copy / New Tab** — copy raw file content or open the GitHub Pages URL
 * **Rendered ↔ Raw toggle** — for Markdown, HTML, and SVG files; preference saved per file type
@@ -100,9 +100,9 @@ Want your own TooToo pointing at your own repo? It takes about a minute.
 
 For deeper customization (adding renderers, new buttons, etc.), see [`FORKING.md`](FORKING.md) — covers the architecture, render pipelines, and the gotchas (file://, rate limits, blob lifecycle).
 
-### localStorage keys
+### Browser storage keys
 
-TooToo stores everything in the browser's `localStorage`. All keys except the GitHub token are scoped per `location.pathname`, so two TooToo instances on the same origin keep separate state.
+TooToo stores preferences and the GitHub token in the browser's `localStorage`. Recently viewed file contents are cached in `sessionStorage`, so they expire when the tab session ends. Keys are scoped per `location.pathname`, so two TooToo instances on the same origin keep separate state.
 
 | Key | Purpose |
 | --- | --- |
@@ -110,12 +110,12 @@ TooToo stores everything in the browser's `localStorage`. All keys except the Gi
 | `tootoo:<pathname>:darkMode` | Dark mode on/off |
 | `tootoo:<pathname>:fontSize` | Font size override (px) |
 | `tootoo:<pathname>:sidebarWidth` | Last sidebar width (px) |
-| `tootoo:<pathname>:fileTextCache` | LRU cache of recently viewed file contents |
+| `tootoo:<pathname>:fileTextCache` | Session-only LRU cache of recently viewed file contents |
 | `tootoo:<pathname>:viewPref:<ext>` | Rendered / Raw toggle per file extension |
 | `tootoo:<pathname>:currentFile:<owner>/<repo>/<branch>` | Last-opened file in that repo |
-| `githubToken` | GitHub Personal Access Token (un-prefixed; shared across every TooToo instance on the origin) |
+| `tootoo:<pathname>:githubToken` | GitHub Personal Access Token for this TooToo instance |
 
-To wipe state, click ⚙️ Token → **Reset all TooToo data**, or run `localStorage.clear()` in DevTools.
+To wipe state, click ⚙️ Token → **Reset all TooToo data**, or clear both `localStorage` and `sessionStorage` in DevTools.
 
 ## Constraints
 
@@ -148,6 +148,9 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 
 ## Change Log
 
+* 2026-05-18 — Restored repo-local agent guidance as `AGENTS.md` with `CLAUDE.md` as a small pointer file, so TooToo-specific workflow rules are active again
+* 2026-05-18 — File-content cache now uses sessionStorage instead of localStorage; legacy persistent file-cache entries are cleared on restore/reset
+* 2026-05-18 — Markdown link rewriting now keeps custom schemes intact, avoids treating query strings/fragments as filenames, and handles GitHub blob links on branches containing `/`
 * 2026-04-25 — Top-header label and GitHub icon now derive from `APP_ORIGIN` (where this app instance is hosted), independent of the currently browsed repo; on `file://` it reads the surrounding `.git/config`
 * 2026-04-25 — Token panel auto-opens on rate-limit (403) with explanation of why a token is needed and where to get one
 * 2026-04-25 — Pinned CDN versions (marked@12.0.2, dompurify@3.4.1, xlsx@0.20.3) to insulate against upstream breakage

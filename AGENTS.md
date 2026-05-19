@@ -40,6 +40,7 @@ Reference files:
 ## Development Workflow
 
 - Edit [`index.html`](index.html) directly; it is the canonical single-file app.
+- On every save to [`index.html`](index.html), update `<meta name="revised" content="YYYY-MM-DD HH:MM">` using Pacific Time; the Files tooltip and About page read this value.
 - Before non-trivial edits, define 2-4 concrete success checks, then verify them.
 - Use the test and sample folders to exercise file rendering behavior when relevant.
 - Keep README changelog entries dated, newest first, when user-facing behavior changes.
