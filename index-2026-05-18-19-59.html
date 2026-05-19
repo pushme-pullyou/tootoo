@@ -695,20 +695,6 @@
       }, [] ).join( '/' );
     };
 
-    const splitPathParts = ( targetPath ) => {
-      const hashIndex = targetPath.indexOf( '#' );
-      const beforeHash = hashIndex >= 0 ? targetPath.slice( 0, hashIndex ) : targetPath;
-      const hash = hashIndex >= 0 ? targetPath.slice( hashIndex ) : '';
-      const queryIndex = beforeHash.indexOf( '?' );
-      return {
-        path: queryIndex >= 0 ? beforeHash.slice( 0, queryIndex ) : beforeHash,
-        query: queryIndex >= 0 ? beforeHash.slice( queryIndex ) : '',
-        hash,
-      };
-    };
-
-    const hasUrlScheme = ( value ) => /^[a-z][a-z0-9+.-]*:/i.test( value );
-
     const rawUrl = ( path ) =>
       `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
 
@@ -874,16 +860,16 @@
     const persistFileCacheNow = () => {
       const key = storageKey( 'fileTextCache' );
       const entries = Array.from( fileTextCache.entries() );
-      // Session-scoped so private file contents do not persist after the tab session.
+      // On quota failure, drop oldest entries and retry until it fits or empties.
       while ( entries.length ) {
         try {
-          sessionStorage.setItem( key, JSON.stringify( entries ) );
+          localStorage.setItem( key, JSON.stringify( entries ) );
           return;
         } catch ( _ ) {
           entries.shift();
         }
       }
-      try { sessionStorage.removeItem( key ); } catch ( _ ) { /* disabled */ }
+      try { localStorage.removeItem( key ); } catch ( _ ) { /* disabled */ }
     };
 
     let persistFileCacheTimer = null;
@@ -906,8 +892,7 @@
 
     const restoreFileCache = () => {
       try {
-        localStorage.removeItem( storageKey( 'fileTextCache' ) );
-        const raw = sessionStorage.getItem( storageKey( 'fileTextCache' ) );
+        const raw = localStorage.getItem( storageKey( 'fileTextCache' ) );
         if ( !raw ) return;
         const arr = JSON.parse( raw );
         for ( const [ key, text ] of arr ) {
@@ -918,8 +903,7 @@
 
     const clearFileCache = () => {
       fileTextCache.clear();
-      try { sessionStorage.removeItem( storageKey( 'fileTextCache' ) ); } catch ( _ ) { /* quota or disabled */ }
-      try { localStorage.removeItem( storageKey( 'fileTextCache' ) ); } catch ( _ ) { /* legacy persistent cache */ }
+      try { localStorage.removeItem( storageKey( 'fileTextCache' ) ); } catch ( _ ) { /* quota or disabled */ }
     };
 
     /* ── 7. View preference helpers ── */
@@ -1157,7 +1141,7 @@
             <li><strong>Public repositories:</strong> create a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a>. A classic token with no scopes is enough for read-only access, or use a fine-grained token.</li>
             <li><strong>Private repositories:</strong> ask the repository owner to issue a fine-grained personal access token scoped to that repository, with at minimum <em>Contents: Read</em> permission, and to share it with you securely.</li>
           </ul>
-          <p>Your token is stored in this browser's <code>localStorage</code> only. It is never sent anywhere except <code>api.github.com</code>, and it is not shared with the developers of ${ escapeHTML( CONFIG.appName ) }. File contents are cached in <code>sessionStorage</code> only, so they expire when this tab session ends.</p>
+          <p>Your token is stored in this browser's <code>localStorage</code> only. It is never sent anywhere except <code>api.github.com</code>, and it is not shared with the developers of ${ escapeHTML( CONFIG.appName ) }.</p>
           <label for="inpToken">Token${ hasToken ? ' (currently set)' : '' }</label>
           <input id="inpToken" type="password" placeholder="${ hasToken ? '•••••••• (leave blank to keep)' : 'ghp_…' }" autocomplete="off" spellcheck="false">
           <label><input id="inpTokenShow" type="checkbox"> Show token</label>
@@ -1208,13 +1192,6 @@
           for ( const k of toRemove ) localStorage.removeItem( k );
           localStorage.removeItem( tokenStorageKey() );
           localStorage.removeItem( 'githubToken' );
-          const sessionToRemove = [];
-          for ( let i = 0; i < sessionStorage.length; i++ ) {
-            const k = sessionStorage.key( i );
-            if ( k && k.startsWith( prefix ) ) sessionToRemove.push( k );
-          }
-          for ( const k of sessionToRemove ) sessionStorage.removeItem( k );
-          fileTextCache.clear();
         } catch ( _ ) { /* storage disabled */ }
         location.reload();
       } );
@@ -2066,36 +2043,30 @@
           // Anchor links — leave as-is
           if ( href.startsWith( '#' ) ) return;
 
-          const hrefParts = splitPathParts( href );
-          const hrefPath = hrefParts.path;
+          // Strip fragment before path resolution (in-page anchors not supported in this viewer)
+          const fragIdx = href.indexOf( '#' );
+          const hrefPath = fragIdx >= 0 ? href.slice( 0, fragIdx ) : href;
           if ( !hrefPath ) return;
 
-          // GitHub blob links — rewrite only when owner/repo/branch all match the current view.
-          // Match the known branch exactly so branch names containing "/" still work.
-          try {
-            const url = new URL( hrefPath, location.href );
-            const pathParts = url.pathname.split( '/' ).filter( Boolean );
-            const branchParts = state.branch.split( '/' );
-            const ownerMatches = pathParts[ 0 ]?.toLowerCase() === state.owner.toLowerCase();
-            const repoMatches = pathParts[ 1 ]?.toLowerCase() === state.repo.toLowerCase();
-            const branchMatches = pathParts.slice( 3, 3 + branchParts.length ).join( '/' ) === state.branch;
-            if ( url.hostname === 'github.com' && ownerMatches && repoMatches && pathParts[ 2 ] === 'blob' && branchMatches ) {
-              const filePath = pathParts.slice( 3 + branchParts.length ).map( decodeURIComponent ).join( '/' );
-              a.removeAttribute( 'href' );
-              a.style.cursor = 'pointer';
-              a.style.color = 'var(--highlight-color)';
-              a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( filePath ); } );
-              return;
-            }
-          } catch ( _ ) { /* fall through to external/relative handling */ }
+          // GitHub blob links — rewrite only when owner/repo/branch all match the current view
+          const blobMatch = hrefPath.match( /github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/ );
+          if (
+            blobMatch &&
+            blobMatch[ 1 ] === state.owner &&
+            blobMatch[ 2 ] === state.repo &&
+            blobMatch[ 3 ] === state.branch
+          ) {
+            a.removeAttribute( 'href' );
+            a.style.cursor = 'pointer';
+            a.style.color = 'var(--highlight-color)';
+            a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( blobMatch[ 4 ] ); } );
+            return;
+          }
 
-          // External links and custom schemes — leave intact.
+          // External links
           if ( hrefPath.startsWith( 'http://' ) || hrefPath.startsWith( 'https://' ) || hrefPath.startsWith( '//' ) ) {
             a.setAttribute( 'target', '_blank' );
             a.setAttribute( 'rel', 'noopener' );
-            return;
-          }
-          if ( hasUrlScheme( hrefPath ) ) {
             return;
           }
 
@@ -2123,7 +2094,8 @@
             return;
           }
 
-          const srcPath = splitPathParts( src ).path;
+          const fragIdx = src.indexOf( '#' );
+          const srcPath = fragIdx >= 0 ? src.slice( 0, fragIdx ) : src;
           if ( !srcPath ) return;
 
           const normalized = resolveRepoPath( srcPath, currentDir );
