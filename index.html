@@ -597,7 +597,8 @@
     .skip-link {
       position: absolute;
       left: 0.5rem;
-      top: -40px;
+      top: 0.5rem;
+      transform: translateY(-200%);
       z-index: 1000;
       padding: 0.4rem 0.8rem;
       background: var(--highlight-color);
@@ -607,7 +608,7 @@
     }
 
     .skip-link:focus {
-      top: 0.5rem;
+      transform: translateY(0);
     }
   </style>
 </head>
