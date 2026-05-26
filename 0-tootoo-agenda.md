@@ -1,5 +1,12 @@
 # TooToo — Agenda
 
+"G:\My Drive\2026-theo-github\heritage-happenings.github.io"
+"G:\My Drive\2026-theo-github\theo-armour-agenda"
+"G:\My Drive\2026-theo-github\theo-armour-qdapages"
+"G:\My Drive\2026-theo-github\theo-armour-qdata"
+"G:\My Drive\2026-theo-github\theo-armour-aa"
+"I:\My Drive\tech"
+
 ## Agenda
 
 ### App
@@ -14,7 +21,6 @@
 
 * Much better filters
 * If there are multiple branches add a branch selector to the sidebar
-
 * Control B to Toggle sidebar
 
 ### About

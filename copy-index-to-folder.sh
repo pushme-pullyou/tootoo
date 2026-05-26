@@ -1,67 +1,98 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+# Drop `set -e` so one failing destination (e.g. drive not mounted) does
+# not abort the rest of the batch.
+set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_FILE="$SCRIPT_DIR/index.html"
 
+# Downstream copies of TooToo's index.html. Edit this list to add or
+# remove targets; the script always copies to every entry here.
+DESTINATIONS=(
+  'G:\My Drive\2026-theo-github\heritage-happenings.github.io'
+  'G:\My Drive\2026-theo-github\theo-armour-agenda'
+  'G:\My Drive\2026-theo-github\theo-armour-qdapages'
+  'G:\My Drive\2026-theo-github\theo-armour-qdata'
+  'G:\My Drive\2026-theo-github\theo-armour-aa'
+  'I:\My Drive\tech'
+)
+
 show_usage() {
   cat <<'USAGE'
-Copy TooToo's index.html to another folder.
+Copy TooToo's index.html to every downstream folder in DESTINATIONS.
 
 Usage:
-  ./copy-index-to-folder.sh "/g/My Drive/path/to/destination-folder"
+  ./copy-index-to-folder.sh           # copy to all configured folders
+  ./copy-index-to-folder.sh -h        # show this help
 
-  ./copy-index-to-folder.sh"
+Edit the DESTINATIONS array near the top of this script to change targets.
 
-Examples:
-  ./copy-index-to-folder.sh "/g/My Drive/2026-theo-github/some-other-repo"
-  ./copy-index-to-folder.sh "G:\My Drive\2026-theo-github\some-other-repo"
+For each destination:
+  - The folder is created if it doesn't exist.
+  - If index.html already exists there, it is backed up as
+    index-YYYY-MM-DD-HH-MM.html before being overwritten.
+  - If the folder can't be created (e.g. drive not mounted), the
+    destination is skipped and the script continues.
 
-  ./copy-index-to-folder.sh "G:\My Drive\2026-theo-github\theo-armour-aa"
-  
-Notes:
-  - Run this from Git Bash or a bash-compatible terminal on Windows.
-  - If the destination already has index.html, this script backs it up first.
+Run this from Git Bash or another bash-compatible shell on Windows.
 USAGE
 }
 
 to_bash_path() {
   local path="$1"
-
   if command -v cygpath >/dev/null 2>&1; then
     cygpath -u "$path"
     return
   fi
-
   printf '%s\n' "$path"
 }
 
-if [[ "${1:-}" == "" || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   show_usage
   exit 0
 fi
-
-DEST_DIR="$(to_bash_path "$1")"
-DEST_FILE="$DEST_DIR/index.html"
 
 if [[ ! -f "$SOURCE_FILE" ]]; then
   echo "Source file not found: $SOURCE_FILE" >&2
   exit 1
 fi
 
-mkdir -p "$DEST_DIR"
+echo "Source: $SOURCE_FILE"
+echo
 
-if [[ -f "$DEST_FILE" ]]; then
-  STAMP="$(date '+%Y-%m-%d-%H-%M')"
-  BACKUP_FILE="$DEST_DIR/index-$STAMP.html"
-  cp -p "$DEST_FILE" "$BACKUP_FILE"
-  echo "Backed up existing destination file:"
-  echo "  $BACKUP_FILE"
-fi
+STAMP="$(date '+%Y-%m-%d-%H-%M')"
+copied=0
+skipped=0
 
-cp -p "$SOURCE_FILE" "$DEST_FILE"
+for raw_dest in "${DESTINATIONS[@]}"; do
+  DEST_DIR="$(to_bash_path "$raw_dest")"
+  DEST_FILE="$DEST_DIR/index.html"
 
-echo "Copied:"
-echo "  from: $SOURCE_FILE"
-echo "  to:   $DEST_FILE"
+  if ! mkdir -p "$DEST_DIR" 2>/dev/null; then
+    echo "SKIP  $raw_dest  (cannot create folder)"
+    skipped=$((skipped + 1))
+    continue
+  fi
+
+  if [[ -f "$DEST_FILE" ]]; then
+    BACKUP_FILE="$DEST_DIR/index-$STAMP.html"
+    if ! cp -p "$DEST_FILE" "$BACKUP_FILE"; then
+      echo "SKIP  $raw_dest  (backup failed)"
+      skipped=$((skipped + 1))
+      continue
+    fi
+    echo "  backup: $BACKUP_FILE"
+  fi
+
+  if cp -p "$SOURCE_FILE" "$DEST_FILE"; then
+    echo "COPY  $raw_dest"
+    copied=$((copied + 1))
+  else
+    echo "FAIL  $raw_dest"
+    skipped=$((skipped + 1))
+  fi
+done
+
+echo
+echo "Done. Copied: $copied   Skipped: $skipped"
