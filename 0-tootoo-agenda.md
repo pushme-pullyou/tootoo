@@ -14,7 +14,7 @@
 
 * Much better filters
 * If there are multiple branches add a branch selector to the sidebar
-* Add a footer to the sidebar with copyright and license info, and a link go to top
+
 * Control B to Toggle sidebar
 
 ### About
