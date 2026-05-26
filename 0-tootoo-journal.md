@@ -1,5 +1,12 @@
 # TooToo — Development Journal
 
+## 2026-05-26
+
+* 2026-05-25 ~ Files with no extension are sent to a new tab.
+* Favicon to GitHub organization
+* User theming
+* Make sure all the different code sections are relevant and are factual.
+* That the numbering of sections is relevant
 
 ## 2026-05-25
 

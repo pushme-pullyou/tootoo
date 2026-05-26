@@ -12,11 +12,12 @@
 
 ### App
 
-* 2026-05-25 ~ Files with no extension are sent to a new tab.
-* Favicon to GitHub organization
-* User theming
-* Make sure all the different code sections are relevant and are factual.
-* That the numbering of sections is relevant
+* 2026-05-26 ~ Reload last page and file in the sidebar, and open it on load. Store in session storage.
+* 2026-05-26 ~ Config in external file.
+* 2026-05-26 ~ theming
+* 2026-05-26 ~ support for the linux repo
+* 2026-05-26 ~ Update readme
+* 2026-05-26 ~ Update about page
 
 ### Sidebar
 
