@@ -1118,7 +1118,7 @@
       }
     };
 
-    /* ── 12. showTokenPanel — render the token form, optionally with a reason ── */
+    /* ── 11b. showTokenPanel — render the token form, optionally with a reason ── */
     const showTokenPanel = ( reasonHtml = '' ) => {
       const cb = document.getElementById( 'contentBody' );
       const contentArea = document.getElementById( 'contentArea' );
@@ -1205,7 +1205,7 @@
     const privateRepoReasonHtml = () =>
       `<div class="error-panel">⚠️ <strong>GitHub returned 404.</strong> If this is a private repository, enter a GitHub access token with <em>Contents: Read</em> permission below. If you already have a token saved, make sure it is scoped to ${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }.</div>`;
 
-    /* ── 13. setupListeners ── */
+    /* ── 12. setupListeners ── */
     const setupListeners = () => {
       const contentArea = document.getElementById( 'contentArea' );
 
@@ -1397,7 +1397,7 @@
       } );
     };
 
-    /* ── 14. GitHub API helpers ── */
+    /* ── 13. GitHub API helpers (Public API) ── */
 
     const getToken = () => localStorage.getItem( tokenStorageKey() ) || localStorage.getItem( 'githubToken' ) || '';
 
@@ -1423,7 +1423,7 @@
 
     let currentAbortController = null;
 
-    /* ── 15. File type icons ── */
+    /* ── 14. File type icons ── */
     const getFileIcon = ( fileName ) => {
       const ext = fileName.includes( '.' ) ? '.' + fileName.split( '.' ).pop().toLowerCase() : '';
       const iconMap = {
@@ -1445,7 +1445,7 @@
       return iconMap[ ext ] || '📄';
     };
 
-    /* ── 16. File size formatting ── */
+    /* ── 15. File size formatting ── */
     const formatFileSize = ( bytes ) => {
       if ( bytes == null ) return '';
       if ( bytes < 1024 ) return `${ bytes } B`;
@@ -1453,7 +1453,7 @@
       return `${ ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) } MB`;
     };
 
-    /* ── 17. Repository statistics ── */
+    /* ── 16. Repository statistics ── */
     const getRepoStats = () => {
       if ( !state.tree ) return null;
       const blobs = state.tree.filter( ( i ) => i.type === 'blob' );
@@ -1479,7 +1479,7 @@
       return { fileCount: blobs.length, folderCount: trees.length, totalSize, topTypes, largest };
     };
 
-    /* ── 18. Build nested tree structure ── */
+    /* ── 17. Build nested tree structure ── */
     const buildNestedTree = ( flatTree ) => {
       const root = { children: {} };
       for ( const item of flatTree ) {
@@ -1502,7 +1502,7 @@
       return root;
     };
 
-    /* ── 19. Sort tree children: folders first, then alphabetical ── */
+    /* ── 18. Sort tree children: folders first, then alphabetical ── */
     const sortedEntries = ( children ) =>
       Object.entries( children ).sort( ( [ aName, aNode ], [ bName, bNode ] ) => {
         const aIsFolder = aNode.type === 'tree' || Object.keys( aNode.children ).length > 0;
@@ -1512,7 +1512,7 @@
         return aName.toLowerCase().localeCompare( bName.toLowerCase() );
       } );
 
-    /* ── 20. Generate HTML for a tree node ── */
+    /* ── 19. Generate HTML for a tree node ── */
     const renderNode = ( name, node, parentPath ) => {
       const fullPath = parentPath ? `${ parentPath }/${ name }` : name;
       const isFolder = node.type === 'tree' || Object.keys( node.children ).length > 0;
@@ -1544,7 +1544,7 @@
         `</div>`;
     };
 
-    /* ── 21. renderTree — batched rendering ── */
+    /* ── 20. renderTree — batched rendering ── */
     const renderTree = ( treeArray ) => {
       const treeList = document.getElementById( 'treeList' );
       treeList.innerHTML = '';
@@ -1594,7 +1594,7 @@
       } );
     };
 
-    /* ── 22. fetchTree ── */
+    /* ── 21. fetchTree ── */
     const fetchTree = async () => {
       if ( currentAbortController ) currentAbortController.abort();
       currentAbortController = new AbortController();
@@ -1666,7 +1666,7 @@
       }
     };
 
-    /* ── 23. Filter logic ── */
+    /* ── 22. Filter logic ── */
     let preFilterOpenState = null;
 
     const runFilter = () => {
@@ -1722,7 +1722,7 @@
       } );
     };
 
-    /* ── 24. Debounce helper ── */
+    /* ── 23. Debounce helper ── */
     const debounce = ( fn, ms ) => {
       let timer;
       return ( ...args ) => {
@@ -1731,7 +1731,7 @@
       };
     };
 
-    /* ── 25. Expand All / Collapse All ── */
+    /* ── 24. Expand All / Collapse All ── */
     const setupExpandAll = () => {
       const btn = document.getElementById( 'btnExpandAll' );
       let expanded = false;
@@ -1744,7 +1744,7 @@
       } );
     };
 
-    /* ── 26. File selection (event delegation) — calls selectFile ── */
+    /* ── 25. File selection (event delegation) — calls selectFile ── */
     const setupFileSelection = () => {
       document.getElementById( 'treeList' ).addEventListener( 'click', ( e ) => {
         const target = e.target.closest( '[data-action="select-file"]' );
@@ -1753,7 +1753,7 @@
       } );
     };
 
-    /* ── 27. Keyboard navigation ── */
+    /* ── 26. Keyboard navigation ── */
     const getVisibleTreeItems = () => {
       const treeList = document.getElementById( 'treeList' );
       const all = treeList.querySelectorAll( '.tree-folder, .tree-item' );
@@ -1869,7 +1869,7 @@
       } );
     };
 
-    /* ── 28. Auto-select README ── */
+    /* ── 27. Auto-select README ── */
     const autoSelectReadme = () => {
       if ( !state.tree ) return;
 
@@ -1890,7 +1890,7 @@
       if ( el ) el.scrollIntoView( { block: 'center', behavior: 'smooth' } );
     };
 
-    /* ── 29. scrollToTreeFolder ── */
+    /* ── 28. scrollToTreeFolder ── */
     const scrollToTreeFolder = ( folderPath ) => {
       const target = document.querySelector( `details[data-folder-path="${ CSS.escape( folderPath ) }"]` );
       if ( !target ) return;
@@ -1903,6 +1903,10 @@
       target.open = true;
       target.scrollIntoView( { block: 'center', behavior: 'smooth' } );
     };
+
+    /* ── 29. (resetToHome removed — was only called by the deprecated
+       breadcrumb reset-home action; the top-header click now handles the
+       "back to original repo" flow with a full reload.) ── */
 
     /* ── 30. Hash routing ── */
     const updateHash = ( path ) => {
@@ -1935,19 +1939,8 @@
       }
     };
 
-    /* ── 31. getNewTabUrl — local file, GitHub Pages, or blob/raw fallback ── */
+    /* ── 31. getNewTabUrl — GitHub Pages or raw fallback ── */
     const getNewTabUrl = async ( path ) => {
-      // Extensionless files (LICENSE, AUTHORS, etc.) — raw.githubusercontent.com
-      // serves these with Content-Disposition: attachment, which triggers a
-      // download. Prefer the local file when we have file:// access (browser
-      // shows it inline); otherwise fall back to the GitHub blob page.
-      const fileName = path.split( '/' ).pop();
-      if ( !fileName.includes( '.' ) ) {
-        const localUrl = localUrlFor( path );
-        if ( localUrl ) return localUrl;
-        return `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/blob/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
-      }
-
       if ( state.pagesEnabled === null ) {
         try {
           const headers = getAuthHeaders();
@@ -2204,7 +2197,7 @@
       }
     };
 
-    /* ── 34. Local-first helpers ── */
+    /* ── 33b. Local-first helpers ── */
     const localUrlFor = ( path ) => {
       if ( location.protocol !== 'file:' ) return null;
       if ( !state.localMode || state.localBase === null ) return null;
@@ -2245,7 +2238,7 @@
       }
     };
 
-    /* ── 35. fetchFileText — text content fetch ── */
+    /* ── 34. fetchFileText — text content fetch ── */
     const fetchFileText = async ( path, signal ) => {
       // Local-first: bypass cache so uncommitted edits show immediately
       const localUrl = localUrlFor( path );
@@ -2284,7 +2277,7 @@
       return text;
     };
 
-    /* ── 36. fetchFileBlob — binary content fetch ── */
+    /* ── 35. fetchFileBlob — binary content fetch ── */
     const fetchFileBlob = async ( path, signal, mimeType ) => {
       // Local-first
       const localUrl = localUrlFor( path );
@@ -2334,7 +2327,7 @@
       return rawUrl( path );
     };
 
-    /* ── 37. selectFile — main function ── */
+    /* ── 36. selectFile — main function ── */
     let lastRawText = '';
 
     const selectFile = async ( path, { skipHash = false } = {} ) => {
@@ -2466,7 +2459,7 @@
       contentArea.scrollTo( { top: 0 } );
     };
 
-    /* ── 38. setupContentActions — breadcrumb delegation, Copy, New Tab, view toggle ── */
+    /* ── 37. setupContentActions — breadcrumb delegation, Copy, New Tab, view toggle ── */
     const setupContentActions = () => {
       const contentArea = document.getElementById( 'contentArea' );
 
@@ -2528,7 +2521,7 @@
       } );
     };
 
-    /* ── 39. Global error handlers ── */
+    /* ── 38. Global error handlers ── */
     window.addEventListener( 'error', ( event ) => {
       const panel = document.createElement( 'div' );
       panel.className = 'error-panel';
@@ -2543,7 +2536,7 @@
       document.body.appendChild( panel );
     } );
 
-    /* ── 40. init ── */
+    /* ── 39. init ── */
     const init = async () => {
       // Sync Files-panel tooltip with the meta revised marker
       const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';

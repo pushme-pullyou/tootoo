@@ -1,6 +1,9 @@
 # TooToo — Development Journal
 
 
+## 2026-05-25
+
+* 2026-05-19 PDF opens in new tab instead of downloading
 
 ## 2026-04-26
 

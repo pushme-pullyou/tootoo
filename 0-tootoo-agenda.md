@@ -4,7 +4,7 @@
 
 ### App
 
-* 2026-05-19 PDF opens in new tab instead of downloading
+* 2026-05-25 ~ Files with no extension are sent to a new tab.
 * Favicon to GitHub organization
 * User theming
 * Make sure all the different code sections are relevant and are factual.
