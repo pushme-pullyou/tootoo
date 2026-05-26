@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-26 04:46">
+  <meta name="revised" content="2026-05-26 04:58">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1309,6 +1309,17 @@
             <li>Use <strong>A−</strong> / <strong>A+</strong> to adjust font size — helpful on phones and small screens</li>
             <li>Click <strong>🌙</strong> to toggle dark mode — your choice is saved across visits</li>
           </ul>
+          <h3>Keyboard shortcuts</h3>
+          <ul>
+            <li><kbd>/</kbd> — focus the filter box</li>
+            <li><kbd>\\</kbd> — focus the sidebar tree (jumps to the current selection)</li>
+            <li><kbd>↑</kbd> <kbd>↓</kbd> — move one item up / down</li>
+            <li><kbd>Home</kbd> <kbd>End</kbd> — jump to first / last visible item</li>
+            <li><kbd>PgUp</kbd> <kbd>PgDn</kbd> — jump about one viewport</li>
+            <li><kbd>→</kbd> — open folder / step into</li>
+            <li><kbd>←</kbd> — close folder / step out</li>
+            <li><kbd>Enter</kbd> <kbd>Space</kbd> — toggle folder or select file</li>
+          </ul>
         `;
 
         // Restore original panel header (selectFile replaces it with breadcrumbs)
@@ -1809,6 +1820,20 @@
           return;
         }
 
+        // `\` jumps focus into the tree so arrow / Page / Home / End keys
+        // start working. Prefers the currently-selected item, falls back
+        // to the first visible one.
+        if ( e.key === '\\' && active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' ) {
+          e.preventDefault();
+          const visible = getVisibleTreeItems();
+          if ( visible.length === 0 ) return;
+          const activeItem = document.querySelector( '#treeList .tree-item.active' );
+          const target = ( activeItem && visible.includes( activeItem ) ) ? activeItem : visible[ 0 ];
+          target.focus();
+          target.scrollIntoView( { block: 'nearest' } );
+          return;
+        }
+
         if ( !treeList.contains( active ) ) return;
         if ( !active.classList.contains( 'tree-folder' ) && !active.classList.contains( 'tree-item' ) ) return;
 
@@ -1827,6 +1852,29 @@
             e.preventDefault();
             const prev = visible[ idx - 1 ];
             if ( prev ) { prev.focus(); selectFileItem( prev ); }
+            break;
+          }
+          case 'Home': {
+            e.preventDefault();
+            const first = visible[ 0 ];
+            if ( first && first !== active ) { first.focus(); selectFileItem( first ); }
+            break;
+          }
+          case 'End': {
+            e.preventDefault();
+            const last = visible[ visible.length - 1 ];
+            if ( last && last !== active ) { last.focus(); selectFileItem( last ); }
+            break;
+          }
+          case 'PageDown':
+          case 'PageUp': {
+            e.preventDefault();
+            const itemHeight = active.getBoundingClientRect().height || 24;
+            const pageSize = Math.max( 1, Math.floor( treeList.clientHeight / itemHeight ) - 1 );
+            const dir = e.key === 'PageDown' ? 1 : -1;
+            const newIdx = Math.max( 0, Math.min( idx + dir * pageSize, visible.length - 1 ) );
+            const target = visible[ newIdx ];
+            if ( target && target !== active ) { target.focus(); selectFileItem( target ); }
             break;
           }
           case 'Enter':
