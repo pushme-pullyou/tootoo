@@ -12,9 +12,12 @@ SOURCE_FILE="$SCRIPT_DIR/index.html"
 DESTINATIONS=(
   'G:\My Drive\2026-theo-github\heritage-happenings.github.io'
   'G:\My Drive\2026-theo-github\theo-armour-agenda'
-  'G:\My Drive\2026-theo-github\theo-armour-qdapages'
-  'G:\My Drive\2026-theo-github\theo-armour-qdata'
   'G:\My Drive\2026-theo-github\theo-armour-aa'
+  'G:\My Drive\2026-theo-github\theo-armour-genealogy'
+  'G:\My Drive\2026-theo-github\theo-armour-pages'
+  'G:\My Drive\2026-theo-github\theo-armour-qdata'
+  'G:\My Drive\2026-theo-github\theo-armour-sandbox'
+  'G:\My Drive\2026-theo-github\theo-armour-wikitheo'
   'I:\My Drive\tech'
 )
 
@@ -30,8 +33,8 @@ Edit the DESTINATIONS array near the top of this script to change targets.
 
 For each destination:
   - The folder is created if it doesn't exist.
-  - If index.html already exists there, it is backed up as
-    index-YYYY-MM-DD-HH-MM.html before being overwritten.
+  - Any existing index.html is overwritten. No backup is made — the
+    canonical history lives in the tootoo repo.
   - If the folder can't be created (e.g. drive not mounted), the
     destination is skipped and the script continues.
 
@@ -61,7 +64,6 @@ fi
 echo "Source: $SOURCE_FILE"
 echo
 
-STAMP="$(date '+%Y-%m-%d-%H-%M')"
 copied=0
 skipped=0
 
@@ -73,16 +75,6 @@ for raw_dest in "${DESTINATIONS[@]}"; do
     echo "SKIP  $raw_dest  (cannot create folder)"
     skipped=$((skipped + 1))
     continue
-  fi
-
-  if [[ -f "$DEST_FILE" ]]; then
-    BACKUP_FILE="$DEST_DIR/index-$STAMP.html"
-    if ! cp -p "$DEST_FILE" "$BACKUP_FILE"; then
-      echo "SKIP  $raw_dest  (backup failed)"
-      skipped=$((skipped + 1))
-      continue
-    fi
-    echo "  backup: $BACKUP_FILE"
   fi
 
   if cp -p "$SOURCE_FILE" "$DEST_FILE"; then

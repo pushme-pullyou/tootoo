@@ -2,8 +2,9 @@
 
 "G:\My Drive\2026-theo-github\heritage-happenings.github.io"
 "G:\My Drive\2026-theo-github\theo-armour-agenda"
-"G:\My Drive\2026-theo-github\theo-armour-qdapages"
 "G:\My Drive\2026-theo-github\theo-armour-qdata"
+"G:\My Drive\2026-theo-github\theo-armour-pages"
+"G:\My Drive\2026-theo-github\theo-armour-sandbox"
 "G:\My Drive\2026-theo-github\theo-armour-aa"
 "I:\My Drive\tech"
 
