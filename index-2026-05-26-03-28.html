@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-26 03:28">
+  <meta name="revised" content="2026-05-26 02:56">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -760,10 +760,6 @@
     const SHEET_EXTS = [ 'xlsx', 'xls', 'csv', 'ods' ];
     const STREAMABLE_EXTS = [ ...IMAGE_EXTS, ...AUDIO_EXTS, ...VIDEO_EXTS, 'pdf' ];
     const NO_COPY_EXTS = [ ...STREAMABLE_EXTS, ...SHEET_EXTS ];
-    // Extensions that Pages/raw serve with a MIME type browsers download
-    // by default. Routed to the GitHub blob page in getNewTabUrl, which
-    // renders them inline (CSV as a table, archives as a listing, etc.).
-    const DOWNLOAD_PRONE_EXTS = [ ...SHEET_EXTS, 'tsv', 'zip', 'tar', 'gz', '7z', 'doc', 'docx' ];
     const LARGE_FILE_WARNING_BYTES = 1024 * 1024;
     const approvedLargeFiles = new Set();
     const RATE_LIMIT_MESSAGE = 'Rate limited. Add a GitHub token for higher limits.';
@@ -1941,19 +1937,16 @@
 
     /* ── 31. getNewTabUrl — local file, GitHub Pages, or blob/raw fallback ── */
     const getNewTabUrl = async ( path ) => {
+      // Extensionless files (LICENSE, AUTHORS, etc.) — raw.githubusercontent.com
+      // serves these with Content-Disposition: attachment, which triggers a
+      // download. Prefer the local file when we have file:// access (browser
+      // shows it inline); otherwise fall back to the GitHub blob page.
       const fileName = path.split( '/' ).pop();
-      const ext = fileName.includes( '.' ) ? fileName.split( '.' ).pop().toLowerCase() : '';
-      const blobUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/blob/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
-
-      // Extensionless files (LICENSE, AUTHORS, etc.) — Pages/raw triggers
-      // a download. Prefer the local file when available; otherwise the
-      // GitHub blob page renders the content inline.
-      if ( !ext ) return localUrlFor( path ) || blobUrl;
-
-      // Download-prone extensions (CSV, archives, Office docs) — Pages/raw
-      // would return a MIME the browser downloads. The blob page renders
-      // them (CSV as a sortable table, archives as a listing, etc.).
-      if ( DOWNLOAD_PRONE_EXTS.includes( ext ) ) return blobUrl;
+      if ( !fileName.includes( '.' ) ) {
+        const localUrl = localUrlFor( path );
+        if ( localUrl ) return localUrl;
+        return `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/blob/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
+      }
 
       if ( state.pagesEnabled === null ) {
         try {
@@ -1971,6 +1964,7 @@
 
       if ( state.pagesEnabled ) {
         // GitHub Pages / Jekyll renders .md as HTML; README.md becomes the directory index.html
+        const fileName = path.split( '/' ).pop();
         const isReadme = /^readme\.md$/i.test( fileName );
         const pagesPath = isReadme
           ? path.slice( 0, path.length - fileName.length )  // strip filename → directory URL
