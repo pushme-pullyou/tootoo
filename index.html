@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-26 03:28">
+  <meta name="revised" content="2026-05-26 03:47">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -760,9 +760,9 @@
     const SHEET_EXTS = [ 'xlsx', 'xls', 'csv', 'ods' ];
     const STREAMABLE_EXTS = [ ...IMAGE_EXTS, ...AUDIO_EXTS, ...VIDEO_EXTS, 'pdf' ];
     const NO_COPY_EXTS = [ ...STREAMABLE_EXTS, ...SHEET_EXTS ];
-    // Extensions that Pages/raw serve with a MIME type browsers download
-    // by default. Routed to the GitHub blob page in getNewTabUrl, which
-    // renders them inline (CSV as a table, archives as a listing, etc.).
+    // Extensions Pages serves with a MIME the browser downloads by default.
+    // In New Tab these go straight to raw.githubusercontent.com so the user
+    // gets the file on disk — the expected action for data/binary files.
     const DOWNLOAD_PRONE_EXTS = [ ...SHEET_EXTS, 'tsv', 'zip', 'tar', 'gz', '7z', 'doc', 'docx' ];
     const LARGE_FILE_WARNING_BYTES = 1024 * 1024;
     const approvedLargeFiles = new Set();
@@ -1950,10 +1950,10 @@
       // GitHub blob page renders the content inline.
       if ( !ext ) return localUrlFor( path ) || blobUrl;
 
-      // Download-prone extensions (CSV, archives, Office docs) — Pages/raw
-      // would return a MIME the browser downloads. The blob page renders
-      // them (CSV as a sortable table, archives as a listing, etc.).
-      if ( DOWNLOAD_PRONE_EXTS.includes( ext ) ) return blobUrl;
+      // Download-prone extensions (CSV, archives, Office docs) — go to the
+      // raw file so the browser downloads it directly. Data/binary files
+      // are most useful on disk; bypassing the Pages MD/HTML wrapper.
+      if ( DOWNLOAD_PRONE_EXTS.includes( ext ) ) return rawUrl( path );
 
       if ( state.pagesEnabled === null ) {
         try {
