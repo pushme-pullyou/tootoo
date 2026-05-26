@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-26 04:46">
+  <meta name="revised" content="2026-05-26 04:12">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -721,10 +721,7 @@
          4. CONFIG.sourceRepoUrl             (below) — top-header GitHub
             icon target and About page "Source code" link. Point this
             at your fork so the header always links back to your repo.
-         5. CONFIG.hiddenFolders             (below) — folder names to
-            omit from the sidebar tree (case-insensitive, matches at any
-            depth). Files inside stay reachable by direct URL/hash.
-         6. <link rel="icon" ...>            in <head>     — SVG favicon
+         5. <link rel="icon" ...>            in <head>     — SVG favicon
 
        CONFIG_DEFAULTS just snapshots the starter values so detectRepo
        can fall back to them after auto-detection fails.
@@ -737,7 +734,6 @@
       storagePrefix: 'tootoo',  // localStorage namespace; change for forks
       appName: 'TooToo',        // <title>, header label, About heading
       sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo', // top-header GitHub icon target; About page "Source code" link
-      hiddenFolders: [ 'Images' ], // folder names to omit from the sidebar tree (case-insensitive, any depth)
     };
 
     const CONFIG_DEFAULTS = {
@@ -1490,10 +1486,9 @@
     /* ── 18. Build nested tree structure ── */
     const buildNestedTree = ( flatTree ) => {
       const root = { children: {} };
-      const hidden = new Set( ( CONFIG.hiddenFolders || [] ).map( ( s ) => s.toLowerCase() ) );
       for ( const item of flatTree ) {
         const parts = item.path.split( '/' );
-        if ( parts.some( ( p ) => p.startsWith( '.' ) || hidden.has( p.toLowerCase() ) ) ) continue;
+        if ( parts.some( ( p ) => p.startsWith( '.' ) ) ) continue;
         let current = root;
         for ( let i = 0; i < parts.length; i++ ) {
           const part = parts[ i ];
