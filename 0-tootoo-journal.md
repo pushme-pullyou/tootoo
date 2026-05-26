@@ -4,7 +4,8 @@
 ## 2026-05-25
 
 * 2026-05-19 PDF opens in new tab instead of downloading
-
+* Add keystroke to initiate sidebar scrolling
+* 2026-05-19 file size slides under filename, not in a separate column
 ## 2026-04-26
 
 ## Why TooToo?

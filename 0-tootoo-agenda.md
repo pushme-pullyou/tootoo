@@ -12,9 +12,7 @@
 
 ### Sidebar
 
-* 2026-05-19 file size slides under filename, not in a separate column
 * Much better filters
-* Add keystroke to initiate sidebar scrolling
 * If there are multiple branches add a branch selector to the sidebar
 * Add a footer to the sidebar with copyright and license info, and a link go to top
 * Control B to Toggle sidebar
