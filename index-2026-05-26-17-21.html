@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-26 20:14">
+  <meta name="revised" content="2026-05-26 05:12">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -788,7 +788,6 @@
       appName: 'TooToo',        // <title>, header label, About heading
       sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo', // top-header GitHub icon target; About page "Source code" link
       hiddenFolders: [ 'Images' ], // folder names to omit from the sidebar tree (case-insensitive, any depth)
-      maxRepoFiles: 5000,       // refuse to render repos larger than this (or any truncated GitHub tree response)
     };
 
     const CONFIG_DEFAULTS = {
@@ -806,7 +805,6 @@
       pagesEnabled: null,
       localBase: null,   // prefix from app to repo root (e.g. '../' or ''); null = unknown
       localMode: false,  // true when a probe confirmed local file reads work
-      oversized: false,  // true when the repo exceeds CONFIG.maxRepoFiles or GitHub truncated the tree
     };
 
     /* ── 3. Extension constants ── */
@@ -872,9 +870,8 @@
 
     const clearCurrentFilePreference = () => {
       try {
-        sessionStorage.removeItem( getCurrentFileKey() );
-        localStorage.removeItem( getCurrentFileKey() );          // legacy: pre-sessionStorage versions
-        localStorage.removeItem( storageKey( 'currentFile' ) );  // legacy: pre-scoped key
+        localStorage.removeItem( getCurrentFileKey() );
+        localStorage.removeItem( storageKey( 'currentFile' ) );
       } catch ( _ ) { /* storage disabled */ }
     };
 
@@ -1483,7 +1480,7 @@
 
     /* ── 14. GitHub API helpers ── */
 
-    const getToken = () => localStorage.getItem( tokenStorageKey() ) || '';
+    const getToken = () => localStorage.getItem( tokenStorageKey() ) || localStorage.getItem( 'githubToken' ) || '';
 
     const getAuthHeaders = () => {
       const headers = { Accept: 'application/vnd.github+json' };
@@ -1666,43 +1663,17 @@
             setTimeout( renderBatch, 0 );
           } else {
             statusEl.remove();
-            refreshTreeCache();
             resolve();
           }
         };
 
         if ( total === 0 ) {
           statusEl.remove();
-          refreshTreeCache();
           resolve();
         } else {
           renderBatch();
         }
       } );
-    };
-
-    /* ── 21b. Oversized-repo panel ──
-       Repos beyond CONFIG.maxRepoFiles (or any tree the GitHub API truncates)
-       would render a misleading half-tree and choke the sidebar filter. We
-       show a friendly bail-out instead and link out to github.com. */
-    const showOversizedRepoPanel = ( count, truncated ) => {
-      const repoUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`;
-      const countLabel = truncated
-        ? `over ${ count.toLocaleString() } files (GitHub truncated the tree response)`
-        : `${ count.toLocaleString() } files`;
-
-      document.getElementById( 'treeList' ).innerHTML =
-        `<div style="padding: 0.6rem 0.5rem; font-size: 0.85rem; opacity: 0.8;">Repository too large to browse here.</div>`;
-
-      const cb = document.getElementById( 'contentBody' );
-      cb.innerHTML = `
-        <div class="error-panel">
-          <h3 style="margin-top: 0;">Repository too large for ${ escapeHTML( CONFIG.appName ) }</h3>
-          <p><strong>${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }</strong> contains ${ escapeHTML( countLabel ) }. ${ escapeHTML( CONFIG.appName ) } is built for small-to-medium personal repositories; larger trees overwhelm the sidebar render and the per-keystroke filter.</p>
-          <p><a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">Browse this repository on github.com →</a></p>
-          <p style="font-size: 0.85rem; opacity: 0.75; margin-bottom: 0;">If you maintain a fork, raise <code>CONFIG.maxRepoFiles</code> (currently ${ CONFIG.maxRepoFiles.toLocaleString() }) to override this cutoff. Truncated trees cannot be overridden — that is a GitHub API response limit.</p>
-        </div>
-      `;
     };
 
     /* ── 22. fetchTree ── */
@@ -1760,18 +1731,16 @@
         if ( !treeRes.ok ) throw new Error( `Failed to fetch tree: ${ treeRes.status }` );
 
         const treeData = await treeRes.json();
-        const treeCount = treeData.tree?.length || 0;
-        const tooLarge = treeData.truncated || treeCount > CONFIG.maxRepoFiles;
-
-        if ( tooLarge ) {
-          state.tree = null;
-          state.oversized = true;
-          showOversizedRepoPanel( treeCount, treeData.truncated );
-          return;
-        }
 
         state.tree = treeData.tree;
         await renderTree( state.tree );
+
+        if ( treeData.truncated ) {
+          const warning = document.createElement( 'div' );
+          warning.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; padding: 0.5rem; border-radius: 4px; margin: 0 0.5rem 0.5rem 0.5rem; font-size: 0.85rem;';
+          warning.textContent = '⚠️ Repository tree is truncated. Some files may not appear.';
+          treeList.insertBefore( warning, treeList.firstChild );
+        }
 
       } catch ( err ) {
         if ( err.name === 'AbortError' ) return;
@@ -1781,26 +1750,17 @@
 
     /* ── 23. Filter logic ── */
     let preFilterOpenState = null;
-    // Cached after each renderTree(); reused by every filter keystroke so we
-    // don't run two querySelectorAll walks over the tree on every input event.
-    let cachedTreeItems = [];
-    let cachedTreeFolders = [];
-
-    const refreshTreeCache = () => {
-      const treeList = document.getElementById( 'treeList' );
-      cachedTreeItems = Array.from( treeList.querySelectorAll( '.tree-item' ) );
-      cachedTreeFolders = Array.from( treeList.querySelectorAll( 'details' ) );
-    };
 
     const runFilter = () => {
       const query = document.getElementById( 'treeFilter' ).value.trim().toLowerCase();
+      const treeList = document.getElementById( 'treeList' );
       const btnFilterClear = document.getElementById( 'btnFilterClear' );
       const normalizedQuery = query.replace( /[-\s]+/g, ' ' );
 
       btnFilterClear.style.display = query ? 'block' : 'none';
 
-      const items = cachedTreeItems;
-      const folders = cachedTreeFolders;
+      const items = treeList.querySelectorAll( '.tree-item' );
+      const folders = treeList.querySelectorAll( 'details' );
 
       if ( !query ) {
         items.forEach( ( el ) => { el.classList.remove( 'is-hidden' ); } );
@@ -1832,7 +1792,7 @@
         el.classList.toggle( 'is-hidden', !matches );
       } );
 
-      const foldersArr = folders.slice().reverse();
+      const foldersArr = Array.from( folders ).reverse();
       foldersArr.forEach( ( details ) => {
         const hasVisible = details.querySelector( '.tree-item:not(.is-hidden)' );
         if ( hasVisible ) {
@@ -2081,11 +2041,10 @@
       const hash = location.hash.slice( 1 );
       if ( !hash ) return;
       const path = decodeURIComponent( hash );
-      if ( !state.tree && !state.oversized ) {
+      if ( !state.tree ) {
         document.getElementById( 'contentBody' ).innerHTML = '<p>Loading tree…</p>';
         await fetchTree();
       }
-      if ( state.oversized ) return;  // panel already in place; don't overwrite
       const found = state.tree?.find( ( item ) => item.path === path && item.type === 'blob' );
       if ( found ) {
         selectFile( path, { skipHash: true } );
@@ -2123,11 +2082,11 @@
       }
 
       if ( state.pagesEnabled ) {
-        // GitHub Pages / Jekyll renders .md and .markdown as HTML; README.* becomes the directory index.html
-        const isReadme = /^readme\.(md|markdown)$/i.test( fileName );
+        // GitHub Pages / Jekyll renders .md as HTML; README.md becomes the directory index.html
+        const isReadme = /^readme\.md$/i.test( fileName );
         const pagesPath = isReadme
           ? path.slice( 0, path.length - fileName.length )  // strip filename → directory URL
-          : path.replace( /\.(md|markdown)$/i, '' );        // strip .md/.markdown extension
+          : path.replace( /\.md$/i, '' );                   // strip .md extension
         const encodedPagesPath = encodePath( pagesPath );
         const isUserPage = state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`;
         return isUserPage
@@ -2241,7 +2200,7 @@
             a.removeAttribute( 'href' );
             a.style.cursor = 'pointer';
             a.style.color = 'var(--highlight-color)';
-            a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( blobMatch[ 4 ], { skipFocus: true } ); } );
+            a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( blobMatch[ 4 ] ); } );
             return;
           }
 
@@ -2258,11 +2217,11 @@
           a.removeAttribute( 'href' );
           a.style.cursor = 'pointer';
           a.style.color = 'var(--highlight-color)';
-          a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( normalized, { skipFocus: true } ); } );
+          a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( normalized ); } );
         } );
 
         const images = Array.from( mdBody.querySelectorAll( 'img[src]' ) );
-        const resolveOne = async ( img ) => {
+        await Promise.all( images.map( async ( img ) => {
           const src = img.getAttribute( 'src' );
           if ( !src ) return;
 
@@ -2284,13 +2243,7 @@
           const resolvedSrc = await resolveMediaUrl( normalized, signal );
           img.setAttribute( 'src', resolvedSrc );
           img.setAttribute( 'loading', 'lazy' );
-        };
-        // Cap concurrency so image-heavy READMEs don't burst the rate limit
-        // when a token is set (each call may hit api.github.com).
-        const IMAGE_CONCURRENCY = 4;
-        for ( let i = 0; i < images.length; i += IMAGE_CONCURRENCY ) {
-          await Promise.all( images.slice( i, i + IMAGE_CONCURRENCY ).map( resolveOne ) );
-        }
+        } ) );
       }
     };
 
@@ -2505,7 +2458,7 @@
     /* ── 37. selectFile — main function ── */
     let lastRawText = '';
 
-    const selectFile = async ( path, { skipHash = false, skipFocus = false } = {} ) => {
+    const selectFile = async ( path, { skipHash = false } = {} ) => {
       // Abort in-flight
       if ( currentAbortController ) currentAbortController.abort();
       currentAbortController = new AbortController();
@@ -2541,7 +2494,7 @@
         }
         treeEl.classList.add( 'active' );
         treeEl.scrollIntoView( { block: 'center', behavior: 'auto' } );
-        if ( !skipFocus ) treeEl.focus();
+        treeEl.focus();
       }
 
       state.currentFilePath = path;
@@ -2626,10 +2579,9 @@
         updateHash( path );
       }
 
-      // Save last file path for the current session only (cleared when the tab/browser closes).
-      try { sessionStorage.setItem( getCurrentFileKey(), path ); } catch ( _ ) { /* storage disabled */ }
-      try { localStorage.removeItem( getCurrentFileKey() ); } catch ( _ ) { /* clear pre-sessionStorage entry */ }
-      try { localStorage.removeItem( storageKey( 'currentFile' ) ); } catch ( _ ) { /* legacy un-scoped key */ }
+      // Save last file path
+      localStorage.setItem( getCurrentFileKey(), path );
+      try { localStorage.removeItem( storageKey( 'currentFile' ) ); } catch ( _ ) { /* storage disabled */ }
 
       // Scroll content area to top
       contentArea.scrollTo( { top: 0 } );
@@ -2749,11 +2701,6 @@
         updateHeaderFromConfig();
         document.getElementById( 'contentBody' ).innerHTML = '<p>Loading tree…</p>';
         await fetchTree();
-
-        // Oversized-repo bail-out: panel is already in place; skip file-open
-        // logic so deep links / sessionStorage paths don't fight the panel.
-        if ( state.oversized ) return;
-
         document.getElementById( 'btnExpandAll' ).style.display = '';
 
         // Probe for local file access; enables fetching uncommitted edits
@@ -2764,16 +2711,14 @@
           await handleHashChange();
         } else {
           const currentFileKey = getCurrentFileKey();
-          // One-time cleanup of any pre-sessionStorage entry left in localStorage.
-          try { localStorage.removeItem( currentFileKey ); } catch ( _ ) { /* storage disabled */ }
-          const lastPath = sessionStorage.getItem( currentFileKey );
+          const lastPath = localStorage.getItem( currentFileKey );
           const lastPathExists = lastPath && state.tree?.some( ( item ) => item.path === lastPath && item.type === 'blob' );
 
           if ( lastPathExists ) {
             await selectFile( lastPath, { skipHash: false } );
           } else {
             if ( lastPath ) {
-              try { sessionStorage.removeItem( currentFileKey ); } catch ( _ ) { /* storage disabled */ }
+              try { localStorage.removeItem( currentFileKey ); } catch ( _ ) { /* storage disabled */ }
             }
             autoSelectReadme();
           }

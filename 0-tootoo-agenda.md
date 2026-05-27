@@ -12,13 +12,13 @@
 
 ### App
 
-* 2026-05-26 ~ Reload last page and file in the sidebar, and open it on load. Store in session storage.
+* 2026-05-26 ~ support printing the current file with a clean print stylesheet
 * 2026-05-26 ~ Config in external file.
+* 2026-05-26 ~ update both local and GitHub repos
+
+## Theming
+
 * 2026-05-26 ~ theming
-* 2026-05-26 ~ support for the linux repo
-* 2026-05-26 ~ Update readme
-* 2026-05-26 ~ Update about page
-* 2026-05-26 ~update both local and GitHub repos
 * 2026-05-26 ~ Add a favicon for each repo, using the GitHub organization avatar if available, otherwise a default icon.
 
 
@@ -29,6 +29,9 @@
 * Control B to Toggle sidebar
 
 ### About
+
+* 2026-05-26 ~ Update readme
+* 2026-05-26 ~ Update about page
 * 2026-04-30 About: add copyright and license info, and a link to the GitHub repo
 * 2026-04-30 About ~ rejig: repo, tips, about TT ~ click again to return
 * About shows number of branches, not just the default branch
