@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-26 20:32">
+  <meta name="revised" content="2026-05-26 21:16">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -89,6 +89,8 @@
       font-family: var(--font-family);
       color: var(--text-color);
       background-color: var(--primary-bg);
+      /* Per-fork brand stripe across the very top of the viewport. */
+      border-top: 3px solid var(--highlight-color);
     }
 
     /* ── Header ── */
@@ -108,16 +110,37 @@
     #headerGitHub {
       display: flex;
       align-items: center;
-      color: var(--text-color);
+      /* SVG fill="currentColor" picks this up so the icon tints per-fork. */
+      color: var(--highlight-color);
       text-decoration: none;
+    }
+
+    body.dark-mode #headerGitHub {
+      color: color-mix(in srgb, var(--highlight-color) 65%, white);
+    }
+
+    /* GitHub icon inside the content-header file-title (only direct <a>
+       child of .file-title — the breadcrumb links live inside a <span>). */
+    .file-title > a {
+      color: var(--highlight-color);
+    }
+
+    body.dark-mode .file-title > a {
+      color: color-mix(in srgb, var(--highlight-color) 65%, white);
     }
 
     #headerTitle {
       font-weight: bold;
-      font-size: 1.1rem;
+      /* Sized so the title is visually present, but still shorter than the
+         header buttons so the bar's overall height stays driven by them. */
+      font-size: 1.35rem;
       text-decoration: none;
-      color: inherit;
+      color: var(--highlight-color);
       cursor: pointer;
+    }
+
+    body.dark-mode #headerTitle {
+      color: color-mix(in srgb, var(--highlight-color) 65%, white);
     }
 
     /* ── Shared button hover/active ── */
@@ -223,7 +246,17 @@
 
     .panel-header h3 {
       margin: 0;
-      font-size: 0.95rem;
+      /* Matches the breadcrumb body text in the content header so the
+         sidebar and content header read at the same scale. Semi-bold
+         (600) gives a section-label feel without the full browser-default
+         bold (700) that overpowered the breadcrumb's lighter leading text. */
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--highlight-color);
+    }
+
+    body.dark-mode .panel-header h3 {
+      color: color-mix(in srgb, var(--highlight-color) 65%, white);
     }
 
     /* ── Filter wrap ── */
@@ -465,6 +498,21 @@
       word-wrap: break-word;
     }
 
+    /* Tint top-level headings with the theme color so forks feel branded in
+       long-form content. h3 and below stay at body color for legibility. */
+    .markdown-body h1,
+    .markdown-body h2 {
+      color: var(--highlight-color);
+    }
+
+    /* Dark mode: lighten the heading color so saturated theme colors don't
+       shimmer against dark backgrounds. color-mix is Chrome 111+, which
+       matches the project's "modern Chrome only" target. */
+    body.dark-mode .markdown-body h1,
+    body.dark-mode .markdown-body h2 {
+      color: color-mix(in srgb, var(--highlight-color) 65%, white);
+    }
+
     .markdown-body img {
       max-width: 100%;
       height: auto;
@@ -697,7 +745,7 @@
     <div class="sidebar">
       <div class="panel-header" id="filesPanelHeader">
         <h3 id="hFiles">Files</h3>
-        <button id="btnExpandAll" class="header-btn" style="display: none;" title="Expand All Folders"
+        <button id="btnExpandAll" class="file-btn" style="display: none;" title="Expand All Folders"
           aria-label="Expand all folders">Expand All</button>
       </div>
       <div class="filter-wrap">

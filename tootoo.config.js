@@ -32,10 +32,10 @@ window.TOOTOO_CONFIG = {
   //                  middle-dot separator
   // faviconLetters : two characters drawn into the SVG favicon; uppercased
   // faviconColor   : background color of the SVG favicon
-  // themeColor: '#3a8856',
+  themeColor: '#3a8856',
   // subtitle: 'Daily journal entries',
-  // faviconLetters: 'MJ',
-  // faviconColor: '#3a8856',
+  faviconLetters: 'tt',
+  faviconColor: '#3a8856',
 
   // ── Browsing behavior ───────────────────────────────────────────────────
   // hiddenFolders : folder names to omit from the sidebar tree

@@ -13,7 +13,9 @@
 ### App
 
 * 2026-05-26 ~ support printing the current file with a clean print stylesheet
-* 2026-05-26 ~ Config in external file.
+
+## Copy Index to Repo
+
 * 2026-05-26 ~ update both local and GitHub repos
 
 ## Theming

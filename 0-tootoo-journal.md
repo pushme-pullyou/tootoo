@@ -4,6 +4,7 @@
 
 currently the current url used when reloading is being saved to local storage. I think this can be confusing to a user who's not been to the site for a while. What would that be a more normal way of handling reloading?
 
+* 2026-05-26 ~ Config in external file.
 * 2026-05-26 ~ support for the linux repo
 * 2026-05-26 ~ Reload last page and file in the sidebar, and open it on load. Store in session storage.
 * 2026-05-25 ~ Files with no extension are sent to a new tab.
