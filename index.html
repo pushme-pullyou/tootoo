@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-26 20:14">
+  <meta name="revised" content="2026-05-26 20:32">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -24,6 +24,15 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.1/dist/purify.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+  <!--
+    Optional per-fork branding/config. If tootoo.config.js exists next to
+    this file, it sets window.TOOTOO_CONFIG = { … } and we merge it over
+    the built-in CONFIG block before init runs. Missing file is fine —
+    forks that don't customize anything can omit it. See tootoo.config.js
+    in the canonical repo for the full list of knobs.
+  -->
+  <script src="tootoo.config.js" onerror="void 0"></script>
   <style>
     /* ── Custom Properties ── */
     :root {
@@ -758,25 +767,35 @@
 
     /* ══════════════════════════════════════════════════════════════════
        ── FORK CUSTOMIZATION ZONE ──
-       Most forks only need to touch the things in this block:
+       Preferred: drop a tootoo.config.js file next to index.html and set
+       window.TOOTOO_CONFIG = { … } there. Anything you set overrides the
+       built-in CONFIG below. That way index.html stays byte-identical to
+       canonical and you can sync it with a plain `cp`. See the sample
+       tootoo.config.js shipped alongside this file for every available
+       knob.
 
-         1. CONFIG.owner / .repo / .branch  (below) — pre-load a specific
-            repo. Empty values fall through to URL params, GitHub Pages
-            URL, .git/config (file:// only), and the manual repo form.
-         2. CONFIG.storagePrefix             (below) — localStorage
-            namespace. Change this if your fork should keep its own
-            state separate from TooToo's.
-         3. CONFIG.appName                   (below) — drives <title>,
-            the header label, and the About heading.
-         4. CONFIG.sourceRepoUrl             (below) — top-header GitHub
-            icon target and About page "Source code" link. Point this
-            at your fork so the header always links back to your repo.
-         5. CONFIG.hiddenFolders             (below) — folder names to
-            omit from the sidebar tree (case-insensitive, matches at any
-            depth). Files inside stay reachable by direct URL/hash.
-         6. <link rel="icon" ...>            in <head>     — SVG favicon
+       The CONFIG block below holds the built-in defaults. Editing it
+       in-place still works for forks that don't want a sibling file,
+       but every change has to be re-applied on every canonical sync.
 
-       CONFIG_DEFAULTS just snapshots the starter values so detectRepo
+       Knobs you'll usually want to set:
+         • owner / repo / branch  — pre-load a specific repo. Empty
+           values fall through to URL params, GitHub Pages URL,
+           .git/config (file:// only), and the manual repo form.
+         • storagePrefix          — localStorage namespace. Change so
+           your fork's state doesn't collide with canonical TooToo's.
+         • appName                — <title>, header label, About heading.
+         • sourceRepoUrl          — top-header GitHub icon target and
+           About page "Source code" link.
+         • hiddenFolders          — folder names to omit from the
+           sidebar tree (case-insensitive, matches at any depth).
+         • maxRepoFiles           — refuse to render repos bigger than
+           this; protects forks from accidental linux-scale browsing.
+         • themeColor             — highlight color (light + dark mode).
+         • subtitle               — small muted text after the title.
+         • faviconLetters / faviconColor — restyle the SVG favicon.
+
+       CONFIG_DEFAULTS just snapshots owner/repo/branch so detectRepo
        can fall back to them after auto-detection fails.
        ══════════════════════════════════════════════════════════════════ */
     /* ── 2. CONFIG & state ── */
@@ -789,7 +808,19 @@
       sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo', // top-header GitHub icon target; About page "Source code" link
       hiddenFolders: [ 'Images' ], // folder names to omit from the sidebar tree (case-insensitive, any depth)
       maxRepoFiles: 5000,       // refuse to render repos larger than this (or any truncated GitHub tree response)
+
+      // Branding knobs (forks usually override these via tootoo.config.js)
+      themeColor: '',           // hex string, e.g. '#3a8856'; empty = built-in blue (#2563eb)
+      subtitle: '',             // small muted text appended after the header title; empty = none
+      faviconLetters: 'TT',     // two characters drawn into the SVG favicon (also the sidebar-footer icon)
+      faviconColor: '#2563eb',  // background color of the SVG favicon
     };
+
+    // Merge external config (set by tootoo.config.js, if present) over the
+    // built-in defaults. Forks customize here without touching index.html.
+    if ( window.TOOTOO_CONFIG && typeof window.TOOTOO_CONFIG === 'object' ) {
+      Object.assign( CONFIG, window.TOOTOO_CONFIG );
+    }
 
     const CONFIG_DEFAULTS = {
       owner: CONFIG.owner,
@@ -1040,8 +1071,16 @@
       const label = APP_ORIGIN.owner && APP_ORIGIN.repo
         ? `${ APP_ORIGIN.owner } / ${ APP_ORIGIN.repo }`
         : CONFIG.appName;
-      document.title = label;
-      document.getElementById( 'headerTitle' ).textContent = label;
+      const fullTitle = CONFIG.subtitle ? `${ label } · ${ CONFIG.subtitle }` : label;
+      document.title = fullTitle;
+      const titleEl = document.getElementById( 'headerTitle' );
+      titleEl.textContent = label;
+      if ( CONFIG.subtitle ) {
+        const sub = document.createElement( 'span' );
+        sub.style.cssText = 'opacity: 0.6; font-weight: normal; margin-left: 0.4rem; font-size: 0.9rem;';
+        sub.textContent = '· ' + CONFIG.subtitle;
+        titleEl.appendChild( sub );
+      }
       document.getElementById( 'headerGitHub' ).href = APP_ORIGIN.url;
     };
 
@@ -1177,6 +1216,33 @@
         // Narrow viewport, no saved preference → start at 25% of viewport
         document.documentElement.style.setProperty( '--sidebar-width', Math.round( window.innerWidth * 0.25 ) + 'px' );
       }
+
+      // Set themeColor on both <html> and <body> so it wins in light AND dark
+      // mode (the body.dark-mode rule otherwise overrides the :root default).
+      if ( CONFIG.themeColor ) {
+        document.documentElement.style.setProperty( '--highlight-color', CONFIG.themeColor );
+        document.body.style.setProperty( '--highlight-color', CONFIG.themeColor );
+      }
+    };
+
+    /* Regenerate the inline SVG favicon from CONFIG.faviconLetters/Color so
+       forks get a visually distinct tab icon and sidebar-footer button.
+       The sidebar-footer button reads its src from the <link rel="icon">
+       href later in setupListeners, so updating the link is enough. */
+    const applyFavicon = () => {
+      const letters = String( CONFIG.faviconLetters || 'TT' );
+      const l1 = ( letters[ 0 ] || 'T' ).toUpperCase();
+      const l2 = ( letters[ 1 ] || l1 ).toUpperCase();
+      const fill = ( CONFIG.faviconColor || '#2563eb' ).replace( '#', '%23' );
+      const svg =
+        `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E` +
+        `%3Crect width='64' height='64' rx='12' fill='${ fill }'/%3E` +
+        `%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E` +
+        `%3Ctext x='22' y='28'%3E${ encodeURIComponent( l1 ) }%3C/text%3E` +
+        `%3Ctext x='42' y='40'%3E${ encodeURIComponent( l2 ) }%3C/text%3E` +
+        `%3C/g%3E%3C/svg%3E`;
+      const link = document.querySelector( 'link[rel="icon"]' );
+      if ( link ) link.href = svg;
     };
 
     /* ── 12. showTokenPanel — render the token form, optionally with a reason ── */
@@ -2727,6 +2793,7 @@
       // up front and it stays correct for the whole session.
       await detectAppOrigin();
       updateHeaderFromConfig();
+      applyFavicon();
 
       initAppearance();
       setupListeners();
