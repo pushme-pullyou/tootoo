@@ -18,6 +18,9 @@
 * 2026-05-26 ~ support for the linux repo
 * 2026-05-26 ~ Update readme
 * 2026-05-26 ~ Update about page
+* 2026-05-26 ~update both local and GitHub repos
+* 2026-05-26 ~ Add a favicon for each repo, using the GitHub organization avatar if available, otherwise a default icon.
+
 
 ### Sidebar
 
