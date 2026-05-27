@@ -11,6 +11,10 @@ SOURCE_FILE="$SCRIPT_DIR/index.html"
 # remove targets; the script always copies to every entry here.
 DESTINATIONS=(
   'G:\My Drive\2026-theo-github\heritage-happenings.github.io'
+  'G:\My Drive\2026-theo-github\pushme-pullyou-github'
+  'G:\My Drive\2026-theo-github\pushme-pullyou-assets'
+  'G:\My Drive\2026-theo-github\theo-armour-2025'
+  'G:\My Drive\2026-theo-github\theo-armour-2026'
   'G:\My Drive\2026-theo-github\theo-armour-agenda'
   'G:\My Drive\2026-theo-github\theo-armour-aa'
   'G:\My Drive\2026-theo-github\theo-armour-genealogy'
@@ -48,7 +52,8 @@ to_bash_path() {
     cygpath -u "$path"
     return
   fi
-  printf '%s\n' "$path"
+  echo "cygpath not found; run this script from Git Bash on Windows." >&2
+  exit 1
 }
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
@@ -88,3 +93,7 @@ done
 
 echo
 echo "Done. Copied: $copied   Skipped: $skipped"
+
+# Exit non-zero if any destination was skipped or failed, so callers
+# can detect partial-failure runs.
+(( skipped == 0 ))
