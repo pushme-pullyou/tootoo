@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-26 21:16">
+  <meta name="revised" content="2026-05-26 21:25">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -45,7 +45,6 @@
       --font-family: system-ui, -apple-system, sans-serif;
       --sidebar-width: 300px;
       --font-size: 16px;
-      --resizer-bg: rgba(37, 99, 235, 0.7);
       --warning-bg: #fff3cd;
       --warning-border: #ffc107;
       --error-bg: #fff0f0;
@@ -70,6 +69,13 @@
     /* ── Font size on html so rem units scale ── */
     html {
       font-size: var(--font-size);
+      /* Tint scrollbars with the theme color. Inherited by every scrollable
+         descendant (sidebar tree, content area, code blocks). Chrome 121+. */
+      scrollbar-color: var(--highlight-color) transparent;
+    }
+
+    body.dark-mode {
+      scrollbar-color: color-mix(in srgb, var(--highlight-color) 65%, white) transparent;
     }
 
     /* ── Reset ── */
@@ -127,6 +133,14 @@
 
     body.dark-mode .file-title > a {
       color: color-mix(in srgb, var(--highlight-color) 65%, white);
+    }
+
+    /* The 18x18 GitHub icons sit on the line-box center via flex alignment,
+       but text descenders pull the optical center of the text slightly down.
+       Nudge the icons 1px down so they sit on the text's visual midline. */
+    #headerGitHub svg,
+    .file-title > a svg {
+      transform: translateY(1px);
     }
 
     #headerTitle {
@@ -343,7 +357,9 @@
     /* ── Resizer ── */
     .resizer {
       width: 8px;
-      background: var(--resizer-bg);
+      /* Theme color at ~70% opacity. Hover/drag below bump to full opacity
+         to give clear feedback when the resizer is engaged. */
+      background: color-mix(in srgb, var(--highlight-color), transparent 30%);
       cursor: col-resize;
       touch-action: none;
       transition: opacity 0.2s;

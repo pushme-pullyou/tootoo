@@ -20,9 +20,6 @@
 
 ## Theming
 
-* 2026-05-26 ~ theming
-* 2026-05-26 ~ Add a favicon for each repo, using the GitHub organization avatar if available, otherwise a default icon.
-
 
 ### Sidebar
 
