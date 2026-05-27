@@ -33,7 +33,7 @@ window.TOOTOO_CONFIG = {
   // faviconLetters : two characters drawn into the SVG favicon; uppercased
   // faviconColor   : background color of the SVG favicon
   themeColor: '#3a8856',
-  // subtitle: 'Daily journal entries',
+  subtitle: 'Single-file GitHub repo browser',
   faviconLetters: 'tt',
   faviconColor: '#3a8856',
 
