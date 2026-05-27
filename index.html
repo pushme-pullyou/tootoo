@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-26 22:02">
+  <meta name="revised" content="2026-05-26 22:40">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -42,7 +42,7 @@
       --border-color: #d1d5db;
       --highlight-color: #2563eb;
       --hover-bg: #e5e7eb;
-      --font-family: system-ui, -apple-system, sans-serif;
+      --font-family: system-ui, sans-serif;
       --sidebar-width: 300px;
       --font-size: 16px;
       --warning-bg: #fff3cd;
@@ -137,21 +137,24 @@
        required nudge scales with adjacent text size: the top-header title
        (1.35rem) needs more than the content-header breadcrumb (1rem). */
     #headerGitHub svg {
-      transform: translateY(3px);
+      transform: translateY(4px);
     }
 
     .file-title > a svg {
-      transform: translateY(2px);
+      transform: translateY(4px);
     }
 
     #headerTitle {
-      font-weight: bold;
+      /* Normal weight so a single-weight display heading font (e.g. Patua One)
+         renders as-designed instead of being synthetically emboldened. */
+      font-weight: normal;
       /* Sized so the title is visually present, but still shorter than the
          header buttons so the bar's overall height stays driven by them. */
       font-size: 1.35rem;
       text-decoration: none;
       color: var(--highlight-color);
       cursor: pointer;
+      font-family: var(--heading-font, var(--font-family));
     }
 
     body.dark-mode #headerTitle {
@@ -261,13 +264,13 @@
 
     .panel-header h3 {
       margin: 0;
-      /* Matches the breadcrumb body text in the content header so the
-         sidebar and content header read at the same scale. Semi-bold
-         (600) gives a section-label feel without the full browser-default
-         bold (700) that overpowered the breadcrumb's lighter leading text. */
+      /* Normal weight so a single-weight display heading font (e.g. Patua One)
+         renders as-designed instead of being synthetically emboldened.
+         Matches #headerTitle for visual consistency across both bars. */
       font-size: 1rem;
-      font-weight: 600;
+      font-weight: normal;
       color: var(--highlight-color);
+      font-family: var(--heading-font, var(--font-family));
     }
 
     body.dark-mode .panel-header h3 {
@@ -516,10 +519,14 @@
     }
 
     /* Tint top-level headings with the theme color so forks feel branded in
-       long-form content. h3 and below stay at body color for legibility. */
+       long-form content. h3 and below stay at body color for legibility.
+       Normal weight so single-weight display heading fonts (e.g. Patua One)
+       aren't synthetically emboldened on top of their already-heavy design. */
     .markdown-body h1,
     .markdown-body h2 {
       color: var(--highlight-color);
+      font-family: var(--heading-font, var(--font-family));
+      font-weight: normal;
     }
 
     /* Dark mode: lighten the heading color so saturated theme colors don't
@@ -879,6 +886,8 @@
       subtitle: '',             // small muted text appended after the header title; empty = none
       faviconLetters: 'TT',     // two characters drawn into the SVG favicon (also the sidebar-footer icon)
       faviconColor: '#2563eb',  // background color of the SVG favicon
+      headingFontUrl: '',       // optional stylesheet URL (e.g. Google Fonts) loaded into <head> at init
+      headingFont: '',          // font-family value applied to title + panel headers + markdown h1/h2
     };
 
     // Merge external config (set by tootoo.config.js, if present) over the
@@ -1310,6 +1319,22 @@
         `%3C/g%3E%3C/svg%3E`;
       const link = document.querySelector( 'link[rel="icon"]' );
       if ( link ) link.href = svg;
+    };
+
+    /* Load an optional heading stylesheet (e.g. Google Fonts) and apply the
+       chosen font-family to title + panel headers + markdown h1/h2 via the
+       --heading-font CSS variable. The CSS rules use var(--heading-font,
+       var(--font-family)) so omitting either knob is a no-op. */
+    const applyHeadingFont = () => {
+      if ( CONFIG.headingFontUrl ) {
+        const link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.href = CONFIG.headingFontUrl;
+        document.head.appendChild( link );
+      }
+      if ( CONFIG.headingFont ) {
+        document.documentElement.style.setProperty( '--heading-font', CONFIG.headingFont );
+      }
     };
 
     /* ── 12. showTokenPanel — render the token form, optionally with a reason ── */
@@ -2861,6 +2886,7 @@
       await detectAppOrigin();
       updateHeaderFromConfig();
       applyFavicon();
+      applyHeadingFont();
 
       initAppearance();
       setupListeners();
