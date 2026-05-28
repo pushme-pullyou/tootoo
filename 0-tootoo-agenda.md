@@ -12,7 +12,7 @@
 
 ### App
 
-* 2026-05-28 ~ Links in theme colors
+
 * 2026-05-28 ~ Add hiddenFiles ~ for tootoo.config.sys etc
 * 2026-05-28 ~ Home page readme on new tab
 * 2026-05-26 ~ support printing the current file with a clean print stylesheet

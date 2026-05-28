@@ -53,10 +53,14 @@ window.TOOTOO_CONFIG = {
   // ── Browsing behavior ───────────────────────────────────────────────────
   // hiddenFolders : folder names to omit from the sidebar tree
   //                 (case-insensitive, matches at any depth)
+  // hiddenFiles   : file names to omit from the sidebar tree
+  //                 (case-insensitive, matches at any depth) — useful for
+  //                 per-fork config files like tootoo.config.js itself
   // maxRepoFiles  : refuse to render repos bigger than this; the
   //                 friendly bail-out panel also fires on any truncated
   //                 GitHub tree response
   // hiddenFolders: [ 'Images', 'drafts' ],
+  hiddenFiles: [ 'tootoo.config.js' ],
   // maxRepoFiles: 5000,
 
 };

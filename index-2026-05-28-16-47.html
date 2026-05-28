@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-28 16:47">
+  <meta name="revised" content="2026-05-28 16:42">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1817,7 +1817,7 @@
 
         return `<details data-folder-path="${ escapeHTML( fullPath ) }">` +
           `<summary class="tree-folder" tabindex="0" title="${ escapeHTML( fullPath ) }">` +
-          `<span aria-hidden="true">📁</span> <span class="folder-name">${ escapeHTML( displayName ) }</span>` +
+          `📁 <span class="folder-name">${ escapeHTML( displayName ) }</span>` +
           `</summary>` +
           childrenHtml +
           `</details>`;
@@ -1831,7 +1831,7 @@
         : escapeHTML( displayName );
 
       return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeHTML( fullPath ) }" title="${ escapeHTML( fullPath ) }">` +
-        `<span class="tree-item-name"><span aria-hidden="true">${ icon }</span> ${ nameHtml }</span>` +
+        `<span class="tree-item-name">${ icon } ${ nameHtml }</span>` +
         `<span class="tree-item-size">${ sizeStr }</span>` +
         `</div>`;
     };
@@ -2377,9 +2377,7 @@
       const githubUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/blob/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
 
       const hasToggle = [ 'md', 'html', 'htm', 'svg' ].includes( ext );
-      // SVG is in NO_COPY_EXTS (it's an image), but we fetch its source as
-      // text and offer a Raw view, so its text is copyable too.
-      const hasCopy = !NO_COPY_EXTS.includes( ext ) || ext === 'svg';
+      const hasCopy = !NO_COPY_EXTS.includes( ext );
       const preferredView = hasToggle ? getPreferredView( ext ) : 'rendered';
 
       let actionsHtml = '';
@@ -2474,16 +2472,6 @@
           a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( normalized, { skipFocus: true } ); } );
         } );
 
-        // Syntax-highlight fenced code blocks. marked emits
-        // <pre><code class="language-x"> but never adds the .hljs class or
-        // token spans the theme styles, so without this pass code in
-        // rendered markdown shows unhighlighted. Skip oversized blocks for
-        // the same reason renderCode does (hljs is slow on huge inputs).
-        mdBody.querySelectorAll( 'pre code' ).forEach( ( el ) => {
-          if ( el.textContent.length > 500 * 1024 ) return;
-          try { hljs.highlightElement( el ); } catch ( _ ) { /* plain fallback */ }
-        } );
-
         const images = Array.from( mdBody.querySelectorAll( 'img[src]' ) );
         const resolveOne = async ( img ) => {
           const src = img.getAttribute( 'src' );
@@ -2542,16 +2530,8 @@
       const renderedDisplay = preferredView === 'rendered' ? '' : 'display:none';
       const rawDisplay = preferredView === 'raw' ? '' : 'display:none';
 
-      // The iframe is fully sandboxed (no allow-scripts / allow-same-origin)
-      // and served from a blob: URL with no base, so scripts and relative
-      // assets (CSS, images, modules) won't load. Tell the user instead of
-      // letting a blank-ish preview read as a TooToo bug — New Tab opens the
-      // live page (GitHub Pages or raw) where those work.
-      const previewNote =
-        `<div class="md-error">ℹ️ Preview is sandboxed: scripts and relative assets (CSS, images, modules) are disabled. Use <strong>↗ New Tab</strong> to open the live page.</div>`;
-
       document.getElementById( 'contentBody' ).innerHTML =
-        `<div id="viewRendered" style="${ renderedDisplay }">${ previewNote }<iframe class="iframe-content" sandbox src="${ escapeHTML( url ) }"></iframe></div>` +
+        `<div id="viewRendered" style="${ renderedDisplay }"><iframe class="iframe-content" sandbox src="${ escapeHTML( url ) }"></iframe></div>` +
         `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( text ) }</pre>`;
     };
 
@@ -2759,12 +2739,6 @@
       if ( fileSize > LARGE_FILE_WARNING_BYTES && !isStreamable && !approvedLargeFiles.has( approvalKey ) ) {
         const sizeMB = ( fileSize / ( 1024 * 1024 ) ).toFixed( 1 );
         if ( !window.confirm( `This file is ${ sizeMB } MB. Load anyway?` ) ) return;
-        // Cap the set so a long browsing session can't grow it unbounded.
-        // Set preserves insertion order, so deleting the first key evicts
-        // the oldest approval (LRU-ish; re-approving just re-prompts).
-        if ( approvedLargeFiles.size >= 100 ) {
-          approvedLargeFiles.delete( approvedLargeFiles.values().next().value );
-        }
         approvedLargeFiles.add( approvalKey );
       }
 
