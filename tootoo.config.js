@@ -34,8 +34,9 @@ window.TOOTOO_CONFIG = {
   // faviconColor   : background color of the SVG favicon
   // headingFontUrl : optional <link> stylesheet (Google Fonts URL or local
   //                  .woff2 path) loaded into <head> at init
-  // headingFont    : font-family value for title + panel headers + markdown
-  //                  h1/h2; falls back to system-ui everywhere else
+  // headingFont    : font-family value applied to every heading — title,
+  //                  panel headers, and every h1–h6 anywhere in the doc;
+  //                  falls back to system-ui everywhere else
   themeColor: '#3a8856',
   subtitle: 'Single-file GitHub repo browser',
   faviconLetters: 'tt',
@@ -43,8 +44,9 @@ window.TOOTOO_CONFIG = {
 
   // headingFontUrl : optional <link> stylesheet (Google Fonts URL or local
   //                  .woff2 path) loaded into <head> at init
-  // headingFont    : font-family value applied to title + panel headers +
-  //                  markdown h1/h2; falls back to system-ui everywhere else
+  // headingFont    : font-family value applied to every heading — title,
+  //                  panel headers, and every h1–h6 anywhere in the doc;
+  //                  falls back to system-ui everywhere else
   headingFontUrl: 'https://fonts.googleapis.com/css2?family=Patua+One&display=swap',
   headingFont: '"Patua One", serif',
 

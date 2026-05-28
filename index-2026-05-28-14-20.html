@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-28 14:46">
+  <meta name="revised" content="2026-05-28 13:55">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -169,58 +169,38 @@
       color: color-mix(in srgb, var(--highlight-color) 65%, white);
     }
 
-    /* ── Buttons ──
-       One look for every button: ghost pill in default state (theme-color
-       text + border, transparent background) that fills with theme color
-       on hover. Quiet at rest, clear affordance on hover, slight lift on
-       press. Border uses the same color as text so they read as one unit. */
+    /* ── Shared button hover/active ── */
     .header-btn,
-    .file-btn,
     button.primary,
-    button.secondary {
-      background: transparent;
-      color: var(--highlight-color);
-      border: 1px solid var(--highlight-color);
-      padding: 0.4rem 0.75rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background-color 0.2s, color 0.2s, transform 0.1s;
+    button.secondary,
+    .file-btn {
+      transition: opacity 0.2s, transform 0.1s;
     }
 
     .header-btn:hover,
-    .file-btn:hover,
     button.primary:hover,
-    button.secondary:hover {
-      background: var(--highlight-color);
-      color: #ffffff;
+    button.secondary:hover,
+    .file-btn:hover {
+      opacity: 0.88;
       transform: translateY(-1px);
     }
 
     .header-btn:active,
-    .file-btn:active,
     button.primary:active,
-    button.secondary:active {
+    button.secondary:active,
+    .file-btn:active {
       transform: translateY(0);
     }
 
-    /* Dark mode: brighten the chrome color since saturated theme colors
-       can look dim against dark backgrounds. Matches the pattern used on
-       headings, header title, and panel headers. */
-    body.dark-mode .header-btn,
-    body.dark-mode .file-btn,
-    body.dark-mode button.primary,
-    body.dark-mode button.secondary {
-      color: color-mix(in srgb, var(--highlight-color) 65%, white);
-      border-color: color-mix(in srgb, var(--highlight-color) 65%, white);
-    }
-
-    body.dark-mode .header-btn:hover,
-    body.dark-mode .file-btn:hover,
-    body.dark-mode button.primary:hover,
-    body.dark-mode button.secondary:hover {
-      background: color-mix(in srgb, var(--highlight-color) 65%, white);
-      color: var(--primary-bg);
+    /* ── Header Utility Buttons ── */
+    .header-btn {
+      background: var(--secondary-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
     }
 
     .dark-mode-btn {
@@ -417,7 +397,19 @@
       background: var(--secondary-bg);
     }
 
-/* ── Back to Top ── */
+    /* ── Action Buttons (primary / secondary) ── */
+    button.primary,
+    button.secondary {
+      background: var(--highlight-color);
+      color: #ffffff;
+      border: none;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    /* ── Back to Top ── */
     .back-to-top {
       position: fixed;
       bottom: 1.5rem;
@@ -556,37 +548,11 @@
       height: auto;
     }
 
-    /* All links inside the content area (markdown body, About page, error
-       panels, oversized-repo panel) sit on the theme color. Links carry
-       more visual weight than headings or chrome because they're inline
-       with body text and need to stand out as actionable, so light-mode
-       links are darkened against the raw theme color even at rest and
-       darken further on hover. Dark mode mirrors the move toward the
-       opposite end of the contrast axis (brighter at rest, brighter still
-       on hover). External links keep their browser-default underline so
-       they still read distinct from internal-link anchors below, which
-       strip both href and underline. */
-    #contentBody a {
-      color: color-mix(in srgb, var(--highlight-color) 80%, black);
-      transition: color 0.15s;
-    }
-
-    #contentBody a:hover {
-      color: color-mix(in srgb, var(--highlight-color) 50%, black);
-    }
-
-    body.dark-mode #contentBody a {
-      color: color-mix(in srgb, var(--highlight-color) 65%, white);
-    }
-
-    body.dark-mode #contentBody a:hover {
-      color: color-mix(in srgb, var(--highlight-color) 40%, white);
-    }
-
     /* In-page link rewritten by renderMarkdown to call selectFile instead of
-       navigating. href is removed so the browser drops the pointer cursor;
-       restore it here. Color is inherited from the #contentBody a rule. */
+       navigating. href is removed so the styling that browsers give <a href>
+       doesn't apply — restore it here. */
     .markdown-body a.internal-link {
+      color: var(--highlight-color);
       cursor: pointer;
     }
 
@@ -647,6 +613,25 @@
       align-items: center;
       flex-shrink: 0;
     }
+
+    .file-btn {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--secondary-bg);
+      color: var(--text-color);
+    }
+
+    .file-btn[aria-pressed="false"] {
+      opacity: 0.5;
+    }
+
+    .file-btn[aria-pressed="true"] {
+      opacity: 1;
+    }
+
 
     .media-content {
       max-width: 100%;
@@ -2363,12 +2348,10 @@
 
       let actionsHtml = '';
       if ( hasToggle ) {
-        // Single toggle: label is what you'll switch TO. Click "Raw" to
-        // jump to raw, label becomes "Rendered" so the next click goes back.
-        const showingRaw = preferredView === 'raw';
-        const otherLabel = showingRaw ? 'Rendered' : 'Raw';
-        const otherTitle = showingRaw ? 'Show rendered view' : 'Show raw source';
-        actionsHtml += `<button class="file-btn" data-action="view-toggle" title="${ otherTitle }">${ otherLabel }</button>`;
+        const renderedPressed = preferredView === 'rendered';
+        const rawPressed = preferredView === 'raw';
+        actionsHtml += `<button class="file-btn" data-action="view-rendered" title="Show rendered view" aria-pressed="${ renderedPressed }">Rendered</button>`;
+        actionsHtml += `<button class="file-btn" data-action="view-raw" title="Show raw source" aria-pressed="${ rawPressed }">Raw</button>`;
       }
       if ( hasCopy ) {
         actionsHtml += `<button class="file-btn" data-action="copy-file" title="Copy file contents to clipboard" aria-label="Copy file contents to clipboard">📋 Copy</button>`;
@@ -2838,19 +2821,33 @@
         const folderLink = e.target.closest( '[data-action="scroll-folder"]' );
         if ( folderLink ) { e.preventDefault(); scrollToTreeFolder( folderLink.dataset.folder ); return; }
 
-        // View toggle: one button that flips between rendered and raw and
-        // relabels itself with whichever view you'd switch to next.
-        const toggleBtn = e.target.closest( '[data-action="view-toggle"]' );
-        if ( toggleBtn ) {
+        // View toggle: rendered
+        const renderedBtn = e.target.closest( '[data-action="view-rendered"]' );
+        if ( renderedBtn ) {
           const viewRendered = document.getElementById( 'viewRendered' );
           const viewRaw = document.getElementById( 'viewRaw' );
+          if ( viewRendered ) viewRendered.style.display = '';
+          if ( viewRaw ) viewRaw.style.display = 'none';
+          renderedBtn.setAttribute( 'aria-pressed', 'true' );
+          const rawBtn = contentArea.querySelector( '[data-action="view-raw"]' );
+          if ( rawBtn ) rawBtn.setAttribute( 'aria-pressed', 'false' );
           const ext = state.currentFilePath.split( '.' ).pop().toLowerCase();
-          const goingToRaw = getPreferredView( ext ) === 'rendered';
-          if ( viewRendered ) viewRendered.style.display = goingToRaw ? 'none' : '';
-          if ( viewRaw ) viewRaw.style.display = goingToRaw ? '' : 'none';
-          toggleBtn.textContent = goingToRaw ? 'Rendered' : 'Raw';
-          toggleBtn.title = goingToRaw ? 'Show rendered view' : 'Show raw source';
-          setPreferredView( ext, goingToRaw ? 'raw' : 'rendered' );
+          setPreferredView( ext, 'rendered' );
+          return;
+        }
+
+        // View toggle: raw
+        const rawBtn = e.target.closest( '[data-action="view-raw"]' );
+        if ( rawBtn ) {
+          const viewRendered = document.getElementById( 'viewRendered' );
+          const viewRaw = document.getElementById( 'viewRaw' );
+          if ( viewRendered ) viewRendered.style.display = 'none';
+          if ( viewRaw ) viewRaw.style.display = '';
+          rawBtn.setAttribute( 'aria-pressed', 'true' );
+          const rendBtn = contentArea.querySelector( '[data-action="view-rendered"]' );
+          if ( rendBtn ) rendBtn.setAttribute( 'aria-pressed', 'false' );
+          const ext = state.currentFilePath.split( '.' ).pop().toLowerCase();
+          setPreferredView( ext, 'raw' );
           return;
         }
 
