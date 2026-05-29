@@ -4,6 +4,27 @@
 
 * 2026-05-28 ~ Links in theme colors
 
+  'G:\My Drive\2026-theo-github\heritage-happenings.github.io'
+  'G:\My Drive\2026-theo-github\pushme-pullyou-github'
+  'G:\My Drive\2026-theo-github\pushme-pullyou-assets'
+  'G:\My Drive\2026-theo-github\theo-armour-2025'
+  'G:\My Drive\2026-theo-github\theo-armour-2026'
+  'G:\My Drive\2026-theo-github\theo-armour-agenda'
+  'G:\My Drive\2026-theo-github\theo-armour-aa'
+  'G:\My Drive\2026-theo-github\theo-armour-genealogy'
+  'G:\My Drive\2026-theo-github\theo-armour-pages'
+  'G:\My Drive\2026-theo-github\theo-armour-qdata'
+  'G:\My Drive\2026-theo-github\theo-armour-sandbox'
+  'G:\My Drive\2026-theo-github\theo-armour-wikitheo'
+  'I:\My Drive\tech'
+
+For all these repos, to their tootoo.config.js file add:
+ subtitle: 'a GitHub repository browser',
+ headingFontUrl: 'https://fonts.googleapis.com/css2?family=Patua+One&display=swap',
+  headingFont: '"Patua One", serif',
+  hiddenFiles: [ 'tootoo.config.js' ],
+  hiddenFolders: [ 'Images' ],
+  
 ## 2026-05-26
 
 currently the current url used when reloading is being saved to local storage. I think this can be confusing to a user who's not been to the site for a while. What would that be a more normal way of handling reloading?
