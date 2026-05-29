@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-29 00:01">
+  <meta name="revised" content="2026-05-18 21:51">
   <title>TooToo — File Load Test</title>
   <style>
     * {
@@ -180,7 +180,7 @@
 
 <body>
   <h1>🧪 TooToo File Load Test</h1>
-  <p class="summary">Manual integration check for <strong>pushme-pullyou/tootoo</strong>. It fetches the GitHub tree and verifies that each visible raw file is <em>reachable</em> (a HEAD request returns 200). Note: this confirms the file loads over the network — it does not prove TooToo renders it (markdown parse, image decode, PDF embed).</p>
+  <p class="summary">Manual integration check for <strong>pushme-pullyou/tootoo</strong>. It fetches the GitHub tree and verifies raw-file loading for each visible file.</p>
 
   <div class="controls">
     <label>Owner:</label>
@@ -218,14 +218,10 @@
     const summary = $( "summary" );
     const progress = $( "progress" );
     let aborted = false;
-    let controller = null; // per-run AbortController, so Stop cancels in-flight fetches
 
-    // Restore saved field values from localStorage
-    const PERSIST_FIELDS = [ "owner", "repo", "branch", "token" ];
-    PERSIST_FIELDS.forEach( id => {
-      const saved = localStorage.getItem( `tootoo-test-${ id }` );
-      if ( saved !== null ) $( id ).value = saved;
-    } );
+    // Restore token from localStorage if available
+    const savedToken = localStorage.getItem( "gh-token" ) || "";
+    $( "token" ).value = savedToken;
 
     // Filter buttons
     let activeFilter = "all";
@@ -274,19 +270,8 @@
       return `${ ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) } MB`;
     };
 
-    // If a GitHub API response is a rate-limit rejection, describe when it resets
-    const rateLimitNote = ( resp ) => {
-      const remaining = resp.headers.get( "X-RateLimit-Remaining" );
-      const reset = resp.headers.get( "X-RateLimit-Reset" );
-      if ( remaining === "0" && reset ) {
-        const when = new Date( Number( reset ) * 1000 ).toLocaleTimeString();
-        return ` — GitHub API rate limit exceeded; resets at ${ when }. Add a token to raise the limit.`;
-      }
-      return "";
-    };
-
     $( "btnRun" ).addEventListener( "click", runTest );
-    $( "btnStop" ).addEventListener( "click", () => { aborted = true; if ( controller ) controller.abort(); } );
+    $( "btnStop" ).addEventListener( "click", () => { aborted = true; } );
 
     async function runTest () {
       const owner = $( "owner" ).value.trim();
@@ -295,16 +280,11 @@
       const token = $( "token" ).value.trim();
       if ( !owner || !repo || !branch ) return;
 
-      // Persist field values for next time
-      PERSIST_FIELDS.forEach( id => localStorage.setItem( `tootoo-test-${ id }`, $( id ).value.trim() ) );
-
       aborted = false;
-      controller = new AbortController();
       log.innerHTML = "";
       $( "btnRun" ).style.display = "none";
       $( "btnStop" ).style.display = "";
       progress.style.width = "0";
-      progress.style.background = "#2da44e";
 
       const headers = {};
       if ( token ) headers.Authorization = `token ${ token }`;
@@ -316,17 +296,11 @@
       let items;
       try {
         const url = `https://api.github.com/repos/${ owner }/${ repo }/git/trees/${ branch }?recursive=1`;
-        const resp = await fetch( url, { headers, signal: controller.signal } );
-        if ( !resp.ok ) {
-          const note = ( resp.status === 403 || resp.status === 429 ) ? rateLimitNote( resp ) : "";
-          throw new Error( `HTTP ${ resp.status }${ note }` );
-        }
+        const resp = await fetch( url, { headers } );
+        if ( !resp.ok ) throw new Error( `HTTP ${ resp.status }` );
         const data = await resp.json();
         items = data.tree.filter( i => i.type === "blob" );
         addRow( "info", "✅", `Tree loaded: ${ items.length } files found`, "", "info" );
-        if ( data.truncated ) {
-          addRow( "skip", "⚠", "Tree is truncated — repo is too large for a single request, so only part of the file list was returned and tested.", "", "skip" );
-        }
       } catch ( err ) {
         addRow( "fail", "❌", `Failed to fetch tree: ${ err.message }`, "", "fail" );
         summary.innerHTML = `<strong style="color:#cf222e">Failed to fetch tree.</strong> ${ esc( err.message ) }`;
@@ -336,7 +310,7 @@
       }
 
       // 2. Test each file
-      const results = { pass: 0, fail: 0, skip: 0 };
+      let passed = 0, failed = 0, skipped = 0;
       const total = items.length;
       const startTime = performance.now();
 
@@ -348,67 +322,73 @@
       const skippedHidden = total - testable.length;
       if ( skippedHidden ) {
         addRow( "skip", "⏭", `Skipping ${ skippedHidden } hidden/dotfiles`, "", "skip" );
-        results.skip += skippedHidden;
+        skipped += skippedHidden;
       }
 
-      const CONCURRENCY = 6;            // raw.githubusercontent is a CDN, not the rate-limited API endpoint
+      // Rate-limit: small delay between requests to avoid GitHub abuse limits
+      const DELAY_MS = 120;
       const LARGE_SKIP = 5 * 1024 * 1024; // skip files > 5 MB
 
-      // Verify one file is reachable via a HEAD request (no body download)
-      const testFile = async ( item ) => {
+      for ( let idx = 0; idx < testable.length; idx++ ) {
+        if ( aborted ) {
+          addRow( "info", "🛑", "Test aborted by user", "", "info" );
+          break;
+        }
+
+        const item = testable[ idx ];
+        const pct = Math.round( ( ( idx + 1 ) / testable.length ) * 100 );
+        progress.style.width = pct + "%";
+        summary.innerHTML = `Testing file <strong>${ idx + 1 }</strong> of <strong>${ testable.length }</strong> — ${ pct }% — ✅ ${ passed } ❌ ${ failed } ⏭ ${ skipped }`;
+
         const name = item.path.split( "/" ).pop();
         const kind = classifyExt( name );
         const size = item.size || 0;
 
+        // Skip very large files
         if ( size > LARGE_SKIP ) {
           addRow( "skip", "⏭", item.path, `${ formatSize( size ) } — too large`, "skip" );
-          results.skip++;
-          return;
+          skipped++;
+          continue;
         }
 
         const rawUrl = `https://raw.githubusercontent.com/${ owner }/${ repo }/${ branch }/${ item.path }`;
+
         try {
-          const resp = await fetch( rawUrl, { method: "HEAD", signal: controller.signal } );
-          if ( !resp.ok ) {
-            addRow( "fail", "❌", item.path, `HTTP ${ resp.status }`, "fail" );
-            results.fail++;
-            return;
-          }
-          // When the CDN reports a length, treat a 0-byte body for a non-empty blob as a failure
-          const clen = resp.headers.get( "content-length" );
-          if ( kind === "text" && clen !== null && Number( clen ) === 0 && size > 0 ) {
-            addRow( "fail", "❌", item.path, `${ formatSize( size ) } — empty response`, "fail" );
-            results.fail++;
+          // For text/image/embed: do a GET and check status
+          // For binary/media: do a HEAD request (no need to download)
+          const method = ( kind === "binary" || kind === "media" ) ? "HEAD" : "GET";
+          const resp = await fetch( rawUrl, { method } );
+
+          if ( resp.ok ) {
+            // For text files, also verify we got some content
+            if ( method === "GET" ) {
+              const text = await resp.text();
+              if ( kind === "text" && text.length === 0 && size > 0 ) {
+                addRow( "fail", "❌", item.path, `${ formatSize( size ) } — empty response`, "fail" );
+                failed++;
+              } else {
+                addRow( "pass", "✅", item.path, `${ formatSize( size ) } — ${ kind }`, "pass" );
+                passed++;
+              }
+            } else {
+              addRow( "pass", "✅", item.path, `${ formatSize( size ) } — ${ kind } (HEAD)`, "pass" );
+              passed++;
+            }
           } else {
-            addRow( "pass", "✅", item.path, `${ formatSize( size ) } — ${ kind }`, "pass" );
-            results.pass++;
+            addRow( "fail", "❌", item.path, `HTTP ${ resp.status }`, "fail" );
+            failed++;
           }
         } catch ( err ) {
-          if ( err.name === "AbortError" ) return; // Stop pressed — don't count as failure
           addRow( "fail", "❌", item.path, err.message, "fail" );
-          results.fail++;
+          failed++;
         }
-      };
 
-      // Run a fixed pool of workers that pull from a shared cursor
-      let done = 0;
-      let cursor = 0;
-      const worker = async () => {
-        while ( cursor < testable.length && !aborted ) {
-          const item = testable[ cursor++ ];
-          await testFile( item );
-          done++;
-          const pct = Math.round( ( done / testable.length ) * 100 );
-          progress.style.width = pct + "%";
-          summary.innerHTML = `Tested <strong>${ done }</strong> of <strong>${ testable.length }</strong> — ${ pct }% — ✅ ${ results.pass } ❌ ${ results.fail } ⏭ ${ results.skip }`;
+        // Small delay to be polite to GitHub
+        if ( idx < testable.length - 1 ) {
+          await new Promise( r => setTimeout( r, DELAY_MS ) );
         }
-      };
-      await Promise.all(
-        Array.from( { length: Math.min( CONCURRENCY, testable.length ) }, worker )
-      );
-      if ( aborted ) addRow( "info", "🛑", "Test aborted by user", "", "info" );
+      }
 
-      const passed = results.pass, failed = results.fail, skipped = results.skip;
       const elapsed = ( ( performance.now() - startTime ) / 1000 ).toFixed( 1 );
       progress.style.width = "100%";
       progress.style.background = failed ? "#cf222e" : "#2da44e";

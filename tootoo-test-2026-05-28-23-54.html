@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-05-28 23:54">
+  <meta name="revised" content="2026-05-18 21:36">
   <title>TooToo Tests</title>
   <style>
     :root {
@@ -84,31 +84,30 @@
     const encodePath = ( path ) =>
       path.split( '/' ).map( encodeURIComponent ).join( '/' );
 
-    const RATE_LIMIT_MESSAGE = 'Rate limited. Add a GitHub token for higher limits.';
+    const splitPathParts = ( targetPath ) => {
+      const hashIndex = targetPath.indexOf( '#' );
+      const beforeHash = hashIndex >= 0 ? targetPath.slice( 0, hashIndex ) : targetPath;
+      const hash = hashIndex >= 0 ? targetPath.slice( hashIndex ) : '';
+      const queryIndex = beforeHash.indexOf( '?' );
+      return {
+        path: queryIndex >= 0 ? beforeHash.slice( 0, queryIndex ) : beforeHash,
+        query: queryIndex >= 0 ? beforeHash.slice( queryIndex ) : '',
+        hash,
+      };
+    };
 
-    const SHEET_EXTS = [ 'xlsx', 'xls', 'csv', 'ods' ];
-    const DOWNLOAD_PRONE_EXTS = [ ...SHEET_EXTS, 'tsv', 'zip', 'tar', 'gz', '7z', 'doc', 'docx' ];
+    const hasUrlScheme = ( value ) => /^[a-z][a-z0-9+.-]*:/i.test( value );
+
+    const RATE_LIMIT_MESSAGE = 'Rate limited. Add a GitHub token for higher limits.';
 
     // CONFIG/state stubs so the helpers behave as in index.html
     const CONFIG = { owner: '', repo: '', branch: '', storagePrefix: 'tootoo', appName: 'TooToo' };
-    const state = { owner: '', repo: '', branch: '', pagesEnabled: null, localMode: false, localBase: null };
-
-    // Stubs for the network/auth deps that getNewTabUrl's Pages-probe branch
-    // touches. Tests always set state.pagesEnabled explicitly, so that branch
-    // never runs here — these exist only so the copied helper parses and runs.
-    const getAuthHeaders = () => ( {} );
-    const updateRateBadge = () => {};
+    const state = { owner: '', repo: '', branch: '', pagesEnabled: null };
 
     const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }:${ location.pathname }:${ suffix }`;
 
     const rawUrl = ( path ) =>
       `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
-
-    const localUrlFor = ( path ) => {
-      if ( location.protocol !== 'file:' ) return null;
-      if ( !state.localMode || state.localBase === null ) return null;
-      return state.localBase + encodePath( path );
-    };
 
     const getCurrentFileKey = () => {
       const owner = state.owner || CONFIG.owner || '';
@@ -133,35 +132,15 @@
     const getNewTabUrl = async ( path ) => {
       const fileName = path.split( '/' ).pop();
       const ext = fileName.includes( '.' ) ? fileName.split( '.' ).pop().toLowerCase() : '';
-
-      // Extensionless (LICENSE, AUTHORS) and download-prone (CSV, archives,
-      // Office docs) files go straight to the source. Local file shows as
-      // text in the tab when available; raw triggers a browser download for
-      // these MIME types, which is the expected action for a data/text file.
-      if ( !ext || DOWNLOAD_PRONE_EXTS.includes( ext ) ) {
-        return localUrlFor( path ) || rawUrl( path );
-      }
-
-      if ( state.pagesEnabled === null ) {
-        try {
-          const headers = getAuthHeaders();
-          const res = await fetch(
-            `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/pages`,
-            { headers }
-          );
-          updateRateBadge( res );
-          state.pagesEnabled = res.ok;
-        } catch ( _ ) {
-          state.pagesEnabled = false;
-        }
-      }
+      const canUsePages = [ 'md', 'html', 'htm' ].includes( ext );
+      // CSV, data/media, and extensionless files should open as raw content, not as GitHub Pages routes.
+      if ( !canUsePages ) return rawUrl( path );
 
       if ( state.pagesEnabled ) {
-        // GitHub Pages / Jekyll renders .md and .markdown as HTML; README.* becomes the directory index.html
-        const isReadme = /^readme\.(md|markdown)$/i.test( fileName );
+        const isReadme = /^readme\.md$/i.test( fileName );
         const pagesPath = isReadme
-          ? path.slice( 0, path.length - fileName.length )  // strip filename → directory URL
-          : path.replace( /\.(md|markdown)$/i, '' );        // strip .md/.markdown extension
+          ? path.slice( 0, path.length - fileName.length )
+          : path.replace( /\.md$/i, '' );
         const encodedPagesPath = encodePath( pagesPath );
         const isUserPage = state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`;
         return isUserPage
@@ -274,7 +253,32 @@
       assertEqual( encodePath( 'a/b?c.md' ), 'a/b%3Fc.md' );
     } );
 
-    /* ── 6. getNewTabUrl ── */
+    /* ── 6. splitPathParts / hasUrlScheme ── */
+    test( 'splitPathParts', 'plain path has empty query and hash', () => {
+      assertEqual( splitPathParts( 'docs/file.md' ), { path: 'docs/file.md', query: '', hash: '' } );
+    } );
+    test( 'splitPathParts', 'separates query and hash', () => {
+      assertEqual( splitPathParts( 'data/file.csv?raw=true#top' ), { path: 'data/file.csv', query: '?raw=true', hash: '#top' } );
+    } );
+    test( 'splitPathParts', 'hash-only path keeps path clean', () => {
+      assertEqual( splitPathParts( 'docs/file.md#section-2' ), { path: 'docs/file.md', query: '', hash: '#section-2' } );
+    } );
+    test( 'splitPathParts', 'query-only path keeps query separate', () => {
+      assertEqual( splitPathParts( 'img/photo.png?size=large' ), { path: 'img/photo.png', query: '?size=large', hash: '' } );
+    } );
+    test( 'hasUrlScheme', 'detects common external schemes', () => {
+      assertEqual( hasUrlScheme( 'mailto:hello@example.com' ), true );
+      assertEqual( hasUrlScheme( 'tel:+15551234567' ), true );
+      assertEqual( hasUrlScheme( 'data:text/plain,hello' ), true );
+      assertEqual( hasUrlScheme( 'https://example.com' ), true );
+    } );
+    test( 'hasUrlScheme', 'relative paths are not schemes', () => {
+      assertEqual( hasUrlScheme( 'docs/file.md' ), false );
+      assertEqual( hasUrlScheme( '../file.md' ), false );
+      assertEqual( hasUrlScheme( '/README.md' ), false );
+    } );
+
+    /* ── 7. getNewTabUrl ── */
     test( 'getNewTabUrl', 'csv uses raw URL even when Pages is enabled', async () => {
       state.owner = 'octocat'; state.repo = 'hello-world'; state.branch = 'main'; state.pagesEnabled = true;
       assertEqual(
@@ -315,27 +319,6 @@
       assertEqual(
         await getNewTabUrl( 'docs/guide.md' ),
         'https://raw.githubusercontent.com/octocat/hello-world/main/docs/guide.md'
-      );
-    } );
-    test( 'getNewTabUrl', '.markdown extension is stripped for Pages', async () => {
-      state.owner = 'octocat'; state.repo = 'hello-world'; state.branch = 'main'; state.pagesEnabled = true;
-      assertEqual(
-        await getNewTabUrl( 'docs/guide.markdown' ),
-        'https://octocat.github.io/hello-world/docs/guide'
-      );
-    } );
-    test( 'getNewTabUrl', 'README.markdown becomes Pages directory URL', async () => {
-      state.owner = 'octocat'; state.repo = 'hello-world'; state.branch = 'main'; state.pagesEnabled = true;
-      assertEqual(
-        await getNewTabUrl( 'docs/README.markdown' ),
-        'https://octocat.github.io/hello-world/docs/'
-      );
-    } );
-    test( 'getNewTabUrl', 'download-prone archive uses raw URL even when Pages is enabled', async () => {
-      state.owner = 'octocat'; state.repo = 'hello-world'; state.branch = 'main'; state.pagesEnabled = true;
-      assertEqual(
-        await getNewTabUrl( 'dist/bundle.zip' ),
-        'https://raw.githubusercontent.com/octocat/hello-world/main/dist/bundle.zip'
       );
     } );
 
