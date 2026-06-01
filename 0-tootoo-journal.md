@@ -2,6 +2,7 @@
 
 ## 2026-05-28
 
+* 2026-05-28 ~ Add hiddenFiles ~ for tootoo.config.sys etc
 * 2026-05-28 ~ Links in theme colors
 
   'G:\My Drive\2026-theo-github\heritage-happenings.github.io'
@@ -24,7 +25,7 @@ For all these repos, to their tootoo.config.js file add:
   headingFont: '"Patua One", serif',
   hiddenFiles: [ 'tootoo.config.js' ],
   hiddenFolders: [ 'Images' ],
-  
+
 ## 2026-05-26
 
 currently the current url used when reloading is being saved to local storage. I think this can be confusing to a user who's not been to the site for a while. What would that be a more normal way of handling reloading?

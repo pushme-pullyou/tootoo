@@ -1,20 +1,10 @@
 # TooToo — Agenda
 
-"G:\My Drive\2026-theo-github\heritage-happenings.github.io"
-"G:\My Drive\2026-theo-github\theo-armour-agenda"
-"G:\My Drive\2026-theo-github\theo-armour-qdata"
-"G:\My Drive\2026-theo-github\theo-armour-pages"
-"G:\My Drive\2026-theo-github\theo-armour-sandbox"
-"G:\My Drive\2026-theo-github\theo-armour-aa"
-"I:\My Drive\tech"
-
 ## Agenda
 
 ### App
 
-
-* 2026-05-28 ~ Add hiddenFiles ~ for tootoo.config.sys etc
-* 2026-05-28 ~ Home page readme on new tab
+* 2026-05-31 ~ Update tips
 * 2026-05-26 ~ support printing the current file with a clean print stylesheet
 
 ## Copy Index to Repo
@@ -23,9 +13,14 @@
 
 ## Theming
 
+## Content Header bar
+
+* 2026-05-31 ~ add branches to the header bar
+* 2026-05-31 ~ repos to the header bar
 
 ### Sidebar
 
+* 2026-05-31 ~ find files
 * Much better filters
 * If there are multiple branches add a branch selector to the sidebar
 * Control B to Toggle sidebar
