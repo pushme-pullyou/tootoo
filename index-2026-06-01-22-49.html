@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-01 22:56">
+  <meta name="revised" content="2026-06-01 22:43">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1382,32 +1382,22 @@
       }
     };
 
-    /* ── Content-area panel header helpers ──
-       Swap the content-area panel header for `headerEl`: replace the existing
-       one if present, otherwise insert it before #contentBody. Shared by the
-       token panel, the About page, and per-file breadcrumb headers. */
-    const setContentHeader = ( headerEl ) => {
-      const contentArea = document.getElementById( 'contentArea' );
-      const existing = contentArea.querySelector( '.panel-header.file-header' );
-      if ( existing ) existing.replaceWith( headerEl );
-      else contentArea.insertBefore( headerEl, document.getElementById( 'contentBody' ) );
-    };
-
-    // Build a plain panel header with a single <h3 id="contentTitle">title</h3>.
-    const makeSimpleHeader = ( title ) => {
-      const header = document.createElement( 'div' );
-      header.className = 'panel-header file-header';
-      header.innerHTML = `<h3 id="contentTitle">${ escapeHTML( title ) }</h3>`;
-      return header;
-    };
-
     /* ── 12. showTokenPanel — render the token form, optionally with a reason ── */
     const showTokenPanel = ( reasonHtml = '' ) => {
       const cb = document.getElementById( 'contentBody' );
+      const contentArea = document.getElementById( 'contentArea' );
       const current = getToken();
       const hasToken = current.length > 0;
 
-      setContentHeader( makeSimpleHeader( 'GitHub Token' ) );
+      const existingHeader = contentArea.querySelector( '.panel-header.file-header' );
+      const simpleHeader = document.createElement( 'div' );
+      simpleHeader.className = 'panel-header file-header';
+      simpleHeader.innerHTML = '<h3 id="contentTitle">GitHub Token</h3>';
+      if ( existingHeader ) {
+        existingHeader.replaceWith( simpleHeader );
+      } else {
+        contentArea.insertBefore( simpleHeader, cb );
+      }
 
       cb.innerHTML = `
         ${ reasonHtml }
@@ -1595,7 +1585,16 @@
         `;
 
         // Restore original panel header (selectFile replaces it with breadcrumbs)
-        setContentHeader( makeSimpleHeader( 'About' ) );
+        const contentArea = document.getElementById( 'contentArea' );
+        const existingHeader = contentArea.querySelector( '.panel-header.file-header' );
+        const simpleHeader = document.createElement( 'div' );
+        simpleHeader.className = 'panel-header file-header';
+        simpleHeader.innerHTML = '<h3 id="contentTitle">About</h3>';
+        if ( existingHeader ) {
+          existingHeader.replaceWith( simpleHeader );
+        } else {
+          contentArea.insertBefore( simpleHeader, document.getElementById( 'contentBody' ) );
+        }
       } );
 
       // Token inline form
@@ -1918,23 +1917,6 @@
     };
 
     /* ── 22. fetchTree ── */
-    // Tree-load auth handler: on 403/404 drop a sidebar message and pop the
-    // token panel with the right reason, returning true so the caller bails.
-    // Returns false for any other status so the caller proceeds.
-    const handleTreeAuthError = ( res, treeList ) => {
-      if ( res.status === 403 ) {
-        treeList.innerHTML = `<p style="color: red;">${ escapeHTML( RATE_LIMIT_MESSAGE ) }</p>`;
-        showTokenPanel( RATE_LIMIT_REASON_HTML );
-        return true;
-      }
-      if ( res.status === 404 ) {
-        treeList.innerHTML = `<p style="color: red;">${ escapeHTML( PRIVATE_REPO_MESSAGE ) }</p>`;
-        showTokenPanel( privateRepoReasonHtml() );
-        return true;
-      }
-      return false;
-    };
-
     const fetchTree = async () => {
       if ( currentAbortController ) currentAbortController.abort();
       currentAbortController = new AbortController();
@@ -1950,7 +1932,16 @@
             { headers, signal }
           );
           updateRateBadge( repoRes );
-          if ( handleTreeAuthError( repoRes, treeList ) ) return;
+          if ( repoRes.status === 403 ) {
+            treeList.innerHTML = `<p style="color: red;">${ escapeHTML( RATE_LIMIT_MESSAGE ) }</p>`;
+            showTokenPanel( RATE_LIMIT_REASON_HTML );
+            return;
+          }
+          if ( repoRes.status === 404 ) {
+            treeList.innerHTML = `<p style="color: red;">${ escapeHTML( PRIVATE_REPO_MESSAGE ) }</p>`;
+            showTokenPanel( privateRepoReasonHtml() );
+            return;
+          }
           if ( !repoRes.ok ) throw new Error( `Failed to fetch repo info: ${ repoRes.status }` );
           const repoData = await repoRes.json();
           state.branch = repoData.default_branch;
@@ -1967,7 +1958,16 @@
         );
         updateRateBadge( treeRes );
 
-        if ( handleTreeAuthError( treeRes, treeList ) ) return;
+        if ( treeRes.status === 403 ) {
+          treeList.innerHTML = `<p style="color: red;">${ escapeHTML( RATE_LIMIT_MESSAGE ) }</p>`;
+          showTokenPanel( RATE_LIMIT_REASON_HTML );
+          return;
+        }
+        if ( treeRes.status === 404 ) {
+          treeList.innerHTML = `<p style="color: red;">${ escapeHTML( PRIVATE_REPO_MESSAGE ) }</p>`;
+          showTokenPanel( privateRepoReasonHtml() );
+          return;
+        }
         if ( !treeRes.ok ) throw new Error( `Failed to fetch tree: ${ treeRes.status }` );
 
         const treeData = await treeRes.json();
@@ -2429,24 +2429,9 @@
 
     /* ── 33. Content rendering helpers ── */
 
-    // Build the rendered/raw toggle scaffold shared by the markdown, html, and
-    // svg views. `renderedHtml` is the inner markup for the rendered pane; the
-    // view the user last chose for this ext starts visible. `prefix` is emitted
-    // ahead of both panes (markdown uses it for a parse-error banner);
-    // `renderedClass` adds a class to the rendered pane (markdown uses
-    // .markdown-body). The raw pane always shows the escaped source text.
-    const buildToggleHtml = ( ext, renderedHtml, rawText, { prefix = '', renderedClass = '' } = {} ) => {
-      const preferredView = getPreferredView( ext );
-      const renderedDisplay = preferredView === 'rendered' ? '' : 'display:none';
-      const rawDisplay = preferredView === 'raw' ? '' : 'display:none';
-      const classAttr = renderedClass ? ` class="${ renderedClass }"` : '';
-      return prefix +
-        `<div${ classAttr } id="viewRendered" style="${ renderedDisplay }">${ renderedHtml }</div>` +
-        `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( rawText ) }</pre>`;
-    };
-
     const renderMarkdown = async ( text, filePath, signal ) => {
       const ext = filePath.split( '.' ).pop().toLowerCase();
+      const preferredView = getPreferredView( ext );
       let renderedHtml;
       let errorHtml = '';
 
@@ -2457,8 +2442,13 @@
         renderedHtml = '';
       }
 
+      const renderedDisplay = preferredView === 'rendered' ? '' : 'display:none';
+      const rawDisplay = preferredView === 'raw' ? '' : 'display:none';
+
       document.getElementById( 'contentBody' ).innerHTML =
-        buildToggleHtml( ext, renderedHtml, text, { prefix: errorHtml, renderedClass: 'markdown-body' } );
+        errorHtml +
+        `<div class="markdown-body" id="viewRendered" style="${ renderedDisplay }">${ renderedHtml }</div>` +
+        `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( text ) }</pre>`;
 
       // Rewrite links inside .markdown-body
       const mdBody = document.getElementById( 'viewRendered' );
@@ -2575,8 +2565,12 @@
     };
 
     const renderHtml = ( text, filePath, ext ) => {
+      const preferredView = getPreferredView( ext );
       const blob = new Blob( [ text ], { type: 'text/html' } );
       const url = createBlobUrl( blob );
+
+      const renderedDisplay = preferredView === 'rendered' ? '' : 'display:none';
+      const rawDisplay = preferredView === 'raw' ? '' : 'display:none';
 
       // The iframe is fully sandboxed (no allow-scripts / allow-same-origin)
       // and served from a blob: URL with no base, so scripts and relative
@@ -2587,7 +2581,8 @@
         `<div class="md-error">ℹ️ Preview is sandboxed: scripts and relative assets (CSS, images, modules) are disabled. Use <strong>↗ New Tab</strong> to open the live page.</div>`;
 
       document.getElementById( 'contentBody' ).innerHTML =
-        buildToggleHtml( ext, `${ previewNote }<iframe class="iframe-content" sandbox src="${ escapeHTML( url ) }"></iframe>`, text );
+        `<div id="viewRendered" style="${ renderedDisplay }">${ previewNote }<iframe class="iframe-content" sandbox src="${ escapeHTML( url ) }"></iframe></div>` +
+        `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( text ) }</pre>`;
     };
 
     const renderImage = ( url, alt ) => {
@@ -2596,11 +2591,16 @@
     };
 
     const renderSvg = ( text, fileName = 'SVG image' ) => {
+      const preferredView = getPreferredView( 'svg' );
       const blob = new Blob( [ text ], { type: 'image/svg+xml' } );
       const url = createBlobUrl( blob );
 
+      const renderedDisplay = preferredView === 'rendered' ? '' : 'display:none';
+      const rawDisplay = preferredView === 'raw' ? '' : 'display:none';
+
       document.getElementById( 'contentBody' ).innerHTML =
-        buildToggleHtml( 'svg', `<img class="media-content" src="${ escapeHTML( url ) }" alt="${ escapeHTML( fileName ) }">`, text );
+        `<div id="viewRendered" style="${ renderedDisplay }"><img class="media-content" src="${ escapeHTML( url ) }" alt="${ escapeHTML( fileName ) }"></div>` +
+        `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( text ) }</pre>`;
     };
 
     const renderAudio = ( url ) => {
@@ -2674,38 +2674,7 @@
       }
     };
 
-    /* ── 35. GitHub file fetch (shared core) ── */
-
-    // Map GitHub's auth/limit statuses to the sentinel errors selectFile and
-    // fetchTree special-case (they pop the token panel). 403 = rate limited,
-    // 404 = missing or private, anything else non-ok = a generic failure.
-    const assertGitHubOk = ( res ) => {
-      if ( res.status === 403 ) throw new Error( RATE_LIMIT_MESSAGE );
-      if ( res.status === 404 ) throw new Error( PRIVATE_REPO_MESSAGE );
-      if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
-    };
-
-    // The token-vs-anonymous fetch shared by the text and blob paths. With a
-    // token we hit the contents API (raw accept) and track rate-limit headers;
-    // anonymously we hit raw.githubusercontent.com (no rate headers). Callers
-    // own local-first short-circuiting and caching, which differ per type.
-    const githubFileResponse = async ( path, signal ) => {
-      const token = getToken();
-      if ( token ) {
-        const headers = { ...getAuthHeaders(), Accept: 'application/vnd.github.raw+json' };
-        const res = await fetch( contentsApiUrl( path ), { headers, signal } );
-        updateRateBadge( res );
-        assertGitHubOk( res );
-        return res;
-      }
-      const res = await fetch( rawUrl( path ), { signal } );
-      assertGitHubOk( res );
-      return res;
-    };
-
-    const blobFromMime = ( blob, mimeType ) =>
-      mimeType ? new Blob( [ blob ], { type: mimeType } ) : blob;
-
+    /* ── 35. fetchFileText — text content fetch ── */
     const fetchFileText = async ( path, signal ) => {
       // Local-first: bypass cache so uncommitted edits show immediately
       const localUrl = localUrlFor( path );
@@ -2722,8 +2691,24 @@
       const cached = getCachedFileText( path );
       if ( cached !== null ) return cached;
 
-      const res = await githubFileResponse( path, signal );
-      const text = await res.text();
+      let text;
+      const token = getToken();
+
+      if ( token ) {
+        const headers = { ...getAuthHeaders(), Accept: 'application/vnd.github.raw+json' };
+        const res = await fetch( contentsApiUrl( path ), { headers, signal } );
+        updateRateBadge( res );
+        if ( res.status === 403 ) throw new Error( RATE_LIMIT_MESSAGE );
+        if ( res.status === 404 ) throw new Error( PRIVATE_REPO_MESSAGE );
+        if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
+        text = await res.text();
+      } else {
+        const res = await fetch( rawUrl( path ), { signal } );
+        if ( res.status === 404 ) throw new Error( PRIVATE_REPO_MESSAGE );
+        if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
+        text = await res.text();
+      }
+
       setCachedFileText( path, text );
       return text;
     };
@@ -2735,15 +2720,40 @@
       if ( localUrl ) {
         try {
           const res = await fetch( localUrl, { signal } );
-          if ( res.ok ) return createBlobUrl( blobFromMime( await res.blob(), mimeType ) );
+          if ( res.ok ) {
+            let blob = await res.blob();
+            if ( mimeType ) blob = new Blob( [ blob ], { type: mimeType } );
+            return createBlobUrl( blob );
+          }
         } catch ( err ) {
           if ( err.name === 'AbortError' ) throw err;
           /* fall through to GitHub */
         }
       }
 
-      const res = await githubFileResponse( path, signal );
-      return createBlobUrl( blobFromMime( await res.blob(), mimeType ) );
+      const token = getToken();
+      let blob;
+
+      if ( token ) {
+        const headers = { ...getAuthHeaders(), Accept: 'application/vnd.github.raw+json' };
+        const res = await fetch( contentsApiUrl( path ), { headers, signal } );
+        updateRateBadge( res );
+        if ( res.status === 403 ) throw new Error( RATE_LIMIT_MESSAGE );
+        if ( res.status === 404 ) throw new Error( PRIVATE_REPO_MESSAGE );
+        if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
+        blob = await res.blob();
+      } else {
+        const res = await fetch( rawUrl( path ), { signal } );
+        if ( res.status === 404 ) throw new Error( PRIVATE_REPO_MESSAGE );
+        if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
+        blob = await res.blob();
+      }
+
+      if ( mimeType ) {
+        blob = new Blob( [ blob ], { type: mimeType } );
+      }
+
+      return createBlobUrl( blob );
     };
 
     const resolveMediaUrl = async ( path, signal ) => {
@@ -2808,9 +2818,15 @@
 
       // Build file header
       const contentArea = document.getElementById( 'contentArea' );
+      const existingHeader = contentArea.querySelector( '.panel-header.file-header' );
       const newHeader = document.createElement( 'div' );
       newHeader.innerHTML = buildFileHeader( path, ext );
-      setContentHeader( newHeader.firstElementChild );
+      const headerEl = newHeader.firstElementChild;
+      if ( existingHeader ) {
+        existingHeader.replaceWith( headerEl );
+      } else {
+        contentArea.insertBefore( headerEl, document.getElementById( 'contentBody' ) );
+      }
 
       // Show loading
       document.getElementById( 'contentBody' ).innerHTML = '<p>Loading…</p>';
