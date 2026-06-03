@@ -1,7 +1,6 @@
 # TooToo — Tips
 
 
-
 ## Header
 
 * Click the title in the header to reload
