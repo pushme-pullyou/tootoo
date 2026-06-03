@@ -15,8 +15,8 @@ This is the current TooToo roadmap.
 * G:\My Drive\2026-theo-github\theo-armour-sandbox'
 * G:\My Drive\2026-theo-github\theo-armour-aa'
 * G:\My Drive\2026-theo-github\theo-armour-genealogy'
-* G:\My Drive\2026-theo-github\theo-armour-wikitheo'
-* I:\My Drive\tech'
+* G:\My Drive\2026-theo-github\theo-armour-wikitheo
+* I:/My%20Drive/tech/index.html
 
 
 
