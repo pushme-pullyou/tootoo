@@ -4,12 +4,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-02 17:55">
+  <meta name="revised" content="2026-06-01 22:56">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
-  <!-- External deps (pinned): marked → HTML (sanitized by DOMPurify),
-       highlight.js, DOMPurify, SheetJS (xlsx/csv; ~700KB). See FORKING.md. -->
+  <!--
+    External dependencies. Versions pinned to insulate against upstream churn.
+    To swap a CDN for a local copy, download the file into your fork and
+    point the src/href at the relative path. See FORKING.md for details.
+
+      marked       — Markdown → HTML; output always sanitized via DOMPurify
+      highlight.js — code syntax highlighting (CSS theme + JS engine)
+      DOMPurify    — HTML sanitization for marked + SheetJS output
+      SheetJS      — xlsx/xls/csv/ods rendering (~700KB; remove if unused)
+  -->
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
   <link id="hljsTheme" rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
@@ -17,8 +25,13 @@
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.1/dist/purify.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <!-- Optional per-fork config: if present, tootoo.config.js sets
-       window.TOOTOO_CONFIG and we merge it over CONFIG before init. -->
+  <!--
+    Optional per-fork branding/config. If tootoo.config.js exists next to
+    this file, it sets window.TOOTOO_CONFIG = { … } and we merge it over
+    the built-in CONFIG block before init runs. Missing file is fine —
+    forks that don't customize anything can omit it. See tootoo.config.js
+    in the canonical repo for the full list of knobs.
+  -->
   <script src="tootoo.config.js" onerror="void 0"></script>
   <style>
     /* ── Custom Properties ── */
@@ -56,7 +69,9 @@
     /* ── Font size on html so rem units scale ── */
     html {
       font-size: var(--font-size);
-      /* Faintly tint scrollbars with the theme color (Chrome 121+). */
+      /* Faintly tint scrollbars (~35% opacity) so the theme is hinted at
+         without competing with content. Inherits to every scrollable
+         descendant (sidebar tree, content area, code blocks). Chrome 121+. */
       scrollbar-color: color-mix(in srgb, var(--highlight-color), transparent 65%) transparent;
     }
 
@@ -67,8 +82,10 @@
       box-sizing: border-box;
     }
 
-    /* Every heading + title picks up the optional CONFIG.headingFont
-       (falls back to the body font when unset). */
+    /* All headings — title, panel headers, every h1–h6 anywhere in the doc
+       (markdown body, About page, error panels, spreadsheet sheet names) —
+       pick up the optional CONFIG.headingFont. Var fallback means omitting
+       the knob falls through to the body font-family with no override. */
     h1, h2, h3, h4, h5, h6,
     #headerTitle {
       font-family: var(--heading-font, var(--font-family));
@@ -124,7 +141,10 @@
       color: color-mix(in srgb, var(--highlight-color) 65%, white);
     }
 
-    /* Nudge the GitHub icons down to the visual center of adjacent text. */
+    /* The 18x18 GitHub icons sit on the line-box geometric center via flex
+       alignment, but text descenders pull the *visual* center down. The
+       required nudge scales with adjacent text size: the top-header title
+       (1.35rem) needs more than the content-header breadcrumb (1rem). */
     #headerGitHub svg {
       transform: translateY(4px);
     }
@@ -134,8 +154,11 @@
     }
 
     #headerTitle {
-      /* Normal weight so single-weight display fonts aren't synthetically bolded. */
+      /* Normal weight so a single-weight display heading font (e.g. Patua One)
+         renders as-designed instead of being synthetically emboldened. */
       font-weight: normal;
+      /* Sized so the title is visually present, but still shorter than the
+         header buttons so the bar's overall height stays driven by them. */
       font-size: 1.35rem;
       text-decoration: none;
       color: var(--highlight-color);
@@ -146,8 +169,11 @@
       color: color-mix(in srgb, var(--highlight-color) 65%, white);
     }
 
-    /* ── Buttons ── ghost pill (theme-color text + border) that fills with
-       the theme color on hover, with a slight lift on press. */
+    /* ── Buttons ──
+       One look for every button: ghost pill in default state (theme-color
+       text + border, transparent background) that fills with theme color
+       on hover. Quiet at rest, clear affordance on hover, slight lift on
+       press. Border uses the same color as text so they read as one unit. */
     .header-btn,
     .file-btn,
     button.primary,
@@ -178,7 +204,9 @@
       transform: translateY(0);
     }
 
-    /* Dark mode: brighten the chrome color against dark backgrounds. */
+    /* Dark mode: brighten the chrome color since saturated theme colors
+       can look dim against dark backgrounds. Matches the pattern used on
+       headings, header title, and panel headers. */
     body.dark-mode .header-btn,
     body.dark-mode .file-btn,
     body.dark-mode button.primary,
@@ -264,7 +292,9 @@
 
     .panel-header h3 {
       margin: 0;
-      /* Normal weight so single-weight display fonts aren't synthetically bolded. */
+      /* Normal weight so a single-weight display heading font (e.g. Patua One)
+         renders as-designed instead of being synthetically emboldened.
+         Matches #headerTitle for visual consistency across both bars. */
       font-size: 1rem;
       font-weight: normal;
       color: var(--highlight-color);
@@ -409,8 +439,11 @@
 
     /* ── Inline repo form ── */
     .repo-form {
-      /* Shares .markdown-body's width/rhythm, but stacks label+input in a
-         flex column with gap instead of block flow. */
+      /* Form columns (token page, Set-Repository fallback) share the same
+         width/line-height/wrap rules as .markdown-body so prose and forms
+         read with the same rhythm. The flex column + gap is what makes
+         this class different from .markdown-body — labels and inputs stack
+         vertically with consistent spacing instead of using block flow. */
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
@@ -507,13 +540,18 @@
       word-wrap: break-word;
     }
 
-    /* Tint every content heading (h1–h6) with the theme color, normal weight. */
+    /* Tint every heading in long-form content with the theme color so forks
+       feel branded uniformly — h1 through h6 all get the same treatment.
+       Normal weight so single-weight display heading fonts (e.g. Patua One)
+       aren't synthetically emboldened on top of their already-heavy design. */
     .markdown-body :is(h1, h2, h3, h4, h5, h6) {
       color: var(--highlight-color);
       font-weight: normal;
     }
 
-    /* Dark mode: lighten headings against dark backgrounds. */
+    /* Dark mode: lighten the heading color so saturated theme colors don't
+       shimmer against dark backgrounds. color-mix is Chrome 111+, which
+       matches the project's "modern Chrome only" target. */
     body.dark-mode .markdown-body :is(h1, h2, h3, h4, h5, h6) {
       color: color-mix(in srgb, var(--highlight-color) 65%, white);
     }
@@ -523,8 +561,16 @@
       height: auto;
     }
 
-    /* Content-area links sit on the theme color — darkened in light mode
-       (darker on hover), brightened in dark mode — to read as actionable. */
+    /* All links inside the content area (markdown body, About page, error
+       panels, oversized-repo panel) sit on the theme color. Links carry
+       more visual weight than headings or chrome because they're inline
+       with body text and need to stand out as actionable, so light-mode
+       links are darkened against the raw theme color even at rest and
+       darken further on hover. Dark mode mirrors the move toward the
+       opposite end of the contrast axis (brighter at rest, brighter still
+       on hover). External links keep their browser-default underline so
+       they still read distinct from internal-link anchors below, which
+       strip both href and underline. */
     #contentBody a {
       color: color-mix(in srgb, var(--highlight-color) 80%, black);
       transition: color 0.15s;
@@ -542,7 +588,9 @@
       color: color-mix(in srgb, var(--highlight-color) 40%, white);
     }
 
-    /* renderMarkdown strips href on in-page links; restore the pointer cursor. */
+    /* In-page link rewritten by renderMarkdown to call selectFile instead of
+       navigating. href is removed so the browser drops the pointer cursor;
+       restore it here. Color is inherited from the #contentBody a rule. */
     .markdown-body a.internal-link {
       cursor: pointer;
     }
@@ -818,21 +866,52 @@
     const rawUrl = ( path ) =>
       `https://raw.githubusercontent.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
 
-    // raw.githack.com re-serves raw GitHub files with correct Content-Types, so
-    // HTML renders (and its relative assets resolve) instead of showing source.
-    const githackUrl = ( path ) =>
-      `https://raw.githack.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/${ encodeURIComponent( state.branch ) }/${ encodePath( path ) }`;
-
     const contentsApiUrl = ( path ) =>
       `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/contents/${ encodePath( path ) }?ref=${ encodeURIComponent( state.branch ) }`;
 
     const GITHUB_SVG_ICON = '<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>';
 
-    /* ── 2. CONFIG & state ──
-       Built-in defaults; a fork overrides any of these via tootoo.config.js
-       (window.TOOTOO_CONFIG) so index.html stays byte-identical to canonical.
-       Each knob is documented inline below. CONFIG_DEFAULTS snapshots
-       owner/repo/branch so detectRepo can fall back to them. */
+    /* ══════════════════════════════════════════════════════════════════
+       ── FORK CUSTOMIZATION ZONE ──
+       Preferred: drop a tootoo.config.js file next to index.html and set
+       window.TOOTOO_CONFIG = { … } there. Anything you set overrides the
+       built-in CONFIG below. That way index.html stays byte-identical to
+       canonical and you can sync it with a plain `cp`. See the sample
+       tootoo.config.js shipped alongside this file for every available
+       knob.
+
+       The CONFIG block below holds the built-in defaults. Editing it
+       in-place still works for forks that don't want a sibling file,
+       but every change has to be re-applied on every canonical sync.
+
+       Knobs you'll usually want to set:
+         • owner / repo / branch  — pre-load a specific repo. Empty
+           values fall through to URL params, GitHub Pages URL,
+           .git/config (file:// only), and the manual repo form.
+         • storagePrefix          — localStorage namespace. Change so
+           your fork's state doesn't collide with canonical TooToo's.
+         • appName                — <title>, header label, About heading.
+         • sourceRepoUrl          — top-header GitHub icon target and
+           About page "Source code" link.
+         • hiddenFolders          — folder names to omit from the
+           sidebar tree (case-insensitive, matches at any depth).
+         • hiddenFiles            — file names to omit from the sidebar
+           tree (case-insensitive, matches at any depth). Useful for
+           per-fork config files like tootoo.config.js.
+         • maxRepoFiles           — refuse to render repos bigger than
+           this; protects forks from accidental linux-scale browsing.
+         • themeColor             — highlight color (light + dark mode).
+         • subtitle               — small muted text after the title.
+         • faviconLetters / faviconColor — restyle the SVG favicon.
+         • headingFontUrl         — optional stylesheet URL (e.g. Google
+           Fonts) loaded into <head> at init.
+         • headingFont            — font-family applied to the title,
+           panel headers, and markdown h1/h2.
+
+       CONFIG_DEFAULTS just snapshots owner/repo/branch so detectRepo
+       can fall back to them after auto-detection fails.
+       ══════════════════════════════════════════════════════════════════ */
+    /* ── 2. CONFIG & state ── */
     const CONFIG = {
       owner: '',                // e.g. 'octocat'
       repo: '',                 // e.g. 'hello-world'
@@ -1053,13 +1132,19 @@
     const setPreferredView = ( ext, view ) => localStorage.setItem( getViewPrefKey( ext ), view );
 
     /* ── 8. updateHeaderFromConfig ──
-       The top header shows where this app instance lives (owner/repo serving
-       the HTML), not the browsed repo. Source: Pages URL, else .git/config
-       on file://, else CONFIG.sourceRepoUrl. */
+       The top header identifies *where this app instance lives* — the
+       owner/repo serving the HTML. On GitHub Pages that's parsed from
+       the URL; on file:// we read .git/config from the surrounding
+       repo; otherwise we fall back to CONFIG.sourceRepoUrl. The header
+       does not follow the currently browsed repo (the lower-panel
+       breadcrumbs do that). */
     const APP_ORIGIN = { owner: '', repo: '', url: '.' };
 
-    // Probe .git/config in this dir and ancestors (file:// only). Cached so
-    // detectAppOrigin/detectRepo share one walk. Returns { owner, repo, base }.
+    // Probe .git/config in the current directory and ancestors. Cached on
+    // first call so detectAppOrigin and detectRepo share one walk per page
+    // load. Returns { owner, repo, base } on a hit, null otherwise. Off
+    // file:// returns null without probing — servers typically deny dotfile
+    // access and the failed requests just surface as console noise.
     let gitConfigProbe = null;
     const findGitConfig = () => {
       if ( gitConfigProbe ) return gitConfigProbe;
@@ -1260,8 +1345,10 @@
       }
     };
 
-    /* Rebuild the inline SVG favicon from CONFIG.faviconLetters/Color.
-       (The sidebar-footer button reuses this link's href in setupListeners.) */
+    /* Regenerate the inline SVG favicon from CONFIG.faviconLetters/Color so
+       forks get a visually distinct tab icon and sidebar-footer button.
+       The sidebar-footer button reads its src from the <link rel="icon">
+       href later in setupListeners, so updating the link is enough. */
     const applyFavicon = () => {
       const letters = String( CONFIG.faviconLetters || 'TT' );
       const l1 = ( letters[ 0 ] || 'T' ).toUpperCase();
@@ -1278,8 +1365,11 @@
       if ( link ) link.href = svg;
     };
 
-    /* Optionally load CONFIG.headingFontUrl and set --heading-font; omitting
-       either knob is a no-op (the CSS var falls back to the body font). */
+    /* Load an optional heading stylesheet (e.g. Google Fonts) and apply the
+       chosen font-family to every heading (title + panel headers + every
+       h1–h6 anywhere in the doc) via the --heading-font CSS variable. The
+       CSS rules use var(--heading-font, var(--font-family)) so omitting
+       either knob is a no-op. */
     const applyHeadingFont = () => {
       if ( CONFIG.headingFontUrl ) {
         const link = document.createElement( 'link' );
@@ -1293,7 +1383,9 @@
     };
 
     /* ── Content-area panel header helpers ──
-       Swap in `headerEl` (replace the current header, else insert before #contentBody). */
+       Swap the content-area panel header for `headerEl`: replace the existing
+       one if present, otherwise insert it before #contentBody. Shared by the
+       token panel, the About page, and per-file breadcrumb headers. */
     const setContentHeader = ( headerEl ) => {
       const contentArea = document.getElementById( 'contentArea' );
       const existing = contentArea.querySelector( '.panel-header.file-header' );
@@ -1572,6 +1664,8 @@
       } );
 
       // Sidebar footer: favicon doubles as a "scroll tree to top" button.
+      // Pull the img src from the favicon link so forks only need to
+      // update one place in <head>.
       const footerIcon = document.querySelector( '#btnScrollTreeTop img' );
       const faviconHref = document.querySelector( 'link[rel="icon"]' )?.href;
       if ( footerIcon && faviconHref ) footerIcon.src = faviconHref;
@@ -1581,8 +1675,9 @@
         document.getElementById( 'treeList' ).scrollTo( { top: 0, behavior: reduce ? 'auto' : 'smooth' } );
       } );
 
-      // Header title click — reset to the original repo: clear hash, query
-      // overrides, cached repo, and last-file preference, then reload.
+      // Header title click — return to the *original* repo for this app
+      // instance: clear the deep-link hash, the URL query overrides, the
+      // cached repo, and the last-opened-file preference, then reload.
       document.getElementById( 'headerTitle' ).addEventListener( 'click', ( e ) => {
         e.preventDefault();
         clearCurrentFilePreference();
@@ -1798,8 +1893,10 @@
       } );
     };
 
-    /* ── 21b. Oversized-repo panel ── bail out (and link to github.com) for
-       repos past CONFIG.maxRepoFiles or a truncated tree response. */
+    /* ── 21b. Oversized-repo panel ──
+       Repos beyond CONFIG.maxRepoFiles (or any tree the GitHub API truncates)
+       would render a misleading half-tree and choke the sidebar filter. We
+       show a friendly bail-out instead and link out to github.com. */
     const showOversizedRepoPanel = ( count, truncated ) => {
       const repoUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`;
       const countLabel = truncated
@@ -1821,8 +1918,9 @@
     };
 
     /* ── 22. fetchTree ── */
-    // Tree-load auth handler: on 403/404 show the token panel and return true
-    // (caller bails); false otherwise so the caller proceeds.
+    // Tree-load auth handler: on 403/404 drop a sidebar message and pop the
+    // token panel with the right reason, returning true so the caller bails.
+    // Returns false for any other status so the caller proceeds.
     const handleTreeAuthError = ( res, treeList ) => {
       if ( res.status === 403 ) {
         treeList.innerHTML = `<p style="color: red;">${ escapeHTML( RATE_LIMIT_MESSAGE ) }</p>`;
@@ -1898,7 +1996,8 @@
 
     /* ── 23. Filter logic ── */
     let preFilterOpenState = null;
-    // Cached after each renderTree(); reused by every filter keystroke.
+    // Cached after each renderTree(); reused by every filter keystroke so we
+    // don't run two querySelectorAll walks over the tree on every input event.
     let cachedTreeItems = [];
     let cachedTreeFolders = [];
 
@@ -2038,7 +2137,9 @@
           return;
         }
 
-        // `\` moves focus into the tree (current selection, else first visible).
+        // `\` jumps focus into the tree so arrow / Page / Home / End keys
+        // start working. Prefers the currently-selected item, falls back
+        // to the first visible one.
         if ( e.key === '\\' && active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' ) {
           e.preventDefault();
           const visible = getVisibleTreeItems();
@@ -2146,8 +2247,9 @@
     const autoSelectReadme = () => {
       if ( !state.tree ) return;
 
-      // Match a root-level README (.md/.markdown/.mkd/.mdown/.txt or bare);
-      // otherwise fall back to the About page.
+      // Only match a root-level README; otherwise fall back to the About page.
+      // Accepts: README.md, README.markdown, README.mkd, README.mdown,
+      // README.txt, and bare README (no extension). Case-insensitive.
       const readme = state.tree.find( ( item ) =>
         item.type === 'blob' && /^readme(\.(md|markdown|mkd|mdown|txt))?$/i.test( item.path )
       );
@@ -2213,13 +2315,17 @@
       const fileName = path.split( '/' ).pop();
       const ext = fileName.includes( '.' ) ? fileName.split( '.' ).pop().toLowerCase() : '';
 
-      // Local mode (file://): prefer the on-disk file so New Tab reflects
-      // uncommitted edits and HTML keeps its relative assets. Null when hosted.
+      // Running locally (file://, probe confirmed): always prefer the on-disk
+      // file. New Tab then reflects uncommitted edits, and HTML opens with its
+      // relative assets (CSS, images, modules) resolving against the real path
+      // instead of being sandboxed. Returns null off local mode, so this is a
+      // no-op when hosted.
       const localUrl = localUrlFor( path );
       if ( localUrl ) return localUrl;
 
-      // Extensionless and download-prone (CSV, archives, Office) files go
-      // straight to raw, which downloads them — the expected action.
+      // Extensionless (LICENSE, AUTHORS) and download-prone (CSV, archives,
+      // Office docs) files go straight to raw. raw triggers a browser download
+      // for these MIME types, which is the expected action for a data file.
       if ( !ext || DOWNLOAD_PRONE_EXTS.includes( ext ) ) {
         return rawUrl( path );
       }
@@ -2232,17 +2338,24 @@
             { headers }
           );
           updateRateBadge( res );
-          // Only cache a definitive answer (200 = on, 404 = off). A 403/network
-          // error leaves pagesEnabled null so the next click re-probes.
+          // Only cache a definitive answer. 200 = Pages on, 404 = genuinely
+          // off. A 403 (rate limit) or network error is NOT proof Pages is
+          // off — leaving pagesEnabled null re-probes on the next click
+          // instead of locking raw.githubusercontent.com in for the whole
+          // session. This click still falls through to the raw fallback below.
           if ( res.status === 200 ) state.pagesEnabled = true;
           else if ( res.status === 404 ) state.pagesEnabled = false;
         } catch ( _ ) { /* network blip: leave null, re-probe next click */ }
       }
 
       if ( state.pagesEnabled ) {
-        // Pages/Jekyll converts Markdown to HTML: a README.md becomes its
-        // directory URL; other .md files drop their extension. (.txt/bare
-        // README are served as-is, so they're excluded here.)
+        // GitHub Pages / Jekyll renders Markdown as HTML; a README.* of one of
+        // these extensions becomes the directory index.html. The set matches
+        // Jekyll's default markdown_ext so every file Pages actually converts
+        // gets directory-index / extension-strip treatment. Note autoSelectReadme
+        // also treats README.txt and bare README as readmes, but those are
+        // intentionally excluded here: Pages serves them as-is (no HTML
+        // conversion), so the raw filename URL below is the correct target.
         const mdExtRe = /\.(md|markdown|mkdown|mkdn|mkd)$/i;
         const isReadme = /^readme\.(md|markdown|mkdown|mkdn|mkd)$/i.test( fileName );
         const pagesPath = isReadme
@@ -2255,9 +2368,7 @@
           : `https://${ state.owner }.github.io/${ state.repo }/${ encodedPagesPath }`;
       }
 
-      // Pages off: raw serves HTML as text/plain (shows source), so route
-      // .html/.htm through githack to render it; everything else uses raw.
-      return ( ext === 'html' || ext === 'htm' ) ? githackUrl( path ) : rawUrl( path );
+      return rawUrl( path );
     };
 
     /* ── 32. buildFileHeader — breadcrumbs + action buttons ── */
@@ -2268,8 +2379,9 @@
       const ownerUrl = `https://github.com/${ encodeURIComponent( state.owner ) }`;
       const repoUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`;
 
-      // Breadcrumbs: owner / repo @ branch / folder / file. Owner/repo/branch
-      // link out to GitHub.
+      // Breadcrumbs identify the file fully: owner / repo @ branch / folder / file.
+      // The owner, repo, and branch segments link out to GitHub (the top header
+      // is the way back to the TooToo repo home for this app).
       let breadcrumbHtml =
         `<a class="breadcrumb-link" href="${ escapeHTML( ownerUrl ) }" target="_blank" rel="noopener" title="Open ${ escapeHTML( state.owner ) } on GitHub" aria-label="Open ${ escapeHTML( state.owner ) } on GitHub">${ escapeHTML( state.owner ) }</a>` +
         ` / <a class="breadcrumb-link" href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener" title="Open ${ escapeHTML( state.repo ) } on GitHub" aria-label="Open ${ escapeHTML( state.repo ) } on GitHub">${ escapeHTML( state.repo ) }</a>`;
@@ -2317,9 +2429,12 @@
 
     /* ── 33. Content rendering helpers ── */
 
-    // Rendered/raw toggle scaffold shared by the markdown, html, and svg views.
-    // Starts on the user's last-chosen view for this ext. `prefix` precedes both
-    // panes; `renderedClass` classes the rendered pane.
+    // Build the rendered/raw toggle scaffold shared by the markdown, html, and
+    // svg views. `renderedHtml` is the inner markup for the rendered pane; the
+    // view the user last chose for this ext starts visible. `prefix` is emitted
+    // ahead of both panes (markdown uses it for a parse-error banner);
+    // `renderedClass` adds a class to the rendered pane (markdown uses
+    // .markdown-body). The raw pane always shows the escaped source text.
     const buildToggleHtml = ( ext, renderedHtml, rawText, { prefix = '', renderedClass = '' } = {} ) => {
       const preferredView = getPreferredView( ext );
       const renderedDisplay = preferredView === 'rendered' ? '' : 'display:none';
@@ -2391,8 +2506,11 @@
           a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( normalized, { skipFocus: true } ); } );
         } );
 
-        // Syntax-highlight fenced code blocks (marked doesn't); skip oversized
-        // ones (hljs is slow on huge inputs).
+        // Syntax-highlight fenced code blocks. marked emits
+        // <pre><code class="language-x"> but never adds the .hljs class or
+        // token spans the theme styles, so without this pass code in
+        // rendered markdown shows unhighlighted. Skip oversized blocks for
+        // the same reason renderCode does (hljs is slow on huge inputs).
         mdBody.querySelectorAll( 'pre code' ).forEach( ( el ) => {
           if ( el.textContent.length > 500 * 1024 ) return;
           try { hljs.highlightElement( el ); } catch ( _ ) { /* plain fallback */ }
@@ -2423,12 +2541,15 @@
             img.setAttribute( 'src', resolvedSrc );
             img.setAttribute( 'loading', 'lazy' );
           } catch ( err ) {
-            // One image's failure must not discard the rendered README; only
-            // re-throw aborts (user navigated away).
+            // A rate-limited / 404 / network failure on one image must not
+            // discard the already-rendered README. Re-throw aborts (the user
+            // navigated away); otherwise leave the original relative src so
+            // the image shows as broken instead of taking the page down.
             if ( err?.name === 'AbortError' ) throw err;
           }
         };
-        // Cap concurrency so image-heavy READMEs don't burst the rate limit.
+        // Cap concurrency so image-heavy READMEs don't burst the rate limit
+        // when a token is set (each call may hit api.github.com).
         const IMAGE_CONCURRENCY = 4;
         for ( let i = 0; i < images.length; i += IMAGE_CONCURRENCY ) {
           await Promise.all( images.slice( i, i + IMAGE_CONCURRENCY ).map( resolveOne ) );
@@ -2437,7 +2558,9 @@
     };
 
     const renderCode = ( text, ext ) => {
-      // Skip highlighting for extensionless files — hljs mis-colors prose.
+      // Skip auto-detect highlighting for extensionless files (LICENSE,
+      // AUTHORS, etc.) — hljs often guesses a code language and colors
+      // natural-text words like "AS"/"OR"/"AND" as keywords.
       const skipHighlight = !ext || text.length > 500 * 1024;
       const code = document.createElement( 'code' );
       code.textContent = text;
@@ -2455,8 +2578,11 @@
       const blob = new Blob( [ text ], { type: 'text/html' } );
       const url = createBlobUrl( blob );
 
-      // The iframe is fully sandboxed from a blob: URL, so scripts/relative
-      // assets won't load — tell the user; New Tab opens the live page.
+      // The iframe is fully sandboxed (no allow-scripts / allow-same-origin)
+      // and served from a blob: URL with no base, so scripts and relative
+      // assets (CSS, images, modules) won't load. Tell the user instead of
+      // letting a blank-ish preview read as a TooToo bug — New Tab opens the
+      // live page (GitHub Pages or raw) where those work.
       const previewNote =
         `<div class="md-error">ℹ️ Preview is sandboxed: scripts and relative assets (CSS, images, modules) are disabled. Use <strong>↗ New Tab</strong> to open the live page.</div>`;
 
@@ -2550,16 +2676,19 @@
 
     /* ── 35. GitHub file fetch (shared core) ── */
 
-    // Map GitHub statuses to sentinel errors (403 = rate limit, 404 = missing/
-    // private) that callers special-case to pop the token panel.
+    // Map GitHub's auth/limit statuses to the sentinel errors selectFile and
+    // fetchTree special-case (they pop the token panel). 403 = rate limited,
+    // 404 = missing or private, anything else non-ok = a generic failure.
     const assertGitHubOk = ( res ) => {
       if ( res.status === 403 ) throw new Error( RATE_LIMIT_MESSAGE );
       if ( res.status === 404 ) throw new Error( PRIVATE_REPO_MESSAGE );
       if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
     };
 
-    // Token-vs-anonymous fetch shared by the text and blob paths: token → the
-    // contents API (rate headers tracked), anonymous → raw. Callers own caching.
+    // The token-vs-anonymous fetch shared by the text and blob paths. With a
+    // token we hit the contents API (raw accept) and track rate-limit headers;
+    // anonymously we hit raw.githubusercontent.com (no rate headers). Callers
+    // own local-first short-circuiting and caching, which differ per type.
     const githubFileResponse = async ( path, signal ) => {
       const token = getToken();
       if ( token ) {
@@ -2643,13 +2772,16 @@
       const ext = path.includes( '.' ) ? path.split( '.' ).pop().toLowerCase() : '';
       const isStreamable = STREAMABLE_EXTS.includes( ext );
 
-      // Large-file confirm. Approval is scoped by owner/repo/branch/path so it
-      // doesn't carry across repos switched without a reload.
+      // Large file protection. Approval is scoped by owner/repo/branch/path so
+      // a path approved in one repo doesn't carry over after switching repos
+      // (e.g. via the URL-form fallback, which doesn't trigger a reload).
       const approvalKey = getFileCacheKey( path );
       if ( fileSize > LARGE_FILE_WARNING_BYTES && !isStreamable && !approvedLargeFiles.has( approvalKey ) ) {
         const sizeMB = ( fileSize / ( 1024 * 1024 ) ).toFixed( 1 );
         if ( !window.confirm( `This file is ${ sizeMB } MB. Load anyway?` ) ) return;
-        // Cap the set (evict oldest; re-approving just re-prompts).
+        // Cap the set so a long browsing session can't grow it unbounded.
+        // Set preserves insertion order, so deleting the first key evicts
+        // the oldest approval (LRU-ish; re-approving just re-prompts).
         if ( approvedLargeFiles.size >= 100 ) {
           approvedLargeFiles.delete( approvedLargeFiles.values().next().value );
         }
@@ -2748,7 +2880,8 @@
         updateHash( path );
       }
 
-      // Save last file path for this session only (sessionStorage).
+      // Save last file path for the current session only (cleared when the tab/browser closes).
+      // Legacy localStorage keys are wiped once at init in migrateCurrentFileStorage.
       try { sessionStorage.setItem( getCurrentFileKey(), path ); } catch ( _ ) { /* storage disabled */ }
 
       // Scroll content area to top
@@ -2764,7 +2897,8 @@
         const folderLink = e.target.closest( '[data-action="scroll-folder"]' );
         if ( folderLink ) { e.preventDefault(); scrollToTreeFolder( folderLink.dataset.folder ); return; }
 
-        // View toggle: flips rendered/raw and relabels to the next view.
+        // View toggle: one button that flips between rendered and raw and
+        // relabels itself with whichever view you'd switch to next.
         const toggleBtn = e.target.closest( '[data-action="view-toggle"]' );
         if ( toggleBtn ) {
           const viewRendered = document.getElementById( 'viewRendered' );
@@ -2823,7 +2957,9 @@
       migrateStorageKeys();
       migrateTokenStorage();
 
-      // Brand the page from APP_ORIGIN (independent of the browsed repo).
+      // Brand the page from APP_ORIGIN (where this app instance is hosted).
+      // Header is independent of which repo gets browsed, so do this once
+      // up front and it stays correct for the whole session.
       await detectAppOrigin();
       updateHeaderFromConfig();
       applyFavicon();
@@ -2837,8 +2973,9 @@
       setupContentActions();
       restoreFileCache();
 
-      // hashchange covers back/forward and address-bar edits (popstate would
-      // double-fire, so we listen to only one).
+      // hashchange covers both browser back/forward and direct hash edits
+      // in the address bar. popstate would double-fire on back/forward
+      // (popstate → hashchange) so we only listen to one.
       window.addEventListener( 'hashchange', handleHashChange );
 
       await detectRepo();

@@ -1,5 +1,15 @@
 # TooToo — Development Journal
 
+## 2026-06-02
+
+Here is my previous prompt for index.html:
+
+"this file is going to be quite large and complicated. Is there any place where we can streamline or simplify it?"
+
+You worked for a long time on this and came up with a new index.html that is the same size as the earlier version - index-2026-06-01-22-49.html. And it seems to display the same error of displaying an HTML file using raw GitHub user content.
+
+Review and comment on this situation.
+
 ## 2026-05-28
 
 * 2026-05-28 ~ Add hiddenFiles ~ for tootoo.config.sys etc
