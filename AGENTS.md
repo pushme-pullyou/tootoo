@@ -27,7 +27,7 @@ Reference files:
 - [`README.md`](README.md) - features, quick start, project structure, and changelog.
 - [`0-tootoo-agenda.md`](0-tootoo-agenda.md) - current priorities.
 - [`0-tootoo-journal.md`](0-tootoo-journal.md) - recent notes.
-- [`test-cases/`](test-cases/) and [`sample-folders-and-files/`](sample-folders-and-files/) - rendering behavior checks.
+- [`examples/`](examples/) - sample content and rendering-behavior fixtures, organized by file type.
 
 ## Style Conventions
 

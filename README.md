@@ -142,7 +142,7 @@ TooToo stays intentionally small: single-file, vanilla JavaScript, static hostin
 * Add search results with matching file paths, line snippets, next/previous navigation, and clear filename-vs-content search modes.
 * Add share/copy actions for deep links, raw URLs, and GitHub URLs.
 * Polish mobile behavior with an easier sidebar toggle and simpler header layout.
-* Expand `test-cases/` for CSV, extensionless files, Markdown links, text search, and New Tab routing.
+* Expand `examples/` for CSV, extensionless files, Markdown links, text search, and New Tab routing.
 
 ### Maybe
 
@@ -162,8 +162,7 @@ CLAUDE.md                     ← Claude-specific pointer file
 0-tootoo-journal.md           ← development notes
 tootoo-test.html              ← standalone test harness for pure helpers
 tootoo-test-load.html         ← manual GitHub raw-file load tester for this repo
-test-cases/                   ← file rendering fixtures (with index README)
-sample-folders-and-files/     ← sample local tree content
+examples/                     ← sample content + render fixtures, organized by file type (with index README)
 .archive/                     ← older snapshots
 .github/prompts/              ← generation/merge/rebuild prompts
 gemini/                       ← alternate-model experiments

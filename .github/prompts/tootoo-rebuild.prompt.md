@@ -18,7 +18,7 @@ Rebuild or extend the current TooToo app in staged passes.
 - Agent guidance: `AGENTS.md`
 - Project docs: `README.md`, `0-tootoo-agenda.md`, `0-tootoo-journal.md`
 - Rebuild notes: `RECREATE-PROMPT.md`
-- Local fixtures: `test-cases/`, `sample-folders-and-files/`
+- Local fixtures: `examples/` (organized by file type)
 
 ## Workflow
 
