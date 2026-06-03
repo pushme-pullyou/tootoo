@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-02 22:32">
+  <meta name="revised" content="2026-06-02 22:04">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -198,19 +198,6 @@
 
     .dark-mode-btn {
       margin-left: auto;
-    }
-
-    /* Sidebar toggle (Ctrl/⌘ B): center the icon, and hide the sidebar + its
-       resizer when collapsed so the content area (flex: 1) fills the width. */
-    #btnToggleSidebar {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    body.sidebar-hidden .sidebar,
-    body.sidebar-hidden .resizer {
-      display: none;
     }
 
     /* ── Rate limit badge ── */
@@ -700,34 +687,6 @@
       font-weight: bold;
     }
 
-    /* ── Self-test report table ── */
-    .selftest-table {
-      border-collapse: collapse;
-      width: 100%;
-      font-size: 0.85rem;
-    }
-
-    .selftest-table th,
-    .selftest-table td {
-      border: 1px solid var(--border-color);
-      padding: 0.25rem 0.5rem;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    .selftest-table td:first-child {
-      width: 1.5rem;
-      text-align: center;
-    }
-
-    .selftest-table tr.st-fail {
-      background: var(--error-bg);
-    }
-
-    .selftest-table tr.st-skip {
-      background: var(--warning-bg);
-    }
-
     .md-error {
       background: var(--warning-bg);
       border: 1px solid var(--warning-border);
@@ -885,14 +844,6 @@
   <a class="skip-link" href="#mainContent">Skip to content</a>
 
   <header>
-    <button id="btnToggleSidebar" class="header-btn" title="Toggle sidebar (Ctrl/⌘ B)"
-      aria-label="Toggle sidebar" aria-expanded="true">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
-        aria-hidden="true">
-        <rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.5"></rect>
-        <line x1="6" y1="2.75" x2="6" y2="13.25"></line>
-      </svg>
-    </button>
     <a id="headerGitHub" href="." title="View on GitHub" aria-label="View on GitHub">
       <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
         <path
@@ -1422,21 +1373,7 @@
         document.documentElement.style.setProperty( '--highlight-color', CONFIG.themeColor );
         document.body.style.setProperty( '--highlight-color', CONFIG.themeColor );
       }
-
-      // Restore the persisted sidebar-collapsed state.
-      const sidebarHidden = localStorage.getItem( storageKey( 'sidebarHidden' ) ) === 'true';
-      document.body.classList.toggle( 'sidebar-hidden', sidebarHidden );
-      document.getElementById( 'btnToggleSidebar' )?.setAttribute( 'aria-expanded', String( !sidebarHidden ) );
     };
-
-    /* Collapse / expand the sidebar (header button + Ctrl/⌘ B), persisting it. */
-    const setSidebarHidden = ( hidden ) => {
-      document.body.classList.toggle( 'sidebar-hidden', hidden );
-      document.getElementById( 'btnToggleSidebar' )?.setAttribute( 'aria-expanded', String( !hidden ) );
-      try { localStorage.setItem( storageKey( 'sidebarHidden' ), hidden ); } catch ( _ ) { /* storage disabled */ }
-    };
-
-    const toggleSidebar = () => setSidebarHidden( !document.body.classList.contains( 'sidebar-hidden' ) );
 
     /* Rebuild the inline SVG favicon from CONFIG.faviconLetters/Color.
        (The sidebar-footer button reuses this link's href in setupListeners.) */
@@ -1574,139 +1511,6 @@
     const privateRepoReasonHtml = () =>
       `<div class="error-panel">⚠️ <strong>GitHub returned 404.</strong> If this is a private repository, enter a GitHub access token with <em>Contents: Read</em> permission below. If you already have a token saved, make sure it is scoped to ${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }.</div>`;
 
-    /* ── 12b. Self-test — render every file off-screen and report pass/fail ── */
-    // Reuses the real fetch/parse/decode helpers, so the result reflects what
-    // the viewer actually does. A "pass" means the file loaded and parsed or
-    // decoded without throwing — not that it looks perfect.
-    const runSelfTest = async () => {
-      const cb = document.getElementById( 'contentBody' );
-      setContentHeader( makeSimpleHeader( 'Self-test' ) );
-
-      if ( !state.tree ) {
-        cb.innerHTML = '<div class="markdown-body"><p>No repository tree is loaded yet.</p></div>';
-        return;
-      }
-
-      // The same files the sidebar shows (skip dotfiles + CONFIG.hidden* entries).
-      const hiddenFolders = new Set( ( CONFIG.hiddenFolders || [] ).map( ( s ) => s.toLowerCase() ) );
-      const hiddenFiles = new Set( ( CONFIG.hiddenFiles || [] ).map( ( s ) => s.toLowerCase() ) );
-      const files = state.tree.filter( ( item ) => {
-        if ( item.type !== 'blob' ) return false;
-        const parts = item.path.split( '/' );
-        if ( parts.some( ( p ) => p.startsWith( '.' ) || hiddenFolders.has( p.toLowerCase() ) ) ) return false;
-        return !hiddenFiles.has( parts[ parts.length - 1 ].toLowerCase() );
-      } );
-
-      // Abort any in-flight file load and own this run's signal; if the user
-      // navigates mid-run, our fetches abort and we stop touching the DOM.
-      if ( currentAbortController ) currentAbortController.abort();
-      currentAbortController = new AbortController();
-      const signal = currentAbortController.signal;
-
-      const total = files.length;
-      const results = [];
-      let done = 0, pass = 0, fail = 0, skip = 0, rateLimited = false;
-      const LARGE_SKIP = 5 * 1024 * 1024;
-
-      const render = () => {
-        const rows = results.map( ( r ) => {
-          const icon = r.status === 'pass' ? '✅' : r.status === 'fail' ? '❌' : '⏭';
-          return `<tr class="st-${ r.status }"><td>${ icon }</td><td>${ escapeHTML( r.path ) }</td><td>${ escapeHTML( r.detail || '' ) }</td></tr>`;
-        } ).join( '' );
-        const banner = rateLimited
-          ? '<div class="error-panel">⚠️ <strong>GitHub rate limit hit</strong> — the run stopped early. Add a token (⚙️) or open TooToo locally (file://), then run it again.</div>'
-          : '';
-        const heading = ( done < total && !rateLimited )
-          ? `Testing… <strong>${ done }</strong> / ${ total }`
-          : `<strong>${ fail ? 'Some failures' : 'All passed' }</strong> — ${ done } of ${ total } checked`;
-        cb.innerHTML =
-          banner +
-          '<div class="markdown-body">' +
-          '<h2>Self-test</h2>' +
-          '<p>Renders every file the way TooToo would, off-screen, to confirm it displays. ' +
-          'A pass means it loaded and parsed/decoded without throwing — not that it looks perfect.</p>' +
-          `<p>${ heading } &middot; ✅ ${ pass } &middot; ❌ ${ fail } &middot; ⏭ ${ skip }</p>` +
-          `<table class="selftest-table"><thead><tr><th></th><th>File</th><th>Result</th></tr></thead><tbody>${ rows }</tbody></table>` +
-          '</div>';
-      };
-      render();
-
-      const decodeImage = ( url ) => new Promise( ( resolve, reject ) => {
-        const img = new Image();
-        const timer = setTimeout( () => { img.src = ''; reject( new Error( 'timed out' ) ); }, 15000 );
-        img.onload = () => { clearTimeout( timer ); resolve(); };
-        img.onerror = () => { clearTimeout( timer ); reject( new Error( 'failed to decode' ) ); };
-        img.src = url;
-      } );
-      const revokeIfBlob = ( u ) => { if ( typeof u === 'string' && u.startsWith( 'blob:' ) ) URL.revokeObjectURL( u ); };
-
-      const testFile = async ( item ) => {
-        const path = item.path;
-        const ext = path.includes( '.' ) ? path.split( '.' ).pop().toLowerCase() : '';
-        const size = item.size || 0;
-        if ( size > LARGE_SKIP ) return { path, status: 'skip', detail: `${ formatFileSize( size ) } — too large` };
-
-        try {
-          if ( ext === 'md' ) {
-            DOMPurify.sanitize( marked.parse( await fetchFileText( path, signal ) ) );
-            return { path, status: 'pass', detail: 'markdown parsed' };
-          }
-          if ( ext === 'svg' ) {
-            const text = await fetchFileText( path, signal );
-            const url = URL.createObjectURL( new Blob( [ text ], { type: 'image/svg+xml' } ) );
-            try { await decodeImage( url ); } finally { URL.revokeObjectURL( url ); }
-            return { path, status: 'pass', detail: 'svg decoded' };
-          }
-          if ( IMAGE_EXTS.includes( ext ) ) {
-            const url = await resolveMediaUrl( path, signal );
-            try { await decodeImage( url ); } finally { revokeIfBlob( url ); }
-            return { path, status: 'pass', detail: 'image decoded' };
-          }
-          if ( SHEET_EXTS.includes( ext ) ) {
-            const url = await fetchFileBlob( path, signal );
-            try {
-              const buf = await ( await fetch( url ) ).arrayBuffer();
-              await ensureXLSX();
-              const wb = XLSX.read( new Uint8Array( buf ), { type: 'array' } );
-              return { path, status: 'pass', detail: `${ wb.SheetNames.length } sheet${ wb.SheetNames.length === 1 ? '' : 's' }` };
-            } finally { revokeIfBlob( url ); }
-          }
-          if ( AUDIO_EXTS.includes( ext ) || VIDEO_EXTS.includes( ext ) || ext === 'pdf' ) {
-            revokeIfBlob( await fetchFileBlob( path, signal ) ); // just confirm it downloads
-            return { path, status: 'pass', detail: `${ ext } reachable` };
-          }
-          await fetchFileText( path, signal ); // text / code / html / json / other
-          return { path, status: 'pass', detail: ext ? `${ ext } loaded` : 'loaded' };
-        } catch ( err ) {
-          if ( err?.name === 'AbortError' || err?.message === RATE_LIMIT_MESSAGE ) throw err;
-          return { path, status: 'fail', detail: err?.message || 'error' };
-        }
-      };
-
-      const CONCURRENCY = state.localMode ? 8 : 4;
-      let cursor = 0;
-      const worker = async () => {
-        while ( cursor < files.length && !rateLimited ) {
-          const item = files[ cursor++ ];
-          let res;
-          try {
-            res = await testFile( item );
-          } catch ( err ) {
-            if ( err?.name === 'AbortError' ) return;                 // user navigated away
-            if ( err?.message === RATE_LIMIT_MESSAGE ) { rateLimited = true; break; }
-            res = { path: item.path, status: 'fail', detail: err?.message || 'error' };
-          }
-          results.push( res );
-          done++;
-          if ( res.status === 'pass' ) pass++; else if ( res.status === 'fail' ) fail++; else skip++;
-          if ( !signal.aborted && done % 5 === 0 ) render();
-        }
-      };
-
-      await Promise.all( Array.from( { length: Math.max( 1, Math.min( CONCURRENCY, files.length ) ) }, worker ) );
-      if ( !signal.aborted ) render();
-    };
-
     /* ── 13. setupListeners ── */
     const setupListeners = () => {
       const contentArea = document.getElementById( 'contentArea' );
@@ -1718,9 +1522,6 @@
         localStorage.setItem( storageKey( 'darkMode' ), isDark );
         setHljsTheme( isDark );
       } );
-
-      // Sidebar collapse toggle
-      document.getElementById( 'btnToggleSidebar' ).addEventListener( 'click', toggleSidebar );
 
       // Font size
       const getFontSize = () => {
@@ -1820,15 +1621,11 @@
             <li><kbd>←</kbd> — close folder / step out</li>
             <li><kbd>Enter</kbd> <kbd>Space</kbd> — toggle folder or select file</li>
           </ul>
-          <h3>Maintenance</h3>
-          <p>Render every file in this repo off-screen and report which ones fail to display — markdown that won't parse, images that won't decode, spreadsheets that won't open. Best run locally (<code>file://</code>) or with a token.</p>
-          <button id="btnSelfTest" class="secondary" title="Render every file and report failures">🧪 Run self-test</button>
           </div>
         `;
 
         // Restore original panel header (selectFile replaces it with breadcrumbs)
         setContentHeader( makeSimpleHeader( 'About' ) );
-        document.getElementById( 'btnSelfTest' )?.addEventListener( 'click', runSelfTest );
       } );
 
       // Token inline form
@@ -2400,15 +2197,6 @@
       document.addEventListener( 'keydown', ( e ) => {
         const treeList = document.getElementById( 'treeList' );
         const active = document.activeElement;
-
-        // Ctrl/Cmd+B toggles the sidebar from anywhere (VS Code convention).
-        // Safe even in inputs — Ctrl+B does nothing in a plain text field — and
-        // we preventDefault so Firefox doesn't open its bookmarks sidebar.
-        if ( ( e.ctrlKey || e.metaKey ) && !e.altKey && ( e.key === 'b' || e.key === 'B' ) ) {
-          e.preventDefault();
-          toggleSidebar();
-          return;
-        }
 
         if ( e.key === '/' && active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' ) {
           e.preventDefault();

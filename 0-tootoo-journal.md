@@ -6,6 +6,8 @@
 * 2026-06-02 ~ tidy the sample files.
 * 2026-06-02 ~ Sidebar header: folders and files and sizes
 * 2026-05-26 ~ support printing the current file with a clean print stylesheet
+* 2026-05-31 ~ find files ~ Much better filters
+* Control B to Toggle sidebar
 
 ***
 

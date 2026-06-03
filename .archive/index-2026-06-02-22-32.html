@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-02 22:32">
+  <meta name="revised" content="2026-06-02 22:20">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -198,19 +198,6 @@
 
     .dark-mode-btn {
       margin-left: auto;
-    }
-
-    /* Sidebar toggle (Ctrl/⌘ B): center the icon, and hide the sidebar + its
-       resizer when collapsed so the content area (flex: 1) fills the width. */
-    #btnToggleSidebar {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    body.sidebar-hidden .sidebar,
-    body.sidebar-hidden .resizer {
-      display: none;
     }
 
     /* ── Rate limit badge ── */
@@ -885,14 +872,6 @@
   <a class="skip-link" href="#mainContent">Skip to content</a>
 
   <header>
-    <button id="btnToggleSidebar" class="header-btn" title="Toggle sidebar (Ctrl/⌘ B)"
-      aria-label="Toggle sidebar" aria-expanded="true">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
-        aria-hidden="true">
-        <rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.5"></rect>
-        <line x1="6" y1="2.75" x2="6" y2="13.25"></line>
-      </svg>
-    </button>
     <a id="headerGitHub" href="." title="View on GitHub" aria-label="View on GitHub">
       <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
         <path
@@ -1422,21 +1401,7 @@
         document.documentElement.style.setProperty( '--highlight-color', CONFIG.themeColor );
         document.body.style.setProperty( '--highlight-color', CONFIG.themeColor );
       }
-
-      // Restore the persisted sidebar-collapsed state.
-      const sidebarHidden = localStorage.getItem( storageKey( 'sidebarHidden' ) ) === 'true';
-      document.body.classList.toggle( 'sidebar-hidden', sidebarHidden );
-      document.getElementById( 'btnToggleSidebar' )?.setAttribute( 'aria-expanded', String( !sidebarHidden ) );
     };
-
-    /* Collapse / expand the sidebar (header button + Ctrl/⌘ B), persisting it. */
-    const setSidebarHidden = ( hidden ) => {
-      document.body.classList.toggle( 'sidebar-hidden', hidden );
-      document.getElementById( 'btnToggleSidebar' )?.setAttribute( 'aria-expanded', String( !hidden ) );
-      try { localStorage.setItem( storageKey( 'sidebarHidden' ), hidden ); } catch ( _ ) { /* storage disabled */ }
-    };
-
-    const toggleSidebar = () => setSidebarHidden( !document.body.classList.contains( 'sidebar-hidden' ) );
 
     /* Rebuild the inline SVG favicon from CONFIG.faviconLetters/Color.
        (The sidebar-footer button reuses this link's href in setupListeners.) */
@@ -1718,9 +1683,6 @@
         localStorage.setItem( storageKey( 'darkMode' ), isDark );
         setHljsTheme( isDark );
       } );
-
-      // Sidebar collapse toggle
-      document.getElementById( 'btnToggleSidebar' ).addEventListener( 'click', toggleSidebar );
 
       // Font size
       const getFontSize = () => {
@@ -2400,15 +2362,6 @@
       document.addEventListener( 'keydown', ( e ) => {
         const treeList = document.getElementById( 'treeList' );
         const active = document.activeElement;
-
-        // Ctrl/Cmd+B toggles the sidebar from anywhere (VS Code convention).
-        // Safe even in inputs — Ctrl+B does nothing in a plain text field — and
-        // we preventDefault so Firefox doesn't open its bookmarks sidebar.
-        if ( ( e.ctrlKey || e.metaKey ) && !e.altKey && ( e.key === 'b' || e.key === 'B' ) ) {
-          e.preventDefault();
-          toggleSidebar();
-          return;
-        }
 
         if ( e.key === '/' && active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' ) {
           e.preventDefault();

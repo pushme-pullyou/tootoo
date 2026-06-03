@@ -2,8 +2,6 @@
 
 This is the current TooToo roadmap.
 
-
-
 ## App
 
 
@@ -21,10 +19,6 @@ This is the current TooToo roadmap.
 
 ### Sidebar
 
-
-* 2026-05-31 ~ find files
-* Much better filters
-* Control B to Toggle sidebar
 
 ### About
 
