@@ -2,6 +2,8 @@
 
 ## Agenda
 
+* 2026-06-02 ~ tidy the sample files.
+
 ### App
 
 * 2026-05-31 ~ Update tips
@@ -15,14 +17,14 @@
 
 ## Content Header bar
 
-* 2026-05-31 ~ add branches to the header bar
 * 2026-05-31 ~ repos to the header bar
+* 2026-05-31 ~ add branches to the header bar
 
 ### Sidebar
 
+* 2026-06-02~ Sidebar header: folders and files and sizes
 * 2026-05-31 ~ find files
 * Much better filters
-* If there are multiple branches add a branch selector to the sidebar
 * Control B to Toggle sidebar
 
 ### About
