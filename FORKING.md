@@ -48,9 +48,9 @@ Per-file action buttons (Rendered / Raw / Copy / New Tab): emit them from `build
 | [marked](https://marked.js.org) | Markdown → HTML | Output is always passed through DOMPurify. Pinned to `12.0.2` because `18.x` reorganized the package layout and broke `/marked.min.js`. |
 | [highlight.js](https://highlightjs.org) | Code syntax highlighting | Also loads a theme stylesheet — light/dark swap happens in `setHljsTheme`. |
 | [DOMPurify](https://github.com/cure53/DOMPurify) | HTML sanitization | Wraps every `marked.parse` and every `XLSX.utils.sheet_to_html` call. Don't render untrusted HTML without it. |
-| [SheetJS](https://sheetjs.com) | xlsx / xls / csv / ods rendering | Heaviest dep. If you don't need spreadsheets, delete `renderSpreadsheet` and the `<script src="...xlsx...">` tag and save ~700 KB. |
+| [SheetJS](https://sheetjs.com) | xlsx / xls / csv / ods rendering | Heaviest dep (~700 KB), so it is **lazy-loaded**: `ensureXLSX()` injects its `<script>` the first time a spreadsheet is opened, not on page load. It has no tag in `<head>`. If you don't need spreadsheets, delete `renderSpreadsheet` + `ensureXLSX` and nothing ever fetches it. |
 
-To swap a CDN for a local copy, download the file into your fork and point the `<script>`/`<link>` tags at the relative path. Everything still works under `file://`.
+To swap a CDN for a local copy, download the file into your fork and point the `<script>`/`<link>` tags at the relative path. Everything still works under `file://`. (SheetJS is the exception — it has no `<head>` tag; change the URL inside `ensureXLSX` instead.)
 
 ## Things that will bite you
 

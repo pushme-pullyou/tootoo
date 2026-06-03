@@ -1,8 +1,10 @@
 # Why TooToo?
 
-* You like or need to look at a lot of files as quickly as possible.
-* You want a fast, simple and free content management system for your repository.
-* You want something to work locally, on the server and most anywhere.
-* You want something easy PC that you can modify and hack yourself?
-* You want to be able to share stuff with simple clicks, without needing to upload it anywhere
-* You want to see everything in branches, With Pages or without?
+TooToo is a single HTML file that turns any GitHub repo into a fast, readable website — nothing to install, no build step, no server needed. It's for you if…
+
+* You want to skim through a lot of files as fast as you can press the arrow keys — each one opens the moment you land on it.
+* You want a fast, simple, free content manager for a repository — notes, docs, code, and media, all browsable in one place.
+* You want one tool that works the same locally (`file://`), on a plain web server, and on GitHub Pages.
+* You want a single file you can open, read, and hack yourself — plain HTML, CSS, and JavaScript.
+* You want to share a file with a click and a link, without uploading it anywhere — TooToo reads straight from the repo.
+* You want to browse any branch, with GitHub Pages or without.

@@ -2,6 +2,13 @@
 
 ## 2026-06-02
 
+* 2026-05-31 ~ Update tips & why pages
+* 2026-06-02 ~ tidy the sample files.
+* 2026-06-02 ~ Sidebar header: folders and files and sizes
+* 2026-05-26 ~ support printing the current file with a clean print stylesheet
+
+***
+
 Here is my previous prompt for index.html:
 
 "this file is going to be quite large and complicated. Is there any place where we can streamline or simplify it?"

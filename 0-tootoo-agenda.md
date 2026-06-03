@@ -1,17 +1,16 @@
 # TooToo — Agenda
 
-## Agenda
+This is the current TooToo roadmap.
 
-* 2026-06-02 ~ tidy the sample files.
 
-### App
 
-* 2026-05-31 ~ Update tips
-* 2026-05-26 ~ support printing the current file with a clean print stylesheet
+## App
+
+
 
 ## Copy Index to Repo
 
-* 2026-05-26 ~ update both local and GitHub repos
+* 2026-05-26 ~ update both local and GitHub repos: or maybe separate apps
 
 ## Theming
 
@@ -22,7 +21,7 @@
 
 ### Sidebar
 
-* 2026-06-02~ Sidebar header: folders and files and sizes
+
 * 2026-05-31 ~ find files
 * Much better filters
 * Control B to Toggle sidebar

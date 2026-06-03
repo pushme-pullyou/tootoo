@@ -38,7 +38,7 @@ window.TOOTOO_CONFIG = {
   //                  panel headers, and every h1–h6 anywhere in the doc;
   //                  falls back to system-ui everywhere else
   themeColor: '#3a8856',
-  subtitle: 'Single-file GitHub repo browser',
+  subtitle: 'Single-file GitHub repository browser',
   faviconLetters: 'tt',
   faviconColor: '#3a8856',
 

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-02 22:04">
+  <meta name="revised" content="2026-06-02 21:52">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -502,44 +502,6 @@
       margin-left: 0.75rem;
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
-    }
-
-    /* Parent-folder caption under a file name — hidden until filtering. */
-    .tree-item-folder {
-      display: none;
-    }
-
-    /* While the filter box has text, the sidebar becomes a flat list of just
-       the matching files: folder rows and indentation are dropped, the size is
-       hidden, and each file shows the folder it lives in. */
-    #treeList.filtering .tree-folder {
-      display: none;
-    }
-
-    #treeList.filtering details,
-    #treeList.filtering details details {
-      padding-left: 0;
-    }
-
-    #treeList.filtering details .tree-item {
-      padding-left: 0.4rem;
-    }
-
-    #treeList.filtering .tree-item {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.1rem;
-    }
-
-    #treeList.filtering .tree-item-size {
-      display: none;
-    }
-
-    #treeList.filtering .tree-item-folder {
-      display: block;
-      padding-left: 1.4rem;
-      font-size: 0.72rem;
-      opacity: 0.6;
     }
 
     details details {
@@ -1861,19 +1823,10 @@
       const nameHtml = isReadme
         ? `<strong>${ escapeHTML( displayName ) }</strong>`
         : escapeHTML( displayName );
-      // Parent folder as a breadcrumb caption — shown only while filtering, so
-      // the flat results list tells you where each matching file lives.
-      const folderDisplay = parentPath
-        ? parentPath.split( '/' ).map( displayTreeName ).join( ' / ' )
-        : '';
-      const folderHtml = folderDisplay
-        ? `<span class="tree-item-folder">${ escapeHTML( folderDisplay ) }</span>`
-        : '';
 
       return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeHTML( fullPath ) }" title="${ escapeHTML( fullPath ) }">` +
         `<span class="tree-item-name"><span aria-hidden="true">${ icon }</span> ${ nameHtml }</span>` +
         `<span class="tree-item-size">${ sizeStr }</span>` +
-        folderHtml +
         `</div>`;
     };
 
@@ -2035,7 +1988,6 @@
         const hFilesEl = document.getElementById( 'hFiles' );
         hFilesEl.textContent = `${ countLabel( folderCount, 'folder' ) } · ${ countLabel( fileCount, 'file' ) } · ${ formatFileSize( totalBytes ) }`;
         hFilesEl.title = `${ countLabel( folderCount, 'folder' ) }, ${ countLabel( fileCount, 'file' ) }, ${ formatFileSize( totalBytes ) } total`;
-        treeSummaryText = hFilesEl.textContent; // restored when the filter clears
 
       } catch ( err ) {
         if ( err.name === 'AbortError' ) return;
@@ -2045,9 +1997,6 @@
 
     /* ── 23. Filter logic ── */
     let preFilterOpenState = null;
-    // The Files-header summary text, captured after each tree load so the filter
-    // can swap in a match count and restore the summary when it clears.
-    let treeSummaryText = '';
     // Cached after each renderTree(); reused by every filter keystroke.
     let cachedTreeItems = [];
     let cachedTreeFolders = [];
@@ -2059,7 +2008,6 @@
     };
 
     const runFilter = () => {
-      const treeList = document.getElementById( 'treeList' );
       const query = document.getElementById( 'treeFilter' ).value.trim().toLowerCase();
       const btnFilterClear = document.getElementById( 'btnFilterClear' );
       const normalizedQuery = query.replace( /[-\s]+/g, ' ' );
@@ -2070,8 +2018,6 @@
       const folders = cachedTreeFolders;
 
       if ( !query ) {
-        treeList.classList.remove( 'filtering' );
-        if ( treeSummaryText ) document.getElementById( 'hFiles' ).textContent = treeSummaryText;
         items.forEach( ( el ) => { el.classList.remove( 'is-hidden' ); } );
         folders.forEach( ( el ) => { el.classList.remove( 'is-hidden' ); } );
         if ( preFilterOpenState ) {
@@ -2094,16 +2040,11 @@
         } );
       }
 
-      // Match the file name only (not the full path), so results are the files
-      // a user is looking for — not every file that merely sits under a folder
-      // whose name matches.
-      let matchCount = 0;
       items.forEach( ( el ) => {
-        const name = ( el.dataset.path || '' ).split( '/' ).pop().toLowerCase();
-        const normalizedName = name.replace( /[-\s]+/g, ' ' );
-        const matches = name.includes( query ) || normalizedName.includes( normalizedQuery );
+        const path = ( el.dataset.path || '' ).toLowerCase();
+        const normalizedPath = path.replace( /[-\s]+/g, ' ' );
+        const matches = path.includes( query ) || normalizedPath.includes( normalizedQuery );
         el.classList.toggle( 'is-hidden', !matches );
-        if ( matches ) matchCount++;
       } );
 
       const foldersArr = folders.slice().reverse();
@@ -2116,10 +2057,6 @@
           details.classList.add( 'is-hidden' );
         }
       } );
-
-      treeList.classList.add( 'filtering' );
-      document.getElementById( 'hFiles' ).textContent =
-        `${ matchCount.toLocaleString() } match${ matchCount === 1 ? '' : 'es' }`;
     };
 
     /* ── 24. Debounce helper ── */
@@ -2157,12 +2094,8 @@
     const getVisibleTreeItems = () => {
       const treeList = document.getElementById( 'treeList' );
       const all = treeList.querySelectorAll( '.tree-folder, .tree-item' );
-      const filtering = treeList.classList.contains( 'filtering' );
       return Array.from( all ).filter( ( el ) => {
         if ( el.classList.contains( 'is-hidden' ) ) return false;
-        // While filtering, the sidebar is a flat file list — folder rows are
-        // hidden, so keyboard nav should skip them.
-        if ( filtering && el.classList.contains( 'tree-folder' ) ) return false;
 
         if ( el.classList.contains( 'tree-folder' ) ) {
           const ownDetails = el.parentElement;
