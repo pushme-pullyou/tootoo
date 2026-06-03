@@ -20,7 +20,6 @@ DESTINATIONS=(
   'G:\My Drive\2026-theo-github\theo-armour-pages'
   'G:\My Drive\2026-theo-github\theo-armour-qdata'
   'G:\My Drive\2026-theo-github\theo-armour-sandbox'
-  - ***
   'G:\My Drive\2026-theo-github\theo-armour-aa'
   'G:\My Drive\2026-theo-github\theo-armour-genealogy'
   'G:\My Drive\2026-theo-github\theo-armour-wikitheo'
