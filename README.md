@@ -47,13 +47,15 @@
 * **Content viewer** — Markdown (rendered via marked), syntax-highlighted code, images, audio, video, PDF, spreadsheets (SheetJS)
 * **Dark mode** — toggle with persisted preference
 * **Resizable sidebar** — drag to resize, width saved across visits
+* **Collapsible sidebar** — toggle with the header button or Ctrl/⌘ B, state persisted
 * **Font size controls** — A−/A+ buttons, helpful on phones
 * **GitHub token support** — optional PAT for private repos and higher rate limits (5,000/hr vs 60/hr)
 * **File text cache** — LRU in-memory + sessionStorage cache to reduce API calls without persisting file contents after the tab session
 * **Hash routing** — deep-link to any file via `#path/to/file`
-* **Copy / New Tab** — copy raw file content or open the GitHub Pages URL
+* **Copy / New Tab / Download** — copy raw text, open viewable files in a new tab, or save non-viewable files (3D, fonts, archives, spreadsheets, binaries) straight to disk
 * **Rendered ↔ Raw toggle** — for Markdown, HTML, and SVG files; preference saved per file type
 * **Safer HTML previews** — rendered HTML uses a strict iframe sandbox so repository scripts do not run by default
+* **Self-test** — render every file off-screen and report which fail to display (About → 🧪 Run self-test)
 
 ## Quick Start
 
@@ -73,6 +75,8 @@ const CONFIG = {
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
 };
 ```
+
+These are the common knobs; `CONFIG` also supports theming and filtering options (`themeColor`, `subtitle`, `hiddenFolders`/`hiddenFiles`, `faviconLetters`, `headingFont`, `maxRepoFiles`) — see [`FORKING.md`](FORKING.md) for the full set.
 
 ## Fork & Customize
 
@@ -110,9 +114,10 @@ TooToo stores preferences and the GitHub token in the browser's `localStorage`. 
 | `tootoo:<pathname>:darkMode` | Dark mode on/off |
 | `tootoo:<pathname>:fontSize` | Font size override (px) |
 | `tootoo:<pathname>:sidebarWidth` | Last sidebar width (px) |
+| `tootoo:<pathname>:sidebarHidden` | Sidebar collapsed on/off (Ctrl/⌘ B) |
 | `tootoo:<pathname>:fileTextCache` | Session-only LRU cache of recently viewed file contents |
 | `tootoo:<pathname>:viewPref:<ext>` | Rendered / Raw toggle per file extension |
-| `tootoo:<pathname>:currentFile:<owner>/<repo>/<branch>` | Last-opened file in that repo |
+| `tootoo:<pathname>:currentFile:<owner>/<repo>/<branch>` | Last-opened file in that repo (sessionStorage — clears with the tab) |
 | `tootoo:<pathname>:githubToken` | GitHub Personal Access Token for this TooToo instance |
 
 To wipe state, click ⚙️ Token → **Reset all TooToo data**, or clear both `localStorage` and `sessionStorage` in DevTools.
@@ -131,10 +136,9 @@ TooToo stays intentionally small: single-file, vanilla JavaScript, static hostin
 ### Next
 
 * Add better text search: search within the current file first, then loaded/cached text files, with optional rate-limit-aware search across small repo text files.
-* Improve New Tab choices: keep page-like files on GitHub Pages when useful, and open data/media/extensionless files as raw content.
 * Add richer previews for common data files, starting with friendlier `.csv` and `.json` views.
 * Add visible local-mode/rate-limit status so users know whether TooToo is reading local files, raw GitHub files, or the GitHub API.
-* Expand keyboard help, including `/` for filter, `F` for file tree focus, arrows for navigation, and Rendered/Raw toggles.
+* Add an in-app keyboard-shortcut help overlay (the About page already lists `/`, `\`, arrows, Ctrl/⌘ B, and Esc).
 
 ### Later
 
@@ -165,7 +169,7 @@ tootoo-test-load.html         ← manual GitHub raw-file load tester for this re
 examples/                     ← sample content + render fixtures, organized by file type (with index README)
 .archive/                     ← older snapshots
 .github/prompts/              ← generation/merge/rebuild prompts
-gemini/                       ← alternate-model experiments
+.gemini/                      ← alternate-model experiments
 ```
 
 ## License
@@ -174,6 +178,13 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 
 ## Change Log
 
+* 2026-06-08 — About and Token header buttons now toggle: clicking again closes the panel and returns to the file you were viewing, with the active button shown pressed
+* 2026-06-08 — New Tab is now an honest action — viewable files (HTML, PDF, images, media, text/source) open in a tab, while non-viewable files (3D models, fonts, archives, spreadsheets, binaries, extensionless) get a **Download** button that saves directly; local downloads no longer flash a throwaway tab
+* 2026-06-08 — Viewable vs downloadable is now decided by an allowlist of browser-renderable types instead of a blocklist, so new binary formats (e.g. `.stl`) are handled correctly without chasing the list
+* 2026-06-08 — About page now shows the current branch with links to its tree and the repo's full branch list; the keyboard-shortcut list adds Ctrl/⌘ B and Esc
+* 2026-06-08 — Broken in-repo links now show a plain "file not found" message instead of misfiring the private-repo token panel
+* 2026-06-08 — Rate-limit handling now distinguishes a real quota 403/429 (token panel) from other 403s (reported plainly)
+* 2026-06-08 — Sidebar file rows expose `role="button"` so screen readers announce them as actionable
 * 2026-05-18 — Restored repo-local agent guidance as `AGENTS.md` with `CLAUDE.md` as a small pointer file, so TooToo-specific workflow rules are active again
 * 2026-05-18 — File-content cache now uses sessionStorage instead of localStorage; legacy persistent file-cache entries are cleared on restore/reset
 * 2026-05-18 — Markdown link rewriting now keeps custom schemes intact, avoids treating query strings/fragments as filenames, and handles GitHub blob links on branches containing `/`
