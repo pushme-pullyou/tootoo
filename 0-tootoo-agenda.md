@@ -37,11 +37,7 @@ This is the current TooToo roadmap.
 ### About
 
 * 2026-05-26 ~ Update readme
-* 2026-05-26 ~ Update about page
-* 2026-04-30 About: add copyright and license info, and a link to the GitHub repo
-* 2026-04-30 About ~ rejig: repo, tips, about TT ~ click again to return
-* About shows number of branches, not just the default branch
-* Token: click to return
+* About shows the live branch count (name + all-branches link done 2026-06-08)
 
 ### Content
 

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-08 23:12">
+  <meta name="revised" content="2026-06-02 22:32">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -192,18 +192,6 @@
     body.dark-mode .file-btn:hover,
     body.dark-mode button.primary:hover,
     body.dark-mode button.secondary:hover {
-      background: color-mix(in srgb, var(--highlight-color) 65%, white);
-      color: var(--primary-bg);
-    }
-
-    /* Pressed/active state for the About (?) and ⚙️ Token toggle buttons —
-       same fill as hover so an open panel reads as a held-down button. */
-    .header-btn.active {
-      background: var(--highlight-color);
-      color: #ffffff;
-    }
-
-    body.dark-mode .header-btn.active {
       background: color-mix(in srgb, var(--highlight-color) 65%, white);
       color: var(--primary-bg);
     }
@@ -919,10 +907,9 @@
       aria-label="Toggle dark mode">🌙</button>
     <button id="btnFontDec" class="header-btn" title="Decrease Font Size" aria-label="Decrease font size">A−</button>
     <button id="btnFontInc" class="header-btn" title="Increase Font Size" aria-label="Increase font size">A+</button>
-    <button id="btnHelp" class="header-btn" title="About this app" aria-label="About this app"
-      aria-pressed="false">?</button>
+    <button id="btnHelp" class="header-btn" title="About this app" aria-label="About this app">?</button>
     <button id="btnToken" class="header-btn" title="Set GitHub Personal Access Token"
-      aria-label="Set GitHub personal access token" aria-pressed="false">⚙️ Token</button>
+      aria-label="Set GitHub personal access token">⚙️ Token</button>
     <div id="rateBadge" class="rate-limit-badge" title="API Rate Limit" aria-live="polite"></div>
   </header>
 
@@ -1061,26 +1048,10 @@
     const SHEET_EXTS = [ 'xlsx', 'xls', 'csv', 'ods' ];
     const STREAMABLE_EXTS = [ ...IMAGE_EXTS, ...AUDIO_EXTS, ...VIDEO_EXTS, 'pdf' ];
     const NO_COPY_EXTS = [ ...STREAMABLE_EXTS, ...SHEET_EXTS ];
-    // Extensions a browser renders directly in a tab: markup, PDF, media, and
-    // common text/source. The file-header action only OPENS these; everything
-    // else — 3D models (stl, obj, glb), fonts (woff, ttf), spreadsheets,
-    // archives, binaries, CAD/design files — the browser would download, so the
-    // action SAVES the file instead. This is an allowlist on purpose: what
-    // browsers can display is small and stable, while the "downloadable" set is
-    // unbounded, so a blocklist would always miss the next format.
-    const TAB_VIEWABLE_EXTS = [
-      'html', 'htm', 'pdf', 'txt', 'text', 'md', 'markdown',
-      ...IMAGE_EXTS, ...AUDIO_EXTS, ...VIDEO_EXTS,
-      // text / source files browsers show inline as plain text
-      'js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx', 'json', 'css', 'scss', 'less',
-      'xml', 'yaml', 'yml', 'toml', 'ini', 'cfg', 'conf', 'env',
-      'py', 'rb', 'go', 'rs', 'java', 'kt', 'c', 'h', 'cpp', 'cc', 'hpp',
-      'cs', 'php', 'sh', 'bash', 'zsh', 'sql', 'pl', 'lua', 'r', 'swift', 'log',
-    ];
-    // True when the file-header action should save the file rather than open a
-    // viewable tab: an extensionless or non-viewable (binary/data) file. Drives
-    // both the button label (⬇ Download vs ↗ New Tab) and what the click does.
-    const isDownloadAction = ( ext ) => !TAB_VIEWABLE_EXTS.includes( ext );
+    // Extensions Pages serves with a MIME the browser downloads by default.
+    // In New Tab these go straight to raw.githubusercontent.com so the user
+    // gets the file on disk — the expected action for data/binary files.
+    const DOWNLOAD_PRONE_EXTS = [ ...SHEET_EXTS, 'tsv', 'zip', 'tar', 'gz', '7z', 'doc', 'docx' ];
     const LARGE_FILE_WARNING_BYTES = 1024 * 1024;
     const approvedLargeFiles = new Set();
     const RATE_LIMIT_MESSAGE = 'Rate limited. Add a GitHub token for higher limits.';
@@ -1736,23 +1707,41 @@
       if ( !signal.aborted ) render();
     };
 
-    /* ── 12c. About / Token panels (toggle) ──
-       The header ? and ⚙️ Token buttons open their panel; clicking the same
-       button again closes it and returns to the file that was open. activePanel
-       tracks which (if any) is showing; selectFile clears it on any real open. */
-    let activePanel = null;     // 'about' | 'token' | null
-    let panelReturnPath = '';   // file path to restore when a panel is dismissed
+    /* ── 13. setupListeners ── */
+    const setupListeners = () => {
+      const contentArea = document.getElementById( 'contentArea' );
 
-    const updateInfoButtonState = () => {
-      const help = document.getElementById( 'btnHelp' );
-      const token = document.getElementById( 'btnToken' );
-      help?.classList.toggle( 'active', activePanel === 'about' );
-      help?.setAttribute( 'aria-pressed', String( activePanel === 'about' ) );
-      token?.classList.toggle( 'active', activePanel === 'token' );
-      token?.setAttribute( 'aria-pressed', String( activePanel === 'token' ) );
-    };
+      // Dark mode toggle
+      document.getElementById( 'btnDarkMode' ).addEventListener( 'click', () => {
+        const isDark = document.body.classList.toggle( 'dark-mode' );
+        document.getElementById( 'btnDarkMode' ).textContent = isDark ? '☀️' : '🌙';
+        localStorage.setItem( storageKey( 'darkMode' ), isDark );
+        setHljsTheme( isDark );
+      } );
 
-    const renderAboutPanel = async () => {
+      // Sidebar collapse toggle
+      document.getElementById( 'btnToggleSidebar' ).addEventListener( 'click', toggleSidebar );
+
+      // Font size
+      const getFontSize = () => {
+        const val = getComputedStyle( document.documentElement ).getPropertyValue( '--font-size' );
+        return parseInt( val, 10 ) || 16;
+      };
+
+      document.getElementById( 'btnFontInc' ).addEventListener( 'click', () => {
+        const sz = Math.min( getFontSize() + 2, 28 );
+        document.documentElement.style.setProperty( '--font-size', sz + 'px' );
+        localStorage.setItem( storageKey( 'fontSize' ), sz + 'px' );
+      } );
+
+      document.getElementById( 'btnFontDec' ).addEventListener( 'click', () => {
+        const sz = Math.max( getFontSize() - 2, 10 );
+        document.documentElement.style.setProperty( '--font-size', sz + 'px' );
+        localStorage.setItem( storageKey( 'fontSize' ), sz + 'px' );
+      } );
+
+      // Help / About
+      document.getElementById( 'btnHelp' ).addEventListener( 'click', async () => {
         const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
         const sourceUrl = CONFIG.sourceRepoUrl;
         const repoUrl = state.owner && state.repo
@@ -1772,13 +1761,6 @@
         } catch ( _ ) { /* offline or blocked */ }
 
         const tokenStatus = token ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
-
-        // Current branch (links to its tree, plus the repo's full branch list).
-        // Only shown once a repo + branch are known.
-        const branchHtml = ( state.owner && state.repo && state.branch )
-          ? `<li><strong>Branch:</strong> <a href="https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/tree/${ encodeURIComponent( state.branch ) }" target="_blank" rel="noopener">${ escapeHTML( state.branch ) }</a> · <a href="https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/branches" target="_blank" rel="noopener">all branches</a></li>`
-          : '';
-
         const cb = document.getElementById( 'contentBody' );
         // Wrap in .markdown-body so headings, links, and max-width/line-height
         // inherit the same treatment as rendered markdown files.
@@ -1789,7 +1771,6 @@
           <ul>
             <li><strong>Source code:</strong> <a href="${ escapeHTML( sourceUrl ) }" target="_blank" rel="noopener">${ escapeHTML( sourceUrl ) }</a></li>
             <li><strong>Repository:</strong> <a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">${ escapeHTML( repoUrl ) }</a></li>
-            ${ branchHtml }
             <li><strong>Copyright:</strong> pushme-pullyou authors</li>
             <li><strong>License:</strong> MIT License</li>
             <li><strong>Built:</strong> ${ escapeHTML( revised ) }</li>
@@ -1827,13 +1808,10 @@
             <li>Click the title in the header to reload</li>
             <li>Use <strong>A−</strong> / <strong>A+</strong> to adjust font size — helpful on phones and small screens</li>
             <li>Click <strong>🌙</strong> to toggle dark mode — your choice is saved across visits</li>
-            <li>Click <strong>?</strong> or <strong>⚙️ Token</strong> again to close the panel and return to your file</li>
           </ul>
           <h3>Keyboard shortcuts</h3>
           <ul>
-            <li><kbd>Ctrl/⌘ B</kbd> — toggle the sidebar</li>
             <li><kbd>/</kbd> — focus the filter box</li>
-            <li><kbd>Esc</kbd> — clear the filter (when it's focused)</li>
             <li><kbd>\\</kbd> — focus the sidebar tree (jumps to the current selection)</li>
             <li><kbd>↑</kbd> <kbd>↓</kbd> — move one item up / down</li>
             <li><kbd>Home</kbd> <kbd>End</kbd> — jump to first / last visible item</li>
@@ -1851,69 +1829,10 @@
         // Restore original panel header (selectFile replaces it with breadcrumbs)
         setContentHeader( makeSimpleHeader( 'About' ) );
         document.getElementById( 'btnSelfTest' )?.addEventListener( 'click', runSelfTest );
-    };
-
-    const closeInfoPanel = () => {
-      activePanel = null;
-      updateInfoButtonState();
-      const path = panelReturnPath;
-      panelReturnPath = '';
-      // Return to the file we left; else fall back to the README / About.
-      if ( path && state.tree?.some( ( i ) => i.path === path && i.type === 'blob' ) ) {
-        selectFile( path );
-      } else {
-        autoSelectReadme();
-      }
-    };
-
-    const toggleInfoPanel = async ( panel ) => {
-      if ( activePanel === panel ) { closeInfoPanel(); return; }
-      // Capture the file to return to only on the first open — switching
-      // About↔Token keeps the original return target.
-      if ( !activePanel ) panelReturnPath = state.currentFilePath || '';
-      activePanel = panel;
-      updateInfoButtonState();
-      if ( panel === 'about' ) await renderAboutPanel();
-      else showTokenPanel();
-    };
-
-    /* ── 13. setupListeners ── */
-    const setupListeners = () => {
-      const contentArea = document.getElementById( 'contentArea' );
-
-      // Dark mode toggle
-      document.getElementById( 'btnDarkMode' ).addEventListener( 'click', () => {
-        const isDark = document.body.classList.toggle( 'dark-mode' );
-        document.getElementById( 'btnDarkMode' ).textContent = isDark ? '☀️' : '🌙';
-        localStorage.setItem( storageKey( 'darkMode' ), isDark );
-        setHljsTheme( isDark );
       } );
 
-      // Sidebar collapse toggle
-      document.getElementById( 'btnToggleSidebar' ).addEventListener( 'click', toggleSidebar );
-
-      // Font size
-      const getFontSize = () => {
-        const val = getComputedStyle( document.documentElement ).getPropertyValue( '--font-size' );
-        return parseInt( val, 10 ) || 16;
-      };
-
-      document.getElementById( 'btnFontInc' ).addEventListener( 'click', () => {
-        const sz = Math.min( getFontSize() + 2, 28 );
-        document.documentElement.style.setProperty( '--font-size', sz + 'px' );
-        localStorage.setItem( storageKey( 'fontSize' ), sz + 'px' );
-      } );
-
-      document.getElementById( 'btnFontDec' ).addEventListener( 'click', () => {
-        const sz = Math.max( getFontSize() - 2, 10 );
-        document.documentElement.style.setProperty( '--font-size', sz + 'px' );
-        localStorage.setItem( storageKey( 'fontSize' ), sz + 'px' );
-      } );
-
-      // Help / About + Token — each toggles its panel open/closed (handlers
-      // defined in the panel-toggle section above).
-      document.getElementById( 'btnHelp' ).addEventListener( 'click', () => toggleInfoPanel( 'about' ) );
-      document.getElementById( 'btnToken' ).addEventListener( 'click', () => toggleInfoPanel( 'token' ) );
+      // Token inline form
+      document.getElementById( 'btnToken' ).addEventListener( 'click', () => showTokenPanel() );
 
       // Resizable sidebar
       const resizer = document.getElementById( 'resizer' );
@@ -2154,7 +2073,7 @@
         ? `<span class="tree-item-folder">${ escapeHTML( folderDisplay ) }</span>`
         : '';
 
-      return `<div class="tree-item" role="button" tabindex="0" data-action="select-file" data-path="${ escapeHTML( fullPath ) }" title="${ escapeHTML( fullPath ) }">` +
+      return `<div class="tree-item" tabindex="0" data-action="select-file" data-path="${ escapeHTML( fullPath ) }" title="${ escapeHTML( fullPath ) }">` +
         `<span class="tree-item-name"><span aria-hidden="true">${ icon }</span> ${ nameHtml }</span>` +
         `<span class="tree-item-size">${ sizeStr }</span>` +
         folderHtml +
@@ -2679,7 +2598,7 @@
 
       // Extensionless and download-prone (CSV, archives, Office) files go
       // straight to raw, which downloads them — the expected action.
-      if ( isDownloadAction( ext ) ) {
+      if ( !ext || DOWNLOAD_PRONE_EXTS.includes( ext ) ) {
         return rawUrl( path );
       }
 
@@ -2764,12 +2683,7 @@
         actionsHtml += `<button class="file-btn" data-action="copy-file" title="Copy file contents to clipboard" aria-label="Copy file contents to clipboard">📋 Copy</button>`;
       }
       actionsHtml += `<button class="file-btn" data-action="print" title="Print this file" aria-label="Print this file">🖨 Print</button>`;
-      // Label matches the outcome: types the browser downloads (data/binary,
-      // extensionless) get a Download button; viewable types get New Tab.
-      const willDownload = isDownloadAction( ext );
-      const newTabLabel = willDownload ? '⬇ Download' : '↗ New Tab';
-      const newTabTitle = willDownload ? 'Download this file' : 'Open in new tab';
-      actionsHtml += `<button class="file-btn" data-action="new-tab" data-path="${ escapeHTML( path ) }" title="${ newTabTitle }" aria-label="${ newTabTitle }">${ newTabLabel }</button>`;
+      actionsHtml += `<button class="file-btn" data-action="new-tab" data-path="${ escapeHTML( path ) }" title="Open in new tab" aria-label="Open in new tab">↗ New Tab</button>`;
 
       return `<div class="panel-header file-header">` +
         `<div class="file-title">` +
@@ -3039,17 +2953,7 @@
     // Map GitHub statuses to sentinel errors (403 = rate limit, 404 = missing/
     // private) that callers special-case to pop the token panel.
     const assertGitHubOk = ( res ) => {
-      if ( res.status === 403 || res.status === 429 ) {
-        // A genuine rate-limit response carries X-RateLimit-Remaining: 0. Other
-        // 403s (a token missing a scope, a blocked file) shouldn't claim the
-        // hourly quota is gone. raw.githubusercontent.com sends no such header,
-        // so a 403/429 there is treated as rate limiting (the usual cause).
-        const remaining = res.headers.get( 'X-RateLimit-Remaining' );
-        if ( res.status === 429 || remaining === null || remaining === '0' ) {
-          throw new Error( RATE_LIMIT_MESSAGE );
-        }
-        throw new Error( `GitHub returned 403 (forbidden): ${ res.statusText || 'access denied' }` );
-      }
+      if ( res.status === 403 ) throw new Error( RATE_LIMIT_MESSAGE );
       if ( res.status === 404 ) throw new Error( PRIVATE_REPO_MESSAGE );
       if ( !res.ok ) throw new Error( `Failed to fetch file: ${ res.status }` );
     };
@@ -3124,10 +3028,6 @@
     let lastRawText = '';
 
     const selectFile = async ( path, { skipHash = false, skipFocus = false } = {} ) => {
-      // Opening a real file dismisses any About/Token panel toggle state.
-      activePanel = null;
-      updateInfoButtonState();
-
       // Abort in-flight
       if ( currentAbortController ) currentAbortController.abort();
       currentAbortController = new AbortController();
@@ -3139,19 +3039,6 @@
 
       // Look up file in tree
       const treeItem = state.tree?.find( ( item ) => item.path === path && item.type === 'blob' );
-
-      // Tree loaded but the path isn't in it (e.g. a broken relative link in a
-      // README). Show a plain not-found message instead of fetching — a bare
-      // fetch would 404 and misfire the "private repo, add a token" panel.
-      if ( state.tree && !treeItem ) {
-        state.currentFilePath = path;
-        setContentHeader( makeSimpleHeader( path.split( '/' ).pop() ) );
-        document.getElementById( 'contentBody' ).innerHTML =
-          `<p>File not found: <code>${ escapeHTML( path ) }</code></p>`;
-        if ( !skipHash ) updateHash( path );
-        return;
-      }
-
       const fileSize = treeItem?.size || 0;
       const ext = path.includes( '.' ) ? path.split( '.' ).pop().toLowerCase() : '';
       const isStreamable = STREAMABLE_EXTS.includes( ext );
@@ -3309,29 +3196,12 @@
         const printBtn = e.target.closest( '[data-action="print"]' );
         if ( printBtn ) { window.print(); return; }
 
-        // New Tab / Download
+        // New Tab
         const newTabBtn = e.target.closest( '[data-action="new-tab"]' );
         if ( newTabBtn ) {
           const filePath = newTabBtn.dataset.path;
-          const ext = filePath.includes( '.' ) ? filePath.split( '.' ).pop().toLowerCase() : '';
           const url = await getNewTabUrl( filePath );
-
-          // Local download-prone file: save it straight to disk via a download
-          // link instead of opening a throwaway tab that the browser converts
-          // to a download. The download attribute is honored for same-origin
-          // (file://) URLs, so no blank tab flashes. Remote files keep the
-          // new-tab path: cross-origin download attrs are ignored, but a new
-          // tab safely downloads/displays without navigating away from the app.
-          if ( isDownloadAction( ext ) && localUrlFor( filePath ) ) {
-            const a = document.createElement( 'a' );
-            a.href = url;
-            a.download = filePath.split( '/' ).pop();
-            document.body.appendChild( a );
-            a.click();
-            a.remove();
-          } else {
-            window.open( url, '_blank', 'noopener' );
-          }
+          window.open( url, '_blank', 'noopener' );
           return;
         }
       } );

@@ -1,5 +1,18 @@
 # TooToo — Development Journal
 
+
+## 2026-06-08
+
+* 2026-06-08 ~ Clicks on About and Token buttons Should toggle their appearance and disappearance
+* 2026-06-08 ~ New tab:
+  * local: csv, stl, xls
+* 2026-06-08 ~ About page refreshed:
+  * copyright, license, repo link
+  * rejig repo / tips / about; click ? or ⚙️ Token again to return
+  * shows current branch + all-branches link
+  * keyboard shortcuts updated (Ctrl/⌘ B, Esc)
+
+I'm still very unclear as to the way that files are opened depending on whether they are local or on the server and whether the server is public or not.
 ## 2026-06-02
 
 * 2026-05-31 ~ Update tips & why pages
