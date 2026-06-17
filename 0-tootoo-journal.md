@@ -2,12 +2,15 @@
 
 ## 2026-06-16
 
-Issues
+✅ **Fixed: New Tab now displays text files instead of downloading**
 
-* Running locally, markdown file open, pressing "New Tab" reloads current page and initiates a download
+* markdown (.md, .markdown, .mkd, .mkdn)
+* 3D model source (OBJ, STL, MTL)
+* Extensionless text files (LICENSE, Makefile, etc.)
 
-markdown
-OBJ, STL
+**Solution:** Added `isTextOpenAsPlain()` helper. When "New Tab" is clicked on these file types, the handler now fetches the file as text and opens it as a `text/plain` blob URL in a new tab. This forces display in the browser instead of triggering a download, and never navigates the app away. Works locally (`file://`) and on GitHub Pages. Fall-through to normal `getNewTabUrl()` for other types (PDF, video, images, code files, HTML, etc.).
+
+
 
 
 

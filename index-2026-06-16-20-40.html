@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-16 20:40">
+  <meta name="revised" content="2026-06-08 23:18">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1081,14 +1081,6 @@
     // viewable tab: an extensionless or non-viewable (binary/data) file. Drives
     // both the button label (⬇ Download vs ↗ New Tab) and what the click does.
     const isDownloadAction = ( ext ) => !TAB_VIEWABLE_EXTS.includes( ext );
-
-    // Text-like files that the browser can't render inline (markdown, 3D model
-    // source, extensionless). These fetch as text/plain blobs so they DISPLAY
-    // in a new tab instead of triggering downloads. Avoids browser guessing on
-    // content-type or file extension.
-    const isTextOpenAsPlain = ( ext ) =>
-      !ext || // extensionless (LICENSE, Makefile, etc.)
-      [ 'md', 'markdown', 'mkd', 'mkdn', 'obj', 'stl', 'mtl' ].includes( ext );
     
     const LARGE_FILE_WARNING_BYTES = 1024 * 1024;
     const approvedLargeFiles = new Set();
@@ -3323,29 +3315,24 @@
         if ( newTabBtn ) {
           const filePath = newTabBtn.dataset.path;
           const ext = filePath.includes( '.' ) ? filePath.split( '.' ).pop().toLowerCase() : '';
-
-          // Text-like files that browsers won't inline render: fetch as text/plain
-          // so they DISPLAY in a new tab instead of downloading or navigating away.
-          // Handles markdown (no built-in viewer on file://), 3D model source (OBJ,
-          // STL, MTL), and extensionless files (LICENSE, Makefile). Even on GitHub
-          // Pages where raw.githubusercontent serves the right Content-Type, a local
-          // .md file won't render via window.open(file://), so text/plain is safer
-          // and more predictable.
-          if ( isTextOpenAsPlain( ext ) ) {
-            try {
-              const text = await fetchFileText( filePath );
-              const url = createBlobUrl( new Blob( [ text ], { type: 'text/plain;charset=utf-8' } ) );
-              window.open( url, '_blank', 'noopener' );
-              return;
-            } catch ( err ) {
-              // Fall through to normal path if fetch fails
-              console.error( 'Failed to fetch text file as blob:', err );
-            }
-          }
-
-          // Normal path: videos, PDFs, images, HTML, code, archives, etc.
           const url = await getNewTabUrl( filePath );
-          window.open( url, '_blank', 'noopener' );
+
+          // Local download-prone file: save it straight to disk via a download
+          // link instead of opening a throwaway tab that the browser converts
+          // to a download. The download attribute is honored for same-origin
+          // (file://) URLs, so no blank tab flashes. Remote files keep the
+          // new-tab path: cross-origin download attrs are ignored, but a new
+          // tab safely downloads/displays without navigating away from the app.
+          if ( isDownloadAction( ext ) && localUrlFor( filePath ) ) {
+            const a = document.createElement( 'a' );
+            a.href = url;
+            a.download = filePath.split( '/' ).pop();
+            document.body.appendChild( a );
+            a.click();
+            a.remove();
+          } else {
+            window.open( url, '_blank', 'noopener' );
+          }
           return;
         }
       } );
