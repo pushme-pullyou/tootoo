@@ -1109,10 +1109,11 @@
     // both the button label (⬇ Download vs ↗ New Tab) and what the click does.
     const isDownloadAction = ( ext ) => !TAB_VIEWABLE_EXTS.includes( ext );
 
-    // Text-like files that the browser can't render inline (markdown, 3D model
-    // source, extensionless). These fetch as text/plain blobs so they DISPLAY
-    // in a new tab instead of triggering downloads. Avoids browser guessing on
-    // content-type or file extension.
+    // Text-like files that the browser can't render inline locally (markdown, 3D
+    // model source, extensionless). In local mode (file://), these fetch as
+    // text/plain blobs so they DISPLAY instead of downloading. On GitHub Pages,
+    // getNewTabUrl() handles these correctly already (Pages renders .md to HTML,
+    // others serve as text/plain from raw), so no blob conversion needed.
     const isTextOpenAsPlain = ( ext ) =>
       !ext || // extensionless (LICENSE, Makefile, etc.)
       [ 'md', 'markdown', 'mkd', 'mkdn', 'obj', 'stl', 'mtl' ].includes( ext );
@@ -3352,14 +3353,12 @@
           const filePath = newTabBtn.dataset.path;
           const ext = filePath.includes( '.' ) ? filePath.split( '.' ).pop().toLowerCase() : '';
 
-          // Text-like files that browsers won't inline render: fetch as text/plain
-          // so they DISPLAY in a new tab instead of downloading or navigating away.
-          // Handles markdown (no built-in viewer on file://), 3D model source (OBJ,
-          // STL, MTL), and extensionless files (LICENSE, Makefile). Even on GitHub
-          // Pages where raw.githubusercontent serves the right Content-Type, a local
-          // .md file won't render via window.open(file://), so text/plain is safer
-          // and more predictable.
-          if ( isTextOpenAsPlain( ext ) ) {
+          // Text-like files in LOCAL mode: fetch as text/plain so they DISPLAY
+          // in a new tab instead of downloading or navigating away. On GitHub
+          // Pages, getNewTabUrl() already handles markdown, OBJ, STL, MTL, and
+          // extensionless files correctly (Pages routes .md → directory or raw
+          // serves them as text/plain).
+          if ( isTextOpenAsPlain( ext ) && localUrlFor( filePath ) ) {
             try {
               const text = await fetchFileText( filePath );
               const url = createBlobUrl( new Blob( [ text ], { type: 'text/plain;charset=utf-8' } ) );
@@ -3371,7 +3370,7 @@
             }
           }
 
-          // Normal path: videos, PDFs, images, HTML, code, archives, etc.
+          // Normal path: all remote files, binaries, videos, PDFs, images, HTML, etc.
           const url = await getNewTabUrl( filePath );
           window.open( url, '_blank', 'noopener' );
           return;
