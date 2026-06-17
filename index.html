@@ -2801,8 +2801,9 @@
       }
       actionsHtml += `<button class="file-btn" data-action="print" title="Print this file" aria-label="Print this file">🖨 Print</button>`;
       // Label matches the outcome: types the browser downloads (data/binary,
-      // extensionless) get a Download button; viewable types get New Tab.
-      const willDownload = isDownloadAction( ext );
+      // extensionless) get a Download button; viewable types and text-as-plain
+      // files get New Tab.
+      const willDownload = isDownloadAction( ext ) && !isTextOpenAsPlain( ext );
       const newTabLabel = willDownload ? '⬇ Download' : '↗ New Tab';
       const newTabTitle = willDownload ? 'Download this file' : 'Open in new tab';
       actionsHtml += `<button class="file-btn" data-action="new-tab" data-path="${ escapeHTML( path ) }" title="${ newTabTitle }" aria-label="${ newTabTitle }">${ newTabLabel }</button>`;
