@@ -70,7 +70,12 @@
 
     /* Every heading + title picks up the optional CONFIG.headingFont
        (falls back to the body font when unset). */
-    h1, h2, h3, h4, h5, h6,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
     #headerTitle {
       font-family: var(--heading-font, var(--font-family));
     }
@@ -117,11 +122,11 @@
 
     /* GitHub icon inside the content-header file-title (only direct <a>
        child of .file-title — the breadcrumb links live inside an <h3>). */
-    .file-title > a {
+    .file-title>a {
       color: var(--highlight-color);
     }
 
-    body.dark-mode .file-title > a {
+    body.dark-mode .file-title>a {
       color: color-mix(in srgb, var(--highlight-color) 65%, white);
     }
 
@@ -130,7 +135,7 @@
       transform: translateY(4px);
     }
 
-    .file-title > a svg {
+    .file-title>a svg {
       transform: translateY(4px);
     }
 
@@ -263,7 +268,8 @@
       background: var(--primary-bg);
       padding: 0;
       overflow: hidden;
-      container-type: inline-size; /* enables @container queries on sidebar width */
+      container-type: inline-size;
+      /* enables @container queries on sidebar width */
     }
 
     /* Narrow sidebar — drop the file size onto its own line beneath the name */
@@ -272,9 +278,11 @@
         flex-direction: column;
         align-items: flex-start;
       }
+
       .tree-item-size {
         margin-left: 0;
-        padding-left: 1.4rem; /* aligns roughly with the filename text after the icon */
+        padding-left: 1.4rem;
+        /* aligns roughly with the filename text after the icon */
       }
     }
 
@@ -284,7 +292,8 @@
       justify-content: space-between;
       align-items: center;
       padding: 0.5rem 0.5rem;
-      min-height: 3rem; /* lock every header bar (sidebar + content) to one height */
+      min-height: 3rem;
+      /* lock every header bar (sidebar + content) to one height */
       border-bottom: 1px solid var(--border-color);
       background: var(--primary-bg);
     }
@@ -424,7 +433,7 @@
       background: var(--secondary-bg);
     }
 
-/* ── Back to Top ── */
+    /* ── Back to Top ── */
     .back-to-top {
       position: fixed;
       bottom: 1.5rem;
@@ -782,9 +791,12 @@
     }
 
     /* ── Print: only the current file's content, with its name as a title ── */
-    .print-only { display: none; }
+    .print-only {
+      display: none;
+    }
 
     @media print {
+
       /* Hide all app chrome. */
       header,
       .sidebar,
@@ -807,9 +819,21 @@
         overflow: visible;
       }
 
-      body { border-top: none; } /* drop the brand stripe */
-      #contentBody { padding: 0; }
-      .markdown-body, pre { max-width: none; } /* use the full page width */
+      body {
+        border-top: none;
+      }
+
+      /* drop the brand stripe */
+      #contentBody {
+        padding: 0;
+      }
+
+      .markdown-body,
+      pre {
+        max-width: none;
+      }
+
+      /* use the full page width */
 
       /* Force a light page even if dark mode is on (legible, saves ink). */
       body,
@@ -834,7 +858,10 @@
       }
 
       /* The file name, shown only on the printout. */
-      .print-only { display: block; }
+      .print-only {
+        display: block;
+      }
+
       #printTitle {
         margin: 0 0 1rem 0;
         padding-bottom: 0.4rem;
@@ -897,8 +924,8 @@
   <a class="skip-link" href="#mainContent">Skip to content</a>
 
   <header>
-    <button id="btnToggleSidebar" class="header-btn" title="Toggle sidebar (Ctrl/⌘ B)"
-      aria-label="Toggle sidebar" aria-expanded="true">
+    <button id="btnToggleSidebar" class="header-btn" title="Toggle sidebar (Ctrl/⌘ B)" aria-label="Toggle sidebar"
+      aria-expanded="true">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
         aria-hidden="true">
         <rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.5"></rect>
@@ -1089,7 +1116,7 @@
     const isTextOpenAsPlain = ( ext ) =>
       !ext || // extensionless (LICENSE, Makefile, etc.)
       [ 'md', 'markdown', 'mkd', 'mkdn', 'obj', 'stl', 'mtl' ].includes( ext );
-    
+
     const LARGE_FILE_WARNING_BYTES = 1024 * 1024;
     const approvedLargeFiles = new Set();
     const RATE_LIMIT_MESSAGE = 'Rate limited. Add a GitHub token for higher limits.';
@@ -1762,36 +1789,36 @@
     };
 
     const renderAboutPanel = async () => {
-        const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
-        const sourceUrl = CONFIG.sourceRepoUrl;
-        const repoUrl = state.owner && state.repo
-          ? `https://github.com/${ state.owner }/${ state.repo }`
-          : sourceUrl;
-        const token = getToken();
+      const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
+      const sourceUrl = CONFIG.sourceRepoUrl;
+      const repoUrl = state.owner && state.repo
+        ? `https://github.com/${ state.owner }/${ state.repo }`
+        : sourceUrl;
+      const token = getToken();
 
-        let rateLimitInfo = 'Unable to fetch';
-        try {
-          const res = await fetch( 'https://api.github.com/rate_limit', { headers: getAuthHeaders() } );
-          if ( res.ok ) {
-            const data = await res.json();
-            const core = data.resources.core;
-            const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
-            rateLimitInfo = `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })`;
-          }
-        } catch ( _ ) { /* offline or blocked */ }
+      let rateLimitInfo = 'Unable to fetch';
+      try {
+        const res = await fetch( 'https://api.github.com/rate_limit', { headers: getAuthHeaders() } );
+        if ( res.ok ) {
+          const data = await res.json();
+          const core = data.resources.core;
+          const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
+          rateLimitInfo = `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })`;
+        }
+      } catch ( _ ) { /* offline or blocked */ }
 
-        const tokenStatus = token ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
+      const tokenStatus = token ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
 
-        // Current branch (links to its tree, plus the repo's full branch list).
-        // Only shown once a repo + branch are known.
-        const branchHtml = ( state.owner && state.repo && state.branch )
-          ? `<li><strong>Branch:</strong> <a href="https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/tree/${ encodeURIComponent( state.branch ) }" target="_blank" rel="noopener">${ escapeHTML( state.branch ) }</a> · <a href="https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/branches" target="_blank" rel="noopener">all branches</a></li>`
-          : '';
+      // Current branch (links to its tree, plus the repo's full branch list).
+      // Only shown once a repo + branch are known.
+      const branchHtml = ( state.owner && state.repo && state.branch )
+        ? `<li><strong>Branch:</strong> <a href="https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/tree/${ encodeURIComponent( state.branch ) }" target="_blank" rel="noopener">${ escapeHTML( state.branch ) }</a> · <a href="https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/branches" target="_blank" rel="noopener">all branches</a></li>`
+        : '';
 
-        const cb = document.getElementById( 'contentBody' );
-        // Wrap in .markdown-body so headings, links, and max-width/line-height
-        // inherit the same treatment as rendered markdown files.
-        cb.innerHTML = `
+      const cb = document.getElementById( 'contentBody' );
+      // Wrap in .markdown-body so headings, links, and max-width/line-height
+      // inherit the same treatment as rendered markdown files.
+      cb.innerHTML = `
           <div class="markdown-body">
           <h2>${ escapeHTML( CONFIG.appName ) }</h2>
           <p>A lightweight single-file GitHub repository browser.</p>
@@ -1811,15 +1838,15 @@
             <li><strong>GitHub Pages:</strong> Supported — auto-detects repos hosted on GitHub Pages</li>
           </ul>
           ${ ( () => {
-            const stats = getRepoStats();
-            if ( !stats ) return '<h3>Repository Statistics</h3><p>No tree data loaded yet.</p>';
-            const typesHtml = stats.topTypes.map( ( [ ext, count ] ) =>
-              `<li>${ escapeHTML( ext ) }: ${ count } file${ count !== 1 ? 's' : '' }</li>`
-            ).join( '' );
-            const largestHtml = stats.largest.map( ( f ) =>
-              `<li>${ escapeHTML( f.path ) } — ${ formatFileSize( f.size ) }</li>`
-            ).join( '' );
-            return `<h3>Repository Statistics</h3>
+          const stats = getRepoStats();
+          if ( !stats ) return '<h3>Repository Statistics</h3><p>No tree data loaded yet.</p>';
+          const typesHtml = stats.topTypes.map( ( [ ext, count ] ) =>
+            `<li>${ escapeHTML( ext ) }: ${ count } file${ count !== 1 ? 's' : '' }</li>`
+          ).join( '' );
+          const largestHtml = stats.largest.map( ( f ) =>
+            `<li>${ escapeHTML( f.path ) } — ${ formatFileSize( f.size ) }</li>`
+          ).join( '' );
+          return `<h3>Repository Statistics</h3>
               <ul>
                 <li><strong>Files:</strong> ${ stats.fileCount }</li>
                 <li><strong>Folders:</strong> ${ stats.folderCount }</li>
@@ -1829,7 +1856,7 @@
               <ol>${ typesHtml }</ol>
               <h4>Largest files</h4>
               <ol>${ largestHtml }</ol>`;
-          } )() }
+        } )() }
           <h3>Tips</h3>
           <ul>
             <li>Use the filter input in the sidebar to search file names</li>
@@ -1857,9 +1884,9 @@
           </div>
         `;
 
-        // Restore original panel header (selectFile replaces it with breadcrumbs)
-        setContentHeader( makeSimpleHeader( 'About' ) );
-        document.getElementById( 'btnSelfTest' )?.addEventListener( 'click', runSelfTest );
+      // Restore original panel header (selectFile replaces it with breadcrumbs)
+      setContentHeader( makeSimpleHeader( 'About' ) );
+      document.getElementById( 'btnSelfTest' )?.addEventListener( 'click', runSelfTest );
     };
 
     const closeInfoPanel = () => {

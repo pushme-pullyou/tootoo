@@ -12,8 +12,6 @@
 
 
 
-
-
 ## 2026-06-08
 
 * 2026-06-08 ~ Clicks on About and Token buttons Should toggle their appearance and disappearance
