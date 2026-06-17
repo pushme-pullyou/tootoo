@@ -1,6 +1,16 @@
 # TooToo — Development Journal
 
-##
+## 2026-06-16
+
+Issues
+
+* Running locally, markdown file open, pressing "New Tab" reloads current page and initiates a download
+
+markdown
+OBJ, STL
+
+
+
 ## 2026-06-08
 
 * 2026-06-08 ~ Clicks on About and Token buttons Should toggle their appearance and disappearance
@@ -13,6 +23,7 @@
   * keyboard shortcuts updated (Ctrl/⌘ B, Esc)
 
 I'm still very unclear as to the way that files are opened depending on whether they are local or on the server and whether the server is public or not.
+
 ## 2026-06-02
 
 * 2026-05-31 ~ Update tips & why pages
