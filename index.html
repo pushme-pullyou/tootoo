@@ -1081,6 +1081,7 @@
     // viewable tab: an extensionless or non-viewable (binary/data) file. Drives
     // both the button label (⬇ Download vs ↗ New Tab) and what the click does.
     const isDownloadAction = ( ext ) => !TAB_VIEWABLE_EXTS.includes( ext );
+    
     const LARGE_FILE_WARNING_BYTES = 1024 * 1024;
     const approvedLargeFiles = new Set();
     const RATE_LIMIT_MESSAGE = 'Rate limited. Add a GitHub token for higher limits.';

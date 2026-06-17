@@ -5,6 +5,10 @@ This is the current TooToo roadmap.
 ## Apps
 
 * "file:///g%3A/My%20Drive/2026-theo-github/theo-armour-sandbox/0-apps/newww-tab/newww-tab.html"
+G:\My [Drive\2026-theo-github\theo-armour-sandbox\0-apps\newww-tab\]
+
+"file:///g%3A/My%20Drive/2026-theo-github/theo-armour-sandbox/0-apps/newww-tab/newwwtab-data-default.md"
+
 * G:\My Drive\2026-theo-github\pushme-pullyou-github'
 * G:\My Drive\2026-theo-github\pushme-pullyou-assets'
 * G:\My Drive\2026-theo-github\theo-armour-2025'
@@ -22,6 +26,8 @@ This is the current TooToo roadmap.
 
 ## Copy Index to Repo
 
+* 2026-06-16: Photo gallery app
+* 2026-06-16 Ability to load special file format loaders on the fly
 * 2026-05-26 ~ update both local and GitHub repos: or maybe separate apps
 
 ## Theming
