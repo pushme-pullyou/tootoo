@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-16 21:59">
+  <meta name="revised" content="2026-06-16 21:34">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1643,9 +1643,9 @@
     };
 
     const RATE_LIMIT_REASON_HTML = '<div class="error-panel">⚠️ <strong>GitHub API rate limit reached.</strong> You\'ve exceeded the anonymous request quota and cannot load more files until you add a token below or wait for the limit to reset.</div>';
-    const PRIVATE_REPO_MESSAGE = 'Repository not found. Double-check the owner, repository, and branch names for typos. If the repository is private, add a GitHub token with read access below.';
+    const PRIVATE_REPO_MESSAGE = 'GitHub returned 404. If this is a private repository, enter a GitHub access token with Contents: Read permission below.';
     const privateRepoReasonHtml = () =>
-      `<div class="error-panel">⚠️ <strong>Repository not found</strong> (GitHub returned 404). First, check the owner, repository, and branch names for a typo — that's the most common cause. If the repository really is private, add a GitHub access token with read access below. If you already have a token saved, make sure it covers ${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }.</div>`;
+      `<div class="error-panel">⚠️ <strong>GitHub returned 404.</strong> If this is a private repository, enter a GitHub access token with <em>Contents: Read</em> permission below. If you already have a token saved, make sure it is scoped to ${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }.</div>`;
 
     /* ── 12b. Self-test — render every file off-screen and report pass/fail ── */
     // Reuses the real fetch/parse/decode helpers, so the result reflects what
