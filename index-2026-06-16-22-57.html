@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-16 23:39">
+  <meta name="revised" content="2026-06-16 22:48">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -143,6 +143,27 @@
       color: color-mix(in srgb, var(--highlight-color) 65%, white);
     }
 
+    /* Branch chip: which branch of the browsed repo is in view. Links to the
+       branch tree on GitHub (the branch link the slim breadcrumb dropped). */
+    .header-branch {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.8rem;
+      padding: 0.05rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      color: var(--text-color);
+      text-decoration: none;
+      white-space: nowrap;
+      opacity: 0.85;
+    }
+
+    .header-branch:hover {
+      opacity: 1;
+      border-color: var(--highlight-color);
+      color: var(--highlight-color);
+    }
 
     /* ── Buttons ── ghost pill (theme-color text + border) that fills with
        the theme color on hover, with a slight lift on press. */
@@ -313,98 +334,6 @@
     #btnExpandAll {
       flex-shrink: 0;
       line-height: 1;
-    }
-
-    /* ── Branch switcher (sidebar title) ── the branch chip opens a dropdown of
-       the repo's branches; the file summary sits beside it and yields first. */
-    #filesPanelHeader {
-      position: relative;
-    }
-
-    .files-meta {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      min-width: 0;
-    }
-
-    .branch-switcher {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.2rem;
-      flex-shrink: 0;
-      font-family: inherit;
-      font-size: 0.85rem;
-      padding: 0.1rem 0.4rem;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      background: transparent;
-      color: var(--text-color);
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .branch-switcher:hover,
-    .branch-switcher[aria-expanded="true"] {
-      border-color: var(--highlight-color);
-      color: var(--highlight-color);
-    }
-
-    .branch-glyph {
-      color: var(--highlight-color);
-    }
-
-    .branch-caret {
-      font-size: 0.7rem;
-      opacity: 0.7;
-    }
-
-    .branch-menu {
-      position: absolute;
-      top: 100%;
-      left: 0.5rem;
-      z-index: 20;
-      min-width: 12rem;
-      max-width: calc(100% - 1rem);
-      max-height: 60vh;
-      overflow-y: auto;
-      margin-top: 0.25rem;
-      padding: 0.25rem;
-      background: var(--secondary-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .branch-option {
-      display: block;
-      width: 100%;
-      text-align: left;
-      padding: 0.3rem 0.5rem;
-      border: none;
-      border-radius: 4px;
-      background: transparent;
-      color: var(--text-color);
-      font-family: inherit;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      cursor: pointer;
-    }
-
-    .branch-option:hover {
-      background: var(--hover-bg);
-    }
-
-    .branch-option.is-current {
-      color: var(--highlight-color);
-      font-weight: 600;
-    }
-
-    .branch-menu-loading,
-    .branch-menu-error {
-      padding: 0.5rem;
-      font-size: 0.85rem;
-      opacity: 0.8;
     }
 
     /* ── Filter wrap ── */
@@ -1050,6 +979,7 @@
     </a>
 
     <a id="headerTitle" href="." title="Reload" aria-label="Reload page">TooToo</a>
+    <a id="headerBranch" class="header-branch" target="_blank" rel="noopener" hidden></a>
 
     <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode"
       aria-label="Toggle dark mode">🌙</button>
@@ -1057,8 +987,8 @@
     <button id="btnFontInc" class="header-btn" title="Increase Font Size" aria-label="Increase font size">A+</button>
     <button id="btnHelp" class="header-btn" title="About this app" aria-label="About this app"
       aria-pressed="false">?</button>
-    <button id="btnToken" class="header-btn" title="GitHub API rate limit — click to set a token"
-      aria-label="Set GitHub personal access token" aria-pressed="false">⚙️</button>
+    <button id="btnToken" class="header-btn" title="Set GitHub Personal Access Token"
+      aria-label="Set GitHub personal access token" aria-pressed="false">⚙️ Token</button>
     <div id="rateBadge" class="rate-limit-badge" title="API Rate Limit" aria-live="polite"></div>
   </header>
 
@@ -1066,25 +996,18 @@
 
     <div class="sidebar">
       <div class="panel-header" id="filesPanelHeader">
-        <div class="files-meta">
-          <button id="btnBranch" class="branch-switcher" type="button" hidden
-            aria-haspopup="listbox" aria-expanded="false" title="Switch branch">
-            <span class="branch-glyph" aria-hidden="true">⎇</span>
-            <span id="branchName"></span>
-            <span class="branch-caret" aria-hidden="true">▾</span>
-          </button>
-          <h3 id="hFiles">Files</h3>
-        </div>
+        <h3 id="hFiles">Files</h3>
         <button id="btnExpandAll" class="file-btn" style="display: none;" title="Expand all folders"
           aria-label="Expand all folders">⊞</button>
-        <div id="branchMenu" class="branch-menu" role="listbox" aria-label="Branches" hidden></div>
       </div>
       <div class="filter-wrap">
         <label for="treeFilter" class="sr-only">Filter files by name</label>
         <input type="text" id="treeFilter" placeholder="Filter files…" title="Filter files by name">
         <button id="btnFilterClear" title="Clear filter" aria-label="Clear filter">✕</button>
       </div>
-      <div id="treeList"></div>
+      <div id="treeList">
+        <!-- placeholder for future tree content -->
+      </div>
       <div class="sidebar-footer">
         <button id="btnScrollTreeTop" type="button" title="Scroll sidebar to top" aria-label="Scroll sidebar to top">
           <img alt="" width="20" height="20">
@@ -1487,103 +1410,18 @@
       document.getElementById( 'headerGitHub' ).href = APP_ORIGIN.url;
     };
 
-    /* ── Branch switcher (sidebar title) ──
-       The sidebar title doubles as an in-app branch picker: it shows the branch
-       in view and, on click, lists the repo's branches and switches to one. */
-    let branchList = null;   // cached names for the current repo; null = not fetched
-
-    // Reflect state.branch in the switcher label; hide it until a branch is known.
-    const updateBranchControl = () => {
-      const btn = document.getElementById( 'btnBranch' );
-      const name = document.getElementById( 'branchName' );
-      if ( !btn || !name ) return;
-      if ( !state.branch ) { btn.hidden = true; return; }
-      name.textContent = state.branch;
-      btn.title = `Branch: ${ state.branch } — click to switch`;
-      btn.setAttribute( 'aria-label', `Branch ${ state.branch } — click to switch` );
-      btn.hidden = false;
+    /* Show which branch of the browsed repo is in view as a header chip that
+       links to the branch tree on GitHub. Called once state.branch resolves. */
+    const updateHeaderBranch = () => {
+      const el = document.getElementById( 'headerBranch' );
+      if ( !el ) return;
+      if ( !state.branch || !state.owner || !state.repo ) { el.hidden = true; return; }
+      el.textContent = `⎇ ${ state.branch }`;
+      el.href = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/tree/${ encodeURIComponent( state.branch ) }`;
+      el.title = `Browsing the ${ state.branch } branch — open on GitHub`;
+      el.setAttribute( 'aria-label', `Branch ${ state.branch } — open on GitHub` );
+      el.hidden = false;
     };
-
-    const closeBranchMenu = () => {
-      const menu = document.getElementById( 'branchMenu' );
-      if ( menu ) menu.hidden = true;
-      document.getElementById( 'btnBranch' )?.setAttribute( 'aria-expanded', 'false' );
-    };
-
-    // One page of up to 100 branches — enough for virtually every repo. If a
-    // repo has more, the rest aren't listed (a deliberate cap, not silent: the
-    // note row says so) and the user can still deep-link via ?branch=.
-    const fetchBranchList = async () => {
-      if ( branchList ) return branchList;
-      const res = await fetch(
-        `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/branches?per_page=100`,
-        { headers: getAuthHeaders() }
-      );
-      updateRateBadge( res );
-      if ( !res.ok ) throw new Error( `Failed to list branches: ${ res.status }` );
-      const data = await res.json();
-      branchList = data.map( ( b ) => b.name );
-      branchList.capped = data.length === 100;
-      return branchList;
-    };
-
-    const openBranchMenu = async () => {
-      const menu = document.getElementById( 'branchMenu' );
-      const btn = document.getElementById( 'btnBranch' );
-      if ( !menu || !btn ) return;
-      menu.hidden = false;
-      btn.setAttribute( 'aria-expanded', 'true' );
-      menu.innerHTML = '<div class="branch-menu-loading">Loading branches…</div>';
-      try {
-        const branches = await fetchBranchList();
-        const options = branches.map( ( b ) =>
-          `<button type="button" role="option" class="branch-option${ b === state.branch ? ' is-current' : '' }"` +
-          ` data-branch="${ escapeHTML( b ) }" aria-selected="${ b === state.branch }">` +
-          `${ b === state.branch ? '✓ ' : '' }${ escapeHTML( b ) }</button>`
-        ).join( '' );
-        const note = branches.capped
-          ? '<div class="branch-menu-error">Showing first 100 branches.</div>'
-          : '';
-        menu.innerHTML = options + note;
-      } catch ( _ ) {
-        menu.innerHTML = '<div class="branch-menu-error">Could not load branches.</div>';
-      }
-    };
-
-    const toggleBranchMenu = () => {
-      const menu = document.getElementById( 'branchMenu' );
-      if ( menu && !menu.hidden ) closeBranchMenu();
-      else openBranchMenu();
-    };
-
-    // Switch the browsed branch in place: reset branch-scoped state, persist the
-    // choice, then reuse the normal tree-load + readme-open path (no reload).
-    const switchBranch = async ( branch ) => {
-      closeBranchMenu();
-      if ( !branch || branch === state.branch ) return;
-      state.branch = branch;
-      state.tree = null;
-      state.oversized = false;
-      state.pagesEnabled = null;   // re-probe GitHub Pages for the new branch
-      try {
-        localStorage.setItem( storageKey( 'repo' ), JSON.stringify( {
-          owner: state.owner, repo: state.repo, branch: state.branch,
-        } ) );
-      } catch ( _ ) { /* storage disabled */ }
-      clearFileCache();
-      updateBranchControl();
-      await fetchTree();
-      if ( state.oversized ) return;
-      autoSelectReadme();
-    };
-
-    // GitHub owner/repo names are limited to this charset. Validating before we
-    // interpolate `owner` into the `${owner}.github.io` host (getNewTabUrl) and
-    // `repo` into URLs blocks a crafted value (e.g. from ?owner= or a malformed
-    // .git/config) from redirecting New Tab / window.open to another origin.
-    // Branch names are NOT checked here — they legitimately contain '/' and are
-    // always encodeURIComponent'd into paths, never into a host.
-    const isValidGitHubName = ( s ) => /^[A-Za-z0-9._-]+$/.test( s );
 
     /* ── 9. detectRepo ── */
     const detectRepo = async () => {
@@ -1871,18 +1709,6 @@
     const privateRepoReasonHtml = () =>
       `<div class="error-panel">⚠️ <strong>Repository not found</strong> (GitHub returned 404). First, check the owner, repository, and branch names for a typo — that's the most common cause. If the repository really is private, add a GitHub access token with read access below. If you already have a token saved, make sure it covers ${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }.</div>`;
 
-    /* Visible-tree filter — the single rule for what the sidebar shows: skip
-       dotfiles and CONFIG.hiddenFolders/hiddenFiles (case-insensitive, at any
-       depth). Shared by buildNestedTree, the sidebar count, and the self-test so
-       all three stay in lockstep instead of three hand-copied filters drifting. */
-    const hiddenFolderSet = () => new Set( ( CONFIG.hiddenFolders || [] ).map( ( s ) => s.toLowerCase() ) );
-    const hiddenFileSet = () => new Set( ( CONFIG.hiddenFiles || [] ).map( ( s ) => s.toLowerCase() ) );
-    const isVisibleTreeItem = ( item, folders, files ) => {
-      const parts = item.path.split( '/' );
-      if ( parts.some( ( p ) => p.startsWith( '.' ) || folders.has( p.toLowerCase() ) ) ) return false;
-      return !( item.type === 'blob' && files.has( parts[ parts.length - 1 ].toLowerCase() ) );
-    };
-
     /* ── 12b. Self-test — render every file off-screen and report pass/fail ── */
     // Reuses the real fetch/parse/decode helpers, so the result reflects what
     // the viewer actually does. A "pass" means the file loaded and parsed or
@@ -1897,11 +1723,14 @@
       }
 
       // The same files the sidebar shows (skip dotfiles + CONFIG.hidden* entries).
-      const hidFolders = hiddenFolderSet();
-      const hidFiles = hiddenFileSet();
-      const files = state.tree.filter( ( item ) =>
-        item.type === 'blob' && isVisibleTreeItem( item, hidFolders, hidFiles )
-      );
+      const hiddenFolders = new Set( ( CONFIG.hiddenFolders || [] ).map( ( s ) => s.toLowerCase() ) );
+      const hiddenFiles = new Set( ( CONFIG.hiddenFiles || [] ).map( ( s ) => s.toLowerCase() ) );
+      const files = state.tree.filter( ( item ) => {
+        if ( item.type !== 'blob' ) return false;
+        const parts = item.path.split( '/' );
+        if ( parts.some( ( p ) => p.startsWith( '.' ) || hiddenFolders.has( p.toLowerCase() ) ) ) return false;
+        return !hiddenFiles.has( parts[ parts.length - 1 ].toLowerCase() );
+      } );
 
       // Abort any in-flight file load and own this run's signal; if the user
       // navigates mid-run, our fetches abort and we stop touching the DOM.
@@ -2192,20 +2021,6 @@
       document.getElementById( 'btnHelp' ).addEventListener( 'click', () => toggleInfoPanel( 'about' ) );
       document.getElementById( 'btnToken' ).addEventListener( 'click', () => toggleInfoPanel( 'token' ) );
 
-      // Branch switcher: toggle the dropdown, switch on selection, and dismiss
-      // on outside-click or Escape. (Helpers in the branch-switcher section.)
-      document.getElementById( 'btnBranch' ).addEventListener( 'click', toggleBranchMenu );
-      document.getElementById( 'branchMenu' ).addEventListener( 'click', ( e ) => {
-        const opt = e.target.closest( '.branch-option' );
-        if ( opt ) switchBranch( opt.dataset.branch );
-      } );
-      document.addEventListener( 'click', ( e ) => {
-        if ( !e.target.closest( '#filesPanelHeader' ) ) closeBranchMenu();
-      } );
-      document.addEventListener( 'keydown', ( e ) => {
-        if ( e.key === 'Escape' ) closeBranchMenu();
-      } );
-
       // Resizable sidebar
       const resizer = document.getElementById( 'resizer' );
       let isResizing = false;
@@ -2308,16 +2123,12 @@
       const remaining = response.headers.get( 'X-RateLimit-Remaining' );
       const limit = response.headers.get( 'X-RateLimit-Limit' );
       if ( remaining !== null && limit !== null ) {
-        const n = parseInt( remaining, 10 );
-        // The live count lives in the ⚙️ button's tooltip; the standalone badge
-        // only surfaces as a warning when the quota runs low (≤30) / critical (≤10).
-        const tokenBtn = document.getElementById( 'btnToken' );
-        if ( tokenBtn ) tokenBtn.title = `${ remaining }/${ limit } GitHub API requests left this hour — click to set a token`;
         const badge = document.getElementById( 'rateBadge' );
+        badge.style.display = 'inline';
         badge.textContent = `${ remaining }/${ limit }`;
+        const n = parseInt( remaining, 10 );
         badge.classList.toggle( 'critical', n <= 10 );
-        badge.classList.toggle( 'low', n > 10 && n <= 30 );
-        badge.style.display = n <= 30 ? 'inline' : 'none';
+        badge.classList.toggle( 'low', n > 10 && n <= 50 );
       }
     };
 
@@ -2382,11 +2193,12 @@
     /* ── 18. Build nested tree structure ── */
     const buildNestedTree = ( flatTree ) => {
       const root = { children: {} };
-      const hidFolders = hiddenFolderSet();
-      const hidFiles = hiddenFileSet();
+      const hiddenFolders = new Set( ( CONFIG.hiddenFolders || [] ).map( ( s ) => s.toLowerCase() ) );
+      const hiddenFiles = new Set( ( CONFIG.hiddenFiles || [] ).map( ( s ) => s.toLowerCase() ) );
       for ( const item of flatTree ) {
-        if ( !isVisibleTreeItem( item, hidFolders, hidFiles ) ) continue;
         const parts = item.path.split( '/' );
+        if ( parts.some( ( p ) => p.startsWith( '.' ) || hiddenFolders.has( p.toLowerCase() ) ) ) continue;
+        if ( item.type === 'blob' && hiddenFiles.has( parts[ parts.length - 1 ].toLowerCase() ) ) continue;
         let current = root;
         for ( let i = 0; i < parts.length; i++ ) {
           const part = parts[ i ];
@@ -2456,23 +2268,10 @@
     };
 
     /* ── 21. renderTree — batched rendering ── */
-    /* The ⊞/⊟ Expand-all button reflects the tree's current state. A fresh
-       render collapses every folder, so renderTree resets it to ⊞ — otherwise
-       the state would go stale after a branch switch and need a double-click. */
-    const setExpandAllButton = ( expanded ) => {
-      const btn = document.getElementById( 'btnExpandAll' );
-      if ( !btn ) return;
-      btn.textContent = expanded ? '⊟' : '⊞';
-      const label = expanded ? 'Collapse all folders' : 'Expand all folders';
-      btn.title = label;
-      btn.setAttribute( 'aria-label', label );
-    };
-
     const renderTree = ( treeArray ) => {
       const treeList = document.getElementById( 'treeList' );
       treeList.innerHTML = '';
       preFilterOpenState = null;
-      setExpandAllButton( false );
 
       const nested = buildNestedTree( treeArray );
       const rootEntries = sortedEntries( nested.children );
@@ -2583,7 +2382,7 @@
           } ) );
         }
 
-        updateBranchControl();
+        updateHeaderBranch();
 
         treeList.innerHTML = '<p>Loading tree…</p>';
 
@@ -2611,19 +2410,22 @@
         await renderTree( state.tree );
 
         // Summarize the visible tree in the sidebar header: folders · files ·
-        // total size, using the shared isVisibleTreeItem rule so the counts
-        // always match what buildNestedTree actually renders.
-        const hidFolders = hiddenFolderSet();
-        const hidFiles = hiddenFileSet();
-        const visibleItems = state.tree.filter( ( item ) => isVisibleTreeItem( item, hidFolders, hidFiles ) );
+        // total size. Mirrors buildNestedTree's filter so the counts match what
+        // is actually shown (dotfiles and CONFIG.hidden* entries excluded).
+        const summaryHiddenFolders = new Set( ( CONFIG.hiddenFolders || [] ).map( ( s ) => s.toLowerCase() ) );
+        const summaryHiddenFiles = new Set( ( CONFIG.hiddenFiles || [] ).map( ( s ) => s.toLowerCase() ) );
+        const visibleItems = state.tree.filter( ( item ) => {
+          const parts = item.path.split( '/' );
+          if ( parts.some( ( p ) => p.startsWith( '.' ) || summaryHiddenFolders.has( p.toLowerCase() ) ) ) return false;
+          if ( item.type === 'blob' && summaryHiddenFiles.has( parts[ parts.length - 1 ].toLowerCase() ) ) return false;
+          return true;
+        } );
         const folderCount = visibleItems.filter( ( i ) => i.type === 'tree' ).length;
         const fileCount = visibleItems.filter( ( i ) => i.type === 'blob' ).length;
         const totalBytes = visibleItems.reduce( ( sum, i ) => sum + ( i.type === 'blob' ? ( i.size || 0 ) : 0 ), 0 );
         const countLabel = ( n, word ) => `${ n.toLocaleString() } ${ word }${ n === 1 ? '' : 's' }`;
         const hFilesEl = document.getElementById( 'hFiles' );
-        // 📁 folders · 📄 files · size — icons keep the summary compact; the
-        // tooltip still spells the counts out in words.
-        hFilesEl.textContent = `📁 ${ folderCount.toLocaleString() } · 📄 ${ fileCount.toLocaleString() } · ${ formatFileSize( totalBytes ) }`;
+        hFilesEl.textContent = `${ countLabel( folderCount, 'folder' ) } · ${ countLabel( fileCount, 'file' ) } · ${ formatFileSize( totalBytes ) }`;
         hFilesEl.title = `${ countLabel( folderCount, 'folder' ) }, ${ countLabel( fileCount, 'file' ) }, ${ formatFileSize( totalBytes ) } total`;
         treeSummaryText = hFilesEl.textContent; // restored when the filter clears
 
@@ -2724,16 +2526,19 @@
     /* ── 25. Expand All / Collapse All ── */
     const setupExpandAll = () => {
       const btn = document.getElementById( 'btnExpandAll' );
+      let expanded = false;
 
       btn.addEventListener( 'click', () => {
         const allDetails = document.getElementById( 'treeList' ).querySelectorAll( 'details' );
-        // Derive intent from the current glyph (⊞ expand / ⊟ collapse) rather
-        // than a stored flag, which would go stale when renderTree rebuilds the
-        // collapsed tree (e.g. after a branch switch). The icon-only toggle also
-        // never wraps the way the old "Collapse All" label did on a narrow sidebar.
-        const expand = btn.textContent.trim() !== '⊟';
-        allDetails.forEach( ( d ) => { d.open = expand; } );
-        setExpandAllButton( expand );
+        expanded = !expanded;
+        allDetails.forEach( ( d ) => { d.open = expanded; } );
+        // Icon-only toggle: a single fixed-width glyph (⊞ expand / ⊟ collapse)
+        // never wraps the way the old "Collapse All" label did on a narrow
+        // sidebar. The tooltip + aria-label carry the action and state.
+        btn.textContent = expanded ? '⊟' : '⊞';
+        const label = expanded ? 'Collapse all folders' : 'Expand all folders';
+        btn.title = label;
+        btn.setAttribute( 'aria-label', label );
       } );
     };
 
@@ -3042,10 +2847,11 @@
 
       // Cumulative folder paths so each crumb links to its own folder.
       const cumulative = [];
-      segments.forEach( ( seg ) => {
-        const prev = cumulative[ cumulative.length - 1 ];
-        cumulative.push( prev ? `${ prev }/${ seg }` : seg );
-      } );
+      segments.reduce( ( acc, seg ) => {
+        const next = acc ? `${ acc }/${ seg }` : seg;
+        cumulative.push( next );
+        return next;
+      }, '' );
 
       let pathHtml = '';
       if ( segments.length > 2 ) {
@@ -3710,15 +3516,6 @@
       state.owner = CONFIG.owner;
       state.repo = CONFIG.repo;
       state.branch = CONFIG.branch;
-
-      // Reject owner/repo outside GitHub's charset before they reach any URL or
-      // host builder (a crafted value could otherwise redirect New Tab / window.open).
-      if ( ( state.owner && !isValidGitHubName( state.owner ) ) ||
-           ( state.repo && !isValidGitHubName( state.repo ) ) ) {
-        document.getElementById( 'contentBody' ).innerHTML =
-          '<div class="error-panel"><p>⚠️ <strong>Invalid repository reference.</strong> Owner and repository names may contain only letters, numbers, and <code>. _ -</code>.</p></div>';
-        return;
-      }
 
       migrateCurrentFileStorage();
 
