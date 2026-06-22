@@ -178,6 +178,7 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 
 ## Change Log
 
+* 2026-06-21 — Hovering the header title now shows the last-updated date as a tooltip even when no subtitle is configured (previously the "Last updated" tooltip only existed on the optional subtitle text)
 * 2026-06-08 — About and Token header buttons now toggle: clicking again closes the panel and returns to the file you were viewing, with the active button shown pressed
 * 2026-06-08 — New Tab is now an honest action — viewable files (HTML, PDF, images, media, text/source) open in a tab, while non-viewable files (3D models, fonts, archives, spreadsheets, binaries, extensionless) get a **Download** button that saves directly; local downloads no longer flash a throwaway tab
 * 2026-06-08 — Viewable vs downloadable is now decided by an allowlist of browser-renderable types instead of a blocklist, so new binary formats (e.g. `.stl`) are handled correctly without chasing the list

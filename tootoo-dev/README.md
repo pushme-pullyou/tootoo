@@ -25,5 +25,7 @@ Edit only in `tootoo-dev/index.html`; test via `file://`; then `promote` → `sy
 
 ## Journal
 
+- **2026-06-21** — First `promote` + `sync`. Promoted the header-tooltip fix to production; synced canonical `index.html` to all 12 downstream repos (4 had stale uncommitted index.html from prior un-published syncs — decided to overwrite, since downstream index.html is generated). Fixed the spec: dirty repos are overwritten (not skipped), and the phantom root-launcher target was removed.
+- **2026-06-21** — Added screenshot refresh as `promote` step 6 (Appendix A in PIPELINE.md): headless Chrome → PNG → JPEG q90, overwriting `tootoo-screenshot.jpeg`. Skippable via `promote no-shot`. Regenerated the live asset (329 KB → 177 KB).
 - **2026-06-21** — Wrote [PIPELINE.md](../PIPELINE.md): the `promote` / `sync` / `publish` spec. Confirmed all 12 downstream copies keep customization in `tootoo.config.js`, so `index.html` is identical everywhere and sync is a safe plain copy.
 - **2026-06-21** — Started the Production/Dev split. Created `tootoo-dev/index.html` as a copy of production `index.html` (revised 2026-06-16 23:39), retitled to "TooToo Dev".

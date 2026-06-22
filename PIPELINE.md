@@ -56,7 +56,13 @@ Copies the tested dev build into this repo's production `index.html`.
    dated bullet to the `## Change Log` section of `README.md`, newest on top.
    Wording is derived from the dev README journal and the `git diff` of the
    change. Date heading format `YYYY-MM-DD`.
-6. **Report**: the backup path created, and a `git diff --stat` of production.
+6. **Refresh the screenshot** — render the just-promoted production `index.html`
+   and overwrite `tootoo-screenshot.jpeg` (repo root, the README's hero image).
+   Backs up the old image to `.archive/tootoo-screenshot-<TSF>.jpeg` first. Exact
+   commands in **Appendix A**. **Skip** this step when invoked as
+   `promote no-shot` — use that for invisible changes that don't alter the UI.
+7. **Report**: the backup path(s) created, whether the screenshot refreshed, and
+   a `git diff --stat` of production.
 
 **Does NOT**: commit, push, or touch `tootoo.config.js`. Git stays manual.
 
@@ -74,17 +80,21 @@ Fans the freshly promoted production `index.html` out to every vendored copy.
 - Confirmation prompt before writing (this touches many repos).
 
 **Steps**
-1. For each repo in the **target set** (§5):
-   a. **Pre-flight**: confirm the target's working tree is clean *for
-      `index.html`* (no uncommitted local edits to overwrite). Skip + report any
-      dirty target rather than clobbering it.
-   b. **Copy** canonical `index.html` → `<repo>/index.html`.
-   c. Leave `<repo>/tootoo.config.js` untouched.
-2. **Report** a table: each target, updated / skipped (clean vs dirty) / identical.
+1. **Pre-flight (read-only)**: for each target, compute whether its `index.html`
+   already equals canonical and whether it has uncommitted changes. Print the
+   plan and confirm before writing.
+2. For each target not already identical:
+   a. **Copy** canonical `index.html` → `<repo>/index.html` (overwrite).
+   b. Leave everything else untouched — `tootoo.config.js`, `LICENSE`, etc.
+3. **Report** a table: each target — updated / already identical / missing.
 
-**Safety model**: each target is its own git repo, so git history is the backup
-(no `.archive` copies needed downstream). The pre-flight clean check guarantees
-`sync` never destroys unsaved work.
+**Safety model — overwrite even "dirty" targets.** Downstream `index.html` is
+generated, never hand-edited (invariant #2), so an uncommitted `index.html` is
+just a prior sync that was never published — safe to replace. Each target is its
+own git repo, so the last *committed* version is always recoverable. Sync touches
+only `index.html`, so unrelated uncommitted work (e.g. `tootoo.config.js`,
+`LICENSE`) is never at risk. The pre-flight reports dirty status for visibility,
+not to skip.
 
 **Does NOT**: commit, push, or modify any `tootoo.config.js`.
 
@@ -105,15 +115,16 @@ site rebuilds. **This is the only command that performs git pushes.**
   wrote to `README.md` is the commit message, shared across all repos in the run.
 - Explicit "yes, publish N repos" confirmation listing the affected repos.
 
-**Eligibility**: `publish` acts only on targets that are git repos. Non-repo
-targets (e.g. the root launcher folder) are sync-only and auto-skipped here — no
-special-casing needed.
+**Eligibility**: `publish` acts only on targets that are git repos. All 13
+current targets are git repos. If a non-repo target is ever added it is sync-only
+and auto-skipped here — no special-casing needed.
 
 **Steps**
 1. Determine the affected set: canonical (from `promote`) + every git-repo target
    updated by `sync`.
 2. For each repo, in order:
-   a. `git add index.html` (+ `README.md` for the canonical repo).
+   a. `git add index.html` (+ `README.md` and `tootoo-screenshot.jpeg` for the
+      canonical repo, since `promote` may have changed both).
    b. `git commit -m "<message>"`.
    c. `git push` to its default branch.
 3. **Report** a table: repo, commit SHA, push result (ok / failed / nothing to
@@ -132,11 +143,10 @@ Discovered 2026-06-21 by scanning for TooToo builds (`TOOTOO_CONFIG` /
 `appName: 'TooToo'`) that are **not** the canonical repo. All have their own
 `tootoo.config.js`.
 
-`sync` writes all of these. `publish` writes the ones that are git repos (all
-except the root launcher, whose folder is not a repo — it is sync-only).
+All 13 are git repos, so every one is both a `sync` and a `publish` target.
 
 ```text
-# git repos — sync + publish
+g:\My Drive\2026-theo-github\heritage-happenings.github.io\index.html
 g:\My Drive\2026-theo-github\pushme-pullyou-assets\index.html
 g:\My Drive\2026-theo-github\pushme-pullyou-github\index.html
 g:\My Drive\2026-theo-github\theo-armour-2025\index.html
@@ -149,9 +159,6 @@ g:\My Drive\2026-theo-github\theo-armour-qdata\index.html
 g:\My Drive\2026-theo-github\theo-armour-sandbox\index.html
 g:\My Drive\2026-theo-github\theo-armour-wikitheo\index.html
 i:\My Drive\tech\index.html
-
-# local launcher — sync only (parent folder is not a git repo)
-g:\My Drive\2026-theo-github\index.html
 ```
 
 The canonical list of record is this file. When a new fork is added, add it here.
@@ -172,10 +179,54 @@ The canonical list of record is this file. When a new fork is added, add it here
 
 - **`i:\My Drive\tech`** — **included** as a full sync + publish target (it is a
   git repo).
-- **Root `2026-theo-github\index.html`** — Theo's personal launcher in the folder
-  that holds all the repo folders. That folder is **not** a git repo, so it is
-  **sync-only** (kept current locally; never published).
+- **`heritage-happenings.github.io`** — added 2026-06-21 as the 13th target. It's
+  a TooToo build with its own `tootoo.config.js`, and a git repo. The first scan
+  reported it as a bare relative `index.html` (it's the working dir), which got
+  misread as a phantom file at the container root — there is no `index.html` at
+  the container root itself.
+- **Dirty downstream `index.html`** — **overwrite it.** Downstream `index.html` is
+  generated, never hand-edited, so an uncommitted copy is a stale prior sync, not
+  work to preserve (git keeps each repo's last commit; sync touches only
+  `index.html`). Resolved 2026-06-21 after the first real sync found 4 such repos.
 - **Branches** — all repos push to their **default branch**. No `gh-pages`
   special-casing for now.
 - **Commit messages** — **derived from the changelog**: `publish` uses the dated
   entry that `promote` wrote to `README.md` as the commit message for the run.
+
+---
+
+## Appendix A — screenshot capture (promote step 6)
+
+Uses the installed Chrome + built-in .NET image conversion. No installs, no
+server. Output keeps the existing filename so no links change.
+
+- **Subject**: the app browsing its own repo — `?owner=pushme-pullyou&repo=tootoo`.
+- **Why `--virtual-time-budget`**: it pauses the capture until the GitHub fetch
+  resolves, so the shot shows the rendered tree + README, not "Loading tree…".
+- **Format**: Chrome emits PNG; we convert to JPEG q90 to preserve
+  `tootoo-screenshot.jpeg` (smaller, no README edit).
+
+```powershell
+$chrome = "C:\Program Files\Google\Chrome\Application\chrome.exe"
+$root   = "G:\My Drive\2026-theo-github\pushme-pullyou-tootoo"
+$tmp    = "$root\tootoo-dev\_shot.png"
+$final  = "$root\tootoo-screenshot.jpeg"
+$url    = "file:///G:/My%20Drive/2026-theo-github/pushme-pullyou-tootoo/index.html?owner=pushme-pullyou&repo=tootoo"
+
+# 1. back up the current image  (TSF = yyyy-MM-dd-HH-mm, Pacific)
+Copy-Item $final "$root\.archive\tootoo-screenshot-<TSF>.jpeg"
+
+# 2. render to PNG (waits for the async fetch)
+& $chrome --headless=new --disable-gpu --no-sandbox --allow-file-access-from-files `
+  --run-all-compositor-stages-before-draw --virtual-time-budget=20000 `
+  --screenshot="$tmp" --window-size=1440,900 "$url"
+
+# 3. convert PNG -> JPEG q90, overwrite the asset, drop the temp
+Add-Type -AssemblyName System.Drawing
+$img = [System.Drawing.Image]::FromFile($tmp)
+$enc = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | ? { $_.MimeType -eq 'image/jpeg' }
+$ps  = New-Object System.Drawing.Imaging.EncoderParameters 1
+$ps.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter ([System.Drawing.Imaging.Encoder]::Quality, [long]90)
+$img.Save($final, $enc, $ps); $img.Dispose()
+Remove-Item $tmp
+```
