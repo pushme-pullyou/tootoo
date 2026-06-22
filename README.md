@@ -6,7 +6,7 @@
 
 **Navigate any GitHub repo in your browser. Zero install. Single HTML file.**
 
-![TooToo screenshot](https://pushme-pullyou.github.io/tootoo/tootoo-screenshot.jpeg)
+![TooToo screenshot](tootoo-screenshot.jpeg)
 
 ## Try it
 
