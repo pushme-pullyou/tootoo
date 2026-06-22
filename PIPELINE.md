@@ -124,14 +124,21 @@ and auto-skipped here — no special-casing needed.
    updated by `sync`.
 2. For each repo, in order:
    a. `git add index.html` (+ `README.md` and `tootoo-screenshot.jpeg` for the
-      canonical repo, since `promote` may have changed both).
+      canonical repo, since `promote` may have changed both; also `PIPELINE.md` /
+      `tootoo-dev/` on canonical when those changed).
    b. `git commit -m "<message>"`.
-   c. `git push` to its default branch.
+   c. `git push origin HEAD` (current branch — repos vary between `main` and
+      `master`).
+   d. **If the push is rejected (non-fast-forward)** — the remote has commits the
+      clone lacks — `git fetch` then `git rebase` the publish commit onto the
+      remote, preserving the remote's other changes and re-asserting **canonical**
+      `index.html` on any conflict, then push again. Never force-push.
 3. **Report** a table: repo, commit SHA, push result (ok / failed / nothing to
    commit). Continue past a failed repo; never abort the batch silently.
 
-**Does NOT**: force-push, rebase, push `tootoo.config.js` changes you didn't
-make, or publish repos with merge conflicts (those are reported and skipped).
+**Does NOT**: force-push or rewrite already-pushed history, push
+`tootoo.config.js` changes you didn't make, or auto-resolve real conflicts in
+non-`index.html` files (those are reported for you to handle).
 
 GitHub Pages redeploys automatically on push, so "live" follows from the push.
 

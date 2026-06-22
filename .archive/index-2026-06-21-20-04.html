@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-16 23:22">
+  <meta name="revised" content="2026-06-16 23:39">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1084,9 +1084,7 @@
         <input type="text" id="treeFilter" placeholder="Filter files…" title="Filter files by name">
         <button id="btnFilterClear" title="Clear filter" aria-label="Clear filter">✕</button>
       </div>
-      <div id="treeList">
-        <!-- placeholder for future tree content -->
-      </div>
+      <div id="treeList"></div>
       <div class="sidebar-footer">
         <button id="btnScrollTreeTop" type="button" title="Scroll sidebar to top" aria-label="Scroll sidebar to top">
           <img alt="" width="20" height="20">
@@ -1579,6 +1577,14 @@
       autoSelectReadme();
     };
 
+    // GitHub owner/repo names are limited to this charset. Validating before we
+    // interpolate `owner` into the `${owner}.github.io` host (getNewTabUrl) and
+    // `repo` into URLs blocks a crafted value (e.g. from ?owner= or a malformed
+    // .git/config) from redirecting New Tab / window.open to another origin.
+    // Branch names are NOT checked here — they legitimately contain '/' and are
+    // always encodeURIComponent'd into paths, never into a host.
+    const isValidGitHubName = ( s ) => /^[A-Za-z0-9._-]+$/.test( s );
+
     /* ── 9. detectRepo ── */
     const detectRepo = async () => {
       const params = new URLSearchParams( location.search );
@@ -1865,6 +1871,18 @@
     const privateRepoReasonHtml = () =>
       `<div class="error-panel">⚠️ <strong>Repository not found</strong> (GitHub returned 404). First, check the owner, repository, and branch names for a typo — that's the most common cause. If the repository really is private, add a GitHub access token with read access below. If you already have a token saved, make sure it covers ${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }.</div>`;
 
+    /* Visible-tree filter — the single rule for what the sidebar shows: skip
+       dotfiles and CONFIG.hiddenFolders/hiddenFiles (case-insensitive, at any
+       depth). Shared by buildNestedTree, the sidebar count, and the self-test so
+       all three stay in lockstep instead of three hand-copied filters drifting. */
+    const hiddenFolderSet = () => new Set( ( CONFIG.hiddenFolders || [] ).map( ( s ) => s.toLowerCase() ) );
+    const hiddenFileSet = () => new Set( ( CONFIG.hiddenFiles || [] ).map( ( s ) => s.toLowerCase() ) );
+    const isVisibleTreeItem = ( item, folders, files ) => {
+      const parts = item.path.split( '/' );
+      if ( parts.some( ( p ) => p.startsWith( '.' ) || folders.has( p.toLowerCase() ) ) ) return false;
+      return !( item.type === 'blob' && files.has( parts[ parts.length - 1 ].toLowerCase() ) );
+    };
+
     /* ── 12b. Self-test — render every file off-screen and report pass/fail ── */
     // Reuses the real fetch/parse/decode helpers, so the result reflects what
     // the viewer actually does. A "pass" means the file loaded and parsed or
@@ -1879,14 +1897,11 @@
       }
 
       // The same files the sidebar shows (skip dotfiles + CONFIG.hidden* entries).
-      const hiddenFolders = new Set( ( CONFIG.hiddenFolders || [] ).map( ( s ) => s.toLowerCase() ) );
-      const hiddenFiles = new Set( ( CONFIG.hiddenFiles || [] ).map( ( s ) => s.toLowerCase() ) );
-      const files = state.tree.filter( ( item ) => {
-        if ( item.type !== 'blob' ) return false;
-        const parts = item.path.split( '/' );
-        if ( parts.some( ( p ) => p.startsWith( '.' ) || hiddenFolders.has( p.toLowerCase() ) ) ) return false;
-        return !hiddenFiles.has( parts[ parts.length - 1 ].toLowerCase() );
-      } );
+      const hidFolders = hiddenFolderSet();
+      const hidFiles = hiddenFileSet();
+      const files = state.tree.filter( ( item ) =>
+        item.type === 'blob' && isVisibleTreeItem( item, hidFolders, hidFiles )
+      );
 
       // Abort any in-flight file load and own this run's signal; if the user
       // navigates mid-run, our fetches abort and we stop touching the DOM.
@@ -2295,7 +2310,7 @@
       if ( remaining !== null && limit !== null ) {
         const n = parseInt( remaining, 10 );
         // The live count lives in the ⚙️ button's tooltip; the standalone badge
-        // only surfaces as a warning when the quota runs low (≤50) / critical (≤10).
+        // only surfaces as a warning when the quota runs low (≤30) / critical (≤10).
         const tokenBtn = document.getElementById( 'btnToken' );
         if ( tokenBtn ) tokenBtn.title = `${ remaining }/${ limit } GitHub API requests left this hour — click to set a token`;
         const badge = document.getElementById( 'rateBadge' );
@@ -2367,12 +2382,11 @@
     /* ── 18. Build nested tree structure ── */
     const buildNestedTree = ( flatTree ) => {
       const root = { children: {} };
-      const hiddenFolders = new Set( ( CONFIG.hiddenFolders || [] ).map( ( s ) => s.toLowerCase() ) );
-      const hiddenFiles = new Set( ( CONFIG.hiddenFiles || [] ).map( ( s ) => s.toLowerCase() ) );
+      const hidFolders = hiddenFolderSet();
+      const hidFiles = hiddenFileSet();
       for ( const item of flatTree ) {
+        if ( !isVisibleTreeItem( item, hidFolders, hidFiles ) ) continue;
         const parts = item.path.split( '/' );
-        if ( parts.some( ( p ) => p.startsWith( '.' ) || hiddenFolders.has( p.toLowerCase() ) ) ) continue;
-        if ( item.type === 'blob' && hiddenFiles.has( parts[ parts.length - 1 ].toLowerCase() ) ) continue;
         let current = root;
         for ( let i = 0; i < parts.length; i++ ) {
           const part = parts[ i ];
@@ -2442,10 +2456,23 @@
     };
 
     /* ── 21. renderTree — batched rendering ── */
+    /* The ⊞/⊟ Expand-all button reflects the tree's current state. A fresh
+       render collapses every folder, so renderTree resets it to ⊞ — otherwise
+       the state would go stale after a branch switch and need a double-click. */
+    const setExpandAllButton = ( expanded ) => {
+      const btn = document.getElementById( 'btnExpandAll' );
+      if ( !btn ) return;
+      btn.textContent = expanded ? '⊟' : '⊞';
+      const label = expanded ? 'Collapse all folders' : 'Expand all folders';
+      btn.title = label;
+      btn.setAttribute( 'aria-label', label );
+    };
+
     const renderTree = ( treeArray ) => {
       const treeList = document.getElementById( 'treeList' );
       treeList.innerHTML = '';
       preFilterOpenState = null;
+      setExpandAllButton( false );
 
       const nested = buildNestedTree( treeArray );
       const rootEntries = sortedEntries( nested.children );
@@ -2584,16 +2611,11 @@
         await renderTree( state.tree );
 
         // Summarize the visible tree in the sidebar header: folders · files ·
-        // total size. Mirrors buildNestedTree's filter so the counts match what
-        // is actually shown (dotfiles and CONFIG.hidden* entries excluded).
-        const summaryHiddenFolders = new Set( ( CONFIG.hiddenFolders || [] ).map( ( s ) => s.toLowerCase() ) );
-        const summaryHiddenFiles = new Set( ( CONFIG.hiddenFiles || [] ).map( ( s ) => s.toLowerCase() ) );
-        const visibleItems = state.tree.filter( ( item ) => {
-          const parts = item.path.split( '/' );
-          if ( parts.some( ( p ) => p.startsWith( '.' ) || summaryHiddenFolders.has( p.toLowerCase() ) ) ) return false;
-          if ( item.type === 'blob' && summaryHiddenFiles.has( parts[ parts.length - 1 ].toLowerCase() ) ) return false;
-          return true;
-        } );
+        // total size, using the shared isVisibleTreeItem rule so the counts
+        // always match what buildNestedTree actually renders.
+        const hidFolders = hiddenFolderSet();
+        const hidFiles = hiddenFileSet();
+        const visibleItems = state.tree.filter( ( item ) => isVisibleTreeItem( item, hidFolders, hidFiles ) );
         const folderCount = visibleItems.filter( ( i ) => i.type === 'tree' ).length;
         const fileCount = visibleItems.filter( ( i ) => i.type === 'blob' ).length;
         const totalBytes = visibleItems.reduce( ( sum, i ) => sum + ( i.type === 'blob' ? ( i.size || 0 ) : 0 ), 0 );
@@ -2702,19 +2724,16 @@
     /* ── 25. Expand All / Collapse All ── */
     const setupExpandAll = () => {
       const btn = document.getElementById( 'btnExpandAll' );
-      let expanded = false;
 
       btn.addEventListener( 'click', () => {
         const allDetails = document.getElementById( 'treeList' ).querySelectorAll( 'details' );
-        expanded = !expanded;
-        allDetails.forEach( ( d ) => { d.open = expanded; } );
-        // Icon-only toggle: a single fixed-width glyph (⊞ expand / ⊟ collapse)
-        // never wraps the way the old "Collapse All" label did on a narrow
-        // sidebar. The tooltip + aria-label carry the action and state.
-        btn.textContent = expanded ? '⊟' : '⊞';
-        const label = expanded ? 'Collapse all folders' : 'Expand all folders';
-        btn.title = label;
-        btn.setAttribute( 'aria-label', label );
+        // Derive intent from the current glyph (⊞ expand / ⊟ collapse) rather
+        // than a stored flag, which would go stale when renderTree rebuilds the
+        // collapsed tree (e.g. after a branch switch). The icon-only toggle also
+        // never wraps the way the old "Collapse All" label did on a narrow sidebar.
+        const expand = btn.textContent.trim() !== '⊟';
+        allDetails.forEach( ( d ) => { d.open = expand; } );
+        setExpandAllButton( expand );
       } );
     };
 
@@ -3023,11 +3042,10 @@
 
       // Cumulative folder paths so each crumb links to its own folder.
       const cumulative = [];
-      segments.reduce( ( acc, seg ) => {
-        const next = acc ? `${ acc }/${ seg }` : seg;
-        cumulative.push( next );
-        return next;
-      }, '' );
+      segments.forEach( ( seg ) => {
+        const prev = cumulative[ cumulative.length - 1 ];
+        cumulative.push( prev ? `${ prev }/${ seg }` : seg );
+      } );
 
       let pathHtml = '';
       if ( segments.length > 2 ) {
@@ -3692,6 +3710,15 @@
       state.owner = CONFIG.owner;
       state.repo = CONFIG.repo;
       state.branch = CONFIG.branch;
+
+      // Reject owner/repo outside GitHub's charset before they reach any URL or
+      // host builder (a crafted value could otherwise redirect New Tab / window.open).
+      if ( ( state.owner && !isValidGitHubName( state.owner ) ) ||
+           ( state.repo && !isValidGitHubName( state.repo ) ) ) {
+        document.getElementById( 'contentBody' ).innerHTML =
+          '<div class="error-panel"><p>⚠️ <strong>Invalid repository reference.</strong> Owner and repository names may contain only letters, numbers, and <code>. _ -</code>.</p></div>';
+        return;
+      }
 
       migrateCurrentFileStorage();
 
