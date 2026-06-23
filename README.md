@@ -178,6 +178,11 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 
 ## Change Log
 
+* 2026-06-23 — Rebuilt from standalone, separately-runnable components (header, sidebar, content, footer + shared CSS and core/main JS) that assemble into this single `index.html`; feature-complete against the previous build, with the per-fork `tootoo.config.js` model unchanged. Source + assembler now live in `tootoo-dev/`
+* 2026-06-23 — Footer now flows at the end of the content instead of staying pinned to the viewport
+* 2026-06-23 — Favicon, the footer/sidebar brand marks, and the optional heading font are all driven by `tootoo.config.js` (`faviconLetters`, `faviconColor`, `headingFont`, `headingFontUrl`)
+* 2026-06-23 — Header "Last updated" tooltip now reflects the browsed repo's latest push date rather than the build date
+* 2026-06-23 — On `file://` when the browser blocks local-file reads, TooToo explains how to enable access instead of silently loading the default repo
 * 2026-06-21 — Hovering the header title now shows the last-updated date as a tooltip even when no subtitle is configured (previously the "Last updated" tooltip only existed on the optional subtitle text)
 * 2026-06-08 — About and Token header buttons now toggle: clicking again closes the panel and returns to the file you were viewing, with the active button shown pressed
 * 2026-06-08 — New Tab is now an honest action — viewable files (HTML, PDF, images, media, text/source) open in a tab, while non-viewable files (3D models, fonts, archives, spreadsheets, binaries, extensionless) get a **Download** button that saves directly; local downloads no longer flash a throwaway tab

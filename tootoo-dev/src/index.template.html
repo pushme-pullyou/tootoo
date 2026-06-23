@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="revised" content="2026-06-23 00:39">
+  <title>TooToo</title>
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
+
+  <!-- External deps (same as the real app). -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+  <link id="hljsTheme" rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.1/dist/purify.min.js"></script>
+
+  <!-- Optional per-repo config: a tootoo.config.js sitting next to this file sets
+       window.TOOTOO_CONFIG, merged over CONFIG at init so a repo can rebrand (theme,
+       favicon, appName, hidden files…) without editing index.html. No file → onerror
+       swallows the 404. Loads over file:// without the file-access flag. -->
+  <script src="tootoo.config.js" onerror="void 0"></script>
+
+  <style>
+/* @include styles.css */
+  </style>
+</head>
+
+<body>
+
+  <!-- @include components/header.html -->
+
+  <main>
+    <!-- @include components/sidebar.html -->
+    <div class="resizer" id="resizer" title="Drag to Resize Sidebar"></div>
+    <!-- @include components/content.html -->
+  </main>
+
+  <script>
+/* @include js/core.js */
+/* @include config.js */
+/* @include js/header.js */
+/* @include js/sidebar.js */
+/* @include js/content.js */
+/* @include js/footer.js */
+/* @include js/main.js */
+  </script>
+
+</body>
+
+</html>
