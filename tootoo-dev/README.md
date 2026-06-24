@@ -55,6 +55,19 @@ mock data, no GitHub needed) **and** a source fragment the assembler extracts.
 
 ## Status
 
+- 2026-06-23 — **Private-repo file loading via the GitHub Contents API.** With a token
+  set, `fetchFileResponse` now fetches file contents from the **Contents API**
+  (`Accept: application/vnd.github.raw+json`) instead of `raw.githubusercontent.com`,
+  which only serves public files — so private forks (e.g. the agenda repo) open files,
+  images, and media, not just the tree. `resolveMediaUrl` became async (token → a
+  `blob:` URL via the Contents API); its three callers now `await`. Anonymous/public
+  browsing is unchanged (still raw, no extra API quota).
+- 2026-06-23 — **Header brand mark + favicon.ico auto-detection.** The header's GitHub
+  octocat is now the app favicon (generated letter mark), and a real `favicon.ico` next
+  to `index.html` (the fork's site root) is auto-preferred for the tab icon and the
+  header/footer/sidebar marks when present (`detectRealFavicon`, image-probe with a
+  graceful fallback). Plus a guard so the ?/⚙️ panels no-op instead of throwing on pages
+  with no content area (e.g. the standalone header component).
 - 2026-06-21 — **🟧 list complete** (batch 4): full self-test (§12b) — renders each
   visible file off-screen by type with a pass/fail/skip table + concurrency, replacing
   the fetch-only check. **All 🟥 blockers + 🟧 important items are now closed.** What

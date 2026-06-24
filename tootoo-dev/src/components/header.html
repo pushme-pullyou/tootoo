@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-24 02:31">
+  <meta name="revised" content="2026-06-23 22:18">
   <title>TooToo — Header (dev)</title>
   <link rel="stylesheet" href="../styles.css">
   <style>
@@ -98,9 +98,9 @@
 
     <a id="headerTitle" href="." title="Reload" aria-label="Reload page">TooToo</a>
 
-    <!-- Placeholder: branch picker not wired in the shipping app yet (header.js
-         leaves these hidden / unbound). The dev harness below toggles the chip
-         for preview only. Remove `hidden`-by-default once the picker lands. -->
+    <!-- Branch switcher: hidden in markup until branches load, then sidebar.js fills
+         #branchName + the menu and unhides it (header markup, sidebar.js owns the
+         behavior). The dev harness below toggles it standalone for preview. -->
     <span class="branch-control">
       <button id="btnBranch" class="branch-switcher" type="button" hidden aria-haspopup="listbox" aria-expanded="false"
         title="Switch branch">

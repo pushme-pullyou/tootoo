@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-23 00:39">
+  <meta name="revised" content="2026-06-23 22:18">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1101,9 +1101,9 @@ body.dark-mode .app-footer a {
 
     <a id="headerTitle" href="." title="Reload" aria-label="Reload page">TooToo</a>
 
-    <!-- Placeholder: branch picker not wired in the shipping app yet (header.js
-         leaves these hidden / unbound). The dev harness below toggles the chip
-         for preview only. Remove `hidden`-by-default once the picker lands. -->
+    <!-- Branch switcher: hidden in markup until branches load, then sidebar.js fills
+         #branchName + the menu and unhides it (header markup, sidebar.js owns the
+         behavior). The dev harness below toggles it standalone for preview. -->
     <span class="branch-control">
       <button id="btnBranch" class="branch-switcher" type="button" hidden aria-haspopup="listbox" aria-expanded="false"
         title="Switch branch">
@@ -1456,18 +1456,31 @@ const ghApi = async ( url, signal ) => {
   return res.json();
 };
 
-/* ── raw file URL + fetchers ── */
+/* ── file URLs + fetchers ── */
 const rawUrl = ( path ) =>
   `https://raw.githubusercontent.com/${ state.owner }/${ state.repo }/${ state.branch }/${ encodePath( path ) }`;
 
-/* Fetch a file's Response — local-first (file:// drop-in) then raw GitHub. */
+// Contents API URL (used WITH a token): returns file content the token is authorized
+// for — including PRIVATE repos, which raw.githubusercontent.com refuses to serve.
+const contentsApiUrl = ( path ) =>
+  `https://api.github.com/repos/${ state.owner }/${ state.repo }/contents/${ encodePath( path ) }?ref=${ state.branch }`;
+
+/* Fetch a file's Response — local-first (file:// drop-in), then GitHub. With a token
+   we go through the Contents API (Accept: raw) so PRIVATE repos work — raw.github
+   usercontent.com only serves public content; anonymous falls back to raw. */
 const fetchFileResponse = async ( path, signal ) => {
   const local = localUrlFor( path );
   if ( local ) {
     try { const r = await fetch( local, { signal } ); if ( r.ok ) return r; }
     catch ( e ) { if ( e.name === 'AbortError' ) throw e; /* fall through to GitHub */ }
   }
-  const res = await fetch( rawUrl( path ), { signal } );
+  let res;
+  if ( getToken() ) {
+    res = await fetch( contentsApiUrl( path ), { headers: { ...ghHeaders(), Accept: 'application/vnd.github.raw+json' }, signal } );
+    updateRateBadge( res );   // counts against the API quota, unlike raw
+  } else {
+    res = await fetch( rawUrl( path ), { signal } );
+  }
   if ( !res.ok ) throw new Error( `Failed to load ${ path }: ${ res.status }` );
   return res;
 };
@@ -1485,7 +1498,11 @@ const fetchFileText = async ( path, signal ) => {
   return text;
 };
 
-const resolveMediaUrl = ( path ) => localUrlFor( path ) || rawUrl( path );
+/* Media src for <img>/<audio>/<video>. Local → local path; with a token → fetch via
+   the Contents API and hand back a blob: URL (so PRIVATE-repo media loads); anonymous
+   → the public raw URL. Async because the token path fetches the bytes. */
+const resolveMediaUrl = async ( path, signal ) =>
+  localUrlFor( path ) || ( getToken() ? await fetchFileBlob( path, null, signal ) : rawUrl( path ) );
 
 /* ── binary fetch for media / spreadsheets, with correct MIME for inline view
    (raw.githubusercontent serves octet-stream, which the browser would download;
@@ -2604,15 +2621,18 @@ const renderMarkdown = ( text, filePath ) => {
     a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( repoPath ); } );
   } );
 
-  // Images: resolve repo-relative src against the current file's directory.
-  mdBody.querySelectorAll( 'img[src]' ).forEach( ( img ) => {
+  // Images: resolve repo-relative src against the current file's directory. The URL
+  // resolves async (token → blob via the Contents API for private repos), so set it
+  // when ready and leave the image broken if the fetch fails.
+  mdBody.querySelectorAll( 'img[src]' ).forEach( async ( img ) => {
     const src = img.getAttribute( 'src' );
     if ( !src || /^(https?:)?\/\//.test( src ) || src.startsWith( 'data:' ) || src.startsWith( 'blob:' ) ) return;
     const frag = src.indexOf( '#' );
     const clean = frag >= 0 ? src.slice( 0, frag ) : src;
     if ( !clean ) return;
-    img.setAttribute( 'src', resolveMediaUrl( resolveRepoPath( clean, currentDir ) ) );
     img.setAttribute( 'loading', 'lazy' );
+    try { img.setAttribute( 'src', await resolveMediaUrl( resolveRepoPath( clean, currentDir ) ) ); }
+    catch ( _ ) { /* repo image missing or private fetch failed */ }
   } );
 
   mdBody.querySelectorAll( 'pre code' ).forEach( ( el ) => {
@@ -2743,7 +2763,7 @@ const selectFile = async ( path ) => {
   try {
     if ( IMAGE_EXTS.includes( ext ) && ext !== 'svg' ) {
       lastRawText = '';
-      renderImage( resolveMediaUrl( path ), path.split( '/' ).pop() );
+      renderImage( await resolveMediaUrl( path, signal ), path.split( '/' ).pop() );
     } else if ( AUDIO_EXTS.includes( ext ) ) {
       lastRawText = '';
       renderAudio( await fetchFileBlob( path, MIME[ ext ], signal ) );
@@ -2869,7 +2889,7 @@ const runSelfTest = async () => {
         return { path, status: 'pass', detail: 'svg decoded' };
       }
       if ( IMAGE_EXTS.includes( ext ) ) {
-        const url = resolveMediaUrl( path );
+        const url = await resolveMediaUrl( path, signal );
         try { await decodeImage( url ); } finally { revokeIfBlob( url ); }
         return { path, status: 'pass', detail: 'image decoded' };
       }

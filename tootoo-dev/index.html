@@ -1101,9 +1101,9 @@ body.dark-mode .app-footer a {
 
     <a id="headerTitle" href="." title="Reload" aria-label="Reload page">TooToo</a>
 
-    <!-- Placeholder: branch picker not wired in the shipping app yet (header.js
-         leaves these hidden / unbound). The dev harness below toggles the chip
-         for preview only. Remove `hidden`-by-default once the picker lands. -->
+    <!-- Branch switcher: hidden in markup until branches load, then sidebar.js fills
+         #branchName + the menu and unhides it (header markup, sidebar.js owns the
+         behavior). The dev harness below toggles it standalone for preview. -->
     <span class="branch-control">
       <button id="btnBranch" class="branch-switcher" type="button" hidden aria-haspopup="listbox" aria-expanded="false"
         title="Switch branch">
@@ -1296,8 +1296,9 @@ const revokeAllBlobUrls = () => {
 const GITHUB_SVG_ICON =
   `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>`;
 
-/* ── favicon from CONFIG.faviconLetters / faviconColor (reference §11) — reused
-   for the footer + sidebar brand marks so all three reflect the config. ── */
+/* ── generated letter-mark favicon from CONFIG.faviconLetters / faviconColor
+   (reference §11). This is the fallback behind brandMarkSrc(): used for the tab icon
+   and the header/footer/sidebar brand marks whenever no real favicon.ico is found. ── */
 const faviconDataUrl = () => {
   const letters = String( CONFIG.faviconLetters || 'TT' );
   const l1 = encodeURIComponent( ( letters[ 0 ] || 'T' ).toUpperCase() );
@@ -1455,18 +1456,31 @@ const ghApi = async ( url, signal ) => {
   return res.json();
 };
 
-/* ── raw file URL + fetchers ── */
+/* ── file URLs + fetchers ── */
 const rawUrl = ( path ) =>
   `https://raw.githubusercontent.com/${ state.owner }/${ state.repo }/${ state.branch }/${ encodePath( path ) }`;
 
-/* Fetch a file's Response — local-first (file:// drop-in) then raw GitHub. */
+// Contents API URL (used WITH a token): returns file content the token is authorized
+// for — including PRIVATE repos, which raw.githubusercontent.com refuses to serve.
+const contentsApiUrl = ( path ) =>
+  `https://api.github.com/repos/${ state.owner }/${ state.repo }/contents/${ encodePath( path ) }?ref=${ state.branch }`;
+
+/* Fetch a file's Response — local-first (file:// drop-in), then GitHub. With a token
+   we go through the Contents API (Accept: raw) so PRIVATE repos work — raw.github
+   usercontent.com only serves public content; anonymous falls back to raw. */
 const fetchFileResponse = async ( path, signal ) => {
   const local = localUrlFor( path );
   if ( local ) {
     try { const r = await fetch( local, { signal } ); if ( r.ok ) return r; }
     catch ( e ) { if ( e.name === 'AbortError' ) throw e; /* fall through to GitHub */ }
   }
-  const res = await fetch( rawUrl( path ), { signal } );
+  let res;
+  if ( getToken() ) {
+    res = await fetch( contentsApiUrl( path ), { headers: { ...ghHeaders(), Accept: 'application/vnd.github.raw+json' }, signal } );
+    updateRateBadge( res );   // counts against the API quota, unlike raw
+  } else {
+    res = await fetch( rawUrl( path ), { signal } );
+  }
   if ( !res.ok ) throw new Error( `Failed to load ${ path }: ${ res.status }` );
   return res;
 };
@@ -1484,7 +1498,11 @@ const fetchFileText = async ( path, signal ) => {
   return text;
 };
 
-const resolveMediaUrl = ( path ) => localUrlFor( path ) || rawUrl( path );
+/* Media src for <img>/<audio>/<video>. Local → local path; with a token → fetch via
+   the Contents API and hand back a blob: URL (so PRIVATE-repo media loads); anonymous
+   → the public raw URL. Async because the token path fetches the bytes. */
+const resolveMediaUrl = async ( path, signal ) =>
+  localUrlFor( path ) || ( getToken() ? await fetchFileBlob( path, null, signal ) : rawUrl( path ) );
 
 /* ── binary fetch for media / spreadsheets, with correct MIME for inline view
    (raw.githubusercontent serves octet-stream, which the browser would download;
@@ -2608,15 +2626,18 @@ const renderMarkdown = ( text, filePath ) => {
     a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( repoPath ); } );
   } );
 
-  // Images: resolve repo-relative src against the current file's directory.
-  mdBody.querySelectorAll( 'img[src]' ).forEach( ( img ) => {
+  // Images: resolve repo-relative src against the current file's directory. The URL
+  // resolves async (token → blob via the Contents API for private repos), so set it
+  // when ready and leave the image broken if the fetch fails.
+  mdBody.querySelectorAll( 'img[src]' ).forEach( async ( img ) => {
     const src = img.getAttribute( 'src' );
     if ( !src || /^(https?:)?\/\//.test( src ) || src.startsWith( 'data:' ) || src.startsWith( 'blob:' ) ) return;
     const frag = src.indexOf( '#' );
     const clean = frag >= 0 ? src.slice( 0, frag ) : src;
     if ( !clean ) return;
-    img.setAttribute( 'src', resolveMediaUrl( resolveRepoPath( clean, currentDir ) ) );
     img.setAttribute( 'loading', 'lazy' );
+    try { img.setAttribute( 'src', await resolveMediaUrl( resolveRepoPath( clean, currentDir ) ) ); }
+    catch ( _ ) { /* repo image missing or private fetch failed */ }
   } );
 
   mdBody.querySelectorAll( 'pre code' ).forEach( ( el ) => {
@@ -2747,7 +2768,7 @@ const selectFile = async ( path ) => {
   try {
     if ( IMAGE_EXTS.includes( ext ) && ext !== 'svg' ) {
       lastRawText = '';
-      renderImage( resolveMediaUrl( path ), path.split( '/' ).pop() );
+      renderImage( await resolveMediaUrl( path, signal ), path.split( '/' ).pop() );
     } else if ( AUDIO_EXTS.includes( ext ) ) {
       lastRawText = '';
       renderAudio( await fetchFileBlob( path, MIME[ ext ], signal ) );
@@ -2873,7 +2894,7 @@ const runSelfTest = async () => {
         return { path, status: 'pass', detail: 'svg decoded' };
       }
       if ( IMAGE_EXTS.includes( ext ) ) {
-        const url = resolveMediaUrl( path );
+        const url = await resolveMediaUrl( path, signal );
         try { await decodeImage( url ); } finally { revokeIfBlob( url ); }
         return { path, status: 'pass', detail: 'image decoded' };
       }
@@ -2979,7 +3000,7 @@ const initApp = async () => {
   initHeader();     // header.js  — branding + appearance controls
   initContent();    // content.js — wire Copy / view-toggle / etc.
   renderFooter();   // footer.js  — brand bar
-  applyFavicon();   // core.js    — set the browser-tab favicon from CONFIG
+  applyFavicon();   // core.js    — set the browser-tab favicon (generated mark; favicon.ico upgrade follows)
   detectRealFavicon(); // core.js — if a favicon.ico sits next to index.html, prefer it for the tab + brand marks
   applyHeadingFont(); // core.js  — load + apply CONFIG.headingFont(Url) for headings/title
 

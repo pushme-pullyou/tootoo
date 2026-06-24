@@ -105,15 +105,18 @@ const renderMarkdown = ( text, filePath ) => {
     a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( repoPath ); } );
   } );
 
-  // Images: resolve repo-relative src against the current file's directory.
-  mdBody.querySelectorAll( 'img[src]' ).forEach( ( img ) => {
+  // Images: resolve repo-relative src against the current file's directory. The URL
+  // resolves async (token → blob via the Contents API for private repos), so set it
+  // when ready and leave the image broken if the fetch fails.
+  mdBody.querySelectorAll( 'img[src]' ).forEach( async ( img ) => {
     const src = img.getAttribute( 'src' );
     if ( !src || /^(https?:)?\/\//.test( src ) || src.startsWith( 'data:' ) || src.startsWith( 'blob:' ) ) return;
     const frag = src.indexOf( '#' );
     const clean = frag >= 0 ? src.slice( 0, frag ) : src;
     if ( !clean ) return;
-    img.setAttribute( 'src', resolveMediaUrl( resolveRepoPath( clean, currentDir ) ) );
     img.setAttribute( 'loading', 'lazy' );
+    try { img.setAttribute( 'src', await resolveMediaUrl( resolveRepoPath( clean, currentDir ) ) ); }
+    catch ( _ ) { /* repo image missing or private fetch failed */ }
   } );
 
   mdBody.querySelectorAll( 'pre code' ).forEach( ( el ) => {
@@ -244,7 +247,7 @@ const selectFile = async ( path ) => {
   try {
     if ( IMAGE_EXTS.includes( ext ) && ext !== 'svg' ) {
       lastRawText = '';
-      renderImage( resolveMediaUrl( path ), path.split( '/' ).pop() );
+      renderImage( await resolveMediaUrl( path, signal ), path.split( '/' ).pop() );
     } else if ( AUDIO_EXTS.includes( ext ) ) {
       lastRawText = '';
       renderAudio( await fetchFileBlob( path, MIME[ ext ], signal ) );
@@ -370,7 +373,7 @@ const runSelfTest = async () => {
         return { path, status: 'pass', detail: 'svg decoded' };
       }
       if ( IMAGE_EXTS.includes( ext ) ) {
-        const url = resolveMediaUrl( path );
+        const url = await resolveMediaUrl( path, signal );
         try { await decodeImage( url ); } finally { revokeIfBlob( url ); }
         return { path, status: 'pass', detail: 'image decoded' };
       }

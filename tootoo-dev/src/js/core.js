@@ -286,18 +286,31 @@ const ghApi = async ( url, signal ) => {
   return res.json();
 };
 
-/* ── raw file URL + fetchers ── */
+/* ── file URLs + fetchers ── */
 const rawUrl = ( path ) =>
   `https://raw.githubusercontent.com/${ state.owner }/${ state.repo }/${ state.branch }/${ encodePath( path ) }`;
 
-/* Fetch a file's Response — local-first (file:// drop-in) then raw GitHub. */
+// Contents API URL (used WITH a token): returns file content the token is authorized
+// for — including PRIVATE repos, which raw.githubusercontent.com refuses to serve.
+const contentsApiUrl = ( path ) =>
+  `https://api.github.com/repos/${ state.owner }/${ state.repo }/contents/${ encodePath( path ) }?ref=${ state.branch }`;
+
+/* Fetch a file's Response — local-first (file:// drop-in), then GitHub. With a token
+   we go through the Contents API (Accept: raw) so PRIVATE repos work — raw.github
+   usercontent.com only serves public content; anonymous falls back to raw. */
 const fetchFileResponse = async ( path, signal ) => {
   const local = localUrlFor( path );
   if ( local ) {
     try { const r = await fetch( local, { signal } ); if ( r.ok ) return r; }
     catch ( e ) { if ( e.name === 'AbortError' ) throw e; /* fall through to GitHub */ }
   }
-  const res = await fetch( rawUrl( path ), { signal } );
+  let res;
+  if ( getToken() ) {
+    res = await fetch( contentsApiUrl( path ), { headers: { ...ghHeaders(), Accept: 'application/vnd.github.raw+json' }, signal } );
+    updateRateBadge( res );   // counts against the API quota, unlike raw
+  } else {
+    res = await fetch( rawUrl( path ), { signal } );
+  }
   if ( !res.ok ) throw new Error( `Failed to load ${ path }: ${ res.status }` );
   return res;
 };
@@ -315,7 +328,11 @@ const fetchFileText = async ( path, signal ) => {
   return text;
 };
 
-const resolveMediaUrl = ( path ) => localUrlFor( path ) || rawUrl( path );
+/* Media src for <img>/<audio>/<video>. Local → local path; with a token → fetch via
+   the Contents API and hand back a blob: URL (so PRIVATE-repo media loads); anonymous
+   → the public raw URL. Async because the token path fetches the bytes. */
+const resolveMediaUrl = async ( path, signal ) =>
+  localUrlFor( path ) || ( getToken() ? await fetchFileBlob( path, null, signal ) : rawUrl( path ) );
 
 /* ── binary fetch for media / spreadsheets, with correct MIME for inline view
    (raw.githubusercontent serves octet-stream, which the browser would download;
