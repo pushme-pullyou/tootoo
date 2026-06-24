@@ -2073,15 +2073,80 @@ const buildNestedTree = ( flatTree ) => {
   return root;
 };
 
-/* ── sort: folders first, then alphabetical ── */
-const sortedEntries = ( children ) =>
-  Object.entries( children ).sort( ( [ aName, aNode ], [ bName, bNode ] ) => {
-    const aIsFolder = aNode.type === 'tree' || Object.keys( aNode.children ).length > 0;
-    const bIsFolder = bNode.type === 'tree' || Object.keys( bNode.children ).length > 0;
-    if ( aIsFolder && !bIsFolder ) return -1;
-    if ( !aIsFolder && bIsFolder ) return 1;
-    return aName.toLowerCase().localeCompare( bName.toLowerCase() );
-  } );
+/* ── blog mode (auto, by convention) ──
+   A folder named "blog" holding NN-Month subfolders becomes a reverse-chronological
+   logbook: newest post on top, newest month/year first, and the path to the latest
+   post pre-expanded. Patterns: month "06-June", year "2025", post "2026-06-28-title". */
+const BLOG_MONTH_RE = /^(\d{2})-/;
+const BLOG_YEAR_RE = /^(\d{4})$/;
+const BLOG_DATE_RE = /^(\d{4}-\d{2}-\d{2})/;
+const isFolderNode = ( node ) => node.type === 'tree' || Object.keys( node.children ).length > 0;
+const monthNum = ( name ) => { const m = name.match( BLOG_MONTH_RE ); return m ? +m[ 1 ] : -1; };
+const yearNum = ( name ) => { const m = name.match( BLOG_YEAR_RE ); return m ? +m[ 1 ] : -1; };
+const postDate = ( name ) => { const m = name.match( BLOG_DATE_RE ); return m ? m[ 1 ] : null; };
+const hasMonthChild = ( node ) =>
+  Object.entries( node.children ).some( ( [ n, c ] ) => isFolderNode( c ) && monthNum( n ) >= 0 );
+
+/* default order: folders first, then alphabetical (the non-blog behavior). */
+const cmpDefault = ( [ aName, aNode ], [ bName, bNode ] ) => {
+  const af = isFolderNode( aNode ), bf = isFolderNode( bNode );
+  if ( af && !bf ) return -1;
+  if ( !af && bf ) return 1;
+  return aName.toLowerCase().localeCompare( bName.toLowerCase() );
+};
+/* blog root: current-year month folders (desc) → past-year folders (desc) → other
+   folders (alpha) → files. */
+const cmpBlogRoot = ( [ aN, aNode ], [ bN, bNode ] ) => {
+  const rank = ( n, node ) => !isFolderNode( node ) ? 3 : monthNum( n ) >= 0 ? 0 : yearNum( n ) >= 0 ? 1 : 2;
+  const ra = rank( aN, aNode ), rb = rank( bN, bNode );
+  if ( ra !== rb ) return ra - rb;
+  if ( ra === 0 ) return monthNum( bN ) - monthNum( aN );   // months descending
+  if ( ra === 1 ) return yearNum( bN ) - yearNum( aN );     // years descending
+  return aN.toLowerCase().localeCompare( bN.toLowerCase() );
+};
+/* year folder: its month folders descending, then anything else. */
+const cmpYearFolder = ( [ aN, aNode ], [ bN, bNode ] ) => {
+  const rank = ( n, node ) => isFolderNode( node ) && monthNum( n ) >= 0 ? 0 : isFolderNode( node ) ? 1 : 2;
+  const ra = rank( aN, aNode ), rb = rank( bN, bNode );
+  if ( ra !== rb ) return ra - rb;
+  if ( ra === 0 ) return monthNum( bN ) - monthNum( aN );   // months descending
+  return aN.toLowerCase().localeCompare( bN.toLowerCase() );
+};
+/* month folder: dated posts newest-first (same date → title asc), then the rest below. */
+const cmpMonthFolder = ( [ aN, aNode ], [ bN, bNode ] ) => {
+  const ad = !isFolderNode( aNode ) && postDate( aN );
+  const bd = !isFolderNode( bNode ) && postDate( bN );
+  if ( ad && bd ) return ad !== bd ? bd.localeCompare( ad ) : aN.toLowerCase().localeCompare( bN.toLowerCase() );
+  if ( ad ) return -1;          // dated posts above non-dated files + folders
+  if ( bd ) return 1;
+  return cmpDefault( [ aN, aNode ], [ bN, bNode ] );
+};
+const BLOG_CMP = { blogRoot: cmpBlogRoot, yearFolder: cmpYearFolder, monthFolder: cmpMonthFolder };
+
+/* Newest dated post in a blog subtree → the file to auto-open + the chain of
+   year/month folders to pre-expand down to it (blog root itself stays collapsed). */
+const collectDatedPosts = ( node, path, out ) => {
+  for ( const [ name, child ] of Object.entries( node.children ) ) {
+    const childPath = path ? `${ path }/${ name }` : name;
+    if ( isFolderNode( child ) ) collectDatedPosts( child, childPath, out );
+    else if ( postDate( name ) ) out.push( { date: postDate( name ), name, path: childPath } );
+  }
+  return out;
+};
+const findLatestPost = ( blogNode, blogPath ) => {
+  const posts = collectDatedPosts( blogNode, blogPath, [] );
+  if ( !posts.length ) return { expandPaths: new Set(), postPath: '' };
+  posts.sort( ( a, b ) => a.date !== b.date ? b.date.localeCompare( a.date ) : a.name.toLowerCase().localeCompare( b.name.toLowerCase() ) );
+  const parts = posts[ 0 ].path.split( '/' );
+  const depth = blogPath.split( '/' ).length;
+  const expandPaths = new Set();
+  for ( let i = depth + 1; i < parts.length; i++ ) expandPaths.add( parts.slice( 0, i ).join( '/' ) );
+  return { expandPaths, postPath: posts[ 0 ].path };
+};
+
+/* ── sort entries; `mode` (blog context) picks the comparator, else default. ── */
+const sortedEntries = ( children, mode ) =>
+  Object.entries( children ).sort( BLOG_CMP[ mode ] || cmpDefault );
 
 /* ── recursive folder contents (for the folder tooltip) ── */
 const folderStats = ( node ) => {
@@ -2099,22 +2164,38 @@ const folderStats = ( node ) => {
   return { files, folders, bytes };
 };
 
-/* ── one tree node -> HTML (recursive for folders) ── */
-const renderNode = ( name, node, parentPath ) => {
+/* ── one tree node -> HTML (recursive for folders) ──
+   `blog` carries the blog context once we're inside a "blog" folder
+   ({ expandPaths }), so descendant year/month folders sort reverse-chrono and the
+   path to the latest post renders pre-expanded. */
+const renderNode = ( name, node, parentPath, blog ) => {
   const fullPath = parentPath ? `${ parentPath }/${ name }` : name;
   const isFolder = node.type === 'tree' || Object.keys( node.children ).length > 0;
   const displayName = displayTreeName( name );
 
   if ( isFolder ) {
-    const childrenHtml = sortedEntries( node.children )
-      .map( ( [ childName, childNode ] ) => renderNode( childName, childNode, fullPath ) )
+    // Blog detection + per-folder sort mode. The "blog" folder itself becomes the
+    // root; year/month folders beneath it get their own ordering.
+    let childBlog = blog, mode = null, blogAttr = '';
+    if ( !blog && name.toLowerCase() === 'blog' && hasMonthChild( node ) ) {
+      const latest = findLatestPost( node, fullPath );
+      childBlog = { expandPaths: latest.expandPaths };
+      mode = 'blogRoot';
+      blogAttr = ` data-blog-root data-blog-latest="${ escapeHTML( latest.postPath ) }"`;
+    } else if ( blog ) {
+      mode = yearNum( name ) >= 0 ? 'yearFolder' : monthNum( name ) >= 0 ? 'monthFolder' : null;
+    }
+    const open = ( blog && blog.expandPaths.has( fullPath ) ) ? ' open' : '';
+
+    const childrenHtml = sortedEntries( node.children, mode )
+      .map( ( [ childName, childNode ] ) => renderNode( childName, childNode, fullPath, childBlog ) )
       .join( '' );
     // Tooltip: what's inside — recursive file/folder counts + total size.
     const s = folderStats( node );
     const tip = `${ fullPath } — ${ s.files } file${ s.files === 1 ? '' : 's' }` +
       ( s.folders ? ` · ${ s.folders } folder${ s.folders === 1 ? '' : 's' }` : '' ) +
       ` · ${ formatFileSize( s.bytes ) }`;
-    return `<details data-folder-path="${ escapeHTML( fullPath ) }">` +
+    return `<details${ open }${ blogAttr } data-folder-path="${ escapeHTML( fullPath ) }">` +
       `<summary class="tree-folder" tabindex="0" title="${ escapeHTML( tip ) }">` +
       `<span aria-hidden="true">📁</span> <span class="folder-name">${ escapeHTML( displayName ) }</span>` +
       `</summary>` + childrenHtml + `</details>`;
@@ -2142,15 +2223,35 @@ const setExpandAllButton = ( expanded ) => {
   btn.setAttribute( 'aria-label', label );
 };
 
+/* ── blog: the first time the user expands the blog folder, open its latest post.
+   Bound to the summary click (a real gesture) so the filter / expand-all opening
+   the folder programmatically doesn't hijack the content pane. ── */
+const wireBlogAutoOpen = () => {
+  document.querySelectorAll( 'details[data-blog-root]' ).forEach( ( d ) => {
+    const post = d.getAttribute( 'data-blog-latest' );
+    const summary = d.querySelector( ':scope > summary' );
+    if ( !post || !summary ) return;
+    let opened = false;
+    summary.addEventListener( 'click', () => {
+      if ( opened ) return;
+      // Let the native <details> toggle finish, then open the latest post if it expanded.
+      setTimeout( () => {
+        if ( d.open && typeof selectFile === 'function' ) { opened = true; selectFile( post ); }
+      }, 0 );
+    } );
+  } );
+};
+
 /* ── render the whole tree ── */
 const renderTree = ( treeArray ) => {
   const treeList = document.getElementById( 'treeList' );
   preFilterOpenState = null;
   setExpandAllButton( false );
   const nested = buildNestedTree( treeArray );
-  const entries = sortedEntries( nested.children );
-  treeList.innerHTML = entries.map( ( [ name, node ] ) => renderNode( name, node, '' ) ).join( '' );
+  const entries = sortedEntries( nested.children, null );
+  treeList.innerHTML = entries.map( ( [ name, node ] ) => renderNode( name, node, '', null ) ).join( '' );
   refreshTreeCache();
+  wireBlogAutoOpen();
 };
 
 /* ── filter (reference §23) ── */
