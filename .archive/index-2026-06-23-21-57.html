@@ -75,7 +75,12 @@ html {
 }
 
 /* Every heading + title picks up the optional heading font. */
-h1, h2, h3, h4, h5, h6,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
 #headerTitle {
   font-family: var(--heading-font, var(--font-family));
 }
@@ -84,7 +89,8 @@ h1, h2, h3, h4, h5, h6,
 body {
   display: flex;
   flex-direction: column;
-  height: 100vh;            /* lock the shell to the viewport so the sidebar +
+  height: 100vh;
+  /* lock the shell to the viewport so the sidebar +
                                content scroll INTERNALLY (sidebar footer pins to
                                the sidebar bottom; tree scroll-to-top works) */
   margin: 0;
@@ -103,7 +109,8 @@ header {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem 0.5rem 0.5rem;   /* left 0.5rem: ☰ flush with the sidebar's left edge */
+  padding: 0.5rem 1rem 0.5rem 0.5rem;
+  /* left 0.5rem: ☰ flush with the sidebar's left edge */
   background: var(--primary-bg);
   border-bottom: 1px solid var(--border-color);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -117,9 +124,13 @@ header {
   text-decoration: none;
 }
 
-/* Size the GitHub mark in rem so it scales with A−/A+ (the SVG's width/height
+/* Size the brand mark in rem so it scales with A−/A+ (the img's width/height
    attributes are fixed px; CSS overrides them). */
-#headerGitHub svg { width: 1.15rem; height: 1.15rem; }
+#headerGitHub img {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
+}
 
 body.dark-mode #headerGitHub {
   color: color-mix(in srgb, var(--highlight-color) 65%, white);
@@ -131,9 +142,22 @@ body.dark-mode #headerGitHub {
   text-decoration: none;
   color: var(--highlight-color);
   cursor: pointer;
+  white-space: nowrap;
 }
 
 body.dark-mode #headerTitle {
+  color: color-mix(in srgb, var(--highlight-color) 65%, white);
+}
+
+.header-subtitle {
+  opacity: 0.6;
+  font-weight: normal;
+  font-size: 0.9rem;
+  color: var(--highlight-color);
+  white-space: nowrap;
+}
+
+body.dark-mode .header-subtitle {
   color: color-mix(in srgb, var(--highlight-color) 65%, white);
 }
 
@@ -224,8 +248,16 @@ body.sidebar-hidden .resizer {
   color: var(--text-color);
   border: 1px solid var(--border-color);
 }
-.rate-limit-badge.low { background: var(--warning-bg); border-color: var(--warning-border); }
-.rate-limit-badge.critical { background: var(--error-bg); border-color: var(--error-border); }
+
+.rate-limit-badge.low {
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+}
+
+.rate-limit-badge.critical {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+}
 
 /* ===================================================================
    SIDEBAR  (carved 2026-06-21)
@@ -252,8 +284,15 @@ main {
 }
 
 @container (max-width: 220px) {
-  .tree-item { flex-direction: column; align-items: flex-start; }
-  .tree-item-size { margin-left: 0; padding-left: 1.4rem; }
+  .tree-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tree-item-size {
+    margin-left: 0;
+    padding-left: 1.4rem;
+  }
 }
 
 /* ── Panel Headers (shared) ── */
@@ -290,15 +329,10 @@ body.dark-mode .panel-header h3 {
   line-height: 1;
 }
 
-/* ── Branch switcher (now in the header; positioned relative to its chip) ── */
-#filesPanelHeader { position: relative; }
-.branch-control { position: relative; display: inline-flex; }
-
-.files-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-width: 0;
+/* ── Branch switcher (in the header; menu anchored to its chip) ── */
+.branch-control {
+  position: relative;
+  display: inline-flex;
 }
 
 .branch-switcher {
@@ -323,8 +357,76 @@ body.dark-mode .panel-header h3 {
   color: var(--highlight-color);
 }
 
-.branch-glyph { color: var(--highlight-color); }
-.branch-caret { font-size: 0.7rem; opacity: 0.7; }
+.branch-glyph {
+  color: var(--highlight-color);
+}
+
+.branch-caret {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.branch-menu {
+  position: absolute;
+  top: 100%;
+  left: 0.5rem;
+  z-index: 20;
+  min-width: 12rem;
+  max-width: calc(100% - 1rem);
+  max-height: 60vh;
+  overflow-y: auto;
+  margin-top: 0.25rem;
+  padding: 0.25rem;
+  background: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+body.dark-mode .branch-menu {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.branch-option,
+.branch-menu-loading,
+.branch-menu-error {
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.branch-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-color);
+  font-family: inherit;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.branch-option:hover {
+  background: var(--hover-bg);
+}
+
+.branch-option.is-current {
+  color: var(--highlight-color);
+  font-weight: 600;
+}
+
+.branch-menu-loading,
+.branch-menu-error {
+  padding: 0.3rem 0.5rem;
+  opacity: 0.8;
+}
+
+.branch-menu-error {
+  color: var(--error-border);
+}
 
 /* ── Filter wrap ── */
 .filter-wrap {
@@ -345,7 +447,9 @@ body.dark-mode .panel-header h3 {
   outline: none;
 }
 
-#treeFilter:focus { border-color: var(--highlight-color); }
+#treeFilter:focus {
+  border-color: var(--highlight-color);
+}
 
 #btnFilterClear {
   position: absolute;
@@ -362,7 +466,9 @@ body.dark-mode .panel-header h3 {
   padding: 0;
 }
 
-#btnFilterClear:hover { opacity: 1; }
+#btnFilterClear:hover {
+  opacity: 1;
+}
 
 /* ── Tree list ── */
 #treeList {
@@ -393,13 +499,16 @@ body.dark-mode .panel-header h3 {
 }
 
 .resizer:hover,
-.resizer.dragging { background: var(--highlight-color); }
+.resizer.dragging {
+  background: var(--highlight-color);
+}
 
 /* ── Treeview ── */
 .tree-folder {
   display: flex;
   align-items: center;
-  padding: 0.2rem 0.4rem 0.2rem 0;   /* left flush with the filter input edge */
+  padding: 0.2rem 0.4rem 0.2rem 0;
+  /* left flush with the filter input edge */
   cursor: pointer;
   border-radius: 4px;
   font-family: monospace;
@@ -408,23 +517,38 @@ body.dark-mode .panel-header h3 {
   list-style: none;
 }
 
-.tree-folder::-webkit-details-marker { display: none; }
-.tree-folder:hover { background: var(--hover-bg); }
+.tree-folder::-webkit-details-marker {
+  display: none;
+}
+
+.tree-folder:hover {
+  background: var(--hover-bg);
+}
 
 .tree-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.2rem 0.4rem 0.2rem 0;   /* left flush with the filter input edge */
+  padding: 0.2rem 0.4rem 0.2rem 0;
+  /* left flush with the filter input edge */
   cursor: pointer;
   border-radius: 4px;
   font-family: monospace;
   font-size: 0.85rem;
 }
 
-details .tree-item { padding-left: 1.2rem; }
-.tree-item:hover { background: var(--hover-bg); }
-.tree-item.active { background: var(--highlight-color); color: #fff; }
+details .tree-item {
+  padding-left: 1.2rem;
+}
+
+.tree-item:hover {
+  background: var(--hover-bg);
+}
+
+.tree-item.active {
+  background: var(--highlight-color);
+  color: #fff;
+}
 
 .tree-item-size {
   font-size: 0.8rem;
@@ -434,14 +558,33 @@ details .tree-item { padding-left: 1.2rem; }
   font-variant-numeric: tabular-nums;
 }
 
-.tree-item-folder { display: none; }
+.tree-item-folder {
+  display: none;
+}
 
-#treeList.filtering .tree-folder { display: none; }
+#treeList.filtering .tree-folder {
+  display: none;
+}
+
 #treeList.filtering details,
-#treeList.filtering details details { padding-left: 0; }
-#treeList.filtering details .tree-item { padding-left: 0.4rem; }
-#treeList.filtering .tree-item { flex-direction: column; align-items: flex-start; gap: 0.1rem; }
-#treeList.filtering .tree-item-size { display: none; }
+#treeList.filtering details details {
+  padding-left: 0;
+}
+
+#treeList.filtering details .tree-item {
+  padding-left: 0.4rem;
+}
+
+#treeList.filtering .tree-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+}
+
+#treeList.filtering .tree-item-size {
+  display: none;
+}
+
 #treeList.filtering .tree-item-folder {
   display: block;
   padding-left: 1.4rem;
@@ -449,11 +592,18 @@ details .tree-item { padding-left: 1.2rem; }
   opacity: 0.6;
 }
 
-details details { padding-left: 0.8rem; }
-details { padding-left: 0; }
+details details {
+  padding-left: 0.8rem;
+}
+
+details {
+  padding-left: 0;
+}
 
 /* ── Helpers ── */
-.is-hidden { display: none !important; }
+.is-hidden {
+  display: none !important;
+}
 
 .sr-only {
   position: absolute;
@@ -486,7 +636,8 @@ details { padding-left: 0; }
 #contentBody {
   padding: 0 1rem 1rem 1rem;
   background: var(--secondary-bg);
-  flex: 1 0 auto;   /* grow so the in-pane footer sits at the bottom on short content */
+  flex: 1 0 auto;
+  /* grow so the in-pane footer sits at the bottom on short content */
 }
 
 /* ── Back to Top ── */
@@ -525,16 +676,31 @@ body.dark-mode .markdown-body :is(h1, h2, h3, h4, h5, h6) {
   color: color-mix(in srgb, var(--highlight-color) 65%, white);
 }
 
-.markdown-body img { max-width: 100%; height: auto; }
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+}
 
 #contentBody a {
   color: color-mix(in srgb, var(--highlight-color) 80%, black);
   transition: color 0.15s;
 }
-#contentBody a:hover { color: color-mix(in srgb, var(--highlight-color) 50%, black); }
-body.dark-mode #contentBody a { color: color-mix(in srgb, var(--highlight-color) 65%, white); }
-body.dark-mode #contentBody a:hover { color: color-mix(in srgb, var(--highlight-color) 40%, white); }
-.markdown-body a.internal-link { cursor: pointer; }
+
+#contentBody a:hover {
+  color: color-mix(in srgb, var(--highlight-color) 50%, black);
+}
+
+body.dark-mode #contentBody a {
+  color: color-mix(in srgb, var(--highlight-color) 65%, white);
+}
+
+body.dark-mode #contentBody a:hover {
+  color: color-mix(in srgb, var(--highlight-color) 40%, white);
+}
+
+.markdown-body a.internal-link {
+  cursor: pointer;
+}
 
 pre {
   max-width: 700px;
@@ -547,8 +713,13 @@ pre {
   word-wrap: break-word;
 }
 
-body.dark-mode .markdown-body { color: var(--text-color); }
-body.dark-mode pre { background-color: var(--secondary-bg); }
+body.dark-mode .markdown-body {
+  color: var(--text-color);
+}
+
+body.dark-mode pre {
+  background-color: var(--secondary-bg);
+}
 
 /* ── Content sticky header (breadcrumbs + actions) ── */
 .file-header {
@@ -572,9 +743,19 @@ body.dark-mode pre { background-color: var(--secondary-bg); }
   overflow: hidden;
 }
 
-.file-title > a { color: var(--highlight-color); }
-.file-title > a svg { width: 1.1rem; height: 1.1rem; }   /* scale with A−/A+ */
-body.dark-mode .file-title > a { color: color-mix(in srgb, var(--highlight-color) 65%, white); }
+.file-title>a {
+  color: var(--highlight-color);
+}
+
+.file-title>a svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* scale with A−/A+ */
+body.dark-mode .file-title>a {
+  color: color-mix(in srgb, var(--highlight-color) 65%, white);
+}
 
 #breadcrumbs {
   display: flex;
@@ -595,15 +776,24 @@ body.dark-mode .file-title > a { color: color-mix(in srgb, var(--highlight-color
   text-overflow: ellipsis;
 }
 
-.crumb-file { flex: 0 0 auto; white-space: nowrap; }
-.crumb-collapsed { cursor: default; }
+.crumb-file {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.crumb-collapsed {
+  cursor: default;
+}
 
 .file-title a.breadcrumb-link {
   color: var(--highlight-color);
   cursor: pointer;
   text-decoration: none;
 }
-.file-title a.breadcrumb-link:hover { text-decoration: underline; }
+
+.file-title a.breadcrumb-link:hover {
+  text-decoration: underline;
+}
 
 .file-actions {
   display: flex;
@@ -612,7 +802,10 @@ body.dark-mode .file-title > a { color: color-mix(in srgb, var(--highlight-color
   flex-shrink: 0;
 }
 
-.media-content { max-width: 100%; border-radius: 4px; }
+.media-content {
+  max-width: 100%;
+  border-radius: 4px;
+}
 
 .iframe-content {
   width: 100%;
@@ -636,18 +829,29 @@ body.dark-mode .file-title > a { color: color-mix(in srgb, var(--highlight-color
   background: transparent;
   color: var(--highlight-color);
   border: 1px solid var(--highlight-color);
-  padding: 0 0.4rem;   /* sizing comes from the shared uniform-box rule above */
+  padding: 0 0.4rem;
+  /* sizing comes from the shared uniform-box rule above */
   border-radius: 6px;
   cursor: pointer;
   font-size: 1rem;
   transition: background-color 0.2s, color 0.2s, transform 0.1s;
 }
-.file-btn:hover { background: var(--highlight-color); color: #fff; transform: translateY(-1px); }
-.file-btn:active { transform: translateY(0); }
+
+.file-btn:hover {
+  background: var(--highlight-color);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.file-btn:active {
+  transform: translateY(0);
+}
+
 body.dark-mode .file-btn {
   color: color-mix(in srgb, var(--highlight-color) 65%, white);
   border-color: color-mix(in srgb, var(--highlight-color) 65%, white);
 }
+
 body.dark-mode .file-btn:hover {
   background: color-mix(in srgb, var(--highlight-color) 65%, white);
   color: var(--primary-bg);
@@ -660,7 +864,8 @@ body.dark-mode .file-btn:hover {
 .app-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;   /* brand left · status right */
+  justify-content: space-between;
+  /* brand left · status right */
   gap: 0.5rem 1rem;
   flex-wrap: wrap;
   padding: 0.3rem 1rem;
@@ -670,11 +875,31 @@ body.dark-mode .file-btn:hover {
   color: var(--text-color);
   flex-shrink: 0;
 }
-.app-footer-brand { display: inline-flex; align-items: center; gap: 0.4rem; }
-.app-footer-status { display: inline-flex; align-items: center; gap: 0.75rem; opacity: 0.85; }
-.app-footer-mark { border-radius: 4px; }
-.app-footer a { color: var(--highlight-color); }
-body.dark-mode .app-footer a { color: color-mix(in srgb, var(--highlight-color) 65%, white); }
+
+.app-footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.app-footer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  opacity: 0.85;
+}
+
+.app-footer-mark {
+  border-radius: 4px;
+}
+
+.app-footer a {
+  color: var(--highlight-color);
+}
+
+body.dark-mode .app-footer a {
+  color: color-mix(in srgb, var(--highlight-color) 65%, white);
+}
 
 /* ── Inline form (token panel, repo entry) ── */
 .repo-form {
@@ -686,7 +911,12 @@ body.dark-mode .app-footer a { color: color-mix(in srgb, var(--highlight-color) 
   padding: 1rem;
   word-wrap: break-word;
 }
-.repo-form label { font-size: 0.9rem; font-weight: bold; }
+
+.repo-form label {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
 .repo-form input[type="password"],
 .repo-form input[type="text"] {
   padding: 0.4rem 0.5rem;
@@ -697,68 +927,163 @@ body.dark-mode .app-footer a { color: color-mix(in srgb, var(--highlight-color) 
   color: var(--text-color);
   outline: none;
 }
-.repo-form input:focus { border-color: var(--highlight-color); }
+
+.repo-form input:focus {
+  border-color: var(--highlight-color);
+}
 
 /* ── Spreadsheet tables ── */
-.xlsx-sheet table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
+.xlsx-sheet table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
 .xlsx-sheet td,
-.xlsx-sheet th { border: 1px solid var(--border-color); padding: 0.3rem 0.5rem; font-size: 0.85rem; }
-.xlsx-sheet th { background: var(--primary-bg); font-weight: bold; }
+.xlsx-sheet th {
+  border: 1px solid var(--border-color);
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+.xlsx-sheet th {
+  background: var(--primary-bg);
+  font-weight: bold;
+}
 
 /* ===================================================================
    RESPONSIVE / PRINT / REDUCED-MOTION  (carved 2026-06-21)
    =================================================================== */
 
 @media (max-width: 768px) {
-  .resizer { width: 4px; }
-  .file-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .resizer {
+    width: 4px;
+  }
+
+  .file-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 }
 
 /* Print: only the current file's content, with its name as a title. */
-.print-only { display: none; }
+.print-only {
+  display: none;
+}
 
 @media print {
-  header, .sidebar, .resizer, .file-header, .back-to-top, .app-footer {
+
+  header,
+  .sidebar,
+  .resizer,
+  .file-header,
+  .back-to-top,
+  .app-footer {
     display: none !important;
   }
-  body, main, .content-area, #contentBody {
-    display: block; height: auto; max-height: none; overflow: visible;
+
+  body,
+  main,
+  .content-area,
+  #contentBody {
+    display: block;
+    height: auto;
+    max-height: none;
+    overflow: visible;
   }
-  body { border-top: none; }
-  #contentBody { padding: 0; }
-  .markdown-body, pre { max-width: none; }
-  body, body.dark-mode {
-    --primary-bg: #fff; --secondary-bg: #fff; --text-color: #000;
-    --border-color: #999; --highlight-color: #000;
-    background: #fff; color: #000;
+
+  body {
+    border-top: none;
   }
-  body.dark-mode pre, body.dark-mode code,
-  body.dark-mode .hljs, body.dark-mode .hljs * {
-    background: #fff !important; color: #000 !important;
+
+  #contentBody {
+    padding: 0;
   }
-  .print-only { display: block; }
+
+  .markdown-body,
+  pre {
+    max-width: none;
+  }
+
+  body,
+  body.dark-mode {
+    --primary-bg: #fff;
+    --secondary-bg: #fff;
+    --text-color: #000;
+    --border-color: #999;
+    --highlight-color: #000;
+    background: #fff;
+    color: #000;
+  }
+
+  body.dark-mode pre,
+  body.dark-mode code,
+  body.dark-mode .hljs,
+  body.dark-mode .hljs * {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .print-only {
+    display: block;
+  }
+
   #printTitle {
-    margin: 0 0 1rem 0; padding-bottom: 0.4rem;
-    font-size: 1.4rem; font-weight: bold; border-bottom: 1px solid #999;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.4rem;
+    font-size: 1.4rem;
+    font-weight: bold;
+    border-bottom: 1px solid #999;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition: none !important; animation: none !important; }
+
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 /* ── Self-test report table ── */
-.selftest-table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
-.selftest-table th, .selftest-table td {
-  border: 1px solid var(--border-color); padding: 0.25rem 0.5rem; text-align: left; vertical-align: top;
+.selftest-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
 }
-.selftest-table td:first-child { width: 1.5rem; text-align: center; }
-.selftest-table tr.st-fail { background: var(--error-bg); }
-.selftest-table tr.st-skip { background: var(--warning-bg); }
+
+.selftest-table th,
+.selftest-table td {
+  border: 1px solid var(--border-color);
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.selftest-table td:first-child {
+  width: 1.5rem;
+  text-align: center;
+}
+
+.selftest-table tr.st-fail {
+  background: var(--error-bg);
+}
+
+.selftest-table tr.st-skip {
+  background: var(--warning-bg);
+}
 
 .error-panel {
-  background: var(--error-bg); border: 2px solid var(--error-border); color: var(--text-color);
-  padding: 1rem; border-radius: 6px; margin: 1rem; font-size: 0.9rem;
+  background: var(--error-bg);
+  border: 2px solid var(--error-border);
+  color: var(--text-color);
+  padding: 1rem;
+  border-radius: 6px;
+  margin: 1rem;
+  font-size: 0.9rem;
 }
   </style>
 </head>
@@ -769,24 +1094,27 @@ body.dark-mode .app-footer a { color: color-mix(in srgb, var(--highlight-color) 
     <button id="btnToggleSidebar" class="header-btn" title="Close sidebar (Ctrl/⌘ B)" aria-label="Toggle sidebar"
       aria-expanded="true">☰</button>
     <a id="headerGitHub" href="." title="View on GitHub" aria-label="View on GitHub">
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-        <path
-          d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z">
-        </path>
-      </svg>
+      <!-- App brand mark (the CONFIG favicon), src set from faviconDataUrl() in
+           initHeaderControls. aria-hidden: the anchor's aria-label names the link. -->
+      <img id="headerBrand" width="18" height="18" alt="" aria-hidden="true">
     </a>
 
     <a id="headerTitle" href="." title="Reload" aria-label="Reload page">TooToo</a>
 
+    <!-- Placeholder: branch picker not wired in the shipping app yet (header.js
+         leaves these hidden / unbound). The dev harness below toggles the chip
+         for preview only. Remove `hidden`-by-default once the picker lands. -->
     <span class="branch-control">
-      <button id="btnBranch" class="branch-switcher" type="button" hidden
-        aria-haspopup="listbox" aria-expanded="false" title="Switch branch">
+      <button id="btnBranch" class="branch-switcher" type="button" hidden aria-haspopup="listbox" aria-expanded="false"
+        title="Switch branch">
         <span class="branch-glyph" aria-hidden="true">⎇</span>
         <span id="branchName"></span>
         <span class="branch-caret" aria-hidden="true">▾</span>
       </button>
       <div id="branchMenu" class="branch-menu" role="listbox" aria-label="Branches" hidden></div>
     </span>
+
+    <span id="headerSubtitle" class="header-subtitle" hidden></span>
 
     <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode"
       aria-label="Toggle dark mode">🌙</button>
@@ -825,8 +1153,7 @@ body.dark-mode .app-footer a { color: color-mix(in srgb, var(--highlight-color) 
       </div>
       <div id="printTitle" class="print-only"></div>
       <div id="contentBody">
-        <p>Pick a file above. Try the <strong>Rendered ↔ Raw</strong> toggle, <strong>Copy</strong>,
-        and the breadcrumb on a nested file.</p>
+        <p>Select a file from the list to preview it here.</p>
       </div>
       <button id="btnBackToTop" class="back-to-top" aria-label="Back to top" title="Back to Top">↑</button>
       <footer class="app-footer">
@@ -834,7 +1161,8 @@ body.dark-mode .app-footer a { color: color-mix(in srgb, var(--highlight-color) 
       <img class="app-footer-mark" width="18" height="18" alt="">
       <span id="footerCopyright"></span>
     </span>
-    <a class="app-footer-license" href="https://opensource.org/license/mit" target="_blank" rel="noopener">MIT License</a>
+    <a class="app-footer-license" href="https://opensource.org/license/mit" target="_blank" rel="noopener">MIT
+      License</a>
   </footer>
     </div>
   </main>
@@ -852,14 +1180,14 @@ const CONFIG = {
   owner: '', repo: '', branch: '',
   appName: 'TooToo', subtitle: '',
   themeColor: '',           // empty = the CSS default (blue) — and lets body.dark-mode's
-                            // brighter #3b82f6 win; a fork's explicit color applies to both modes
+  // brighter #3b82f6 win; a fork's explicit color applies to both modes
   faviconLetters: 'TT', faviconColor: '#2563eb',
   headingFontUrl: '', headingFont: '',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
   storagePrefix: 'tootoo',
   hiddenFolders: [ 'Images' ], hiddenFiles: [], maxRepoFiles: 5000,
 };
-const state = { owner: '', repo: '', branch: '', tree: null, currentFilePath: '', repoUpdated: '' };
+const state = { owner: '', repo: '', branch: '', tree: null, currentFilePath: '', repoUpdated: '', oversized: false };
 
 /* ── escape for safe innerHTML ── */
 const escapeHTML = ( s ) =>
@@ -939,8 +1267,9 @@ const VIDEO_EXTS = [ 'mp4', 'webm' ];
 const SHEET_EXTS = [ 'xlsx', 'xls', 'csv', 'ods' ];
 const STREAMABLE_EXTS = [ ...IMAGE_EXTS, ...AUDIO_EXTS, ...VIDEO_EXTS, 'pdf' ];
 const NO_COPY_EXTS = [ ...STREAMABLE_EXTS, ...SHEET_EXTS ];
+const MARKDOWN_EXTS = [ 'md', 'markdown', 'mkd', 'mdown', 'mkdn' ];
 const TAB_VIEWABLE_EXTS = [
-  'html', 'htm', 'pdf', 'txt', 'text', 'md', 'markdown',
+  'html', 'htm', 'pdf', 'txt', 'text', ...MARKDOWN_EXTS,
   ...IMAGE_EXTS, ...AUDIO_EXTS, ...VIDEO_EXTS,
   'js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx', 'json', 'css', 'scss', 'less',
   'xml', 'yaml', 'yml', 'toml', 'ini', 'cfg', 'conf', 'env',
@@ -949,7 +1278,7 @@ const TAB_VIEWABLE_EXTS = [
 ];
 const isDownloadAction = ( ext ) => !TAB_VIEWABLE_EXTS.includes( ext );
 const isTextOpenAsPlain = ( ext ) =>
-  !ext || [ 'md', 'markdown', 'mkd', 'mkdn', 'obj', 'stl', 'mtl' ].includes( ext );
+  !ext || MARKDOWN_EXTS.includes( ext ) || [ 'obj', 'stl', 'mtl' ].includes( ext );
 
 /* ── encode an in-repo path for a URL (keep the slashes) ── */
 const encodePath = ( p ) => p.split( '/' ).map( encodeURIComponent ).join( '/' );
@@ -967,8 +1296,9 @@ const revokeAllBlobUrls = () => {
 const GITHUB_SVG_ICON =
   `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>`;
 
-/* ── favicon from CONFIG.faviconLetters / faviconColor (reference §11) — reused
-   for the footer + sidebar brand marks so all three reflect the config. ── */
+/* ── generated letter-mark favicon from CONFIG.faviconLetters / faviconColor
+   (reference §11). This is the fallback behind brandMarkSrc(): used for the tab icon
+   and the header/footer/sidebar brand marks whenever no real favicon.ico is found. ── */
 const faviconDataUrl = () => {
   const letters = String( CONFIG.faviconLetters || 'TT' );
   const l1 = encodeURIComponent( ( letters[ 0 ] || 'T' ).toUpperCase() );
@@ -979,9 +1309,36 @@ const faviconDataUrl = () => {
     `%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E` +
     `%3Ctext x='22' y='28'%3E${ l1 }%3C/text%3E%3Ctext x='42' y='40'%3E${ l2 }%3C/text%3E%3C/g%3E%3C/svg%3E`;
 };
+/* Prefer a real favicon.ico sitting next to index.html (the fork's site root) over
+   the generated letter mark; fall back to the generated SVG when absent. Resolved
+   asynchronously by detectRealFavicon, so brandMarkSrc() returns the generated mark
+   until a real favicon.ico is confirmed. Drives the tab icon AND every in-page brand
+   mark (header / footer / sidebar). */
+let realFaviconUrl = null;   // 'favicon.ico' once confirmed present, else null
+const brandMarkSrc = () => realFaviconUrl || faviconDataUrl();
+
+const applyBrandMarks = () => {
+  const url = brandMarkSrc();
+  const link = document.querySelector( 'link[rel="icon"]' );
+  if ( link ) link.href = url;
+  document.querySelector( '#headerBrand' )?.setAttribute( 'src', url );
+  document.querySelector( '.app-footer-mark' )?.setAttribute( 'src', url );
+  document.querySelector( '#btnScrollTreeTop img' )?.setAttribute( 'src', url );
+};
+
+/* Existence probe via <img>: loads under file:// without the access flag (images
+   aren't fetch-restricted) and over https. A present .ico fires onload; missing/
+   unreadable fires onerror (and logs one expected 404, like the .git/config probe).
+   On success, every mark upgrades from the generated SVG to the real favicon.ico. */
+const detectRealFavicon = () => {
+  const img = new Image();
+  img.onload = () => { realFaviconUrl = 'favicon.ico'; applyBrandMarks(); };
+  img.src = 'favicon.ico';   // relative to index.html → the fork's site root
+};
+
 const applyFavicon = () => {
   const link = document.querySelector( 'link[rel="icon"]' );
-  if ( link ) link.href = faviconDataUrl();
+  if ( link ) link.href = brandMarkSrc();
 };
 
 /* ── optional heading typeface (reference §11): load CONFIG.headingFontUrl into
@@ -1000,7 +1357,7 @@ const applyHeadingFont = () => {
 };
 
 /* ── per-extension Rendered/Raw preference (reference §7) ── */
-const viewPrefKey = ( ext ) => `${ CONFIG.storagePrefix || 'tootoo' }-lab:viewPref:${ ext }`;
+const viewPrefKey = ( ext ) => `${ CONFIG.storagePrefix || 'tootoo' }-dev:viewPref:${ ext }`;
 const getPreferredView = ( ext ) => {
   try { return localStorage.getItem( viewPrefKey( ext ) ) || 'rendered'; } catch ( _ ) { return 'rendered'; }
 };
@@ -1035,7 +1392,21 @@ const cachePut = ( key, text ) => {
 const clearFileCache = () => fileTextCache.clear();
 
 /* ── GitHub token (optional, from localStorage) ── */
-const tokenStorageKey = () => `${ CONFIG.storagePrefix }-lab:token`;
+const tokenStorageKey = () => `${ CONFIG.storagePrefix }-dev:${ location.pathname }:githubToken`;
+const migrateTokenStorage = () => {
+  try {
+    const scopedKey = tokenStorageKey();
+    const oldScopedKey = `${ CONFIG.storagePrefix }-dev:token`;
+    const legacyToken = localStorage.getItem( 'githubToken' );
+    const oldScopedToken = localStorage.getItem( oldScopedKey );
+    if ( localStorage.getItem( scopedKey ) === null ) {
+      const candidate = oldScopedToken || legacyToken;
+      if ( candidate ) localStorage.setItem( scopedKey, candidate );
+    }
+    localStorage.removeItem( oldScopedKey );
+    localStorage.removeItem( 'githubToken' );
+  } catch ( _ ) { /* storage disabled */ }
+};
 const getToken = () => {
   try { return localStorage.getItem( tokenStorageKey() ) || ''; } catch ( _ ) { return ''; }
 };
@@ -1071,8 +1442,16 @@ const updateRateBadge = ( res ) => {
 const ghApi = async ( url, signal ) => {
   const res = await fetch( url, { headers: ghHeaders(), signal } );
   updateRateBadge( res );
-  if ( res.status === 403 ) throw new Error( 'Rate limited. Add a GitHub token for higher limits.' );
-  if ( res.status === 404 ) throw new Error( 'Not found (private repo, or wrong owner/repo/branch).' );
+  if ( res.status === 403 ) {
+    const err = new Error( 'Rate limited. Add a GitHub token for higher limits.' );
+    err.status = 403;
+    throw err;
+  }
+  if ( res.status === 404 ) {
+    const err = new Error( 'Not found (private repo, or wrong owner/repo/branch).' );
+    err.status = 404;
+    throw err;
+  }
   if ( !res.ok ) throw new Error( `GitHub API error: ${ res.status }` );
   return res.json();
 };
@@ -1158,7 +1537,7 @@ const detectLocalMode = async () => {
 const localUrlFor = ( path ) => ( localMode ? './' + encodePath( path ) : null );
 
 /* ── per-pathname storage + repo cache (reference §4) ── */
-const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }-lab:${ location.pathname }:${ suffix }`;
+const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }-dev:${ location.pathname }:${ suffix }`;
 const repoCacheKey = () => storageKey( 'repo' );
 const cacheRepo = () => {
   try { localStorage.setItem( repoCacheKey(), JSON.stringify( { owner: state.owner, repo: state.repo, branch: state.branch, updated: state.repoUpdated } ) ); }
@@ -1231,6 +1610,15 @@ const resolveRepoPath = ( href, currentDir ) => {
     else stack.push( part );
   }
   return stack.join( '/' );
+};
+
+const scrollToMarkdownFragment = ( fragment ) => {
+  if ( !fragment ) return;
+  let decoded = fragment;
+  try { decoded = decodeURIComponent( fragment ); } catch ( _ ) { /* keep raw fragment */ }
+  const target = document.getElementById( decoded ) ||
+    document.querySelector( `[name="${ CSS.escape( decoded ) }"]` );
+  target?.scrollIntoView( { block: 'center', behavior: 'auto' } );
 };
 
 /* ── URL to open in a new tab / download (reference §31, simplified): the local
@@ -1315,19 +1703,26 @@ const setHeaderTimestamp = () => {
 };
 
 const updateHeaderFromConfig = () => {
-  if ( CONFIG.themeColor ) document.documentElement.style.setProperty( '--highlight-color', CONFIG.themeColor );
+  if ( CONFIG.themeColor ) {
+    document.documentElement.style.setProperty( '--highlight-color', CONFIG.themeColor );
+    document.body?.style.setProperty( '--highlight-color', CONFIG.themeColor );
+  }
   // Once a repo is known, the header shows owner / repo; appName is the fallback
   // shown only before detection (reference §8 uses APP_ORIGIN for the same effect).
   const label = ( state.owner && state.repo ) ? `${ state.owner } / ${ state.repo }` : CONFIG.appName;
   const titleEl = document.getElementById( 'headerTitle' );
+  const subtitleEl = document.getElementById( 'headerSubtitle' );
   document.title = CONFIG.subtitle ? `${ label } · ${ CONFIG.subtitle }` : label;
   titleEl.textContent = label;
   setHeaderTimestamp();
-  if ( CONFIG.subtitle ) {
-    const sub = document.createElement( 'span' );
-    sub.style.cssText = 'opacity: 0.6; font-weight: normal; margin-left: 0.4rem; font-size: 0.9rem;';
-    sub.textContent = '· ' + CONFIG.subtitle;
-    titleEl.appendChild( sub );
+  if ( subtitleEl ) {
+    if ( CONFIG.subtitle ) {
+      subtitleEl.textContent = '· ' + CONFIG.subtitle;
+      subtitleEl.hidden = false;
+    } else {
+      subtitleEl.textContent = '';
+      subtitleEl.hidden = true;
+    }
   }
 };
 
@@ -1384,30 +1779,41 @@ const initHeaderControls = () => {
   } );
 
   document.getElementById( 'headerGitHub' )?.setAttribute( 'href', CONFIG.sourceRepoUrl || '#' );
+  // Brand mark in the GitHub link: the CONFIG favicon (shared with footer/sidebar
+  // marks via faviconDataUrl), replacing the old octocat glyph.
+  document.getElementById( 'headerBrand' )?.setAttribute( 'src', brandMarkSrc() );
 };
 
 /* ── token panel (header owns the dialog; it renders into the content area) ── */
-const showTokenPanel = () => {
+const showTokenPanel = ( reasonHtml = '' ) => {
   const cb = document.getElementById( 'contentBody' );
   if ( !cb ) return;   // standalone header page has no content area
-  const hasToken = getToken().length > 0;
+  const current = getToken();
+  const hasToken = current.length > 0;
   setContentHeader( makeSimpleHeader( 'GitHub Token' ) );
   cb.innerHTML = `
+    ${ reasonHtml }
     <div class="markdown-body">
-      <p>${ escapeHTML( CONFIG.appName ) } reads the GitHub API — <strong>60 requests/hour</strong> anonymous, <strong>5,000/hour</strong> with a token. The token is stored only in this browser's <code>localStorage</code> and sent only to <code>api.github.com</code>.</p>
-      <p><a href="https://github.com/settings/tokens" target="_blank" rel="noopener">Create a token →</a> — a classic token with no scopes is enough for public repos.</p>
       <div class="repo-form">
         <label for="inpToken">Token${ hasToken ? ' (currently set)' : '' }</label>
-        <input id="inpToken" type="password" placeholder="${ hasToken ? '•••••• (blank = keep)' : 'ghp_…' }" autocomplete="off" spellcheck="false">
+        <input id="inpToken" type="password" placeholder="${ hasToken ? '•••••••• (leave blank to keep)' : 'ghp_…' }" autocomplete="off" spellcheck="false">
         <label><input id="inpTokenShow" type="checkbox"> Show token</label>
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-          <button id="btnTokenSave" class="primary">Save</button>
-          <button id="btnTokenClear" class="secondary">Clear</button>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button id="btnTokenSave" class="primary" title="Save token and reload">Save</button>
+          <button id="btnTokenClear" class="secondary" title="Clear stored token">Clear</button>
         </div>
       </div>
-      <hr style="margin:1rem 0;border:none;border-top:1px solid var(--border-color);">
-      <p style="font-size:0.85rem;opacity:0.8;">Wipe every preference, cached file, and the token from this browser — useful when testing.</p>
-      <button id="btnResetAll" class="secondary">Reset all data</button>
+      <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
+      <p>${ escapeHTML( CONFIG.appName ) } reads the GitHub REST API to list and fetch repository contents. GitHub limits anonymous (un-authenticated) access to <strong>60 requests per hour per IP address</strong>. Once you exceed that limit you cannot read more files until the limit resets, unless you provide a Personal Access Token (PAT). With a token the limit rises to <strong>5,000 requests per hour</strong>, and you can also access private repositories the token has read scope for.</p>
+      <p><strong>Where do I get a token?</strong></p>
+      <ul>
+        <li><strong>Public repositories:</strong> create a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a>. A classic token with no scopes is enough for read-only access, or use a fine-grained token.</li>
+        <li><strong>Private repositories:</strong> ask the repository owner to issue a fine-grained personal access token scoped to that repository, with at minimum <em>Contents: Read</em> permission, and to share it with you securely.</li>
+      </ul>
+      <p>Your token is stored in this browser's <code>localStorage</code> only. It is never sent anywhere except <code>api.github.com</code>, and it is not shared with the developers of ${ escapeHTML( CONFIG.appName ) }.</p>
+      <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
+      <p>Wipe every preference, cached file, and the GitHub token from this browser. Useful when testing a fork or starting fresh.</p>
+      <button id="btnResetAll" class="secondary" title="Wipe all ${ escapeHTML( CONFIG.appName ) } data from this browser">Reset all ${ escapeHTML( CONFIG.appName ) } data</button>
     </div>`;
   const inp = document.getElementById( 'inpToken' );
   inp.focus();
@@ -1422,22 +1828,39 @@ const showTokenPanel = () => {
   document.getElementById( 'btnTokenSave' ).addEventListener( 'click', save );
   inp.addEventListener( 'keydown', ( e ) => { if ( e.key === 'Enter' ) save(); } );
   document.getElementById( 'btnTokenClear' ).addEventListener( 'click', () => {
-    try { localStorage.removeItem( tokenStorageKey() ); } catch ( _ ) { /* storage disabled */ }
-    clearFileCache();
-    location.reload();
-  } );
-  document.getElementById( 'btnResetAll' )?.addEventListener( 'click', () => {
-    if ( !window.confirm( `Wipe all ${ CONFIG.appName } data from this browser?` ) ) return;
     try {
-      const prefix = `${ CONFIG.storagePrefix }-lab:`;
-      const keys = [];
-      for ( let i = 0; i < localStorage.length; i++ ) { const k = localStorage.key( i ); if ( k && k.startsWith( prefix ) ) keys.push( k ); }
-      for ( const k of keys ) localStorage.removeItem( k );
+      localStorage.removeItem( tokenStorageKey() );
+      localStorage.removeItem( `${ CONFIG.storagePrefix }-dev:token` );
+      localStorage.removeItem( 'githubToken' );
     } catch ( _ ) { /* storage disabled */ }
     clearFileCache();
     location.reload();
   } );
+  document.getElementById( 'btnResetAll' )?.addEventListener( 'click', () => {
+    if ( !window.confirm( `Wipe all ${ CONFIG.appName } preferences, cached files, and the GitHub token from this browser?` ) ) return;
+    try {
+      const prefix = `${ CONFIG.storagePrefix }-dev:`;
+      const keys = [];
+      for ( let i = 0; i < localStorage.length; i++ ) { const k = localStorage.key( i ); if ( k && k.startsWith( prefix ) ) keys.push( k ); }
+      for ( const k of keys ) localStorage.removeItem( k );
+      localStorage.removeItem( tokenStorageKey() );
+      localStorage.removeItem( `${ CONFIG.storagePrefix }-dev:token` );
+      localStorage.removeItem( 'githubToken' );
+    } catch ( _ ) { /* storage disabled */ }
+    clearFileCache();
+    location.reload();
+  } );
+
+  // Keep ⚙️ pressed-state and aria in sync even when this panel was opened
+  // directly by an auth error path (not via toggleInfoPanel).
+  activePanel = 'token';
+  updateInfoButtonState();
 };
+
+const RATE_LIMIT_REASON_HTML = '<div class="error-panel">⚠️ <strong>GitHub API rate limit reached.</strong> You\'ve exceeded the anonymous request quota and cannot load more files until you add a token below or wait for the limit to reset.</div>';
+const PRIVATE_REPO_MESSAGE = 'Repository not found. Double-check the owner, repository, and branch names for typos. If the repository is private, add a GitHub token with read access below.';
+const privateRepoReasonHtml = () =>
+  `<div class="error-panel">⚠️ <strong>Repository not found</strong> (GitHub returned 404). First, check the owner, repository, and branch names for a typo — that\'s the most common cause. If the repository really is private, add a GitHub access token with read access below. If you already have a token saved, make sure it covers ${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }.</div>`;
 
 /* ── About panel + About/Token toggle (reference §12c). ? / ⚙️ open their panel;
    clicking again returns to the file you were on (panelReturnPath). ── */
@@ -1457,47 +1880,88 @@ const renderAboutPanel = async () => {
   const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
   const sourceUrl = CONFIG.sourceRepoUrl;
   const repoUrl = state.owner && state.repo ? `https://github.com/${ state.owner }/${ state.repo }` : sourceUrl;
-  const tokenStatus = getToken() ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
+  const token = getToken();
 
   let rateLimitInfo = 'Unable to fetch';
   try {
     const res = await fetch( 'https://api.github.com/rate_limit', { headers: ghHeaders() } );
-    if ( res.ok ) { const core = ( await res.json() ).resources.core; rateLimitInfo = `${ core.remaining } / ${ core.limit } remaining`; }
-  } catch ( _ ) { /* offline */ }
+    if ( res.ok ) {
+      const data = await res.json();
+      const core = data.resources.core;
+      const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
+      rateLimitInfo = `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })`;
+    }
+  } catch ( _ ) { /* offline or blocked */ }
+
+  const tokenStatus = token ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
 
   const branchHtml = ( state.owner && state.repo && state.branch )
-    ? `<li><strong>Branch:</strong> <a href="https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/tree/${ encodeURIComponent( state.branch ) }" target="_blank" rel="noopener">${ escapeHTML( state.branch ) }</a></li>`
+    ? `<li><strong>Branch:</strong> <a href="https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/tree/${ encodeURIComponent( state.branch ) }" target="_blank" rel="noopener">${ escapeHTML( state.branch ) }</a> · <a href="https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/branches" target="_blank" rel="noopener">all branches</a></li>`
     : '';
-
-  const statsHtml = ( () => {
-    const stats = getRepoStats();
-    if ( !stats ) return '<h3>Repository statistics</h3><p>No tree loaded yet.</p>';
-    const types = stats.topTypes.map( ( [ ext, n ] ) => `<li>${ escapeHTML( ext ) }: ${ n }</li>` ).join( '' );
-    const largest = stats.largest.map( ( f ) => `<li>${ escapeHTML( f.path ) } — ${ formatFileSize( f.size ) }</li>` ).join( '' );
-    return `<h3>Repository statistics</h3><ul><li><strong>Files:</strong> ${ stats.fileCount }</li><li><strong>Folders:</strong> ${ stats.folderCount }</li><li><strong>Total size:</strong> ${ formatFileSize( stats.totalSize ) }</li></ul><h4>Top file types</h4><ol>${ types }</ol><h4>Largest files</h4><ol>${ largest }</ol>`;
-  } )();
 
   setContentHeader( makeSimpleHeader( 'About' ) );
   document.getElementById( 'contentBody' ).innerHTML = `
     <div class="markdown-body">
       <h2>${ escapeHTML( CONFIG.appName ) }</h2>
-      <p>A lightweight single-file GitHub repository browser (component build).</p>
+      <p>A lightweight single-file GitHub repository browser.</p>
       <ul>
-        <li><strong>Source:</strong> <a href="${ escapeHTML( sourceUrl ) }" target="_blank" rel="noopener">${ escapeHTML( sourceUrl ) }</a></li>
+        <li><strong>Source code:</strong> <a href="${ escapeHTML( sourceUrl ) }" target="_blank" rel="noopener">${ escapeHTML( sourceUrl ) }</a></li>
         <li><strong>Repository:</strong> <a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">${ escapeHTML( repoUrl ) }</a></li>
         ${ branchHtml }
+        <li><strong>Copyright:</strong> pushme-pullyou authors</li>
+        <li><strong>License:</strong> MIT License</li>
         <li><strong>Updated:</strong> ${ escapeHTML( revised ) }</li>
+      </ul>
+      <h3>GitHub API</h3>
+      <ul>
+        <li><strong>Repo visibility:</strong> Public (private repos require a token)</li>
         <li><strong>Token:</strong> ${ escapeHTML( tokenStatus ) }</li>
         <li><strong>Rate limit:</strong> ${ escapeHTML( rateLimitInfo ) }</li>
+        <li><strong>GitHub Pages:</strong> Supported — auto-detects repos hosted on GitHub Pages</li>
       </ul>
-      ${ statsHtml }
+      ${ ( () => {
+      const stats = getRepoStats();
+      if ( !stats ) return '<h3>Repository Statistics</h3><p>No tree data loaded yet.</p>';
+      const typesHtml = stats.topTypes.map( ( [ ext, count ] ) =>
+        `<li>${ escapeHTML( ext ) }: ${ count } file${ count !== 1 ? 's' : '' }</li>`
+      ).join( '' );
+      const largestHtml = stats.largest.map( ( f ) =>
+        `<li>${ escapeHTML( f.path ) } — ${ formatFileSize( f.size ) }</li>`
+      ).join( '' );
+      return `<h3>Repository Statistics</h3>
+              <ul>
+                <li><strong>Files:</strong> ${ stats.fileCount }</li>
+                <li><strong>Folders:</strong> ${ stats.folderCount }</li>
+                <li><strong>Total size:</strong> ${ formatFileSize( stats.totalSize ) }</li>
+              </ul>
+              <h4>Top file types</h4>
+              <ol>${ typesHtml }</ol>
+              <h4>Largest files</h4>
+              <ol>${ largestHtml }</ol>`;
+    } )() }
+      <h3>Tips</h3>
+      <ul>
+        <li>Use the filter input in the sidebar to search file names</li>
+        <li>Click the title in the header to reload</li>
+        <li>Use <strong>A−</strong> / <strong>A+</strong> to adjust font size — helpful on phones and small screens</li>
+        <li>Click <strong>🌙</strong> to toggle dark mode — your choice is saved across visits</li>
+        <li>Click <strong>?</strong> or <strong>⚙️ Token</strong> again to close the panel and return to your file</li>
+      </ul>
       <h3>Keyboard shortcuts</h3>
       <ul>
         <li><kbd>Ctrl/⌘ B</kbd> — toggle sidebar</li>
-        <li><kbd>/</kbd> focus filter · <kbd>Esc</kbd> clear filter</li>
-        <li><kbd>↑</kbd> <kbd>↓</kbd> move · <kbd>→</kbd>/<kbd>←</kbd> open/close folder · <kbd>Enter</kbd> open</li>
+        <li><kbd>/</kbd> — focus the filter box</li>
+        <li><kbd>Esc</kbd> — clear the filter (when it's focused)</li>
+        <li><kbd>\\</kbd> — focus the sidebar tree (jumps to the current selection)</li>
+        <li><kbd>↑</kbd> <kbd>↓</kbd> — move one item up / down</li>
+        <li><kbd>Home</kbd> <kbd>End</kbd> — jump to first / last visible item</li>
+        <li><kbd>PgUp</kbd> <kbd>PgDn</kbd> — jump about one viewport</li>
+        <li><kbd>→</kbd> — open folder / step into</li>
+        <li><kbd>←</kbd> — close folder / step out</li>
+        <li><kbd>Enter</kbd> <kbd>Space</kbd> — toggle folder or select file</li>
       </ul>
       <h3>Maintenance</h3>
+      <p>Render every file in this repo off-screen and report which ones fail to display — markdown that won't parse, images that won't decode, spreadsheets that won't open. Best run locally (<code>file://</code>) or with a token.</p>
       <button id="btnSelfTest" class="secondary">🧪 Run self-test</button>
     </div>`;
   document.getElementById( 'btnSelfTest' )?.addEventListener( 'click', runSelfTest );
@@ -1513,6 +1977,10 @@ const closeInfoPanel = () => {
 };
 
 const toggleInfoPanel = async ( panel ) => {
+  // No content area to render into (e.g. the standalone header component page) →
+  // the ?/⚙️ buttons are inert rather than throwing. Mirrors showTokenPanel's guard,
+  // but here it also avoids leaving the button stuck pressed + a broken close path.
+  if ( !document.getElementById( 'contentBody' ) ) return;
   if ( activePanel === panel ) { closeInfoPanel(); return; }
   if ( !activePanel ) panelReturnPath = state.currentFilePath || '';
   activePanel = panel;
@@ -1751,6 +2219,28 @@ const setupFileSelection = () => {
   } );
 };
 
+// Bail out for very large repositories (or truncated GitHub tree responses):
+// keep sidebar concise and show a clear explanation + link in the content pane.
+const showOversizedRepoPanel = ( count, truncated ) => {
+  const repoUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`;
+  const countLabel = truncated
+    ? `over ${ count.toLocaleString() } files (GitHub truncated the tree response)`
+    : `${ count.toLocaleString() } files`;
+
+  document.getElementById( 'treeList' ).innerHTML =
+    '<div style="padding: 0.6rem 0.5rem; font-size: 0.85rem; opacity: 0.8;">Repository too large to browse here.</div>';
+
+  const cb = document.getElementById( 'contentBody' );
+  cb.innerHTML = `
+        <div class="error-panel">
+          <h3 style="margin-top: 0;">Repository too large for ${ escapeHTML( CONFIG.appName ) }</h3>
+          <p><strong>${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }</strong> contains ${ escapeHTML( countLabel ) }. ${ escapeHTML( CONFIG.appName ) } is built for small-to-medium personal repositories; larger trees overwhelm the sidebar render and the per-keystroke filter.</p>
+          <p><a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">Browse this repository on github.com →</a></p>
+          <p style="font-size: 0.85rem; opacity: 0.75; margin-bottom: 0;">If you maintain a fork, raise <code>CONFIG.maxRepoFiles</code> (currently ${ CONFIG.maxRepoFiles.toLocaleString() }) to override this cutoff. Truncated trees cannot be overridden — that is a GitHub API response limit.</p>
+        </div>
+      `;
+};
+
 /* ── fetchTree: load the repo tree from GitHub (writes state.tree) ── */
 const fetchTree = async () => {
   const signal = newAbort();
@@ -1765,9 +2255,11 @@ const fetchTree = async () => {
     const count = data.tree?.length || 0;
     if ( data.truncated || count > CONFIG.maxRepoFiles ) {
       state.tree = null;
-      treeList.innerHTML = `<p style="padding:0.5rem;color:red;">Repo too large for the lab (${ count.toLocaleString() } entries).</p>`;
+      state.oversized = true;
+      showOversizedRepoPanel( count, data.truncated );
       return;
     }
+    state.oversized = false;
     state.tree = data.tree;
     renderTree( state.tree );
 
@@ -1785,9 +2277,17 @@ const fetchTree = async () => {
     treeSummaryText = h.textContent;
   } catch ( err ) {
     if ( err.name === 'AbortError' ) return;
+    if ( err.status === 403 ) {
+      treeList.innerHTML = `<p style="padding:0.5rem;color:red;">Rate limited. Add a GitHub token for higher limits.</p>`;
+      showTokenPanel( RATE_LIMIT_REASON_HTML );
+      return;
+    }
+    if ( err.status === 404 ) {
+      treeList.innerHTML = `<p style="padding:0.5rem;color:red;">${ escapeHTML( PRIVATE_REPO_MESSAGE ) }</p>`;
+      showTokenPanel( privateRepoReasonHtml() );
+      return;
+    }
     treeList.innerHTML = `<p style="padding:0.5rem;color:red;">${ escapeHTML( err.message ) }</p>`;
-    // Rate-limit (403) or private-repo/not-found (404) → open the token panel.
-    if ( /rate limit|not found/i.test( err.message ) && typeof showTokenPanel === 'function' ) showTokenPanel();
   }
 };
 
@@ -1980,7 +2480,7 @@ const initSidebar = () => {
 
   // Sidebar footer brand mark (from CONFIG favicon) + scroll-to-top.
   const footImg = document.querySelector( '#btnScrollTreeTop img' );
-  if ( footImg ) footImg.src = faviconDataUrl();
+  if ( footImg ) footImg.src = brandMarkSrc();
   document.getElementById( 'btnScrollTreeTop' )?.addEventListener( 'click', () =>
     document.getElementById( 'treeList' ).scrollTo( { top: 0, behavior: 'smooth' } ) );
 
@@ -2002,7 +2502,7 @@ const initSidebar = () => {
    CONFIG. Writes: state.currentFilePath (Content owns this). Depends on core.js
    + marked/hljs/DOMPurify (CDN, same as the real app).
 
-   LAB SIMPLIFICATIONS vs the real app:
+  DEV SIMPLIFICATIONS vs the real app:
    - selectFile reads `mockFiles` instead of fetching GitHub/local.
    - audio/video/pdf/spreadsheet renderers are omitted for now (need real blobs).
    - markdown image/relative-link resolution against the repo is dropped (mock). */
@@ -2423,7 +2923,7 @@ const initContent = () => {
 
 const renderFooter = () => {
   const mark = document.querySelector( '.app-footer-mark' );
-  if ( mark ) mark.src = faviconDataUrl();   // brand mark from CONFIG favicon
+  if ( mark ) mark.src = brandMarkSrc();   // real favicon.ico if present, else CONFIG mark
   updateFooterCopyright();
 };
 
@@ -2470,10 +2970,13 @@ const initApp = async () => {
   // repo can override theme/favicon/appName/hidden files (canonical's fork model).
   if ( window.TOOTOO_CONFIG && typeof window.TOOTOO_CONFIG === 'object' ) Object.assign( CONFIG, window.TOOTOO_CONFIG );
 
+  migrateTokenStorage();
+
   initHeader();     // header.js  — branding + appearance controls
   initContent();    // content.js — wire Copy / view-toggle / etc.
   renderFooter();   // footer.js  — brand bar
-  applyFavicon();   // core.js    — set the browser-tab favicon from CONFIG
+  applyFavicon();   // core.js    — set the browser-tab favicon (generated mark; favicon.ico upgrade follows)
+  detectRealFavicon(); // core.js — if a favicon.ico sits next to index.html, prefer it for the tab + brand marks
   applyHeadingFont(); // core.js  — load + apply CONFIG.headingFont(Url) for headings/title
 
   await detectLocalMode();  // core.js — file:// drop-in: seed owner/repo, read files from disk
@@ -2497,10 +3000,13 @@ const initApp = async () => {
   await fetchTree();                       // sidebar.js — GitHub tree → state.tree → render
   updateFooterLicense();                   // footer.js — link to the repo's own LICENSE (tree now loaded)
 
+  if ( state.oversized ) return;
+
   // Back/forward + address-bar hash edits re-open the file.
   window.addEventListener( 'hashchange', () => {
     const p = currentHashPath();
-    if ( p && p !== state.currentFilePath ) selectFile( p );
+    const pFile = p.includes( '#' ) ? p.slice( 0, p.indexOf( '#' ) ) : p;
+    if ( p && pFile !== state.currentFilePath ) selectFile( p );
   } );
 
   // File-open priority: URL hash → last-opened (this session) → README.

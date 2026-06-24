@@ -1,5 +1,19 @@
 # TooToo — Development Journal
 
+## 2026-06-23
+
+Done
+
+* 2026-05-26 ~ update both local and GitHub repos: or maybe separate apps
+* 2026-05-31 ~ repos to the header bar
+* 2026-05-31 ~ add branches to the header bar
+* 2026-05-26 ~ Update readme
+* About shows the live branch count (name + all-branches link done 2026-06-08)
+* **Keyboard shortcut for toggling sidebar** — `Ctrl+B` (VS Code convention). Useful on narrow screens.
+* **File search** (`Ctrl+F` in sidebar) — fuzzy match across all file paths, not just the filter substring match. Jump to result on Enter.
+* **Branch/tag switcher** — dropdown in the header to switch branches. Already have `state.branch`, just need a `GET /repos/.../branches` call and re-fetch the tree.
+* **Print/export** — render current markdown file to a clean print stylesheet, or offer "Save as PDF" via `window.print()` with `@media print` styles.
+
 ## 2026-06-16
 
 ✅ **Fixed: New Tab now displays text files instead of downloading (local mode)**
