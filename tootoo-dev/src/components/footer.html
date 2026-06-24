@@ -4,18 +4,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TooToo — Footer (lab)</title>
+  <title>TooToo — Footer (dev)</title>
   <link rel="stylesheet" href="../styles.css">
   <style>
-    .lab-note { margin: 1rem; padding: 0.75rem 1rem; border: 1px dashed var(--border-color);
-      border-radius: 8px; background: var(--secondary-bg); font-size: 0.9rem; }
-    body { justify-content: space-between; }
+    .dev-note {
+      margin: 1rem;
+      padding: 0.75rem 1rem;
+      border: 1px dashed var(--border-color);
+      border-radius: 8px;
+      background: var(--secondary-bg);
+      font-size: 0.9rem;
+    }
+
+    body {
+      justify-content: space-between;
+    }
   </style>
 </head>
 
 <body>
 
-  <div class="lab-note">
+  <div class="dev-note">
     🧪 <strong>Footer component.</strong> A new page-level footer (the single-file
     app has none yet). Brand text comes from <code>CONFIG</code> via
     <code>renderFooter()</code>.
@@ -27,7 +36,8 @@
       <img class="app-footer-mark" width="18" height="18" alt="">
       <span id="footerCopyright"></span>
     </span>
-    <a class="app-footer-license" href="https://opensource.org/license/mit" target="_blank" rel="noopener">MIT License</a>
+    <a class="app-footer-license" href="https://opensource.org/license/mit" target="_blank" rel="noopener">MIT
+      License</a>
   </footer>
   <!-- @part:footer:end -->
 

@@ -199,6 +199,28 @@ const setupFileSelection = () => {
   } );
 };
 
+// Bail out for very large repositories (or truncated GitHub tree responses):
+// keep sidebar concise and show a clear explanation + link in the content pane.
+const showOversizedRepoPanel = ( count, truncated ) => {
+  const repoUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`;
+  const countLabel = truncated
+    ? `over ${ count.toLocaleString() } files (GitHub truncated the tree response)`
+    : `${ count.toLocaleString() } files`;
+
+  document.getElementById( 'treeList' ).innerHTML =
+    '<div style="padding: 0.6rem 0.5rem; font-size: 0.85rem; opacity: 0.8;">Repository too large to browse here.</div>';
+
+  const cb = document.getElementById( 'contentBody' );
+  cb.innerHTML = `
+        <div class="error-panel">
+          <h3 style="margin-top: 0;">Repository too large for ${ escapeHTML( CONFIG.appName ) }</h3>
+          <p><strong>${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }</strong> contains ${ escapeHTML( countLabel ) }. ${ escapeHTML( CONFIG.appName ) } is built for small-to-medium personal repositories; larger trees overwhelm the sidebar render and the per-keystroke filter.</p>
+          <p><a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">Browse this repository on github.com →</a></p>
+          <p style="font-size: 0.85rem; opacity: 0.75; margin-bottom: 0;">If you maintain a fork, raise <code>CONFIG.maxRepoFiles</code> (currently ${ CONFIG.maxRepoFiles.toLocaleString() }) to override this cutoff. Truncated trees cannot be overridden — that is a GitHub API response limit.</p>
+        </div>
+      `;
+};
+
 /* ── fetchTree: load the repo tree from GitHub (writes state.tree) ── */
 const fetchTree = async () => {
   const signal = newAbort();
@@ -213,9 +235,11 @@ const fetchTree = async () => {
     const count = data.tree?.length || 0;
     if ( data.truncated || count > CONFIG.maxRepoFiles ) {
       state.tree = null;
-      treeList.innerHTML = `<p style="padding:0.5rem;color:red;">Repo too large for the lab (${ count.toLocaleString() } entries).</p>`;
+      state.oversized = true;
+      showOversizedRepoPanel( count, data.truncated );
       return;
     }
+    state.oversized = false;
     state.tree = data.tree;
     renderTree( state.tree );
 
@@ -233,9 +257,17 @@ const fetchTree = async () => {
     treeSummaryText = h.textContent;
   } catch ( err ) {
     if ( err.name === 'AbortError' ) return;
+    if ( err.status === 403 ) {
+      treeList.innerHTML = `<p style="padding:0.5rem;color:red;">Rate limited. Add a GitHub token for higher limits.</p>`;
+      showTokenPanel( RATE_LIMIT_REASON_HTML );
+      return;
+    }
+    if ( err.status === 404 ) {
+      treeList.innerHTML = `<p style="padding:0.5rem;color:red;">${ escapeHTML( PRIVATE_REPO_MESSAGE ) }</p>`;
+      showTokenPanel( privateRepoReasonHtml() );
+      return;
+    }
     treeList.innerHTML = `<p style="padding:0.5rem;color:red;">${ escapeHTML( err.message ) }</p>`;
-    // Rate-limit (403) or private-repo/not-found (404) → open the token panel.
-    if ( /rate limit|not found/i.test( err.message ) && typeof showTokenPanel === 'function' ) showTokenPanel();
   }
 };
 

@@ -4,20 +4,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TooToo — Sidebar (lab)</title>
+  <title>TooToo — Sidebar (dev)</title>
   <link rel="stylesheet" href="../styles.css">
   <style>
-    /* Page-only scaffolding (the lab pane to the right of the sidebar). */
-    .lab-pane { flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem; }
-    .lab-pane h1 { font-size: 1.2rem; margin: 0 0 0.5rem; color: var(--highlight-color); }
-    .lab-pane p { line-height: 1.55; max-width: 60ch; }
-    .lab-pane code { background: var(--hover-bg); padding: 0 0.25rem; border-radius: 4px; }
-    .lab-out {
-      margin-top: 1rem; padding: 0.75rem 1rem;
-      border: 1px dashed var(--border-color); border-radius: 8px;
-      background: var(--secondary-bg); font-family: monospace; font-size: 0.9rem;
+    /* Page-only scaffolding (the dev pane to the right of the sidebar). */
+    .dev-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem 1.5rem;
     }
-    .lab-out b { color: var(--highlight-color); }
+
+    .dev-pane h1 {
+      font-size: 1.2rem;
+      margin: 0 0 0.5rem;
+      color: var(--highlight-color);
+    }
+
+    .dev-pane p {
+      line-height: 1.55;
+      max-width: 60ch;
+    }
+
+    .dev-pane code {
+      background: var(--hover-bg);
+      padding: 0 0.25rem;
+      border-radius: 4px;
+    }
+
+    .dev-out {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border: 1px dashed var(--border-color);
+      border-radius: 8px;
+      background: var(--secondary-bg);
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+
+    .dev-out b {
+      color: var(--highlight-color);
+    }
   </style>
 </head>
 
@@ -47,8 +73,8 @@
 
     <div class="resizer" id="resizer" title="Drag to Resize Sidebar"></div>
 
-    <div class="lab-pane">
-      <h1>🧪 Sidebar component (lab)</h1>
+    <div class="dev-pane">
+      <h1>🧪 Sidebar component (dev)</h1>
       <p>
         The real sidebar, running standalone on <strong>mock data</strong>
         (<code>state.tree</code> from <code>mock/mock-data.js</code>), styled by the
@@ -67,8 +93,8 @@
         <code>examples/Images</code> (<code>CONFIG.hiddenFolders</code>) are in the
         mock data but the sidebar correctly <em>omits</em> them.
       </p>
-      <div class="lab-out">
-        <b>Content.selectFile()</b> received: <span id="labSelected">— click a file —</span>
+      <div class="dev-out">
+        <b>Content.selectFile()</b> received: <span id="devSelected">— click a file —</span>
       </div>
     </div>
   </main>
@@ -78,7 +104,7 @@
   <script src="../mock/mock-data.js"></script>
   <script src="../js/sidebar.js"></script>
 
-  <!-- Lab harness: the Content stub + footer icon + resizer drag + init.
+  <!-- Dev harness: the Content stub + footer icon + resizer drag + init.
        None of this is part of the sidebar component. -->
   <script>
     // Content owns currentFilePath; here it's a stub that just shows the hand-off.
@@ -87,7 +113,7 @@
       state.currentFilePath = path;
       document.querySelectorAll( '.tree-item' ).forEach( ( el ) =>
         el.classList.toggle( 'active', el.dataset.path === path ) );
-      document.getElementById( 'labSelected' ).textContent = path;
+      document.getElementById( 'devSelected' ).textContent = path;
     };
 
     // Footer icon, scroll-to-top, and resizer drag now live in sidebar.js (initSidebar).

@@ -36,13 +36,24 @@ $pass = 0
 while ( ($template -match '<!--\s*@include\s+components/') -and ($pass -lt 8) ) {
   $template = [regex]::Replace($template, '<!--\s*@include\s+(components/[^\s]+\.html)\s*-->', {
     param($m)
-    $file = Join-Path $src $m.Groups[1].Value
-    $content = Get-Content $file -Raw
-    $frag = [regex]::Match($content, '(?s)<!--\s*@part:[\w:]+:start\s*-->(.*?)<!--\s*@part:[\w:]+:end\s*-->')
-    if ($frag.Success) { $frag.Groups[1].Value.Trim() }
-    else { "<!-- assemble: no @part in $($m.Groups[1].Value) -->" }
+    $rel = $m.Groups[1].Value
+    $file = Join-Path $src $rel
+    if (-not (Test-Path $file)) { "<!-- assemble: missing $rel -->" }
+    else {
+      $content = Get-Content $file -Raw
+      $frag = [regex]::Match($content, '(?s)<!--\s*@part:[\w:]+:start\s*-->(.*?)<!--\s*@part:[\w:]+:end\s*-->')
+      if ($frag.Success) { $frag.Groups[1].Value.Trim() }
+      else { "<!-- assemble: no @part in $rel -->" }
+    }
   })
   $pass++
+}
+
+# Loop bailed (cycle, or nesting deeper than the cap) → component includes survive
+# into the output. They're invisible HTML comments, so warn loudly rather than ship
+# a silently incomplete build.
+if ( $template -match '<!--\s*@include\s+components/' ) {
+  Write-Warning "assemble: unresolved component @include after $pass pass(es) — include cycle or nesting deeper than the cap. Output contains literal include comment(s)."
 }
 
 # 2. CSS / JS includes -> whole file contents.

@@ -10,14 +10,14 @@ const CONFIG = {
   owner: '', repo: '', branch: '',
   appName: 'TooToo', subtitle: '',
   themeColor: '',           // empty = the CSS default (blue) — and lets body.dark-mode's
-                            // brighter #3b82f6 win; a fork's explicit color applies to both modes
+  // brighter #3b82f6 win; a fork's explicit color applies to both modes
   faviconLetters: 'TT', faviconColor: '#2563eb',
   headingFontUrl: '', headingFont: '',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
   storagePrefix: 'tootoo',
   hiddenFolders: [ 'Images' ], hiddenFiles: [], maxRepoFiles: 5000,
 };
-const state = { owner: '', repo: '', branch: '', tree: null, currentFilePath: '', repoUpdated: '' };
+const state = { owner: '', repo: '', branch: '', tree: null, currentFilePath: '', repoUpdated: '', oversized: false };
 
 /* ── escape for safe innerHTML ── */
 const escapeHTML = ( s ) =>
@@ -97,8 +97,9 @@ const VIDEO_EXTS = [ 'mp4', 'webm' ];
 const SHEET_EXTS = [ 'xlsx', 'xls', 'csv', 'ods' ];
 const STREAMABLE_EXTS = [ ...IMAGE_EXTS, ...AUDIO_EXTS, ...VIDEO_EXTS, 'pdf' ];
 const NO_COPY_EXTS = [ ...STREAMABLE_EXTS, ...SHEET_EXTS ];
+const MARKDOWN_EXTS = [ 'md', 'markdown', 'mkd', 'mdown', 'mkdn' ];
 const TAB_VIEWABLE_EXTS = [
-  'html', 'htm', 'pdf', 'txt', 'text', 'md', 'markdown',
+  'html', 'htm', 'pdf', 'txt', 'text', ...MARKDOWN_EXTS,
   ...IMAGE_EXTS, ...AUDIO_EXTS, ...VIDEO_EXTS,
   'js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx', 'json', 'css', 'scss', 'less',
   'xml', 'yaml', 'yml', 'toml', 'ini', 'cfg', 'conf', 'env',
@@ -107,7 +108,7 @@ const TAB_VIEWABLE_EXTS = [
 ];
 const isDownloadAction = ( ext ) => !TAB_VIEWABLE_EXTS.includes( ext );
 const isTextOpenAsPlain = ( ext ) =>
-  !ext || [ 'md', 'markdown', 'mkd', 'mkdn', 'obj', 'stl', 'mtl' ].includes( ext );
+  !ext || MARKDOWN_EXTS.includes( ext ) || [ 'obj', 'stl', 'mtl' ].includes( ext );
 
 /* ── encode an in-repo path for a URL (keep the slashes) ── */
 const encodePath = ( p ) => p.split( '/' ).map( encodeURIComponent ).join( '/' );
@@ -158,7 +159,7 @@ const applyHeadingFont = () => {
 };
 
 /* ── per-extension Rendered/Raw preference (reference §7) ── */
-const viewPrefKey = ( ext ) => `${ CONFIG.storagePrefix || 'tootoo' }-lab:viewPref:${ ext }`;
+const viewPrefKey = ( ext ) => `${ CONFIG.storagePrefix || 'tootoo' }-dev:viewPref:${ ext }`;
 const getPreferredView = ( ext ) => {
   try { return localStorage.getItem( viewPrefKey( ext ) ) || 'rendered'; } catch ( _ ) { return 'rendered'; }
 };
@@ -193,7 +194,21 @@ const cachePut = ( key, text ) => {
 const clearFileCache = () => fileTextCache.clear();
 
 /* ── GitHub token (optional, from localStorage) ── */
-const tokenStorageKey = () => `${ CONFIG.storagePrefix }-lab:token`;
+const tokenStorageKey = () => `${ CONFIG.storagePrefix }-dev:${ location.pathname }:githubToken`;
+const migrateTokenStorage = () => {
+  try {
+    const scopedKey = tokenStorageKey();
+    const oldScopedKey = `${ CONFIG.storagePrefix }-dev:token`;
+    const legacyToken = localStorage.getItem( 'githubToken' );
+    const oldScopedToken = localStorage.getItem( oldScopedKey );
+    if ( localStorage.getItem( scopedKey ) === null ) {
+      const candidate = oldScopedToken || legacyToken;
+      if ( candidate ) localStorage.setItem( scopedKey, candidate );
+    }
+    localStorage.removeItem( oldScopedKey );
+    localStorage.removeItem( 'githubToken' );
+  } catch ( _ ) { /* storage disabled */ }
+};
 const getToken = () => {
   try { return localStorage.getItem( tokenStorageKey() ) || ''; } catch ( _ ) { return ''; }
 };
@@ -229,8 +244,16 @@ const updateRateBadge = ( res ) => {
 const ghApi = async ( url, signal ) => {
   const res = await fetch( url, { headers: ghHeaders(), signal } );
   updateRateBadge( res );
-  if ( res.status === 403 ) throw new Error( 'Rate limited. Add a GitHub token for higher limits.' );
-  if ( res.status === 404 ) throw new Error( 'Not found (private repo, or wrong owner/repo/branch).' );
+  if ( res.status === 403 ) {
+    const err = new Error( 'Rate limited. Add a GitHub token for higher limits.' );
+    err.status = 403;
+    throw err;
+  }
+  if ( res.status === 404 ) {
+    const err = new Error( 'Not found (private repo, or wrong owner/repo/branch).' );
+    err.status = 404;
+    throw err;
+  }
   if ( !res.ok ) throw new Error( `GitHub API error: ${ res.status }` );
   return res.json();
 };
@@ -316,7 +339,7 @@ const detectLocalMode = async () => {
 const localUrlFor = ( path ) => ( localMode ? './' + encodePath( path ) : null );
 
 /* ── per-pathname storage + repo cache (reference §4) ── */
-const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }-lab:${ location.pathname }:${ suffix }`;
+const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }-dev:${ location.pathname }:${ suffix }`;
 const repoCacheKey = () => storageKey( 'repo' );
 const cacheRepo = () => {
   try { localStorage.setItem( repoCacheKey(), JSON.stringify( { owner: state.owner, repo: state.repo, branch: state.branch, updated: state.repoUpdated } ) ); }
@@ -389,6 +412,15 @@ const resolveRepoPath = ( href, currentDir ) => {
     else stack.push( part );
   }
   return stack.join( '/' );
+};
+
+const scrollToMarkdownFragment = ( fragment ) => {
+  if ( !fragment ) return;
+  let decoded = fragment;
+  try { decoded = decodeURIComponent( fragment ); } catch ( _ ) { /* keep raw fragment */ }
+  const target = document.getElementById( decoded ) ||
+    document.querySelector( `[name="${ CSS.escape( decoded ) }"]` );
+  target?.scrollIntoView( { block: 'center', behavior: 'auto' } );
 };
 
 /* ── URL to open in a new tab / download (reference §31, simplified): the local

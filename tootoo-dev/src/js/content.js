@@ -3,7 +3,7 @@
    CONFIG. Writes: state.currentFilePath (Content owns this). Depends on core.js
    + marked/hljs/DOMPurify (CDN, same as the real app).
 
-   LAB SIMPLIFICATIONS vs the real app:
+  DEV SIMPLIFICATIONS vs the real app:
    - selectFile reads `mockFiles` instead of fetching GitHub/local.
    - audio/video/pdf/spreadsheet renderers are omitted for now (need real blobs).
    - markdown image/relative-link resolution against the repo is dropped (mock). */

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-23 17:11">
+  <meta name="revised" content="2026-06-23 16:55">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -141,22 +141,9 @@
       text-decoration: none;
       color: var(--highlight-color);
       cursor: pointer;
-      white-space: nowrap;
     }
 
     body.dark-mode #headerTitle {
-      color: color-mix(in srgb, var(--highlight-color) 65%, white);
-    }
-
-    .header-subtitle {
-      opacity: 0.6;
-      font-weight: normal;
-      font-size: 0.9rem;
-      color: var(--highlight-color);
-      white-space: nowrap;
-    }
-
-    body.dark-mode .header-subtitle {
       color: color-mix(in srgb, var(--highlight-color) 65%, white);
     }
 
@@ -328,11 +315,21 @@
       line-height: 1;
     }
 
-    /* ── Branch switcher (in the header; menu anchored to its chip) ── */
+    /* ── Branch switcher (now in the header; positioned relative to its chip) ── */
+    #filesPanelHeader {
+      position: relative;
+    }
 
     .branch-control {
       position: relative;
       display: inline-flex;
+    }
+
+    .files-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-width: 0;
     }
 
     .branch-switcher {
@@ -1113,8 +1110,6 @@
       <div id="branchMenu" class="branch-menu" role="listbox" aria-label="Branches" hidden></div>
     </span>
 
-    <span id="headerSubtitle" class="header-subtitle" hidden></span>
-
     <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode"
       aria-label="Toggle dark mode">🌙</button>
     <button id="btnFontDec" class="header-btn" title="Decrease Font Size" aria-label="Decrease font size">A−</button>
@@ -1679,18 +1674,14 @@
       // shown only before detection (reference §8 uses APP_ORIGIN for the same effect).
       const label = ( state.owner && state.repo ) ? `${ state.owner } / ${ state.repo }` : CONFIG.appName;
       const titleEl = document.getElementById( 'headerTitle' );
-      const subtitleEl = document.getElementById( 'headerSubtitle' );
       document.title = CONFIG.subtitle ? `${ label } · ${ CONFIG.subtitle }` : label;
       titleEl.textContent = label;
       setHeaderTimestamp();
-      if ( subtitleEl ) {
-        if ( CONFIG.subtitle ) {
-          subtitleEl.textContent = '· ' + CONFIG.subtitle;
-          subtitleEl.hidden = false;
-        } else {
-          subtitleEl.textContent = '';
-          subtitleEl.hidden = true;
-        }
+      if ( CONFIG.subtitle ) {
+        const sub = document.createElement( 'span' );
+        sub.style.cssText = 'opacity: 0.6; font-weight: normal; margin-left: 0.4rem; font-size: 0.9rem;';
+        sub.textContent = '· ' + CONFIG.subtitle;
+        titleEl.appendChild( sub );
       }
     };
 

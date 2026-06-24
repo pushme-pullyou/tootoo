@@ -1,4 +1,4 @@
-/* TooToo Lab — mock data.
+/* TooToo Dev — mock data.
    Stands in for the globals the real app builds from GitHub + tootoo.config.js,
    so component pages run offline. Pure data only (no DOM, no behavior):
    - CONFIG  : the per-fork config (subset)
@@ -9,8 +9,12 @@
 
 Object.assign( CONFIG, {
   appName: 'TooToo Dev',
-  subtitle: '',
+  subtitle: 'a GitHub repository browser',
   themeColor: '#2563eb',
+  // Mirror the fork's tootoo.config.js heading font so the harness is representative
+  // (the dev page reads this mock, never the real tootoo.config.js).
+  headingFontUrl: 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&display=swap',
+  headingFont: '"Fraunces", serif',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
   storagePrefix: 'tootoo',
   hiddenFolders: [ 'Images' ],

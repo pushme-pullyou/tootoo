@@ -20,19 +20,26 @@ const setHeaderTimestamp = () => {
 };
 
 const updateHeaderFromConfig = () => {
-  if ( CONFIG.themeColor ) document.documentElement.style.setProperty( '--highlight-color', CONFIG.themeColor );
+  if ( CONFIG.themeColor ) {
+    document.documentElement.style.setProperty( '--highlight-color', CONFIG.themeColor );
+    document.body?.style.setProperty( '--highlight-color', CONFIG.themeColor );
+  }
   // Once a repo is known, the header shows owner / repo; appName is the fallback
   // shown only before detection (reference §8 uses APP_ORIGIN for the same effect).
   const label = ( state.owner && state.repo ) ? `${ state.owner } / ${ state.repo }` : CONFIG.appName;
   const titleEl = document.getElementById( 'headerTitle' );
+  const subtitleEl = document.getElementById( 'headerSubtitle' );
   document.title = CONFIG.subtitle ? `${ label } · ${ CONFIG.subtitle }` : label;
   titleEl.textContent = label;
   setHeaderTimestamp();
-  if ( CONFIG.subtitle ) {
-    const sub = document.createElement( 'span' );
-    sub.style.cssText = 'opacity: 0.6; font-weight: normal; margin-left: 0.4rem; font-size: 0.9rem;';
-    sub.textContent = '· ' + CONFIG.subtitle;
-    titleEl.appendChild( sub );
+  if ( subtitleEl ) {
+    if ( CONFIG.subtitle ) {
+      subtitleEl.textContent = '· ' + CONFIG.subtitle;
+      subtitleEl.hidden = false;
+    } else {
+      subtitleEl.textContent = '';
+      subtitleEl.hidden = true;
+    }
   }
 };
 
@@ -89,30 +96,41 @@ const initHeaderControls = () => {
   } );
 
   document.getElementById( 'headerGitHub' )?.setAttribute( 'href', CONFIG.sourceRepoUrl || '#' );
+  // Brand mark in the GitHub link: the CONFIG favicon (shared with footer/sidebar
+  // marks via faviconDataUrl), replacing the old octocat glyph.
+  document.getElementById( 'headerBrand' )?.setAttribute( 'src', faviconDataUrl() );
 };
 
 /* ── token panel (header owns the dialog; it renders into the content area) ── */
-const showTokenPanel = () => {
+const showTokenPanel = ( reasonHtml = '' ) => {
   const cb = document.getElementById( 'contentBody' );
   if ( !cb ) return;   // standalone header page has no content area
-  const hasToken = getToken().length > 0;
+  const current = getToken();
+  const hasToken = current.length > 0;
   setContentHeader( makeSimpleHeader( 'GitHub Token' ) );
   cb.innerHTML = `
+    ${ reasonHtml }
     <div class="markdown-body">
-      <p>${ escapeHTML( CONFIG.appName ) } reads the GitHub API — <strong>60 requests/hour</strong> anonymous, <strong>5,000/hour</strong> with a token. The token is stored only in this browser's <code>localStorage</code> and sent only to <code>api.github.com</code>.</p>
-      <p><a href="https://github.com/settings/tokens" target="_blank" rel="noopener">Create a token →</a> — a classic token with no scopes is enough for public repos.</p>
       <div class="repo-form">
         <label for="inpToken">Token${ hasToken ? ' (currently set)' : '' }</label>
-        <input id="inpToken" type="password" placeholder="${ hasToken ? '•••••• (blank = keep)' : 'ghp_…' }" autocomplete="off" spellcheck="false">
+        <input id="inpToken" type="password" placeholder="${ hasToken ? '•••••••• (leave blank to keep)' : 'ghp_…' }" autocomplete="off" spellcheck="false">
         <label><input id="inpTokenShow" type="checkbox"> Show token</label>
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-          <button id="btnTokenSave" class="primary">Save</button>
-          <button id="btnTokenClear" class="secondary">Clear</button>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button id="btnTokenSave" class="primary" title="Save token and reload">Save</button>
+          <button id="btnTokenClear" class="secondary" title="Clear stored token">Clear</button>
         </div>
       </div>
-      <hr style="margin:1rem 0;border:none;border-top:1px solid var(--border-color);">
-      <p style="font-size:0.85rem;opacity:0.8;">Wipe every preference, cached file, and the token from this browser — useful when testing.</p>
-      <button id="btnResetAll" class="secondary">Reset all data</button>
+      <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
+      <p>${ escapeHTML( CONFIG.appName ) } reads the GitHub REST API to list and fetch repository contents. GitHub limits anonymous (un-authenticated) access to <strong>60 requests per hour per IP address</strong>. Once you exceed that limit you cannot read more files until the limit resets, unless you provide a Personal Access Token (PAT). With a token the limit rises to <strong>5,000 requests per hour</strong>, and you can also access private repositories the token has read scope for.</p>
+      <p><strong>Where do I get a token?</strong></p>
+      <ul>
+        <li><strong>Public repositories:</strong> create a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a>. A classic token with no scopes is enough for read-only access, or use a fine-grained token.</li>
+        <li><strong>Private repositories:</strong> ask the repository owner to issue a fine-grained personal access token scoped to that repository, with at minimum <em>Contents: Read</em> permission, and to share it with you securely.</li>
+      </ul>
+      <p>Your token is stored in this browser's <code>localStorage</code> only. It is never sent anywhere except <code>api.github.com</code>, and it is not shared with the developers of ${ escapeHTML( CONFIG.appName ) }.</p>
+      <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
+      <p>Wipe every preference, cached file, and the GitHub token from this browser. Useful when testing a fork or starting fresh.</p>
+      <button id="btnResetAll" class="secondary" title="Wipe all ${ escapeHTML( CONFIG.appName ) } data from this browser">Reset all ${ escapeHTML( CONFIG.appName ) } data</button>
     </div>`;
   const inp = document.getElementById( 'inpToken' );
   inp.focus();
@@ -127,22 +145,39 @@ const showTokenPanel = () => {
   document.getElementById( 'btnTokenSave' ).addEventListener( 'click', save );
   inp.addEventListener( 'keydown', ( e ) => { if ( e.key === 'Enter' ) save(); } );
   document.getElementById( 'btnTokenClear' ).addEventListener( 'click', () => {
-    try { localStorage.removeItem( tokenStorageKey() ); } catch ( _ ) { /* storage disabled */ }
-    clearFileCache();
-    location.reload();
-  } );
-  document.getElementById( 'btnResetAll' )?.addEventListener( 'click', () => {
-    if ( !window.confirm( `Wipe all ${ CONFIG.appName } data from this browser?` ) ) return;
     try {
-      const prefix = `${ CONFIG.storagePrefix }-lab:`;
-      const keys = [];
-      for ( let i = 0; i < localStorage.length; i++ ) { const k = localStorage.key( i ); if ( k && k.startsWith( prefix ) ) keys.push( k ); }
-      for ( const k of keys ) localStorage.removeItem( k );
+      localStorage.removeItem( tokenStorageKey() );
+      localStorage.removeItem( `${ CONFIG.storagePrefix }-dev:token` );
+      localStorage.removeItem( 'githubToken' );
     } catch ( _ ) { /* storage disabled */ }
     clearFileCache();
     location.reload();
   } );
+  document.getElementById( 'btnResetAll' )?.addEventListener( 'click', () => {
+    if ( !window.confirm( `Wipe all ${ CONFIG.appName } preferences, cached files, and the GitHub token from this browser?` ) ) return;
+    try {
+      const prefix = `${ CONFIG.storagePrefix }-dev:`;
+      const keys = [];
+      for ( let i = 0; i < localStorage.length; i++ ) { const k = localStorage.key( i ); if ( k && k.startsWith( prefix ) ) keys.push( k ); }
+      for ( const k of keys ) localStorage.removeItem( k );
+      localStorage.removeItem( tokenStorageKey() );
+      localStorage.removeItem( `${ CONFIG.storagePrefix }-dev:token` );
+      localStorage.removeItem( 'githubToken' );
+    } catch ( _ ) { /* storage disabled */ }
+    clearFileCache();
+    location.reload();
+  } );
+
+  // Keep ⚙️ pressed-state and aria in sync even when this panel was opened
+  // directly by an auth error path (not via toggleInfoPanel).
+  activePanel = 'token';
+  updateInfoButtonState();
 };
+
+const RATE_LIMIT_REASON_HTML = '<div class="error-panel">⚠️ <strong>GitHub API rate limit reached.</strong> You\'ve exceeded the anonymous request quota and cannot load more files until you add a token below or wait for the limit to reset.</div>';
+const PRIVATE_REPO_MESSAGE = 'Repository not found. Double-check the owner, repository, and branch names for typos. If the repository is private, add a GitHub token with read access below.';
+const privateRepoReasonHtml = () =>
+  `<div class="error-panel">⚠️ <strong>Repository not found</strong> (GitHub returned 404). First, check the owner, repository, and branch names for a typo — that\'s the most common cause. If the repository really is private, add a GitHub access token with read access below. If you already have a token saved, make sure it covers ${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }.</div>`;
 
 /* ── About panel + About/Token toggle (reference §12c). ? / ⚙️ open their panel;
    clicking again returns to the file you were on (panelReturnPath). ── */
@@ -162,47 +197,88 @@ const renderAboutPanel = async () => {
   const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
   const sourceUrl = CONFIG.sourceRepoUrl;
   const repoUrl = state.owner && state.repo ? `https://github.com/${ state.owner }/${ state.repo }` : sourceUrl;
-  const tokenStatus = getToken() ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
+  const token = getToken();
 
   let rateLimitInfo = 'Unable to fetch';
   try {
     const res = await fetch( 'https://api.github.com/rate_limit', { headers: ghHeaders() } );
-    if ( res.ok ) { const core = ( await res.json() ).resources.core; rateLimitInfo = `${ core.remaining } / ${ core.limit } remaining`; }
-  } catch ( _ ) { /* offline */ }
+    if ( res.ok ) {
+      const data = await res.json();
+      const core = data.resources.core;
+      const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
+      rateLimitInfo = `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })`;
+    }
+  } catch ( _ ) { /* offline or blocked */ }
+
+  const tokenStatus = token ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
 
   const branchHtml = ( state.owner && state.repo && state.branch )
-    ? `<li><strong>Branch:</strong> <a href="https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/tree/${ encodeURIComponent( state.branch ) }" target="_blank" rel="noopener">${ escapeHTML( state.branch ) }</a></li>`
+    ? `<li><strong>Branch:</strong> <a href="https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/tree/${ encodeURIComponent( state.branch ) }" target="_blank" rel="noopener">${ escapeHTML( state.branch ) }</a> · <a href="https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/branches" target="_blank" rel="noopener">all branches</a></li>`
     : '';
-
-  const statsHtml = ( () => {
-    const stats = getRepoStats();
-    if ( !stats ) return '<h3>Repository statistics</h3><p>No tree loaded yet.</p>';
-    const types = stats.topTypes.map( ( [ ext, n ] ) => `<li>${ escapeHTML( ext ) }: ${ n }</li>` ).join( '' );
-    const largest = stats.largest.map( ( f ) => `<li>${ escapeHTML( f.path ) } — ${ formatFileSize( f.size ) }</li>` ).join( '' );
-    return `<h3>Repository statistics</h3><ul><li><strong>Files:</strong> ${ stats.fileCount }</li><li><strong>Folders:</strong> ${ stats.folderCount }</li><li><strong>Total size:</strong> ${ formatFileSize( stats.totalSize ) }</li></ul><h4>Top file types</h4><ol>${ types }</ol><h4>Largest files</h4><ol>${ largest }</ol>`;
-  } )();
 
   setContentHeader( makeSimpleHeader( 'About' ) );
   document.getElementById( 'contentBody' ).innerHTML = `
     <div class="markdown-body">
       <h2>${ escapeHTML( CONFIG.appName ) }</h2>
-      <p>A lightweight single-file GitHub repository browser (component build).</p>
+      <p>A lightweight single-file GitHub repository browser.</p>
       <ul>
-        <li><strong>Source:</strong> <a href="${ escapeHTML( sourceUrl ) }" target="_blank" rel="noopener">${ escapeHTML( sourceUrl ) }</a></li>
+        <li><strong>Source code:</strong> <a href="${ escapeHTML( sourceUrl ) }" target="_blank" rel="noopener">${ escapeHTML( sourceUrl ) }</a></li>
         <li><strong>Repository:</strong> <a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">${ escapeHTML( repoUrl ) }</a></li>
         ${ branchHtml }
+        <li><strong>Copyright:</strong> pushme-pullyou authors</li>
+        <li><strong>License:</strong> MIT License</li>
         <li><strong>Updated:</strong> ${ escapeHTML( revised ) }</li>
+      </ul>
+      <h3>GitHub API</h3>
+      <ul>
+        <li><strong>Repo visibility:</strong> Public (private repos require a token)</li>
         <li><strong>Token:</strong> ${ escapeHTML( tokenStatus ) }</li>
         <li><strong>Rate limit:</strong> ${ escapeHTML( rateLimitInfo ) }</li>
+        <li><strong>GitHub Pages:</strong> Supported — auto-detects repos hosted on GitHub Pages</li>
       </ul>
-      ${ statsHtml }
+      ${ ( () => {
+      const stats = getRepoStats();
+      if ( !stats ) return '<h3>Repository Statistics</h3><p>No tree data loaded yet.</p>';
+      const typesHtml = stats.topTypes.map( ( [ ext, count ] ) =>
+        `<li>${ escapeHTML( ext ) }: ${ count } file${ count !== 1 ? 's' : '' }</li>`
+      ).join( '' );
+      const largestHtml = stats.largest.map( ( f ) =>
+        `<li>${ escapeHTML( f.path ) } — ${ formatFileSize( f.size ) }</li>`
+      ).join( '' );
+      return `<h3>Repository Statistics</h3>
+              <ul>
+                <li><strong>Files:</strong> ${ stats.fileCount }</li>
+                <li><strong>Folders:</strong> ${ stats.folderCount }</li>
+                <li><strong>Total size:</strong> ${ formatFileSize( stats.totalSize ) }</li>
+              </ul>
+              <h4>Top file types</h4>
+              <ol>${ typesHtml }</ol>
+              <h4>Largest files</h4>
+              <ol>${ largestHtml }</ol>`;
+    } )() }
+      <h3>Tips</h3>
+      <ul>
+        <li>Use the filter input in the sidebar to search file names</li>
+        <li>Click the title in the header to reload</li>
+        <li>Use <strong>A−</strong> / <strong>A+</strong> to adjust font size — helpful on phones and small screens</li>
+        <li>Click <strong>🌙</strong> to toggle dark mode — your choice is saved across visits</li>
+        <li>Click <strong>?</strong> or <strong>⚙️ Token</strong> again to close the panel and return to your file</li>
+      </ul>
       <h3>Keyboard shortcuts</h3>
       <ul>
         <li><kbd>Ctrl/⌘ B</kbd> — toggle sidebar</li>
-        <li><kbd>/</kbd> focus filter · <kbd>Esc</kbd> clear filter</li>
-        <li><kbd>↑</kbd> <kbd>↓</kbd> move · <kbd>→</kbd>/<kbd>←</kbd> open/close folder · <kbd>Enter</kbd> open</li>
+        <li><kbd>/</kbd> — focus the filter box</li>
+        <li><kbd>Esc</kbd> — clear the filter (when it's focused)</li>
+        <li><kbd>\\</kbd> — focus the sidebar tree (jumps to the current selection)</li>
+        <li><kbd>↑</kbd> <kbd>↓</kbd> — move one item up / down</li>
+        <li><kbd>Home</kbd> <kbd>End</kbd> — jump to first / last visible item</li>
+        <li><kbd>PgUp</kbd> <kbd>PgDn</kbd> — jump about one viewport</li>
+        <li><kbd>→</kbd> — open folder / step into</li>
+        <li><kbd>←</kbd> — close folder / step out</li>
+        <li><kbd>Enter</kbd> <kbd>Space</kbd> — toggle folder or select file</li>
       </ul>
       <h3>Maintenance</h3>
+      <p>Render every file in this repo off-screen and report which ones fail to display — markdown that won't parse, images that won't decode, spreadsheets that won't open. Best run locally (<code>file://</code>) or with a token.</p>
       <button id="btnSelfTest" class="secondary">🧪 Run self-test</button>
     </div>`;
   document.getElementById( 'btnSelfTest' )?.addEventListener( 'click', runSelfTest );
@@ -218,6 +294,10 @@ const closeInfoPanel = () => {
 };
 
 const toggleInfoPanel = async ( panel ) => {
+  // No content area to render into (e.g. the standalone header component page) →
+  // the ?/⚙️ buttons are inert rather than throwing. Mirrors showTokenPanel's guard,
+  // but here it also avoids leaving the button stuck pressed + a broken close path.
+  if ( !document.getElementById( 'contentBody' ) ) return;
   if ( activePanel === panel ) { closeInfoPanel(); return; }
   if ( !activePanel ) panelReturnPath = state.currentFilePath || '';
   activePanel = panel;

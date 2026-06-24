@@ -5,7 +5,8 @@
 
    owner/repo here are the default repo; ?owner=…&repo=…&branch=… in the URL wins. */
 Object.assign( CONFIG, {
-  appName: 'TooToo Lab',
+  appName: 'TooToo Dev',
+  subtitle: 'a GitHub repository browser',
   owner: 'pushme-pullyou',
   repo: 'tootoo',
   faviconLetters: 'TT',     // 2 letters drawn into the favicon + brand marks

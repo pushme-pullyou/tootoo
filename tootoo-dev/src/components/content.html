@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TooToo — Content (lab)</title>
+  <title>TooToo — Content (dev)</title>
   <link rel="stylesheet" href="../styles.css">
   <!-- Same external deps the real app uses (CDN; needs internet). -->
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
@@ -14,24 +14,43 @@
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.1/dist/purify.min.js"></script>
   <style>
     /* Page-only scaffolding: the file-picker bar above the panel. */
-    .lab-bar {
-      display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;
-      padding: 0.5rem 1rem; border-bottom: 1px solid var(--border-color);
-      background: var(--primary-bg); font-size: 0.9rem;
+    .dev-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--primary-bg);
+      font-size: 0.9rem;
     }
-    .lab-bar strong { color: var(--highlight-color); margin-right: 0.5rem; }
-    .lab-bar button {
-      font: inherit; cursor: pointer; padding: 0.15rem 0.5rem; border-radius: 6px;
-      border: 1px solid var(--highlight-color); background: transparent; color: var(--highlight-color);
+
+    .dev-bar strong {
+      color: var(--highlight-color);
+      margin-right: 0.5rem;
     }
-    .lab-bar button:hover { background: var(--highlight-color); color: #fff; }
+
+    .dev-bar button {
+      font: inherit;
+      cursor: pointer;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--highlight-color);
+      background: transparent;
+      color: var(--highlight-color);
+    }
+
+    .dev-bar button:hover {
+      background: var(--highlight-color);
+      color: #fff;
+    }
   </style>
 </head>
 
 <body>
 
-  <div class="lab-bar">
-    <strong>🧪 Content panel (lab)</strong> open:
+  <div class="dev-bar">
+    <strong>🧪 Content panel (dev)</strong> open:
     <button data-open="README.md">README.md</button>
     <button data-open="examples/code/code-sample.js">code-sample.js</button>
     <button data-open="examples/data/config.json">config.json</button>
@@ -47,8 +66,7 @@
       </div>
       <div id="printTitle" class="print-only"></div>
       <div id="contentBody">
-        <p>Pick a file above. Try the <strong>Rendered ↔ Raw</strong> toggle, <strong>Copy</strong>,
-        and the breadcrumb on a nested file.</p>
+        <p>Select a file from the list to preview it here.</p>
       </div>
       <button id="btnBackToTop" class="back-to-top" aria-label="Back to top" title="Back to Top">↑</button>
       <!-- @include components/footer.html -->
@@ -61,11 +79,11 @@
   <script src="../mock/mock-data.js"></script>
   <script src="../js/content.js"></script>
 
-  <!-- Lab harness: file picker + init. (Back-to-top now lives in content.js.) -->
+  <!-- Dev harness: file picker + init. (Back-to-top now lives in content.js.) -->
   <script>
     initContent();
 
-    document.querySelector( '.lab-bar' ).addEventListener( 'click', ( e ) => {
+    document.querySelector( '.dev-bar' ).addEventListener( 'click', ( e ) => {
       const btn = e.target.closest( '[data-open]' );
       if ( btn ) selectFile( btn.dataset.open );
     } );

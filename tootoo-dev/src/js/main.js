@@ -12,6 +12,8 @@ const initApp = async () => {
   // repo can override theme/favicon/appName/hidden files (canonical's fork model).
   if ( window.TOOTOO_CONFIG && typeof window.TOOTOO_CONFIG === 'object' ) Object.assign( CONFIG, window.TOOTOO_CONFIG );
 
+  migrateTokenStorage();
+
   initHeader();     // header.js  — branding + appearance controls
   initContent();    // content.js — wire Copy / view-toggle / etc.
   renderFooter();   // footer.js  — brand bar
@@ -39,10 +41,13 @@ const initApp = async () => {
   await fetchTree();                       // sidebar.js — GitHub tree → state.tree → render
   updateFooterLicense();                   // footer.js — link to the repo's own LICENSE (tree now loaded)
 
+  if ( state.oversized ) return;
+
   // Back/forward + address-bar hash edits re-open the file.
   window.addEventListener( 'hashchange', () => {
     const p = currentHashPath();
-    if ( p && p !== state.currentFilePath ) selectFile( p );
+    const pFile = p.includes( '#' ) ? p.slice( 0, p.indexOf( '#' ) ) : p;
+    if ( p && pFile !== state.currentFilePath ) selectFile( p );
   } );
 
   // File-open priority: URL hash → last-opened (this session) → README.

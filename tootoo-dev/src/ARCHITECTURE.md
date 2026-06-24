@@ -1,7 +1,7 @@
-# TooToo Lab — Architecture
+# TooToo Dev — Architecture
 
 How the component-based TooToo is organized. This is the blueprint we build the
-lab against. Status: **draft, 2026-06-21.**
+dev setup against. Status: **draft, 2026-06-21.**
 
 ## Layers
 
@@ -38,7 +38,7 @@ Example flows:
 ## Component contracts
 
 Each component: a **mission**, the **DOM** it owns, what state it **writes** vs
-**reads**, and the **functions it exposes**. In the lab each becomes one file in
+**reads**, and the **functions it exposes**. In the dev setup each becomes one file in
 `src/components/` (markup) + one in `src/js/` (behavior).
 
 ### 🟦 Header — "Where are we?"
@@ -84,7 +84,7 @@ Each component: a **mission**, the **DOM** it owns, what state it **writes** vs
 
 ## File layout this implies
 
-```
+```text
 src/
   index.template.html   skeleton with @include markers
   styles.css            shared (base tokens + per-component sections appended)

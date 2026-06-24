@@ -47,8 +47,8 @@ window.TOOTOO_CONFIG = {
   // headingFont    : font-family value applied to every heading — title,
   //                  panel headers, and every h1–h6 anywhere in the doc;
   //                  falls back to system-ui everywhere else
-  headingFontUrl: 'https://fonts.googleapis.com/css2?family=Patua+One&display=swap',
-  headingFont: '"Patua One", serif',
+  headingFontUrl: 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&display=swap',
+  headingFont: '"Fraunces", serif',
 
   // ── Browsing behavior ───────────────────────────────────────────────────
   // hiddenFolders : folder names to omit from the sidebar tree
