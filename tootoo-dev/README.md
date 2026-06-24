@@ -55,6 +55,14 @@ mock data, no GitHub needed) **and** a source fragment the assembler extracts.
 
 ## Status
 
+- 2026-06-23 — **PDF viewer fills the pane.** PDFs now use the full height between the
+  file-header and the in-pane footer (a `:has()`-driven flex fill on the PDF iframe)
+  instead of a fixed 70vh; the HTML preview keeps 70vh, and it degrades to 70vh where
+  `:has()` is unsupported.
+- 2026-06-23 — **Blog mode (auto, by convention).** A `blog/` folder with NN-Month
+  subfolders becomes a reverse-chronological logbook: newest post on top, newest
+  month/year first, the latest month pre-expanded, and the latest post opens on the
+  first expand of `blog/`. Scoped to the blog subtree — the rest of the repo is unchanged.
 - 2026-06-23 — **Private-repo file loading via the GitHub Contents API.** With a token
   set, `fetchFileResponse` now fetches file contents from the **Contents API**
   (`Accept: application/vnd.github.raw+json`) instead of `raw.githubusercontent.com`,

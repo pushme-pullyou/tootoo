@@ -790,6 +790,23 @@ body.dark-mode .file-title>a {
   background: var(--iframe-bg);
 }
 
+/* PDFs fill the pane's available height (between the file-header and the in-pane
+   footer) instead of the fixed 70vh that previews use. :has() flips #contentBody
+   into a flex column when it holds a PDF so the iframe can flex to fill; min-height
+   keeps a sane floor when the column has no definite height (print). Reverts itself
+   for any other content. */
+#contentBody:has( > .iframe-pdf ) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.iframe-pdf {
+  height: auto;
+  flex: 1;
+  min-height: 70vh;
+}
+
 .md-error {
   background: var(--warning-bg);
   border: 1px solid var(--warning-border);

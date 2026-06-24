@@ -165,8 +165,10 @@ const renderVideo = ( url ) => {
 };
 
 const renderPdf = ( url ) => {
+  // iframe-pdf (vs the shared iframe-content) lets the CSS fill the pane's height
+  // for PDFs while the HTML preview keeps its fixed 70vh.
   document.getElementById( 'contentBody' ).innerHTML =
-    `<iframe class="iframe-content" src="${ escapeHTML( url ) }"></iframe>`;
+    `<iframe class="iframe-content iframe-pdf" src="${ escapeHTML( url ) }"></iframe>`;
 };
 
 // SheetJS (~700KB) is injected on first spreadsheet open, not on every page.
