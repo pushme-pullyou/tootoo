@@ -4,6 +4,7 @@
 
 Done
 
+* 2026-06-23 Blog post folders display newest at top
 * 2026-05-26 ~ update both local and GitHub repos: or maybe separate apps
 * 2026-05-31 ~ repos to the header bar
 * 2026-05-31 ~ add branches to the header bar

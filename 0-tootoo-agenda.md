@@ -20,7 +20,8 @@ This is the current TooToo roadmap.
 
 ## Copy Index to Repo
 
-* 2026-06-23 Blog post folders disply newest at top
+* 2026-06-24: clean up readme files
+* 2026-06-23: favicon in config.js
 * 2026-06-16: Photo gallery app
 * 2026-06-16 Ability to load special file format loaders on the fly
 
