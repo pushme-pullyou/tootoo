@@ -17,7 +17,7 @@ const initApp = async () => {
   initHeader();     // header.js  — branding + appearance controls
   initContent();    // content.js — wire Copy / view-toggle / etc.
   renderFooter();   // footer.js  — brand bar
-  applyFavicon();   // core.js    — set the browser-tab favicon from CONFIG
+  applyFavicon();   // core.js    — set the browser-tab favicon (generated mark; favicon.ico upgrade follows)
   detectRealFavicon(); // core.js — if a favicon.ico sits next to index.html, prefer it for the tab + brand marks
   applyHeadingFont(); // core.js  — load + apply CONFIG.headingFont(Url) for headings/title
 
