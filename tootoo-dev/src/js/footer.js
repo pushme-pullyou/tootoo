@@ -3,7 +3,7 @@
 
 const renderFooter = () => {
   const mark = document.querySelector( '.app-footer-mark' );
-  if ( mark ) mark.src = faviconDataUrl();   // brand mark from CONFIG favicon
+  if ( mark ) mark.src = brandMarkSrc();   // real favicon.ico if present, else CONFIG mark
   updateFooterCopyright();
 };
 

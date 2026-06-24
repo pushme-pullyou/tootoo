@@ -98,7 +98,7 @@ const initHeaderControls = () => {
   document.getElementById( 'headerGitHub' )?.setAttribute( 'href', CONFIG.sourceRepoUrl || '#' );
   // Brand mark in the GitHub link: the CONFIG favicon (shared with footer/sidebar
   // marks via faviconDataUrl), replacing the old octocat glyph.
-  document.getElementById( 'headerBrand' )?.setAttribute( 'src', faviconDataUrl() );
+  document.getElementById( 'headerBrand' )?.setAttribute( 'src', brandMarkSrc() );
 };
 
 /* ── token panel (header owns the dialog; it renders into the content area) ── */

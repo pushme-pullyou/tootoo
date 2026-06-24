@@ -138,9 +138,36 @@ const faviconDataUrl = () => {
     `%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E` +
     `%3Ctext x='22' y='28'%3E${ l1 }%3C/text%3E%3Ctext x='42' y='40'%3E${ l2 }%3C/text%3E%3C/g%3E%3C/svg%3E`;
 };
+/* Prefer a real favicon.ico sitting next to index.html (the fork's site root) over
+   the generated letter mark; fall back to the generated SVG when absent. Resolved
+   asynchronously by detectRealFavicon, so brandMarkSrc() returns the generated mark
+   until a real favicon.ico is confirmed. Drives the tab icon AND every in-page brand
+   mark (header / footer / sidebar). */
+let realFaviconUrl = null;   // 'favicon.ico' once confirmed present, else null
+const brandMarkSrc = () => realFaviconUrl || faviconDataUrl();
+
+const applyBrandMarks = () => {
+  const url = brandMarkSrc();
+  const link = document.querySelector( 'link[rel="icon"]' );
+  if ( link ) link.href = url;
+  document.querySelector( '#headerBrand' )?.setAttribute( 'src', url );
+  document.querySelector( '.app-footer-mark' )?.setAttribute( 'src', url );
+  document.querySelector( '#btnScrollTreeTop img' )?.setAttribute( 'src', url );
+};
+
+/* Existence probe via <img>: loads under file:// without the access flag (images
+   aren't fetch-restricted) and over https. A present .ico fires onload; missing/
+   unreadable fires onerror (and logs one expected 404, like the .git/config probe).
+   On success, every mark upgrades from the generated SVG to the real favicon.ico. */
+const detectRealFavicon = () => {
+  const img = new Image();
+  img.onload = () => { realFaviconUrl = 'favicon.ico'; applyBrandMarks(); };
+  img.src = 'favicon.ico';   // relative to index.html → the fork's site root
+};
+
 const applyFavicon = () => {
   const link = document.querySelector( 'link[rel="icon"]' );
-  if ( link ) link.href = faviconDataUrl();
+  if ( link ) link.href = brandMarkSrc();
 };
 
 /* ── optional heading typeface (reference §11): load CONFIG.headingFontUrl into

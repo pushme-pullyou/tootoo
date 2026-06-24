@@ -460,7 +460,7 @@ const initSidebar = () => {
 
   // Sidebar footer brand mark (from CONFIG favicon) + scroll-to-top.
   const footImg = document.querySelector( '#btnScrollTreeTop img' );
-  if ( footImg ) footImg.src = faviconDataUrl();
+  if ( footImg ) footImg.src = brandMarkSrc();
   document.getElementById( 'btnScrollTreeTop' )?.addEventListener( 'click', () =>
     document.getElementById( 'treeList' ).scrollTo( { top: 0, behavior: 'smooth' } ) );
 
