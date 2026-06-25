@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-25 01:13">
+  <meta name="revised" content="2026-06-24 21:00">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1203,9 +1203,7 @@ const CONFIG = {
   headingFontUrl: '', headingFont: '',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
   storagePrefix: 'tootoo',
-  hiddenFolders: [ 'Images' ],
-  hiddenFiles: [],
-  maxRepoFiles: 5000,
+  hiddenFolders: [ 'Images' ], hiddenFiles: [], maxRepoFiles: 5000,
   autoOpenFolderReadme: true,  // expanding a folder opens its own README the first time (set false to disable)
 };
 const state = { owner: '', repo: '', branch: '', tree: null, currentFilePath: '', repoUpdated: '', oversized: false };
@@ -1721,26 +1719,15 @@ const setHljsTheme = ( isDark ) => {
     ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
     : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
 };
-/* TooToo — config.js: per-build config for the ASSEMBLED (live) build.
-   Object.assigns over the core defaults. This file (not mock-data.js) is what
-   the assembler includes, so `mockFiles` is undefined in the assembled build and
-   the data layer fetches real files from GitHub.
+/* TooToo — production config (used by `assemble.ps1 -Prod`).
 
-   owner/repo here are the default repo; ?owner=…&repo=…&branch=… in the URL wins. */
-Object.assign( CONFIG, {
-  appName: 'TooToo Dev',
-  subtitle: 'a GitHub repository browser',
-  owner: 'Pushme-Pullyou',
-  repo: 'tootoo',
-  faviconLetters: 'TT',     // 2 letters drawn into the favicon + brand marks
-  faviconColor: '#2563eb',  // favicon background color
-  // faviconFile: 'favicon.ico',  // uncomment when a real favicon.ico sits beside index.html:
-                                  // skips the existence probe + generated letter mark
-  hiddenFiles: [ '/index.html' ], // hide this deployment's own root index.html (the app file);
-                                  // leading '/' anchors to the repo root, so nested index.html show.
-                                  // Set this per-repo (in tootoo.config.js), not in the shared core
-                                  // default — that way other people's repos keep their index.html.
-} );
+   Intentionally empty. Canonical index.html stays byte-identical across every fork;
+   each repo customizes via its own tootoo.config.js (window.TOOTOO_CONFIG), merged
+   over the CONFIG defaults at init.
+
+   The dev build uses config.js instead, which bakes a default repo + dev identity so
+   the standalone assembled file is testable without a tootoo.config.js sibling or a
+   .git/config to detect. */
 /* TooToo — header.js  (the "where are we?" component).
    Ported from reference §8 (updateHeaderFromConfig) + appearance controls (§11).
    Reads: CONFIG + meta[revised]. Writes: state.owner/repo/branch (repo/branch
@@ -2810,7 +2797,7 @@ const renderCode = ( text, ext ) => {
 
 const renderHtml = ( text, ext ) => {
   const url = createBlobUrl( new Blob( [ text ], { type: 'text/html' } ) );
-  const note = `<div class="md-error">ℹ️ Preview is sandboxed: scripts and relative assets are disabled. Use ↗ New Tab for the live page.</div>`;
+  const note = `<div class="md-error">ℹ️ Preview is sandboxed: scripts and relative assets are disabled. Click <strong>&lt;/&gt;</strong> to show the raw source, or <strong>↗ New Tab</strong> to open the file directly (renders from a local copy; GitHub's raw host shows source).</div>`;
   document.getElementById( 'contentBody' ).innerHTML =
     buildToggleHtml( ext, `${ note }<iframe class="iframe-content" sandbox src="${ escapeHTML( url ) }"></iframe>`, text );
 };

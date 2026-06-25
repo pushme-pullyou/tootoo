@@ -20,9 +20,8 @@ This is the current TooToo roadmap.
 
 ## Agenda
 
-* 2026-06-24
-* 2026-06-24: clean up readme files
-* 2026-06-23: favicon in config.js
+* 2026-06-24: user footer message
+
 * 2026-06-16: Photo gallery app
 * 2026-06-16 Ability to load special file format loaders on the fly
 

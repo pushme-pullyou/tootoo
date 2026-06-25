@@ -1,66 +1,32 @@
-// TooToo per-fork configuration.
-//
-// Drop this file next to index.html and set the knobs you want to override.
-// Anything you set here wins over the built-in CONFIG block in index.html,
-// so forks can stay byte-identical to canonical and sync with `cp`.
-//
-// All keys are optional — leave a key out (or assign '') to keep the default.
+// TooToo — per-fork configuration.
+// Sits next to index.html; window.TOOTOO_CONFIG overrides the built-in CONFIG at init,
+// so every index.html stays byte-identical across forks. All keys are optional —
+// omit one to keep canonical's default. (Fuller docs: FORKING.md.)
 
 window.TOOTOO_CONFIG = {
 
-  // ── Repo to browse ──────────────────────────────────────────────────────
-  // Leave empty to auto-detect from URL params, GitHub Pages subdomain,
-  // .git/config (file:// only), or the manual repo form.
+  // ── Repo to browse ── omit to auto-detect (URL params, *.github.io host, .git/config, manual form)
   // owner: 'theo-armour',
   // repo: 'pages',
-  // branch: '',
+  // branch: '',          // empty = the repo's default branch
 
-  // ── Identity ────────────────────────────────────────────────────────────
-  // appName        : drives <title>, the header text, and the About heading
-  // storagePrefix  : localStorage namespace; pick a unique value per fork
-  //                  so each fork's state stays separate
-  // sourceRepoUrl  : top-header GitHub icon target and About "Source code"
-  //                  link; point this at your fork
-  // appName: 'Pages',
-  // storagePrefix: 'theo-pages',
-  // sourceRepoUrl: 'https://github.com/me/my-journal',
+  // ── Identity ──
+  // appName: 'TooToo',                                          // <title>, header text, About heading
+  // storagePrefix: 'tootoo',                                    // localStorage namespace — unique per fork
+  // sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',  // header GitHub icon + About link
 
-  // ── Branding (this is what makes forks look different) ──────────────────
-  // themeColor     : hex string; sets --highlight-color in both light AND
-  //                  dark mode
-  // subtitle       : small muted text appended to the header title with a
-  //                  middle-dot separator
-  // faviconLetters : two characters drawn into the SVG favicon; uppercased
-  // faviconColor   : background color of the SVG favicon
-  // headingFontUrl : optional <link> stylesheet (Google Fonts URL or local
-  //                  .woff2 path) loaded into <head> at init
-  // headingFont    : font-family value applied to every heading — title,
-  //                  panel headers, and every h1–h6 anywhere in the doc;
-  //                  falls back to system-ui everywhere else
-  themeColor: '#3a8856',
-  subtitle: 'Single-file GitHub repository browser',
-  faviconLetters: 'tt',
-  faviconColor: '#3a8856',
-
-  // headingFontUrl : optional <link> stylesheet (Google Fonts URL or local
-  //                  .woff2 path) loaded into <head> at init
-  // headingFont    : font-family value applied to every heading — title,
-  //                  panel headers, and every h1–h6 anywhere in the doc;
-  //                  falls back to system-ui everywhere else
+  // ── Branding ──
+  themeColor: '#3a8856',                              // --highlight-color (light + dark)
+  subtitle: 'Single-file GitHub repository browser',  // muted text after the title
+  faviconLetters: 'tt',                               // 2 letters in the generated SVG favicon
+  faviconColor: '#3a8856',                            // favicon background
+  // faviconFile: 'favicon.ico',                      // use a real favicon.ico instead of the generated mark
   headingFontUrl: 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&display=swap',
-  headingFont: '"Fraunces", serif',
+  headingFont: '"Fraunces", serif',                   // applied to every heading + the title
 
-  // ── Browsing behavior ───────────────────────────────────────────────────
-  // hiddenFolders : folder names to omit from the sidebar tree
-  //                 (case-insensitive, matches at any depth)
-  // hiddenFiles   : file names to omit from the sidebar tree
-  //                 (case-insensitive, matches at any depth) — useful for
-  //                 per-fork config files like tootoo.config.js itself
-  // maxRepoFiles  : refuse to render repos bigger than this; the
-  //                 friendly bail-out panel also fires on any truncated
-  //                 GitHub tree response
-  // hiddenFolders: [ 'Images', 'drafts' ],
-  hiddenFiles: [ '/index.html','tootoo.config.js' ],
-  // maxRepoFiles: 5000,
+  // ── Browsing ──
+  // hiddenFolders: [ 'Images' ],                      // folder names to hide (any depth)
+  // hiddenFiles: [ 'tootoo.config.js' ],              // file names to hide; '/name' anchors to the repo root
+  // maxRepoFiles: 5000,                               // refuse to render repos larger than this
 
 };

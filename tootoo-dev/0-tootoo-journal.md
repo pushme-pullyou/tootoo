@@ -1,5 +1,10 @@
 # TooToo — Development Journal
 
+## 2026-06-24
+
+* 2026-06-24: clean up readme files
+* 2026-06-23: favicon in config.js
+
 ## 2026-06-23
 
 Done
