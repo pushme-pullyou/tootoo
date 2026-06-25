@@ -145,6 +145,15 @@ const renderNode = ( name, node, parentPath, blog ) => {
     }
     const open = ( blog && blog.expandPaths.has( fullPath ) ) ? ' open' : '';
 
+    // Auto-open this folder's own README the first time it's expanded. Skipped for blog
+    // roots (they open their latest post instead) and inside the blog subtree.
+    let readmeAttr = '';
+    if ( CONFIG.autoOpenFolderReadme !== false && !blog && !blogAttr ) {
+      const readme = Object.entries( node.children ).find(
+        ( [ n, c ] ) => c.type === 'blob' && /^readme/i.test( n ) );
+      if ( readme ) readmeAttr = ` data-readme="${ escapeHTML( readme[ 1 ].path ) }"`;
+    }
+
     const childrenHtml = sortedEntries( node.children, mode )
       .map( ( [ childName, childNode ] ) => renderNode( childName, childNode, fullPath, childBlog ) )
       .join( '' );
@@ -153,7 +162,7 @@ const renderNode = ( name, node, parentPath, blog ) => {
     const tip = `${ fullPath } — ${ s.files } file${ s.files === 1 ? '' : 's' }` +
       ( s.folders ? ` · ${ s.folders } folder${ s.folders === 1 ? '' : 's' }` : '' ) +
       ` · ${ formatFileSize( s.bytes ) }`;
-    return `<details${ open }${ blogAttr } data-folder-path="${ escapeHTML( fullPath ) }">` +
+    return `<details${ open }${ blogAttr }${ readmeAttr } data-folder-path="${ escapeHTML( fullPath ) }">` +
       `<summary class="tree-folder" tabindex="0" title="${ escapeHTML( tip ) }">` +
       `<span aria-hidden="true">📁</span> <span class="folder-name">${ escapeHTML( displayName ) }</span>` +
       `</summary>` + childrenHtml + `</details>`;
@@ -181,24 +190,26 @@ const setExpandAllButton = ( expanded ) => {
   btn.setAttribute( 'aria-label', label );
 };
 
-/* ── blog: the first time the user expands the blog folder, open its latest post.
-   Bound to the summary click (a real gesture) so the filter / expand-all opening
-   the folder programmatically doesn't hijack the content pane. ── */
-const wireBlogAutoOpen = () => {
-  document.querySelectorAll( 'details[data-blog-root]' ).forEach( ( d ) => {
-    const post = d.getAttribute( 'data-blog-latest' );
+/* ── auto-open on first manual expand. Bound to the summary click (a real gesture) so
+   the filter / expand-all opening a folder programmatically doesn't hijack the content
+   pane. A blog root opens its latest post; any other folder opens its own README. ── */
+const wireFirstOpen = ( selector, attr ) => {
+  document.querySelectorAll( selector ).forEach( ( d ) => {
+    const path = d.getAttribute( attr );
     const summary = d.querySelector( ':scope > summary' );
-    if ( !post || !summary ) return;
+    if ( !path || !summary ) return;
     let opened = false;
     summary.addEventListener( 'click', () => {
       if ( opened ) return;
-      // Let the native <details> toggle finish, then open the latest post if it expanded.
+      // Let the native <details> toggle finish, then open the target if it expanded.
       setTimeout( () => {
-        if ( d.open && typeof selectFile === 'function' ) { opened = true; selectFile( post ); }
+        if ( d.open && typeof selectFile === 'function' ) { opened = true; selectFile( path ); }
       }, 0 );
     } );
   } );
 };
+const wireBlogAutoOpen = () => wireFirstOpen( 'details[data-blog-root]', 'data-blog-latest' );
+const wireFolderReadmeAutoOpen = () => wireFirstOpen( 'details[data-readme]', 'data-readme' );
 
 /* ── render the whole tree ── */
 const renderTree = ( treeArray ) => {
@@ -210,6 +221,7 @@ const renderTree = ( treeArray ) => {
   treeList.innerHTML = entries.map( ( [ name, node ] ) => renderNode( name, node, '', null ) ).join( '' );
   refreshTreeCache();
   wireBlogAutoOpen();
+  wireFolderReadmeAutoOpen();
 };
 
 /* ── filter (reference §23) ── */

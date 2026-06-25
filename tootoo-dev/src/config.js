@@ -11,4 +11,10 @@ Object.assign( CONFIG, {
   repo: 'tootoo',
   faviconLetters: 'TT',     // 2 letters drawn into the favicon + brand marks
   faviconColor: '#2563eb',  // favicon background color
+  // faviconFile: 'favicon.ico',  // uncomment when a real favicon.ico sits beside index.html:
+                                  // skips the existence probe + generated letter mark
+  //hiddenFiles: [ '/index.html' ], // hide this deployment's own root index.html (the app file);
+                                  // leading '/' anchors to the repo root, so nested index.html show.
+                                  // Set this per-repo (in tootoo.config.js), not in the shared core
+                                  // default — that way other people's repos keep their index.html.
 } );

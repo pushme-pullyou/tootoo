@@ -226,7 +226,7 @@ const renderAboutPanel = async () => {
         <li><strong>Repository:</strong> <a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">${ escapeHTML( repoUrl ) }</a></li>
         ${ branchHtml }
         <li><strong>Copyright:</strong> pushme-pullyou authors</li>
-        <li><strong>License:</strong> MIT License</li>
+        <li><strong>License:</strong> See the repository's LICENSE file</li>
         <li><strong>Updated:</strong> ${ escapeHTML( revised ) }</li>
       </ul>
       <h3>GitHub API</h3>

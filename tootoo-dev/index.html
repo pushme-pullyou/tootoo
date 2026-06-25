@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-23 00:39">
+  <meta name="revised" content="2026-06-25 01:13">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -1178,8 +1178,7 @@ body.dark-mode .app-footer a {
       <img class="app-footer-mark" width="18" height="18" alt="">
       <span id="footerCopyright"></span>
     </span>
-    <a class="app-footer-license" href="https://opensource.org/license/mit" target="_blank" rel="noopener">MIT
-      License</a>
+    <a class="app-footer-license" href="https://opensource.org/licenses" target="_blank" rel="noopener">License</a>
   </footer>
     </div>
   </main>
@@ -1199,10 +1198,15 @@ const CONFIG = {
   themeColor: '',           // empty = the CSS default (blue) — and lets body.dark-mode's
   // brighter #3b82f6 win; a fork's explicit color applies to both modes
   faviconLetters: 'TT', faviconColor: '#2563eb',
+  faviconFile: '',          // a fork that ships a real favicon can name it here (true → 'favicon.ico',
+                            // or a path) to skip the probe + generated mark and use the file directly
   headingFontUrl: '', headingFont: '',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
   storagePrefix: 'tootoo',
-  hiddenFolders: [ 'Images' ], hiddenFiles: [], maxRepoFiles: 5000,
+  hiddenFolders: [ 'Images' ],
+  hiddenFiles: [],
+  maxRepoFiles: 5000,
+  autoOpenFolderReadme: true,  // expanding a folder opens its own README the first time (set false to disable)
 };
 const state = { owner: '', repo: '', branch: '', tree: null, currentFilePath: '', repoUpdated: '', oversized: false };
 
@@ -1270,11 +1274,15 @@ const getFileTypeLabel = ( name ) => {
 const hiddenFolderSet = () => new Set( ( CONFIG.hiddenFolders || [] ).map( ( s ) => s.toLowerCase() ) );
 const hiddenFileSet = () => new Set( ( CONFIG.hiddenFiles || [] ).map( ( s ) => s.toLowerCase() ) );
 
-/* Dotfiles/dotfolders and CONFIG-hidden names are dropped from the sidebar. */
+/* Dotfiles/dotfolders and CONFIG-hidden names are dropped from the sidebar. A hiddenFiles
+   entry hides that bare name wherever it appears, unless it starts with '/', which anchors
+   it to the repo root — so '/index.html' hides only the root file, not nested ones. */
 const isVisibleTreeItem = ( item, folders, files ) => {
   const parts = item.path.split( '/' );
   if ( parts.some( ( p ) => p.startsWith( '.' ) || folders.has( p.toLowerCase() ) ) ) return false;
-  return !( item.type === 'blob' && files.has( parts[ parts.length - 1 ].toLowerCase() ) );
+  if ( item.type !== 'blob' ) return true;
+  const name = parts[ parts.length - 1 ].toLowerCase();
+  return !( files.has( name ) || files.has( '/' + item.path.toLowerCase() ) );
 };
 
 /* ── extension constants (reference §3) — used by the content file-header ── */
@@ -1348,6 +1356,13 @@ const applyBrandMarks = () => {
    unreadable fires onerror (and logs one expected 404, like the .git/config probe).
    On success, every mark upgrades from the generated SVG to the real favicon.ico. */
 const detectRealFavicon = () => {
+  // A fork that ships its own favicon can declare it via CONFIG.faviconFile to skip the
+  // probe (and the generated letter-mark) and adopt the real file straight away.
+  if ( CONFIG.faviconFile ) {
+    realFaviconUrl = CONFIG.faviconFile === true ? 'favicon.ico' : CONFIG.faviconFile;
+    applyBrandMarks();
+    return;
+  }
   const img = new Image();
   img.onload = () => { realFaviconUrl = 'favicon.ico'; applyBrandMarks(); };
   img.src = 'favicon.ico';   // relative to index.html → the fork's site root
@@ -1715,10 +1730,16 @@ const setHljsTheme = ( isDark ) => {
 Object.assign( CONFIG, {
   appName: 'TooToo Dev',
   subtitle: 'a GitHub repository browser',
-  owner: 'pushme-pullyou',
+  owner: 'Pushme-Pullyou',
   repo: 'tootoo',
   faviconLetters: 'TT',     // 2 letters drawn into the favicon + brand marks
   faviconColor: '#2563eb',  // favicon background color
+  // faviconFile: 'favicon.ico',  // uncomment when a real favicon.ico sits beside index.html:
+                                  // skips the existence probe + generated letter mark
+  hiddenFiles: [ '/index.html' ], // hide this deployment's own root index.html (the app file);
+                                  // leading '/' anchors to the repo root, so nested index.html show.
+                                  // Set this per-repo (in tootoo.config.js), not in the shared core
+                                  // default — that way other people's repos keep their index.html.
 } );
 /* TooToo — header.js  (the "where are we?" component).
    Ported from reference §8 (updateHeaderFromConfig) + appearance controls (§11).
@@ -1948,7 +1969,7 @@ const renderAboutPanel = async () => {
         <li><strong>Repository:</strong> <a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">${ escapeHTML( repoUrl ) }</a></li>
         ${ branchHtml }
         <li><strong>Copyright:</strong> pushme-pullyou authors</li>
-        <li><strong>License:</strong> MIT License</li>
+        <li><strong>License:</strong> See the repository's LICENSE file</li>
         <li><strong>Updated:</strong> ${ escapeHTML( revised ) }</li>
       </ul>
       <h3>GitHub API</h3>
@@ -2204,6 +2225,15 @@ const renderNode = ( name, node, parentPath, blog ) => {
     }
     const open = ( blog && blog.expandPaths.has( fullPath ) ) ? ' open' : '';
 
+    // Auto-open this folder's own README the first time it's expanded. Skipped for blog
+    // roots (they open their latest post instead) and inside the blog subtree.
+    let readmeAttr = '';
+    if ( CONFIG.autoOpenFolderReadme !== false && !blog && !blogAttr ) {
+      const readme = Object.entries( node.children ).find(
+        ( [ n, c ] ) => c.type === 'blob' && /^readme/i.test( n ) );
+      if ( readme ) readmeAttr = ` data-readme="${ escapeHTML( readme[ 1 ].path ) }"`;
+    }
+
     const childrenHtml = sortedEntries( node.children, mode )
       .map( ( [ childName, childNode ] ) => renderNode( childName, childNode, fullPath, childBlog ) )
       .join( '' );
@@ -2212,7 +2242,7 @@ const renderNode = ( name, node, parentPath, blog ) => {
     const tip = `${ fullPath } — ${ s.files } file${ s.files === 1 ? '' : 's' }` +
       ( s.folders ? ` · ${ s.folders } folder${ s.folders === 1 ? '' : 's' }` : '' ) +
       ` · ${ formatFileSize( s.bytes ) }`;
-    return `<details${ open }${ blogAttr } data-folder-path="${ escapeHTML( fullPath ) }">` +
+    return `<details${ open }${ blogAttr }${ readmeAttr } data-folder-path="${ escapeHTML( fullPath ) }">` +
       `<summary class="tree-folder" tabindex="0" title="${ escapeHTML( tip ) }">` +
       `<span aria-hidden="true">📁</span> <span class="folder-name">${ escapeHTML( displayName ) }</span>` +
       `</summary>` + childrenHtml + `</details>`;
@@ -2240,24 +2270,26 @@ const setExpandAllButton = ( expanded ) => {
   btn.setAttribute( 'aria-label', label );
 };
 
-/* ── blog: the first time the user expands the blog folder, open its latest post.
-   Bound to the summary click (a real gesture) so the filter / expand-all opening
-   the folder programmatically doesn't hijack the content pane. ── */
-const wireBlogAutoOpen = () => {
-  document.querySelectorAll( 'details[data-blog-root]' ).forEach( ( d ) => {
-    const post = d.getAttribute( 'data-blog-latest' );
+/* ── auto-open on first manual expand. Bound to the summary click (a real gesture) so
+   the filter / expand-all opening a folder programmatically doesn't hijack the content
+   pane. A blog root opens its latest post; any other folder opens its own README. ── */
+const wireFirstOpen = ( selector, attr ) => {
+  document.querySelectorAll( selector ).forEach( ( d ) => {
+    const path = d.getAttribute( attr );
     const summary = d.querySelector( ':scope > summary' );
-    if ( !post || !summary ) return;
+    if ( !path || !summary ) return;
     let opened = false;
     summary.addEventListener( 'click', () => {
       if ( opened ) return;
-      // Let the native <details> toggle finish, then open the latest post if it expanded.
+      // Let the native <details> toggle finish, then open the target if it expanded.
       setTimeout( () => {
-        if ( d.open && typeof selectFile === 'function' ) { opened = true; selectFile( post ); }
+        if ( d.open && typeof selectFile === 'function' ) { opened = true; selectFile( path ); }
       }, 0 );
     } );
   } );
 };
+const wireBlogAutoOpen = () => wireFirstOpen( 'details[data-blog-root]', 'data-blog-latest' );
+const wireFolderReadmeAutoOpen = () => wireFirstOpen( 'details[data-readme]', 'data-readme' );
 
 /* ── render the whole tree ── */
 const renderTree = ( treeArray ) => {
@@ -2269,6 +2301,7 @@ const renderTree = ( treeArray ) => {
   treeList.innerHTML = entries.map( ( [ name, node ] ) => renderNode( name, node, '', null ) ).join( '' );
   refreshTreeCache();
   wireBlogAutoOpen();
+  wireFolderReadmeAutoOpen();
 };
 
 /* ── filter (reference §23) ── */
@@ -3063,8 +3096,8 @@ const initContent = () => {
     toTop.addEventListener( 'click', () => area.scrollTo( { top: 0, behavior: 'smooth' } ) );
   }
 };
-/* TooToo — footer.js  (repo-owner copyright + MIT license link).
-   Left: TT mark + "© <year> <owner> · No rights reserved." Right: MIT License link. */
+/* TooToo — footer.js  (repo-owner copyright + license link).
+   Left: TT mark + "© <year> <owner> · No rights reserved." Right: License link. */
 
 const renderFooter = () => {
   const mark = document.querySelector( '.app-footer-mark' );
@@ -3082,8 +3115,8 @@ const updateFooterCopyright = () => {
 };
 
 /* Point the license link at the repo's own root LICENSE file (opened in-app via the
-   hash); fall back to opensource.org if the repo has no license file. Call after the
-   tree loads. */
+   hash) when present; otherwise fall back to the opensource.org license list. Call
+   after the tree loads. */
 const updateFooterLicense = () => {
   const el = document.querySelector( '.app-footer-license' );
   if ( !el ) return;
@@ -3095,10 +3128,10 @@ const updateFooterLicense = () => {
     el.removeAttribute( 'rel' );
     el.title = `View ${ lic.path }`;
   } else {
-    el.href = 'https://opensource.org/license/mit';
+    el.href = 'https://opensource.org/licenses';
     el.target = '_blank';
     el.rel = 'noopener';
-    el.title = 'MIT License (opensource.org)';
+    el.title = 'Open source licenses (opensource.org)';
   }
 };
 /* TooToo — main.js  (init + wiring) for the ASSEMBLED live build.

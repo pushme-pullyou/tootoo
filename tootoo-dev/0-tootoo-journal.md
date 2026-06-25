@@ -4,6 +4,9 @@
 
 Done
 
+* 2026-06-24: Add to config.js: ability to inform the app that a favicon file is present and there is no need to create a favicon
+* 2026-06-24: Hide index.html
+* 2026-06-24:Drop MIT
 * 2026-06-23 Blog post folders display newest at top
 * 2026-05-26 ~ update both local and GitHub repos: or maybe separate apps
 * 2026-05-31 ~ repos to the header bar

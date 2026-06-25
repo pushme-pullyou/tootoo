@@ -12,7 +12,7 @@ window.TOOTOO_CONFIG = {
   // Leave empty to auto-detect from URL params, GitHub Pages subdomain,
   // .git/config (file:// only), or the manual repo form.
   // owner: 'theo-armour',
-  // repo: 'agenda',
+  // repo: 'pages',
   // branch: '',
 
   // ── Identity ────────────────────────────────────────────────────────────
@@ -21,8 +21,8 @@ window.TOOTOO_CONFIG = {
   //                  so each fork's state stays separate
   // sourceRepoUrl  : top-header GitHub icon target and About "Source code"
   //                  link; point this at your fork
-  // appName: 'My Journal',
-  // storagePrefix: 'my-journal',
+  // appName: 'Pages',
+  // storagePrefix: 'theo-pages',
   // sourceRepoUrl: 'https://github.com/me/my-journal',
 
   // ── Branding (this is what makes forks look different) ──────────────────
@@ -60,7 +60,7 @@ window.TOOTOO_CONFIG = {
   //                 friendly bail-out panel also fires on any truncated
   //                 GitHub tree response
   // hiddenFolders: [ 'Images', 'drafts' ],
-  hiddenFiles: [ 'tootoo.config.js' ],
+  hiddenFiles: [ '/index.html','tootoo.config.js' ],
   // maxRepoFiles: 5000,
 
 };

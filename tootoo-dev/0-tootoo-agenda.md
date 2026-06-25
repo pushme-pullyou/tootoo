@@ -20,9 +20,7 @@ This is the current TooToo roadmap.
 
 ## Agenda
 
-* 2026-06-24: Add to config.js: ability to inform the app that a favicon file is present and there is no need to create a favicon
-* 2026-06-24: Hide index.html
-* 2026-06-24:Drop MIT
+* 2026-06-24
 * 2026-06-24: clean up readme files
 * 2026-06-23: favicon in config.js
 * 2026-06-16: Photo gallery app

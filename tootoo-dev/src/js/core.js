@@ -12,10 +12,13 @@ const CONFIG = {
   themeColor: '',           // empty = the CSS default (blue) — and lets body.dark-mode's
   // brighter #3b82f6 win; a fork's explicit color applies to both modes
   faviconLetters: 'TT', faviconColor: '#2563eb',
+  faviconFile: '',          // a fork that ships a real favicon can name it here (true → 'favicon.ico',
+                            // or a path) to skip the probe + generated mark and use the file directly
   headingFontUrl: '', headingFont: '',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
   storagePrefix: 'tootoo',
   hiddenFolders: [ 'Images' ], hiddenFiles: [], maxRepoFiles: 5000,
+  autoOpenFolderReadme: true,  // expanding a folder opens its own README the first time (set false to disable)
 };
 const state = { owner: '', repo: '', branch: '', tree: null, currentFilePath: '', repoUpdated: '', oversized: false };
 
@@ -83,11 +86,15 @@ const getFileTypeLabel = ( name ) => {
 const hiddenFolderSet = () => new Set( ( CONFIG.hiddenFolders || [] ).map( ( s ) => s.toLowerCase() ) );
 const hiddenFileSet = () => new Set( ( CONFIG.hiddenFiles || [] ).map( ( s ) => s.toLowerCase() ) );
 
-/* Dotfiles/dotfolders and CONFIG-hidden names are dropped from the sidebar. */
+/* Dotfiles/dotfolders and CONFIG-hidden names are dropped from the sidebar. A hiddenFiles
+   entry hides that bare name wherever it appears, unless it starts with '/', which anchors
+   it to the repo root — so '/index.html' hides only the root file, not nested ones. */
 const isVisibleTreeItem = ( item, folders, files ) => {
   const parts = item.path.split( '/' );
   if ( parts.some( ( p ) => p.startsWith( '.' ) || folders.has( p.toLowerCase() ) ) ) return false;
-  return !( item.type === 'blob' && files.has( parts[ parts.length - 1 ].toLowerCase() ) );
+  if ( item.type !== 'blob' ) return true;
+  const name = parts[ parts.length - 1 ].toLowerCase();
+  return !( files.has( name ) || files.has( '/' + item.path.toLowerCase() ) );
 };
 
 /* ── extension constants (reference §3) — used by the content file-header ── */
@@ -161,6 +168,13 @@ const applyBrandMarks = () => {
    unreadable fires onerror (and logs one expected 404, like the .git/config probe).
    On success, every mark upgrades from the generated SVG to the real favicon.ico. */
 const detectRealFavicon = () => {
+  // A fork that ships its own favicon can declare it via CONFIG.faviconFile to skip the
+  // probe (and the generated letter-mark) and adopt the real file straight away.
+  if ( CONFIG.faviconFile ) {
+    realFaviconUrl = CONFIG.faviconFile === true ? 'favicon.ico' : CONFIG.faviconFile;
+    applyBrandMarks();
+    return;
+  }
   const img = new Image();
   img.onload = () => { realFaviconUrl = 'favicon.ico'; applyBrandMarks(); };
   img.src = 'favicon.ico';   // relative to index.html → the fork's site root

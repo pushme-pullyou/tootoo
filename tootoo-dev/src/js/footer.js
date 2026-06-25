@@ -1,5 +1,5 @@
-/* TooToo — footer.js  (repo-owner copyright + MIT license link).
-   Left: TT mark + "© <year> <owner> · No rights reserved." Right: MIT License link. */
+/* TooToo — footer.js  (repo-owner copyright + license link).
+   Left: TT mark + "© <year> <owner> · No rights reserved." Right: License link. */
 
 const renderFooter = () => {
   const mark = document.querySelector( '.app-footer-mark' );
@@ -17,8 +17,8 @@ const updateFooterCopyright = () => {
 };
 
 /* Point the license link at the repo's own root LICENSE file (opened in-app via the
-   hash); fall back to opensource.org if the repo has no license file. Call after the
-   tree loads. */
+   hash) when present; otherwise fall back to the opensource.org license list. Call
+   after the tree loads. */
 const updateFooterLicense = () => {
   const el = document.querySelector( '.app-footer-license' );
   if ( !el ) return;
@@ -30,9 +30,9 @@ const updateFooterLicense = () => {
     el.removeAttribute( 'rel' );
     el.title = `View ${ lic.path }`;
   } else {
-    el.href = 'https://opensource.org/license/mit';
+    el.href = 'https://opensource.org/licenses';
     el.target = '_blank';
     el.rel = 'noopener';
-    el.title = 'MIT License (opensource.org)';
+    el.title = 'Open source licenses (opensource.org)';
   }
 };
