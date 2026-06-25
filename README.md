@@ -178,10 +178,11 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 
 ## Change Log
 
-* 2026-06-25 — Expanding a folder now opens that folder's own README the first time, mirroring the blog's auto-open of its latest post; toggle with `autoOpenFolderReadme`
-* 2026-06-25 — Footer license link and the About panel no longer assert MIT specifically — the footer link now reads "License" and points at the repo's own LICENSE file when present
-* 2026-06-25 — New `faviconFile` config knob: a fork that ships a real `favicon.ico` can declare it to skip the existence probe and the generated letter-mark
-* 2026-06-25 — `hiddenFiles` entries may start with `/` to anchor to the repo root (e.g. `/index.html` hides only the root file, not nested ones)
+* 2026-06-24 — HTML preview note now points to the `</>` Show raw source button and describes New Tab accurately (it opens the file directly; GitHub's raw host shows source, not a rendered page)
+* 2026-06-24 — Expanding a folder now opens that folder's own README the first time, mirroring the blog's auto-open of its latest post; toggle with `autoOpenFolderReadme`
+* 2026-06-24 — Footer license link and the About panel no longer assert MIT specifically — the footer link now reads "License" and points at the repo's own LICENSE file when present
+* 2026-06-24 — New `faviconFile` config knob: a fork that ships a real `favicon.ico` can declare it to skip the existence probe and the generated letter-mark
+* 2026-06-24 — `hiddenFiles` entries may start with `/` to anchor to the repo root (e.g. `/index.html` hides only the root file, not nested ones)
 * 2026-06-23 — Rebuilt from standalone, separately-runnable components (header, sidebar, content, footer + shared CSS and core/main JS) that assemble into this single `index.html`; feature-complete against the previous build, with the per-fork `tootoo.config.js` model unchanged. Source + assembler now live in `tootoo-dev/`
 * 2026-06-23 — Footer now flows at the end of the content instead of staying pinned to the viewport
 * 2026-06-23 — Favicon, the footer/sidebar brand marks, and the optional heading font are all driven by `tootoo.config.js` (`faviconLetters`, `faviconColor`, `headingFont`, `headingFontUrl`)
