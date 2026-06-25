@@ -1,8 +1,7 @@
 /* TooToo — shared stylesheet.
-   Carved from tootoo-reference.html. This is the "standard CSS file" every
-   component page links, and what the assembler will inline into index.html.
-   Currently holds: base tokens + header. More sections get added as we carve
-   sidebar / content / footer. */
+   The standard CSS file every component page links, inlined into index.html by the
+   assembler. Sections: tokens + dark mode, header, sidebar, content, footer,
+   responsive / print / reduced-motion, self-test. */
 
 /* ── Custom Properties ── */
 :root {
@@ -11,6 +10,8 @@
   --text-color: #1f2937;
   --border-color: #d1d5db;
   --highlight-color: #2563eb;
+  --highlight-fg: var(--highlight-color);   /* highlight as a legible foreground/fill — lightens in dark mode */
+  --on-highlight: #ffffff;                  /* text/icon sitting on a highlight-colored fill (button hover/active) */
   --hover-bg: #e5e7eb;
   --font-family: system-ui, sans-serif;
   --sidebar-width: 300px;
@@ -29,6 +30,8 @@ body.dark-mode {
   --text-color: #f3f4f6;
   --border-color: #374151;
   --highlight-color: #3b82f6;
+  --highlight-fg: color-mix(in srgb, var(--highlight-color) 65%, white);
+  --on-highlight: var(--primary-bg);
   --hover-bg: #374151;
   --warning-bg: #3a3000;
   --warning-border: #665200;
@@ -65,9 +68,8 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  /* lock the shell to the viewport so the sidebar +
-                               content scroll INTERNALLY (sidebar footer pins to
-                               the sidebar bottom; tree scroll-to-top works) */
+  /* lock the shell to the viewport so the sidebar + content scroll INTERNALLY
+     (sidebar footer pins to the sidebar bottom; tree scroll-to-top works) */
   margin: 0;
   overflow-x: hidden;
   font-family: var(--font-family);
@@ -95,7 +97,7 @@ header {
 #headerGitHub {
   display: flex;
   align-items: center;
-  color: var(--highlight-color);
+  color: var(--highlight-fg);
   text-decoration: none;
 }
 
@@ -107,33 +109,21 @@ header {
   display: block;
 }
 
-body.dark-mode #headerGitHub {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
-}
-
 #headerTitle {
   font-weight: normal;
   font-size: 1.35rem;
   text-decoration: none;
-  color: var(--highlight-color);
+  color: var(--highlight-fg);
   cursor: pointer;
   white-space: nowrap;
-}
-
-body.dark-mode #headerTitle {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
 }
 
 .header-subtitle {
   opacity: 0.6;
   font-weight: normal;
   font-size: 0.9rem;
-  color: var(--highlight-color);
+  color: var(--highlight-fg);
   white-space: nowrap;
-}
-
-body.dark-mode .header-subtitle {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
 }
 
 /* ── Buttons ── ghost pill that fills with the theme color on hover. */
@@ -141,8 +131,8 @@ body.dark-mode .header-subtitle {
 button.primary,
 button.secondary {
   background: transparent;
-  color: var(--highlight-color);
-  border: 1px solid var(--highlight-color);
+  color: var(--highlight-fg);
+  border: 1px solid var(--highlight-fg);
   padding: 0.1rem 0.5rem;
   border-radius: 6px;
   cursor: pointer;
@@ -167,8 +157,8 @@ button.secondary {
 .header-btn:hover,
 button.primary:hover,
 button.secondary:hover {
-  background: var(--highlight-color);
-  color: #ffffff;
+  background: var(--highlight-fg);
+  color: var(--on-highlight);
   transform: translateY(-1px);
 }
 
@@ -178,29 +168,10 @@ button.secondary:active {
   transform: translateY(0);
 }
 
-body.dark-mode .header-btn,
-body.dark-mode button.primary,
-body.dark-mode button.secondary {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
-  border-color: color-mix(in srgb, var(--highlight-color) 65%, white);
-}
-
-body.dark-mode .header-btn:hover,
-body.dark-mode button.primary:hover,
-body.dark-mode button.secondary:hover {
-  background: color-mix(in srgb, var(--highlight-color) 65%, white);
-  color: var(--primary-bg);
-}
-
 /* Pressed/active state for the About (?) and Token toggle buttons. */
 .header-btn.active {
-  background: var(--highlight-color);
-  color: #ffffff;
-}
-
-body.dark-mode .header-btn.active {
-  background: color-mix(in srgb, var(--highlight-color) 65%, white);
-  color: var(--primary-bg);
+  background: var(--highlight-fg);
+  color: var(--on-highlight);
 }
 
 .dark-mode-btn {
@@ -285,11 +256,7 @@ main {
   margin: 0;
   font-size: 1rem;
   font-weight: normal;
-  color: var(--highlight-color);
-}
-
-body.dark-mode .panel-header h3 {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
+  color: var(--highlight-fg);
 }
 
 #hFiles {
@@ -358,10 +325,6 @@ body.dark-mode .panel-header h3 {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-body.dark-mode .branch-menu {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
 .branch-option,
 .branch-menu-loading,
 .branch-menu-error {
@@ -378,8 +341,6 @@ body.dark-mode .branch-menu {
   border-radius: 4px;
   background: transparent;
   color: var(--text-color);
-  font-family: inherit;
-  font-size: 0.9rem;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -643,12 +604,8 @@ details {
 }
 
 .markdown-body :is(h1, h2, h3, h4, h5, h6) {
-  color: var(--highlight-color);
+  color: var(--highlight-fg);
   font-weight: normal;
-}
-
-body.dark-mode .markdown-body :is(h1, h2, h3, h4, h5, h6) {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
 }
 
 .markdown-body img {
@@ -719,17 +676,13 @@ body.dark-mode pre {
 }
 
 .file-title>a {
-  color: var(--highlight-color);
+  color: var(--highlight-fg);
 }
 
+/* svg sizes in rem so it scales with A−/A+ */
 .file-title>a svg {
   width: 1.1rem;
   height: 1.1rem;
-}
-
-/* scale with A−/A+ */
-body.dark-mode .file-title>a {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
 }
 
 #breadcrumbs {
@@ -819,8 +772,8 @@ body.dark-mode .file-title>a {
 /* .file-btn shares the .header-btn pill look. */
 .file-btn {
   background: transparent;
-  color: var(--highlight-color);
-  border: 1px solid var(--highlight-color);
+  color: var(--highlight-fg);
+  border: 1px solid var(--highlight-fg);
   padding: 0 0.4rem;
   /* sizing comes from the shared uniform-box rule above */
   border-radius: 6px;
@@ -830,23 +783,13 @@ body.dark-mode .file-title>a {
 }
 
 .file-btn:hover {
-  background: var(--highlight-color);
-  color: #fff;
+  background: var(--highlight-fg);
+  color: var(--on-highlight);
   transform: translateY(-1px);
 }
 
 .file-btn:active {
   transform: translateY(0);
-}
-
-body.dark-mode .file-btn {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
-  border-color: color-mix(in srgb, var(--highlight-color) 65%, white);
-}
-
-body.dark-mode .file-btn:hover {
-  background: color-mix(in srgb, var(--highlight-color) 65%, white);
-  color: var(--primary-bg);
 }
 
 /* ===================================================================
@@ -874,23 +817,12 @@ body.dark-mode .file-btn:hover {
   gap: 0.4rem;
 }
 
-.app-footer-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  opacity: 0.85;
-}
-
 .app-footer-mark {
   border-radius: 4px;
 }
 
 .app-footer a {
-  color: var(--highlight-color);
-}
-
-body.dark-mode .app-footer a {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
+  color: var(--highlight-fg);
 }
 
 /* ── Inline form (token panel, repo entry) ── */

@@ -12,8 +12,6 @@ const initApp = async () => {
   // repo can override theme/favicon/appName/hidden files (canonical's fork model).
   if ( window.TOOTOO_CONFIG && typeof window.TOOTOO_CONFIG === 'object' ) Object.assign( CONFIG, window.TOOTOO_CONFIG );
 
-  migrateTokenStorage();
-
   initHeader();     // header.js  — branding + appearance controls
   initContent();    // content.js — wire Copy / view-toggle / etc.
   renderFooter();   // footer.js  — brand bar

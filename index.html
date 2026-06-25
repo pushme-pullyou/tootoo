@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-24 21:00">
+  <meta name="revised" content="2026-06-24 22:27">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -24,10 +24,9 @@
 
   <style>
 /* TooToo — shared stylesheet.
-   Carved from tootoo-reference.html. This is the "standard CSS file" every
-   component page links, and what the assembler will inline into index.html.
-   Currently holds: base tokens + header. More sections get added as we carve
-   sidebar / content / footer. */
+   The standard CSS file every component page links, inlined into index.html by the
+   assembler. Sections: tokens + dark mode, header, sidebar, content, footer,
+   responsive / print / reduced-motion, self-test. */
 
 /* ── Custom Properties ── */
 :root {
@@ -36,6 +35,8 @@
   --text-color: #1f2937;
   --border-color: #d1d5db;
   --highlight-color: #2563eb;
+  --highlight-fg: var(--highlight-color);   /* highlight as a legible foreground/fill — lightens in dark mode */
+  --on-highlight: #ffffff;                  /* text/icon sitting on a highlight-colored fill (button hover/active) */
   --hover-bg: #e5e7eb;
   --font-family: system-ui, sans-serif;
   --sidebar-width: 300px;
@@ -54,6 +55,8 @@ body.dark-mode {
   --text-color: #f3f4f6;
   --border-color: #374151;
   --highlight-color: #3b82f6;
+  --highlight-fg: color-mix(in srgb, var(--highlight-color) 65%, white);
+  --on-highlight: var(--primary-bg);
   --hover-bg: #374151;
   --warning-bg: #3a3000;
   --warning-border: #665200;
@@ -90,9 +93,8 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  /* lock the shell to the viewport so the sidebar +
-                               content scroll INTERNALLY (sidebar footer pins to
-                               the sidebar bottom; tree scroll-to-top works) */
+  /* lock the shell to the viewport so the sidebar + content scroll INTERNALLY
+     (sidebar footer pins to the sidebar bottom; tree scroll-to-top works) */
   margin: 0;
   overflow-x: hidden;
   font-family: var(--font-family);
@@ -120,7 +122,7 @@ header {
 #headerGitHub {
   display: flex;
   align-items: center;
-  color: var(--highlight-color);
+  color: var(--highlight-fg);
   text-decoration: none;
 }
 
@@ -132,33 +134,21 @@ header {
   display: block;
 }
 
-body.dark-mode #headerGitHub {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
-}
-
 #headerTitle {
   font-weight: normal;
   font-size: 1.35rem;
   text-decoration: none;
-  color: var(--highlight-color);
+  color: var(--highlight-fg);
   cursor: pointer;
   white-space: nowrap;
-}
-
-body.dark-mode #headerTitle {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
 }
 
 .header-subtitle {
   opacity: 0.6;
   font-weight: normal;
   font-size: 0.9rem;
-  color: var(--highlight-color);
+  color: var(--highlight-fg);
   white-space: nowrap;
-}
-
-body.dark-mode .header-subtitle {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
 }
 
 /* ── Buttons ── ghost pill that fills with the theme color on hover. */
@@ -166,8 +156,8 @@ body.dark-mode .header-subtitle {
 button.primary,
 button.secondary {
   background: transparent;
-  color: var(--highlight-color);
-  border: 1px solid var(--highlight-color);
+  color: var(--highlight-fg);
+  border: 1px solid var(--highlight-fg);
   padding: 0.1rem 0.5rem;
   border-radius: 6px;
   cursor: pointer;
@@ -192,8 +182,8 @@ button.secondary {
 .header-btn:hover,
 button.primary:hover,
 button.secondary:hover {
-  background: var(--highlight-color);
-  color: #ffffff;
+  background: var(--highlight-fg);
+  color: var(--on-highlight);
   transform: translateY(-1px);
 }
 
@@ -203,29 +193,10 @@ button.secondary:active {
   transform: translateY(0);
 }
 
-body.dark-mode .header-btn,
-body.dark-mode button.primary,
-body.dark-mode button.secondary {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
-  border-color: color-mix(in srgb, var(--highlight-color) 65%, white);
-}
-
-body.dark-mode .header-btn:hover,
-body.dark-mode button.primary:hover,
-body.dark-mode button.secondary:hover {
-  background: color-mix(in srgb, var(--highlight-color) 65%, white);
-  color: var(--primary-bg);
-}
-
 /* Pressed/active state for the About (?) and Token toggle buttons. */
 .header-btn.active {
-  background: var(--highlight-color);
-  color: #ffffff;
-}
-
-body.dark-mode .header-btn.active {
-  background: color-mix(in srgb, var(--highlight-color) 65%, white);
-  color: var(--primary-bg);
+  background: var(--highlight-fg);
+  color: var(--on-highlight);
 }
 
 .dark-mode-btn {
@@ -310,11 +281,7 @@ main {
   margin: 0;
   font-size: 1rem;
   font-weight: normal;
-  color: var(--highlight-color);
-}
-
-body.dark-mode .panel-header h3 {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
+  color: var(--highlight-fg);
 }
 
 #hFiles {
@@ -383,10 +350,6 @@ body.dark-mode .panel-header h3 {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-body.dark-mode .branch-menu {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
 .branch-option,
 .branch-menu-loading,
 .branch-menu-error {
@@ -403,8 +366,6 @@ body.dark-mode .branch-menu {
   border-radius: 4px;
   background: transparent;
   color: var(--text-color);
-  font-family: inherit;
-  font-size: 0.9rem;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -668,12 +629,8 @@ details {
 }
 
 .markdown-body :is(h1, h2, h3, h4, h5, h6) {
-  color: var(--highlight-color);
+  color: var(--highlight-fg);
   font-weight: normal;
-}
-
-body.dark-mode .markdown-body :is(h1, h2, h3, h4, h5, h6) {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
 }
 
 .markdown-body img {
@@ -744,17 +701,13 @@ body.dark-mode pre {
 }
 
 .file-title>a {
-  color: var(--highlight-color);
+  color: var(--highlight-fg);
 }
 
+/* svg sizes in rem so it scales with A−/A+ */
 .file-title>a svg {
   width: 1.1rem;
   height: 1.1rem;
-}
-
-/* scale with A−/A+ */
-body.dark-mode .file-title>a {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
 }
 
 #breadcrumbs {
@@ -844,8 +797,8 @@ body.dark-mode .file-title>a {
 /* .file-btn shares the .header-btn pill look. */
 .file-btn {
   background: transparent;
-  color: var(--highlight-color);
-  border: 1px solid var(--highlight-color);
+  color: var(--highlight-fg);
+  border: 1px solid var(--highlight-fg);
   padding: 0 0.4rem;
   /* sizing comes from the shared uniform-box rule above */
   border-radius: 6px;
@@ -855,23 +808,13 @@ body.dark-mode .file-title>a {
 }
 
 .file-btn:hover {
-  background: var(--highlight-color);
-  color: #fff;
+  background: var(--highlight-fg);
+  color: var(--on-highlight);
   transform: translateY(-1px);
 }
 
 .file-btn:active {
   transform: translateY(0);
-}
-
-body.dark-mode .file-btn {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
-  border-color: color-mix(in srgb, var(--highlight-color) 65%, white);
-}
-
-body.dark-mode .file-btn:hover {
-  background: color-mix(in srgb, var(--highlight-color) 65%, white);
-  color: var(--primary-bg);
 }
 
 /* ===================================================================
@@ -899,23 +842,12 @@ body.dark-mode .file-btn:hover {
   gap: 0.4rem;
 }
 
-.app-footer-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  opacity: 0.85;
-}
-
 .app-footer-mark {
   border-radius: 4px;
 }
 
 .app-footer a {
-  color: var(--highlight-color);
-}
-
-body.dark-mode .app-footer a {
-  color: color-mix(in srgb, var(--highlight-color) 65%, white);
+  color: var(--highlight-fg);
 }
 
 /* ── Inline form (token panel, repo entry) ── */
@@ -1387,7 +1319,7 @@ const applyHeadingFont = () => {
 };
 
 /* ── per-extension Rendered/Raw preference (reference §7) ── */
-const viewPrefKey = ( ext ) => `${ CONFIG.storagePrefix || 'tootoo' }-dev:viewPref:${ ext }`;
+const viewPrefKey = ( ext ) => `${ CONFIG.storagePrefix || 'tootoo' }:viewPref:${ ext }`;
 const getPreferredView = ( ext ) => {
   try { return localStorage.getItem( viewPrefKey( ext ) ) || 'rendered'; } catch ( _ ) { return 'rendered'; }
 };
@@ -1422,21 +1354,7 @@ const cachePut = ( key, text ) => {
 const clearFileCache = () => fileTextCache.clear();
 
 /* ── GitHub token (optional, from localStorage) ── */
-const tokenStorageKey = () => `${ CONFIG.storagePrefix }-dev:${ location.pathname }:githubToken`;
-const migrateTokenStorage = () => {
-  try {
-    const scopedKey = tokenStorageKey();
-    const oldScopedKey = `${ CONFIG.storagePrefix }-dev:token`;
-    const legacyToken = localStorage.getItem( 'githubToken' );
-    const oldScopedToken = localStorage.getItem( oldScopedKey );
-    if ( localStorage.getItem( scopedKey ) === null ) {
-      const candidate = oldScopedToken || legacyToken;
-      if ( candidate ) localStorage.setItem( scopedKey, candidate );
-    }
-    localStorage.removeItem( oldScopedKey );
-    localStorage.removeItem( 'githubToken' );
-  } catch ( _ ) { /* storage disabled */ }
-};
+const tokenStorageKey = () => `${ CONFIG.storagePrefix }:${ location.pathname }:githubToken`;
 const getToken = () => {
   try { return localStorage.getItem( tokenStorageKey() ) || ''; } catch ( _ ) { return ''; }
 };
@@ -1584,7 +1502,7 @@ const detectLocalMode = async () => {
 const localUrlFor = ( path ) => ( localMode ? './' + encodePath( path ) : null );
 
 /* ── per-pathname storage + repo cache (reference §4) ── */
-const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }-dev:${ location.pathname }:${ suffix }`;
+const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }:${ location.pathname }:${ suffix }`;
 const repoCacheKey = () => storageKey( 'repo' );
 const cacheRepo = () => {
   try { localStorage.setItem( repoCacheKey(), JSON.stringify( { owner: state.owner, repo: state.repo, branch: state.branch, updated: state.repoUpdated } ) ); }
@@ -1657,15 +1575,6 @@ const resolveRepoPath = ( href, currentDir ) => {
     else stack.push( part );
   }
   return stack.join( '/' );
-};
-
-const scrollToMarkdownFragment = ( fragment ) => {
-  if ( !fragment ) return;
-  let decoded = fragment;
-  try { decoded = decodeURIComponent( fragment ); } catch ( _ ) { /* keep raw fragment */ }
-  const target = document.getElementById( decoded ) ||
-    document.querySelector( `[name="${ CSS.escape( decoded ) }"]` );
-  target?.scrollIntoView( { block: 'center', behavior: 'auto' } );
 };
 
 /* ── URL to open in a new tab / download (reference §31, simplified): the local
@@ -1877,8 +1786,6 @@ const showTokenPanel = ( reasonHtml = '' ) => {
   document.getElementById( 'btnTokenClear' ).addEventListener( 'click', () => {
     try {
       localStorage.removeItem( tokenStorageKey() );
-      localStorage.removeItem( `${ CONFIG.storagePrefix }-dev:token` );
-      localStorage.removeItem( 'githubToken' );
     } catch ( _ ) { /* storage disabled */ }
     clearFileCache();
     location.reload();
@@ -1886,13 +1793,10 @@ const showTokenPanel = ( reasonHtml = '' ) => {
   document.getElementById( 'btnResetAll' )?.addEventListener( 'click', () => {
     if ( !window.confirm( `Wipe all ${ CONFIG.appName } preferences, cached files, and the GitHub token from this browser?` ) ) return;
     try {
-      const prefix = `${ CONFIG.storagePrefix }-dev:`;
+      const prefix = `${ CONFIG.storagePrefix }:`;
       const keys = [];
       for ( let i = 0; i < localStorage.length; i++ ) { const k = localStorage.key( i ); if ( k && k.startsWith( prefix ) ) keys.push( k ); }
       for ( const k of keys ) localStorage.removeItem( k );
-      localStorage.removeItem( tokenStorageKey() );
-      localStorage.removeItem( `${ CONFIG.storagePrefix }-dev:token` );
-      localStorage.removeItem( 'githubToken' );
     } catch ( _ ) { /* storage disabled */ }
     clearFileCache();
     location.reload();
@@ -2073,6 +1977,9 @@ const initHeader = () => { updateHeaderFromConfig(); initAppearance(); initHeade
    NOTE: the real renderTree batches with a "% rendered" status for huge repos;
    here it's synchronous for clarity. Re-add batching when we carve for real. */
 
+/* README matcher — shared by root auto-open, folder auto-open, and bold styling. */
+const README_RE = /^readme/i;
+
 /* ── build nested tree from the flat GitHub list ── */
 const buildNestedTree = ( flatTree ) => {
   const root = { children: {} };
@@ -2217,7 +2124,7 @@ const renderNode = ( name, node, parentPath, blog ) => {
     let readmeAttr = '';
     if ( CONFIG.autoOpenFolderReadme !== false && !blog && !blogAttr ) {
       const readme = Object.entries( node.children ).find(
-        ( [ n, c ] ) => c.type === 'blob' && /^readme/i.test( n ) );
+        ( [ n, c ] ) => c.type === 'blob' && README_RE.test( n ) );
       if ( readme ) readmeAttr = ` data-readme="${ escapeHTML( readme[ 1 ].path ) }"`;
     }
 
@@ -2236,7 +2143,7 @@ const renderNode = ( name, node, parentPath, blog ) => {
   }
 
   const icon = getFileIcon( name );
-  const isReadme = /^readme/i.test( name );
+  const isReadme = README_RE.test( name );
   const nameHtml = isReadme ? `<strong>${ escapeHTML( displayName ) }</strong>` : escapeHTML( displayName );
   const folderDisplay = parentPath ? parentPath.split( '/' ).map( displayTreeName ).join( ' / ' ) : '';
   const folderHtml = folderDisplay ? `<span class="tree-item-folder">${ escapeHTML( folderDisplay ) }</span>` : '';
@@ -2454,7 +2361,7 @@ const fetchTree = async () => {
 /* ── pick the root README on first load ── */
 const autoSelectReadme = () => {
   if ( !state.tree ) return;
-  const readme = state.tree.find( ( i ) => i.type === 'blob' && !i.path.includes( '/' ) && /^readme/i.test( i.path ) );
+  const readme = state.tree.find( ( i ) => i.type === 'blob' && !i.path.includes( '/' ) && README_RE.test( i.path ) );
   if ( readme ) selectFile( readme.path );
 };
 
@@ -2797,7 +2704,7 @@ const renderCode = ( text, ext ) => {
 
 const renderHtml = ( text, ext ) => {
   const url = createBlobUrl( new Blob( [ text ], { type: 'text/html' } ) );
-  const note = `<div class="md-error">ℹ️ Preview is sandboxed: scripts and relative assets are disabled. Click <strong>&lt;/&gt;</strong> to show the raw source, or <strong>↗ New Tab</strong> to open the file directly (renders from a local copy; GitHub's raw host shows source).</div>`;
+  const note = `<div class="md-error">ℹ️ Preview is sandboxed: scripts and relative assets are disabled.<br>Click <strong>&lt;/&gt;</strong> to show the raw source, or <strong>↗ New Tab</strong> to open the file directly (renders from a local copy; GitHub's raw host shows source).</div>`;
   document.getElementById( 'contentBody' ).innerHTML =
     buildToggleHtml( ext, `${ note }<iframe class="iframe-content" sandbox src="${ escapeHTML( url ) }"></iframe>`, text );
 };
@@ -3134,8 +3041,6 @@ const initApp = async () => {
   // window.TOOTOO_CONFIG; merge it over the built-in + baked config so a dropped-in
   // repo can override theme/favicon/appName/hidden files (canonical's fork model).
   if ( window.TOOTOO_CONFIG && typeof window.TOOTOO_CONFIG === 'object' ) Object.assign( CONFIG, window.TOOTOO_CONFIG );
-
-  migrateTokenStorage();
 
   initHeader();     // header.js  — branding + appearance controls
   initContent();    // content.js — wire Copy / view-toggle / etc.

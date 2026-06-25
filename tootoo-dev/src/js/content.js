@@ -138,7 +138,7 @@ const renderCode = ( text, ext ) => {
 
 const renderHtml = ( text, ext ) => {
   const url = createBlobUrl( new Blob( [ text ], { type: 'text/html' } ) );
-  const note = `<div class="md-error">ℹ️ Preview is sandboxed: scripts and relative assets are disabled. Click <strong>&lt;/&gt;</strong> to show the raw source, or <strong>↗ New Tab</strong> to open the file directly (renders from a local copy; GitHub's raw host shows source).</div>`;
+  const note = `<div class="md-error">ℹ️ Preview is sandboxed: scripts and relative assets are disabled.<br>Click <strong>&lt;/&gt;</strong> to show the raw source, or <strong>↗ New Tab</strong> to open the file directly (renders from a local copy; GitHub's raw host shows source).</div>`;
   document.getElementById( 'contentBody' ).innerHTML =
     buildToggleHtml( ext, `${ note }<iframe class="iframe-content" sandbox src="${ escapeHTML( url ) }"></iframe>`, text );
 };

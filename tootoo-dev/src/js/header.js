@@ -147,8 +147,6 @@ const showTokenPanel = ( reasonHtml = '' ) => {
   document.getElementById( 'btnTokenClear' ).addEventListener( 'click', () => {
     try {
       localStorage.removeItem( tokenStorageKey() );
-      localStorage.removeItem( `${ CONFIG.storagePrefix }-dev:token` );
-      localStorage.removeItem( 'githubToken' );
     } catch ( _ ) { /* storage disabled */ }
     clearFileCache();
     location.reload();
@@ -156,13 +154,10 @@ const showTokenPanel = ( reasonHtml = '' ) => {
   document.getElementById( 'btnResetAll' )?.addEventListener( 'click', () => {
     if ( !window.confirm( `Wipe all ${ CONFIG.appName } preferences, cached files, and the GitHub token from this browser?` ) ) return;
     try {
-      const prefix = `${ CONFIG.storagePrefix }-dev:`;
+      const prefix = `${ CONFIG.storagePrefix }:`;
       const keys = [];
       for ( let i = 0; i < localStorage.length; i++ ) { const k = localStorage.key( i ); if ( k && k.startsWith( prefix ) ) keys.push( k ); }
       for ( const k of keys ) localStorage.removeItem( k );
-      localStorage.removeItem( tokenStorageKey() );
-      localStorage.removeItem( `${ CONFIG.storagePrefix }-dev:token` );
-      localStorage.removeItem( 'githubToken' );
     } catch ( _ ) { /* storage disabled */ }
     clearFileCache();
     location.reload();

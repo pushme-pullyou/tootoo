@@ -6,6 +6,9 @@
    NOTE: the real renderTree batches with a "% rendered" status for huge repos;
    here it's synchronous for clarity. Re-add batching when we carve for real. */
 
+/* README matcher — shared by root auto-open, folder auto-open, and bold styling. */
+const README_RE = /^readme/i;
+
 /* ── build nested tree from the flat GitHub list ── */
 const buildNestedTree = ( flatTree ) => {
   const root = { children: {} };
@@ -150,7 +153,7 @@ const renderNode = ( name, node, parentPath, blog ) => {
     let readmeAttr = '';
     if ( CONFIG.autoOpenFolderReadme !== false && !blog && !blogAttr ) {
       const readme = Object.entries( node.children ).find(
-        ( [ n, c ] ) => c.type === 'blob' && /^readme/i.test( n ) );
+        ( [ n, c ] ) => c.type === 'blob' && README_RE.test( n ) );
       if ( readme ) readmeAttr = ` data-readme="${ escapeHTML( readme[ 1 ].path ) }"`;
     }
 
@@ -169,7 +172,7 @@ const renderNode = ( name, node, parentPath, blog ) => {
   }
 
   const icon = getFileIcon( name );
-  const isReadme = /^readme/i.test( name );
+  const isReadme = README_RE.test( name );
   const nameHtml = isReadme ? `<strong>${ escapeHTML( displayName ) }</strong>` : escapeHTML( displayName );
   const folderDisplay = parentPath ? parentPath.split( '/' ).map( displayTreeName ).join( ' / ' ) : '';
   const folderHtml = folderDisplay ? `<span class="tree-item-folder">${ escapeHTML( folderDisplay ) }</span>` : '';
@@ -387,7 +390,7 @@ const fetchTree = async () => {
 /* ── pick the root README on first load ── */
 const autoSelectReadme = () => {
   if ( !state.tree ) return;
-  const readme = state.tree.find( ( i ) => i.type === 'blob' && !i.path.includes( '/' ) && /^readme/i.test( i.path ) );
+  const readme = state.tree.find( ( i ) => i.type === 'blob' && !i.path.includes( '/' ) && README_RE.test( i.path ) );
   if ( readme ) selectFile( readme.path );
 };
 

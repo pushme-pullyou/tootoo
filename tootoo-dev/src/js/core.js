@@ -201,7 +201,7 @@ const applyHeadingFont = () => {
 };
 
 /* ── per-extension Rendered/Raw preference (reference §7) ── */
-const viewPrefKey = ( ext ) => `${ CONFIG.storagePrefix || 'tootoo' }-dev:viewPref:${ ext }`;
+const viewPrefKey = ( ext ) => `${ CONFIG.storagePrefix || 'tootoo' }:viewPref:${ ext }`;
 const getPreferredView = ( ext ) => {
   try { return localStorage.getItem( viewPrefKey( ext ) ) || 'rendered'; } catch ( _ ) { return 'rendered'; }
 };
@@ -236,21 +236,7 @@ const cachePut = ( key, text ) => {
 const clearFileCache = () => fileTextCache.clear();
 
 /* ── GitHub token (optional, from localStorage) ── */
-const tokenStorageKey = () => `${ CONFIG.storagePrefix }-dev:${ location.pathname }:githubToken`;
-const migrateTokenStorage = () => {
-  try {
-    const scopedKey = tokenStorageKey();
-    const oldScopedKey = `${ CONFIG.storagePrefix }-dev:token`;
-    const legacyToken = localStorage.getItem( 'githubToken' );
-    const oldScopedToken = localStorage.getItem( oldScopedKey );
-    if ( localStorage.getItem( scopedKey ) === null ) {
-      const candidate = oldScopedToken || legacyToken;
-      if ( candidate ) localStorage.setItem( scopedKey, candidate );
-    }
-    localStorage.removeItem( oldScopedKey );
-    localStorage.removeItem( 'githubToken' );
-  } catch ( _ ) { /* storage disabled */ }
-};
+const tokenStorageKey = () => `${ CONFIG.storagePrefix }:${ location.pathname }:githubToken`;
 const getToken = () => {
   try { return localStorage.getItem( tokenStorageKey() ) || ''; } catch ( _ ) { return ''; }
 };
@@ -398,7 +384,7 @@ const detectLocalMode = async () => {
 const localUrlFor = ( path ) => ( localMode ? './' + encodePath( path ) : null );
 
 /* ── per-pathname storage + repo cache (reference §4) ── */
-const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }-dev:${ location.pathname }:${ suffix }`;
+const storageKey = ( suffix ) => `${ CONFIG.storagePrefix }:${ location.pathname }:${ suffix }`;
 const repoCacheKey = () => storageKey( 'repo' );
 const cacheRepo = () => {
   try { localStorage.setItem( repoCacheKey(), JSON.stringify( { owner: state.owner, repo: state.repo, branch: state.branch, updated: state.repoUpdated } ) ); }
@@ -471,15 +457,6 @@ const resolveRepoPath = ( href, currentDir ) => {
     else stack.push( part );
   }
   return stack.join( '/' );
-};
-
-const scrollToMarkdownFragment = ( fragment ) => {
-  if ( !fragment ) return;
-  let decoded = fragment;
-  try { decoded = decodeURIComponent( fragment ); } catch ( _ ) { /* keep raw fragment */ }
-  const target = document.getElementById( decoded ) ||
-    document.querySelector( `[name="${ CSS.escape( decoded ) }"]` );
-  target?.scrollIntoView( { block: 'center', behavior: 'auto' } );
 };
 
 /* ── URL to open in a new tab / download (reference §31, simplified): the local
