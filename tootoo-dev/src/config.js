@@ -7,7 +7,7 @@
 Object.assign( CONFIG, {
   appName: 'TooToo Dev',
   subtitle: 'a GitHub repository browser',
-  owner: 'pushme-pullyou',
+  owner: 'Pushme-Pullyou',
   repo: 'tootoo',
   faviconLetters: 'TT',     // 2 letters drawn into the favicon + brand marks
   faviconColor: '#2563eb',  // favicon background color
