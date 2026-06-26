@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-24 22:27">
+  <meta name="revised" content="2026-06-26 02:17">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -124,6 +124,13 @@ header {
   align-items: center;
   color: var(--highlight-fg);
   text-decoration: none;
+  padding: 0.15rem;
+  border-radius: 6px;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+#headerGitHub:hover {
+  background: color-mix(in srgb, var(--highlight-color), transparent 85%);
 }
 
 /* Size the brand mark in rem so it scales with A−/A+ (the img's width/height
@@ -141,6 +148,15 @@ header {
   color: var(--highlight-fg);
   cursor: pointer;
   white-space: nowrap;
+  padding: 0.05rem 0.35rem;
+  border-radius: 6px;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+#headerTitle:hover {
+  color: var(--highlight-color);
+  background: color-mix(in srgb, var(--highlight-color), transparent 85%);
+  text-decoration: underline;
 }
 
 .header-subtitle {
@@ -640,11 +656,16 @@ details {
 
 #contentBody a {
   color: color-mix(in srgb, var(--highlight-color) 80%, black);
-  transition: color 0.15s;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  border-radius: 3px;
+  transition: color 0.15s, background-color 0.15s, text-decoration-thickness 0.15s;
 }
 
 #contentBody a:hover {
-  color: color-mix(in srgb, var(--highlight-color) 50%, black);
+  color: var(--highlight-color);
+  background: color-mix(in srgb, var(--highlight-color), transparent 85%);
+  text-decoration-thickness: 2px;
 }
 
 body.dark-mode #contentBody a {
@@ -652,7 +673,8 @@ body.dark-mode #contentBody a {
 }
 
 body.dark-mode #contentBody a:hover {
-  color: color-mix(in srgb, var(--highlight-color) 40%, white);
+  color: color-mix(in srgb, var(--highlight-color) 90%, white);
+  background: color-mix(in srgb, var(--highlight-color), transparent 78%);
 }
 
 .markdown-body a.internal-link {
