@@ -19,9 +19,14 @@ You type a single word in chat. Claude performs the whole stage and reports back
 - **Dev is the source of truth.** All changes are made in
   `pushme-pullyou-tootoo/tootoo-dev/index.html`, tested locally via `file://`,
   and only then promoted. Production is a generated artifact, never hand-edited.
-- **`index.html` is identical across every repo.** The only differences are the
-  three identity lines in the *Dev* copy (`appName`, `<title>`, `revised`), which
-  `promote` strips on the way to production.
+- **`index.html` is identical across every repo except its config block.** Dev and
+  production differ by exactly two things: the **config block** — dev's `config.js`
+  (`Object.assign( CONFIG, { appName: 'TooToo Dev', owner: 'Pushme-Pullyou', repo:
+  'tootoo', … } )`) bakes in the dev identity + a default repo so the standalone file
+  is testable on its own, while production uses the empty `config.prod.js` and stays
+  neutral — and the **`revised`** timestamp. (`<title>` is set dynamically at runtime,
+  so it is already identical in both — there is no `<title>TooToo Dev</title>` to
+  revert.) `promote` swaps the config block and stamps `revised`.
 - **Per-fork customization lives in `tootoo.config.js`,** not in `index.html`.
   Every downstream repo has its own `tootoo.config.js` carrying its branding
   (owner/repo, appName, theme, etc.). **No pipeline command ever touches
@@ -48,10 +53,20 @@ Copies the tested dev build into this repo's production `index.html`.
 1. Stamp current Pacific time → `TS` (`YYYY-MM-DD HH:MM`) and `TSF` (`YYYY-MM-DD-HH-MM`).
 2. **Back up** current production: copy `index.html` → `.archive/index-<TSF>.html`.
 3. **Copy** `tootoo-dev/index.html` → `index.html` (overwrite).
-4. **Revert dev identity** in the new `index.html`:
-   - `appName: 'TooToo Dev'` → `appName: 'TooToo'`
-   - `<title>TooToo Dev</title>` → `<title>TooToo</title>`
-   - `<meta name="revised" content="...">` → `TS`
+4. **Reconcile dev → production** in the new `index.html`:
+   - **Config block** — replace dev's `config.js` block (`Object.assign( CONFIG, {
+     appName: 'TooToo Dev', owner: 'Pushme-Pullyou', repo: 'tootoo', … } )`) with
+     production's empty `config.prod.js` comment block, so production carries no baked
+     repo or identity and stays neutral (per-fork config comes from `tootoo.config.js`).
+     This is exactly what `assemble.ps1 -Prod` produces.
+   - **`<meta name="revised" content="...">`** → `TS`.
+   - `<title>` needs no change — both copies are `TooToo` (set dynamically at runtime).
+
+   > ⚠️ **Do NOT do a plain copy + appName-only revert.** That leaves dev's
+   > `owner: 'Pushme-Pullyou'` / `repo: 'tootoo'` baked into production, breaking
+   > invariant #2 (production must be neutral). When dev and production already match
+   > except this block (e.g. they were edited in lock-step), the reconcile is just:
+   > confirm the diff is *only* the config block, then stamp `revised`.
 5. **Write a changelog entry** (decision: option C — auto-authored). Prepend a
    dated bullet to the `## Change Log` section of `README.md`, newest on top.
    Wording is derived from the dev README journal and the `git diff` of the
@@ -66,8 +81,8 @@ Copies the tested dev build into this repo's production `index.html`.
 
 **Does NOT**: commit, push, or touch `tootoo.config.js`. Git stays manual.
 
-**Result**: production `index.html` == dev `index.html`, except the three
-identity lines. The diff is always small and reviewable.
+**Result**: production `index.html` == dev `index.html`, except the config block
+and the `revised` line. The diff is always small and reviewable.
 
 ---
 
@@ -176,7 +191,8 @@ The canonical list of record is this file. When a new fork is added, add it here
 
 1. Every published `index.html` is byte-identical to canonical production.
 2. All per-repo difference lives in `tootoo.config.js`, never in `index.html`.
-3. Dev differs from production by exactly the three identity lines.
+3. Dev differs from production by exactly the config block (`config.js` vs
+   `config.prod.js`) and the `revised` timestamp.
 4. No command edits `tootoo.config.js`.
 5. Only `publish` performs git writes; it always confirms first.
 
@@ -210,6 +226,13 @@ server. Output keeps the existing filename so no links change.
 - **Subject**: the app browsing its own repo — `?owner=pushme-pullyou&repo=tootoo`.
 - **Why `--virtual-time-budget`**: it pauses the capture until the GitHub fetch
   resolves, so the shot shows the rendered tree + README, not "Loading tree…".
+- **Why `--user-data-dir` (a fresh temp profile)**: without it, if any Chrome window
+  is already open the launcher just routes to that running session ("Opening in
+  existing browser session") and writes **no** PNG. A throwaway profile forces a
+  separate headless instance.
+- **Do NOT pass `--run-all-compositor-stages-before-draw`**: combined with
+  `--virtual-time-budget` on current `--headless=new` it hangs and produces no PNG.
+  Verified 2026-06-26 — dropping it captures reliably.
 - **Format**: Chrome emits PNG; we convert to JPEG q90 to preserve
   `tootoo-screenshot.jpeg` (smaller, no README edit).
 
@@ -223,9 +246,9 @@ $url    = "file:///G:/My%20Drive/2026-theo-github/pushme-pullyou-tootoo/index.ht
 # 1. back up the current image  (TSF = yyyy-MM-dd-HH-mm, Pacific)
 Copy-Item $final "$root\.archive\tootoo-screenshot-<TSF>.jpeg"
 
-# 2. render to PNG (waits for the async fetch)
-& $chrome --headless=new --disable-gpu --no-sandbox --allow-file-access-from-files `
-  --run-all-compositor-stages-before-draw --virtual-time-budget=20000 `
+# 2. render to PNG (fresh profile forces a headless instance; waits for the async fetch)
+& $chrome --headless=new --disable-gpu --no-sandbox --user-data-dir="$env:TEMP\tootoo_shot" `
+  --allow-file-access-from-files --virtual-time-budget=20000 `
   --screenshot="$tmp" --window-size=1440,900 "$url"
 
 # 3. convert PNG -> JPEG q90, overwrite the asset, drop the temp

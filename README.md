@@ -192,6 +192,8 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 
 ## Change Log
 
+* 2026-06-26 — Footer copyright's rights line is now configurable and owner-scoped: new `rightsText` / `rightsOwners` config knobs — the phrase (e.g. "No rights reserved") shows only for owners you list (your own repos) and stays blank on everyone else's
+* 2026-06-26 — Links in rendered files are underlined with a clearer hover (brighter color + tinted background pill); the header logo and title gained a matching hover effect
 * 2026-06-24 — Browser storage keys dropped the internal `-dev:` segment (now `<storagePrefix>:<pathname>:…`, matching the documented keys); existing saved preferences and the GitHub token reset once as a result
 * 2026-06-24 — HTML preview note now points to the `</>` Show raw source button and describes New Tab accurately (it opens the file directly; GitHub's raw host shows source, not a rendered page)
 * 2026-06-24 — Expanding a folder now opens that folder's own README the first time, mirroring the blog's auto-open of its latest post; toggle with `autoOpenFolderReadme`

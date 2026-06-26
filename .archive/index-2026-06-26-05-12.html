@@ -1659,20 +1659,15 @@ const setHljsTheme = ( isDark ) => {
     ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
     : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
 };
-/* TooToo — config.js: per-build config for the ASSEMBLED dev build.
-   Object.assigns over the core defaults, baking a default repo + dev identity so the
-   standalone index.html is testable on its own. The -Prod build swaps in the empty
-   config.prod.js instead, keeping production neutral. (URL ?owner=…&repo=… still wins.) */
-Object.assign( CONFIG, {
-  appName: 'TooToo Dev',
-  subtitle: 'a GitHub repository browser',
-  owner: 'Pushme-Pullyou',                       // default repo to browse
-  repo: 'tootoo',
-  faviconLetters: 'TT',                          // 2 letters in the generated SVG favicon
-  faviconColor: '#2563eb',                       // favicon background
-  // faviconFile: 'favicon.ico',                 // use a real favicon.ico instead of the generated mark
-  // hiddenFiles: [ '/index.html' ],             // hide a name from the tree; '/name' anchors to the repo root
-} );
+/* TooToo — production config (used by `assemble.ps1 -Prod`).
+
+   Intentionally empty. Canonical index.html stays byte-identical across every fork;
+   each repo customizes via its own tootoo.config.js (window.TOOTOO_CONFIG), merged
+   over the CONFIG defaults at init.
+
+   The dev build uses config.js instead, which bakes a default repo + dev identity so
+   the standalone assembled file is testable without a tootoo.config.js sibling or a
+   .git/config to detect. */
 /* TooToo — header.js  (the "where are we?" component).
    Ported from reference §8 (updateHeaderFromConfig) + appearance controls (§11).
    Reads: CONFIG + meta[revised]. Writes: state.owner/repo/branch (repo/branch

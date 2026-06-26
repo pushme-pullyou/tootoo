@@ -16,10 +16,10 @@ window.TOOTOO_CONFIG = {
   // sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',  // header GitHub icon + About link
 
   // ── Branding ──
-  themeColor: '#3a8856',                            // --highlight-color (light + dark)
+  themeColor: '#3a8856',                              // --highlight-color (light + dark)
   subtitle: 'Single-file GitHub repository browser',  // muted text after the title
   faviconLetters: 'tt',                               // 2 letters in the generated SVG favicon
-  faviconColor: '#3a8856',                          // favicon background
+  faviconColor: '#3a8856',                            // favicon background
   // faviconFile: 'favicon.ico',                      // use a real favicon.ico instead of the generated mark
   headingFontUrl: 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&display=swap',
   headingFont: '"Fraunces", serif',                   // applied to every heading + the title
@@ -29,7 +29,7 @@ window.TOOTOO_CONFIG = {
   // in rightsOwners (case-insensitive) — so it reads "No rights reserved" on your own
   // repos and stays blank on everyone else's. Add any other GitHub accounts you own.
   rightsText: 'No rights reserved',
-  rightsOwners: [ 'theo-armour', 'pushme-pullyou', 'heritage-happenings' ],
+  rightsOwners: [ 'theo-armour', 'pushme-pullyou' ],
 
   // ── Browsing ──
   // hiddenFolders: [ 'Images' ],                      // folder names to hide (any depth)
