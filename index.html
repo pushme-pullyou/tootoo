@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-26 02:17">
+  <meta name="revised" content="2026-06-26 04:18">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -130,7 +130,11 @@ header {
 }
 
 #headerGitHub:hover {
-  background: color-mix(in srgb, var(--highlight-color), transparent 85%);
+  background: color-mix(in srgb, var(--highlight-color), transparent 80%);
+}
+
+#headerGitHub:hover img {
+  transform: scale(1.15);
 }
 
 /* Size the brand mark in rem so it scales with A−/A+ (the img's width/height
@@ -139,6 +143,7 @@ header {
   width: 1.15rem;
   height: 1.15rem;
   display: block;
+  transition: transform 0.15s;
 }
 
 #headerTitle {
@@ -1159,6 +1164,10 @@ const CONFIG = {
   storagePrefix: 'tootoo',
   hiddenFolders: [ 'Images' ], hiddenFiles: [], maxRepoFiles: 5000,
   autoOpenFolderReadme: true,  // expanding a folder opens its own README the first time (set false to disable)
+  // Footer rights line appended after "© <year> <owner>". rightsOwners scopes WHICH
+  // owners it shows for: null = every repo (default), an array = only those owner logins
+  // (case-insensitive), [] = never. So a fork can assert its rights only on its own repos.
+  rightsText: 'No rights reserved', rightsOwners: null,
 };
 const state = { owner: '', repo: '', branch: '', tree: null, currentFilePath: '', repoUpdated: '', oversized: false };
 
@@ -3013,7 +3022,8 @@ const initContent = () => {
   }
 };
 /* TooToo — footer.js  (repo-owner copyright + license link).
-   Left: TT mark + "© <year> <owner> · No rights reserved." Right: License link. */
+   Left: TT mark + "© <year> <owner>", plus CONFIG.rightsText when the owner is in
+   scope (see rightsOwners). Right: License link. */
 
 const renderFooter = () => {
   const mark = document.querySelector( '.app-footer-mark' );
@@ -3021,13 +3031,18 @@ const renderFooter = () => {
   updateFooterCopyright();
 };
 
-/* Copyright by the repo owner, e.g. "© 2026 pushme-pullyou · No rights reserved." */
+/* Copyright by the repo owner, e.g. "© 2026 pushme-pullyou · No rights reserved".
+   The rights phrase (CONFIG.rightsText) is appended only when CONFIG.rightsOwners
+   covers this repo's owner — null = all owners, an array = just those, [] = none —
+   so a fork asserts its rights on its own repos but stays blank on others. */
 const updateFooterCopyright = () => {
   const el = document.getElementById( 'footerCopyright' );
   if ( !el ) return;
-  el.textContent = state.owner
-    ? `© ${ new Date().getFullYear() } ${ state.owner } · No rights reserved.`
-    : 'No rights reserved.';
+  if ( !state.owner ) { el.textContent = ''; return; }
+  const owns = !CONFIG.rightsOwners ||
+    CONFIG.rightsOwners.some( ( o ) => o.toLowerCase() === state.owner.toLowerCase() );
+  const rights = ( CONFIG.rightsText && owns ) ? ` · ${ CONFIG.rightsText }` : '';
+  el.textContent = `© ${ new Date().getFullYear() } ${ state.owner }${ rights }`;
 };
 
 /* Point the license link at the repo's own root LICENSE file (opened in-app via the
