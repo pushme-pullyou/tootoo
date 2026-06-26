@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-26 05:02">
+  <meta name="revised" content="2026-06-26 06:49">
   <title>TooToo</title>
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
@@ -152,7 +152,7 @@ header {
   text-decoration: none;
   color: var(--highlight-fg);
   cursor: pointer;
-  white-space: nowrap;
+  white-space: normal;
   padding: 0.05rem 0.35rem;
   border-radius: 6px;
   transition: color 0.15s, background-color 0.15s;
@@ -170,6 +170,38 @@ header {
   font-size: 0.9rem;
   color: var(--highlight-fg);
   white-space: nowrap;
+}
+
+/* Keep owner and repo each on one line, so a long "owner / repo" title may break
+   only at the slash between them (either side) rather than mid-name or as one long
+   unbreakable line — saves vertical space on a narrow header. */
+.title-seg {
+  white-space: nowrap;
+}
+
+/* Narrow screens: drop the subtitle to reclaim vertical space, and shrink the title
+   so "owner / repo" fits beside the logo on one line instead of dropping to its own
+   row and leaving the logo row half-empty. It still breaks at the slash (never
+   mid-name) if it is ever too wide to fit. */
+@media (max-width: 600px) {
+  .header-subtitle {
+    display: none;
+  }
+  #headerTitle {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 400px) {
+  #headerTitle {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 340px) {
+  #headerTitle {
+    font-size: 0.85rem;
+  }
 }
 
 /* ── Buttons ── ghost pill that fills with the theme color on hover. */
@@ -1705,7 +1737,13 @@ const updateHeaderFromConfig = () => {
   const titleEl = document.getElementById( 'headerTitle' );
   const subtitleEl = document.getElementById( 'headerSubtitle' );
   document.title = CONFIG.subtitle ? `${ label } · ${ CONFIG.subtitle }` : label;
-  titleEl.textContent = label;
+  // Render owner / repo as two nowrap segments so a narrow header can wrap at the
+  // slash (either side) instead of forcing one long unbreakable line.
+  if ( state.owner && state.repo ) {
+    titleEl.innerHTML = `<span class="title-seg">${ escapeHTML( state.owner ) }</span> / <span class="title-seg">${ escapeHTML( state.repo ) }</span>`;
+  } else {
+    titleEl.textContent = CONFIG.appName;
+  }
   setHeaderTimestamp();
   if ( subtitleEl ) {
     if ( CONFIG.subtitle ) {

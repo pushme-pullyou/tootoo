@@ -192,6 +192,7 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 
 ## Change Log
 
+* 2026-06-26 — Narrow screens now keep the `owner / repo` title beside the logo (the title shrinks and breaks only at the slash if it must) and hide the subtitle, instead of dropping the title to its own line and wasting vertical space
 * 2026-06-26 — Footer copyright's rights line is now configurable and owner-scoped: new `rightsText` / `rightsOwners` config knobs — the phrase (e.g. "No rights reserved") shows only for owners you list (your own repos) and stays blank on everyone else's
 * 2026-06-26 — Links in rendered files are underlined with a clearer hover (brighter color + tinted background pill); the header logo and title gained a matching hover effect
 * 2026-06-24 — Browser storage keys dropped the internal `-dev:` segment (now `<storagePrefix>:<pathname>:…`, matching the documented keys); existing saved preferences and the GitHub token reset once as a result
