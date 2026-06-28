@@ -1,5 +1,12 @@
 # TooToo — Development Journal
 
+
+## 2026-06-26
+
+* 2026-06-25: add a header to the readme that is a link to the example folder. This is a test of the new link hover effect. add some links to interesting files in the example folder underneath the header.
+* 2026-06-25: all links to have a hover effect. All links have underlines. This includes headers that are links as well.
+* 2026-06-24: user footer message
+
 ## 2026-06-24
 
 * 2026-06-24: clean up readme files

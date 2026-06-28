@@ -2,27 +2,9 @@
 
 This is the current TooToo roadmap.
 
-## Repos
-
-* G:\My Drive\2026-theo-github\pushme-pullyou-github'
-* G:\My Drive\2026-theo-github\pushme-pullyou-assets'
-* G:\My Drive\2026-theo-github\theo-armour-2025'
-* G:\My Drive\2026-theo-github\theo-armour-2026'
-* G:\My Drive\2026-theo-github\theo-armour-agenda'
-* G:\My Drive\2026-theo-github\theo-armour-pages'
-* G:\My Drive\2026-theo-github\theo-armour-qdata'
-* G:\My Drive\2026-theo-github\theo-armour-sandbox'
-* G:\My Drive\2026-theo-github\theo-armour-aa'
-* G:\My Drive\2026-theo-github\theo-armour-genealogy'
-* G:\My Drive\2026-theo-github\theo-armour-wikitheo
-* I:/My%20Drive/tech/index.html
-
-
 ## Agenda
 
-* 2026-06-25: add a header to the readme that is a link to the example folder. This is a test of the new link hover effect. add some links to interesting files in the example folder underneath the header.
-* 2026-06-25: all links to have a hover effect. All links have underlines. This includes headers that are links as well.
-* 2026-06-24: user footer message
+
 * 2026-06-16: Photo gallery app
 * 2026-06-16 Ability to load special file format loaders on the fly
 
