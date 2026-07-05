@@ -91,9 +91,10 @@
     <button id="btnToggleSidebar" class="header-btn" title="Close sidebar (Ctrl/⌘ B)" aria-label="Toggle sidebar"
       aria-expanded="true">☰</button>
     <a id="headerGitHub" href="." title="View on GitHub" aria-label="View on GitHub">
-      <!-- App brand mark (the CONFIG favicon), src set from faviconDataUrl() in
-           initHeaderControls. aria-hidden: the anchor's aria-label names the link. -->
-      <img id="headerBrand" width="18" height="18" alt="" aria-hidden="true">
+      <!-- App brand mark: the deployment's favicon.ico (static; the standalone
+           harness rewrites the src to ../../favicon.ico). aria-hidden: the anchor's
+           aria-label names the link. -->
+      <img id="headerBrand" src="favicon.ico" width="18" height="18" alt="" aria-hidden="true">
     </a>
 
     <a id="headerTitle" href="." title="Reload" aria-label="Reload page">TooToo</a>
@@ -157,10 +158,6 @@
     <input id="ctlFontUrl" type="url" placeholder="Google Fonts / .woff2 URL">
     <label for="ctlFont">headingFont</label>
     <input id="ctlFont" type="text" placeholder='e.g. "Patua One", serif'>
-    <label for="ctlFaviconLetters">faviconLetters</label>
-    <input id="ctlFaviconLetters" type="text" maxlength="2" placeholder="2 chars, e.g. tt">
-    <label for="ctlFaviconColor">faviconColor</label>
-    <input id="ctlFaviconColor" type="color">
   </div>
 
   <div class="dev-presets" id="devFonts">
@@ -177,6 +174,9 @@
     const byId = ( id ) => document.getElementById( id );
 
     initHeader();
+    // Standalone page: the brand mark's static src="favicon.ico" resolves relative to
+    // this file (src/components/), so point it at the dev folder's generated one.
+    byId( 'headerBrand' ).src = '../../favicon.ico';
     byId( 'ctlOwner' ).value = state.owner || CONFIG.owner || '';
     byId( 'ctlRepo' ).value = state.repo || CONFIG.repo || '';
     byId( 'ctlBranch' ).value = state.branch || CONFIG.branch || '';
@@ -189,8 +189,6 @@
     byId( 'ctlSource' ).value = CONFIG.sourceRepoUrl || '';
     byId( 'ctlFontUrl' ).value = CONFIG.headingFontUrl || '';
     byId( 'ctlFont' ).value = CONFIG.headingFont || '';
-    byId( 'ctlFaviconLetters' ).value = CONFIG.faviconLetters || '';
-    byId( 'ctlFaviconColor' ).value = CONFIG.faviconColor || '#2563eb';
 
     const reflectConfig = ( id, key ) => byId( id ).addEventListener( 'input', ( e ) => {
       CONFIG[ key ] = e.target.value; updateHeaderFromConfig();
@@ -211,17 +209,6 @@
       const root = document.documentElement.style;
       if ( value ) root.setProperty( '--heading-font', value );
       else root.removeProperty( '--heading-font' );
-    } );
-
-    // faviconLetters / faviconColor feed faviconDataUrl(), so re-render the header
-    // brand mark (#headerBrand) on change — same SVG the footer/sidebar marks use.
-    const renderBrandMark = () => {
-      const brand = byId( 'headerBrand' );
-      if ( brand ) brand.src = faviconDataUrl();
-    };
-    const reflectFavicon = ( id, key ) => byId( id ).addEventListener( 'input', ( e ) => {
-      CONFIG[ key ] = e.target.value;
-      renderBrandMark();
     } );
 
     // headingFontUrl loads a stylesheet. Reuse a single <link> (vs. core.js's
@@ -274,8 +261,6 @@
     reflectSource();
     reflectHeadingFont();
     reflectFontUrl();
-    reflectFavicon( 'ctlFaviconLetters', 'faviconLetters' );
-    reflectFavicon( 'ctlFaviconColor', 'faviconColor' );
     syncBranchChip();
 
     // The harness doesn't load main.js (so applyHeadingFont never runs), yet the
@@ -296,7 +281,6 @@
         themeColor: '#3a8856', sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
         headingFontUrl: 'https://fonts.googleapis.com/css2?family=Patua+One&display=swap',
         headingFont: '"Patua One", serif',
-        faviconLetters: 'tt', faviconColor: '#3a8856',
       },
       {
         name: 'React',
@@ -304,7 +288,6 @@
         appName: 'React', subtitle: 'A library for web and native user interfaces',
         themeColor: '#149eca', sourceRepoUrl: 'https://github.com/facebook/react',
         headingFontUrl: '', headingFont: '',
-        faviconLetters: 're', faviconColor: '#149eca',
       },
       {
         name: 'Linux',
@@ -313,7 +296,6 @@
         themeColor: '#d4a017', sourceRepoUrl: 'https://github.com/torvalds/linux',
         headingFontUrl: 'https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap',
         headingFont: '"Courier Prime", monospace',
-        faviconLetters: 'lx', faviconColor: '#d4a017',
       },
       {
         name: 'VS Code',
@@ -321,7 +303,6 @@
         appName: 'VS Code', subtitle: 'Code editing. Redefined.',
         themeColor: '#007acc', sourceRepoUrl: 'https://github.com/microsoft/vscode',
         headingFontUrl: '', headingFont: '',
-        faviconLetters: 'vs', faviconColor: '#007acc',
       },
     ];
 
@@ -343,8 +324,6 @@
       set( 'ctlSource', p.sourceRepoUrl );
       set( 'ctlFontUrl', p.headingFontUrl );
       set( 'ctlFont', p.headingFont );
-      set( 'ctlFaviconLetters', p.faviconLetters );
-      set( 'ctlFaviconColor', p.faviconColor );
     };
 
     const presetBar = byId( 'devPresets' );

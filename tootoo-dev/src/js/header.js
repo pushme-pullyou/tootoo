@@ -30,7 +30,13 @@ const updateHeaderFromConfig = () => {
   const titleEl = document.getElementById( 'headerTitle' );
   const subtitleEl = document.getElementById( 'headerSubtitle' );
   document.title = CONFIG.subtitle ? `${ label } · ${ CONFIG.subtitle }` : label;
-  titleEl.textContent = label;
+  // Render owner / repo as two nowrap segments so a narrow header can wrap at the
+  // slash (either side) instead of forcing one long unbreakable line.
+  if ( state.owner && state.repo ) {
+    titleEl.innerHTML = `<span class="title-seg">${ escapeHTML( state.owner ) }</span> / <span class="title-seg">${ escapeHTML( state.repo ) }</span>`;
+  } else {
+    titleEl.textContent = CONFIG.appName;
+  }
   setHeaderTimestamp();
   if ( subtitleEl ) {
     if ( CONFIG.subtitle ) {
@@ -96,9 +102,6 @@ const initHeaderControls = () => {
   } );
 
   document.getElementById( 'headerGitHub' )?.setAttribute( 'href', CONFIG.sourceRepoUrl || '#' );
-  // Brand mark in the GitHub link: the CONFIG favicon (shared with footer/sidebar
-  // marks via faviconDataUrl), replacing the old octocat glyph.
-  document.getElementById( 'headerBrand' )?.setAttribute( 'src', brandMarkSrc() );
 };
 
 /* ── token panel (header owns the dialog; it renders into the content area) ── */

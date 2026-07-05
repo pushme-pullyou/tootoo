@@ -10,8 +10,10 @@
   --text-color: #1f2937;
   --border-color: #d1d5db;
   --highlight-color: #2563eb;
-  --highlight-fg: var(--highlight-color);   /* highlight as a legible foreground/fill — lightens in dark mode */
-  --on-highlight: #ffffff;                  /* text/icon sitting on a highlight-colored fill (button hover/active) */
+  --highlight-fg: var(--highlight-color);
+  /* highlight as a legible foreground/fill — lightens in dark mode */
+  --on-highlight: #ffffff;
+  /* text/icon sitting on a highlight-colored fill (button hover/active) */
   --hover-bg: #e5e7eb;
   --font-family: system-ui, sans-serif;
   --sidebar-width: 300px;
@@ -99,6 +101,17 @@ header {
   align-items: center;
   color: var(--highlight-fg);
   text-decoration: none;
+  padding: 0.15rem;
+  border-radius: 6px;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+#headerGitHub:hover {
+  background: color-mix(in srgb, var(--highlight-color), transparent 80%);
+}
+
+#headerGitHub:hover img {
+  transform: scale(1.15);
 }
 
 /* Size the brand mark in rem so it scales with A−/A+ (the img's width/height
@@ -107,6 +120,7 @@ header {
   width: 1.15rem;
   height: 1.15rem;
   display: block;
+  transition: transform 0.15s;
 }
 
 #headerTitle {
@@ -115,7 +129,16 @@ header {
   text-decoration: none;
   color: var(--highlight-fg);
   cursor: pointer;
-  white-space: nowrap;
+  white-space: normal;
+  padding: 0.05rem 0.35rem;
+  border-radius: 6px;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+#headerTitle:hover {
+  color: var(--highlight-color);
+  background: color-mix(in srgb, var(--highlight-color), transparent 85%);
+  text-decoration: underline;
 }
 
 .header-subtitle {
@@ -124,6 +147,39 @@ header {
   font-size: 0.9rem;
   color: var(--highlight-fg);
   white-space: nowrap;
+}
+
+/* Keep owner and repo each on one line, so a long "owner / repo" title may break
+   only at the slash between them (either side) rather than mid-name or as one long
+   unbreakable line — saves vertical space on a narrow header. */
+.title-seg {
+  white-space: nowrap;
+}
+
+/* Narrow screens: drop the subtitle to reclaim vertical space, and shrink the title
+   so "owner / repo" fits beside the logo on one line instead of dropping to its own
+   row and leaving the logo row half-empty. It still breaks at the slash (never
+   mid-name) if it is ever too wide to fit. */
+@media (max-width: 600px) {
+  .header-subtitle {
+    display: none;
+  }
+
+  #headerTitle {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 400px) {
+  #headerTitle {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 340px) {
+  #headerTitle {
+    font-size: 0.85rem;
+  }
 }
 
 /* ── Buttons ── ghost pill that fills with the theme color on hover. */
@@ -615,11 +671,16 @@ details {
 
 #contentBody a {
   color: color-mix(in srgb, var(--highlight-color) 80%, black);
-  transition: color 0.15s;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  border-radius: 3px;
+  transition: color 0.15s, background-color 0.15s, text-decoration-thickness 0.15s;
 }
 
 #contentBody a:hover {
-  color: color-mix(in srgb, var(--highlight-color) 50%, black);
+  color: var(--highlight-color);
+  background: color-mix(in srgb, var(--highlight-color), transparent 85%);
+  text-decoration-thickness: 2px;
 }
 
 body.dark-mode #contentBody a {
@@ -627,7 +688,8 @@ body.dark-mode #contentBody a {
 }
 
 body.dark-mode #contentBody a:hover {
-  color: color-mix(in srgb, var(--highlight-color) 40%, white);
+  color: color-mix(in srgb, var(--highlight-color) 90%, white);
+  background: color-mix(in srgb, var(--highlight-color), transparent 78%);
 }
 
 .markdown-body a.internal-link {
@@ -748,12 +810,13 @@ body.dark-mode pre {
    into a flex column when it holds a PDF so the iframe can flex to fill; min-height
    keeps a sane floor when the column has no definite height (print). Reverts itself
    for any other content. */
-#contentBody:has( > .iframe-pdf ) {
+#contentBody:has(> .iframe-pdf) {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
+
 .iframe-pdf {
   height: auto;
   flex: 1;

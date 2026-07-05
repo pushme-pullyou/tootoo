@@ -69,3 +69,58 @@ Set-Content -Path $out -Value $template -Encoding UTF8
 # pre-flush cluster size, e.g. 4096, and look truncated when it isn't).
 $mode = if ( $Prod ) { 'production' } else { 'dev' }
 "assembled ($mode) -> $out  ({0:N0} chars)" -f $template.Length
+
+# ── Favicon ──
+# The app probes for a real favicon.ico beside index.html (detectRealFavicon) and the
+# browser logs a noisy load failure every run when it's missing. So: if the dev folder
+# has no favicon.ico, generate one — the same TT mark (blue rounded square, two white
+# offset T's) drawn with System.Drawing and wrapped as a PNG-in-ICO. Runs only when
+# the file is absent; delete favicon.ico to regenerate, or drop in your own.
+$fav = Join-Path $PSScriptRoot 'favicon.ico'
+if ( -not (Test-Path $fav) ) {
+  Add-Type -AssemblyName System.Drawing
+  $px = 64
+  $bmp = New-Object System.Drawing.Bitmap $px, $px
+  $g = [System.Drawing.Graphics]::FromImage($bmp)
+  $g.SmoothingMode = 'AntiAlias'
+  $g.TextRenderingHint = 'AntiAliasGridFit'
+  $g.Clear([System.Drawing.Color]::Transparent)
+
+  # Rounded square, #2563eb, corner radius 12/64 (mirrors the inline SVG favicon).
+  $r = 12
+  $path = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $path.AddArc(0, 0, 2 * $r, 2 * $r, 180, 90)
+  $path.AddArc($px - 2 * $r, 0, 2 * $r, 2 * $r, 270, 90)
+  $path.AddArc($px - 2 * $r, $px - 2 * $r, 2 * $r, 2 * $r, 0, 90)
+  $path.AddArc(0, $px - 2 * $r, 2 * $r, 2 * $r, 90, 90)
+  $path.CloseFigure()
+  $blue = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(0x25, 0x63, 0xeb))
+  $g.FillPath($blue, $path)
+
+  # Two offset T's at the SVG's anchor points (22,28) and (42,40), centered.
+  $font = New-Object System.Drawing.Font ('Segoe UI', 30, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
+  $white = [System.Drawing.Brushes]::White
+  $fmt = New-Object System.Drawing.StringFormat
+  $fmt.Alignment = 'Center'
+  $fmt.LineAlignment = 'Center'
+  $g.DrawString('T', $font, $white, 22, 28, $fmt)
+  $g.DrawString('T', $font, $white, 42, 40, $fmt)
+  $g.Dispose()
+
+  # ICO container with a single PNG entry (the modern format; browsers accept it).
+  $ms = New-Object System.IO.MemoryStream
+  $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
+  $bmp.Dispose()
+  $png = $ms.ToArray()
+  $ico = New-Object System.IO.MemoryStream
+  $bw = New-Object System.IO.BinaryWriter $ico
+  $bw.Write([uint16]0); $bw.Write([uint16]1); $bw.Write([uint16]1)   # reserved, type=icon, count=1
+  $bw.Write([byte]$px); $bw.Write([byte]$px)                         # width, height
+  $bw.Write([byte]0); $bw.Write([byte]0)                             # palette, reserved
+  $bw.Write([uint16]1); $bw.Write([uint16]32)                        # planes, bpp
+  $bw.Write([uint32]$png.Length); $bw.Write([uint32]22)              # data size, offset
+  $bw.Write($png)
+  [System.IO.File]::WriteAllBytes($fav, $ico.ToArray())
+  $bw.Dispose()
+  "created $fav  ({0:N0} bytes)" -f (Get-Item $fav).Length
+}

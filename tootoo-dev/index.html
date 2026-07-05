@@ -4,10 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-06-26 06:49">
+  <meta name="revised" content="2026-07-05 16:42">
   <title>TooToo</title>
-  <link rel="icon" type="image/svg+xml"
-    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E%3Ctext x='22' y='28'%3ET%3C/text%3E%3Ctext x='42' y='40'%3ET%3C/text%3E%3C/g%3E%3C/svg%3E">
+  <!-- A real favicon.ico is assumed to sit next to index.html in every deployment
+       (assemble.ps1 generates a TT-mark placeholder when the dev folder lacks one). -->
+  <link rel="icon" href="favicon.ico">
 
   <!-- External deps (same as the real app). -->
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
@@ -18,12 +19,12 @@
 
   <!-- Optional per-repo config: a tootoo.config.js sitting next to this file sets
        window.TOOTOO_CONFIG, merged over CONFIG at init so a repo can rebrand (theme,
-       favicon, appName, hidden files…) without editing index.html. No file → onerror
+       appName, hidden files…) without editing index.html. No file → onerror
        swallows the 404. Loads over file:// without the file-access flag. -->
   <script src="tootoo.config.js" onerror="void 0"></script>
 
   <style>
-/* TooToo — shared stylesheet.
+    /* TooToo — shared stylesheet.
    The standard CSS file every component page links, inlined into index.html by the
    assembler. Sections: tokens + dark mode, header, sidebar, content, footer,
    responsive / print / reduced-motion, self-test. */
@@ -35,8 +36,10 @@
   --text-color: #1f2937;
   --border-color: #d1d5db;
   --highlight-color: #2563eb;
-  --highlight-fg: var(--highlight-color);   /* highlight as a legible foreground/fill — lightens in dark mode */
-  --on-highlight: #ffffff;                  /* text/icon sitting on a highlight-colored fill (button hover/active) */
+  --highlight-fg: var(--highlight-color);
+  /* highlight as a legible foreground/fill — lightens in dark mode */
+  --on-highlight: #ffffff;
+  /* text/icon sitting on a highlight-colored fill (button hover/active) */
   --hover-bg: #e5e7eb;
   --font-family: system-ui, sans-serif;
   --sidebar-width: 300px;
@@ -187,6 +190,7 @@ header {
   .header-subtitle {
     display: none;
   }
+
   #headerTitle {
     font-size: 1.1rem;
   }
@@ -832,12 +836,13 @@ body.dark-mode pre {
    into a flex column when it holds a PDF so the iframe can flex to fill; min-height
    keeps a sane floor when the column has no definite height (print). Reverts itself
    for any other content. */
-#contentBody:has( > .iframe-pdf ) {
+#contentBody:has(> .iframe-pdf) {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
+
 .iframe-pdf {
   height: auto;
   flex: 1;
@@ -1102,9 +1107,10 @@ body.dark-mode pre {
     <button id="btnToggleSidebar" class="header-btn" title="Close sidebar (Ctrl/⌘ B)" aria-label="Toggle sidebar"
       aria-expanded="true">☰</button>
     <a id="headerGitHub" href="." title="View on GitHub" aria-label="View on GitHub">
-      <!-- App brand mark (the CONFIG favicon), src set from faviconDataUrl() in
-           initHeaderControls. aria-hidden: the anchor's aria-label names the link. -->
-      <img id="headerBrand" width="18" height="18" alt="" aria-hidden="true">
+      <!-- App brand mark: the deployment's favicon.ico (static; the standalone
+           harness rewrites the src to ../../favicon.ico). aria-hidden: the anchor's
+           aria-label names the link. -->
+      <img id="headerBrand" src="favicon.ico" width="18" height="18" alt="" aria-hidden="true">
     </a>
 
     <a id="headerTitle" href="." title="Reload" aria-label="Reload page">TooToo</a>
@@ -1150,7 +1156,7 @@ body.dark-mode pre {
       <div id="treeList"></div>
       <div class="sidebar-footer">
         <button id="btnScrollTreeTop" type="button" title="Scroll sidebar to top" aria-label="Scroll sidebar to top">
-          <img alt="" width="20" height="20">
+          <img src="favicon.ico" alt="" width="20" height="20">
         </button>
       </div>
     </div>
@@ -1166,7 +1172,7 @@ body.dark-mode pre {
       <button id="btnBackToTop" class="back-to-top" aria-label="Back to top" title="Back to Top">↑</button>
       <footer class="app-footer">
     <span class="app-footer-brand">
-      <img class="app-footer-mark" width="18" height="18" alt="">
+      <img class="app-footer-mark" src="favicon.ico" width="18" height="18" alt="">
       <span id="footerCopyright"></span>
     </span>
     <a class="app-footer-license" href="https://opensource.org/licenses" target="_blank" rel="noopener">License</a>
@@ -1175,7 +1181,7 @@ body.dark-mode pre {
   </main>
 
   <script>
-/* TooToo — core.js  (shared services, no DOM, no UI).
+    /* TooToo — core.js  (shared services, no DOM, no UI).
    In the real app these live in the core layer (reference §1, §15, §16, §18-helpers).
    Only the helpers the carved components need are here for now; this file grows
    as we carve. Per ARCHITECTURE.md, core is the single owner of CONFIG + state
@@ -1188,9 +1194,6 @@ const CONFIG = {
   appName: 'TooToo', subtitle: '',
   themeColor: '',           // empty = the CSS default (blue) — and lets body.dark-mode's
   // brighter #3b82f6 win; a fork's explicit color applies to both modes
-  faviconLetters: 'TT', faviconColor: '#2563eb',
-  faviconFile: '',          // a fork that ships a real favicon can name it here (true → 'favicon.ico',
-                            // or a path) to skip the probe + generated mark and use the file directly
   headingFontUrl: '', headingFont: '',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
   storagePrefix: 'tootoo',
@@ -1314,57 +1317,10 @@ const revokeAllBlobUrls = () => {
 const GITHUB_SVG_ICON =
   `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>`;
 
-/* ── generated letter-mark favicon from CONFIG.faviconLetters / faviconColor
-   (reference §11). This is the fallback behind brandMarkSrc(): used for the tab icon
-   and the header/footer/sidebar brand marks whenever no real favicon.ico is found. ── */
-const faviconDataUrl = () => {
-  const letters = String( CONFIG.faviconLetters || 'TT' );
-  const l1 = encodeURIComponent( ( letters[ 0 ] || 'T' ).toUpperCase() );
-  const l2 = encodeURIComponent( ( letters[ 1 ] || letters[ 0 ] || 'T' ).toUpperCase() );
-  const fill = ( CONFIG.faviconColor || '#2563eb' ).replace( '#', '%23' );
-  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E` +
-    `%3Crect width='64' height='64' rx='12' fill='${ fill }'/%3E` +
-    `%3Cg font-family='system-ui,sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3E` +
-    `%3Ctext x='22' y='28'%3E${ l1 }%3C/text%3E%3Ctext x='42' y='40'%3E${ l2 }%3C/text%3E%3C/g%3E%3C/svg%3E`;
-};
-/* Prefer a real favicon.ico sitting next to index.html (the fork's site root) over
-   the generated letter mark; fall back to the generated SVG when absent. Resolved
-   asynchronously by detectRealFavicon, so brandMarkSrc() returns the generated mark
-   until a real favicon.ico is confirmed. Drives the tab icon AND every in-page brand
-   mark (header / footer / sidebar). */
-let realFaviconUrl = null;   // 'favicon.ico' once confirmed present, else null
-const brandMarkSrc = () => realFaviconUrl || faviconDataUrl();
-
-const applyBrandMarks = () => {
-  const url = brandMarkSrc();
-  const link = document.querySelector( 'link[rel="icon"]' );
-  if ( link ) link.href = url;
-  document.querySelector( '#headerBrand' )?.setAttribute( 'src', url );
-  document.querySelector( '.app-footer-mark' )?.setAttribute( 'src', url );
-  document.querySelector( '#btnScrollTreeTop img' )?.setAttribute( 'src', url );
-};
-
-/* Existence probe via <img>: loads under file:// without the access flag (images
-   aren't fetch-restricted) and over https. A present .ico fires onload; missing/
-   unreadable fires onerror (and logs one expected 404, like the .git/config probe).
-   On success, every mark upgrades from the generated SVG to the real favicon.ico. */
-const detectRealFavicon = () => {
-  // A fork that ships its own favicon can declare it via CONFIG.faviconFile to skip the
-  // probe (and the generated letter-mark) and adopt the real file straight away.
-  if ( CONFIG.faviconFile ) {
-    realFaviconUrl = CONFIG.faviconFile === true ? 'favicon.ico' : CONFIG.faviconFile;
-    applyBrandMarks();
-    return;
-  }
-  const img = new Image();
-  img.onload = () => { realFaviconUrl = 'favicon.ico'; applyBrandMarks(); };
-  img.src = 'favicon.ico';   // relative to index.html → the fork's site root
-};
-
-const applyFavicon = () => {
-  const link = document.querySelector( 'link[rel="icon"]' );
-  if ( link ) link.href = brandMarkSrc();
-};
+/* ── favicon: nothing is generated anymore. A real favicon.ico is assumed to sit
+   next to index.html in every deployment (the <head> link and the header/footer/
+   sidebar brand <img>s all point at it statically). assemble.ps1 creates a TT-mark
+   placeholder when the dev folder lacks one; forks ship their own. ── */
 
 /* ── optional heading typeface (reference §11): load CONFIG.headingFontUrl into
    <head> and set --heading-font, which the h1–h6/#headerTitle CSS already consumes.
@@ -1691,7 +1647,7 @@ const setHljsTheme = ( isDark ) => {
     ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
     : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
 };
-/* TooToo — config.js: per-build config for the ASSEMBLED dev build.
+    /* TooToo — config.js: per-build config for the ASSEMBLED dev build.
    Object.assigns over the core defaults, baking a default repo + dev identity so the
    standalone index.html is testable on its own. The -Prod build swaps in the empty
    config.prod.js instead, keeping production neutral. (URL ?owner=…&repo=… still wins.) */
@@ -1700,12 +1656,9 @@ Object.assign( CONFIG, {
   subtitle: 'a GitHub repository browser',
   owner: 'Pushme-Pullyou',                       // default repo to browse
   repo: 'tootoo',
-  faviconLetters: 'TT',                          // 2 letters in the generated SVG favicon
-  faviconColor: '#2563eb',                       // favicon background
-  // faviconFile: 'favicon.ico',                 // use a real favicon.ico instead of the generated mark
   // hiddenFiles: [ '/index.html' ],             // hide a name from the tree; '/name' anchors to the repo root
 } );
-/* TooToo — header.js  (the "where are we?" component).
+    /* TooToo — header.js  (the "where are we?" component).
    Ported from reference §8 (updateHeaderFromConfig) + appearance controls (§11).
    Reads: CONFIG + meta[revised]. Writes: state.owner/repo/branch (repo/branch
    pickers not built yet). Depends on globals CONFIG/state. */
@@ -1809,9 +1762,6 @@ const initHeaderControls = () => {
   } );
 
   document.getElementById( 'headerGitHub' )?.setAttribute( 'href', CONFIG.sourceRepoUrl || '#' );
-  // Brand mark in the GitHub link: the CONFIG favicon (shared with footer/sidebar
-  // marks via faviconDataUrl), replacing the old octocat glyph.
-  document.getElementById( 'headerBrand' )?.setAttribute( 'src', brandMarkSrc() );
 };
 
 /* ── token panel (header owns the dialog; it renders into the content area) ── */
@@ -2043,7 +1993,7 @@ const initAppearance = () => {
 };
 
 const initHeader = () => { updateHeaderFromConfig(); initAppearance(); initHeaderControls(); };
-/* TooToo — sidebar.js  (the "what files exist & how they're shown" component).
+    /* TooToo — sidebar.js  (the "what files exist & how they're shown" component).
    Ported from reference §18-§26. Reads: state.tree, CONFIG.hidden*.
    Writes: nothing global — display only. Hands off via Content's selectFile(path).
    Depends on core.js helpers + globals CONFIG/state (mock-data.js).
@@ -2619,9 +2569,7 @@ const initSidebar = () => {
     if ( !e.target.closest( '.branch-control' ) ) closeBranchMenu();
   } );
 
-  // Sidebar footer brand mark (from CONFIG favicon) + scroll-to-top.
-  const footImg = document.querySelector( '#btnScrollTreeTop img' );
-  if ( footImg ) footImg.src = brandMarkSrc();
+  // Sidebar footer scroll-to-top (its brand mark is static markup → favicon.ico).
   document.getElementById( 'btnScrollTreeTop' )?.addEventListener( 'click', () =>
     document.getElementById( 'treeList' ).scrollTo( { top: 0, behavior: 'smooth' } ) );
 
@@ -2638,7 +2586,7 @@ const initSidebar = () => {
     } );
   }
 };
-/* TooToo — content.js  (the "show the file & act on it" component).
+    /* TooToo — content.js  (the "show the file & act on it" component).
    Ported from reference §32, §33, §37, §38. Reads: state.owner/repo/branch,
    CONFIG. Writes: state.currentFilePath (Content owns this). Depends on core.js
    + marked/hljs/DOMPurify (CDN, same as the real app).
@@ -3064,13 +3012,11 @@ const initContent = () => {
     toTop.addEventListener( 'click', () => area.scrollTo( { top: 0, behavior: 'smooth' } ) );
   }
 };
-/* TooToo — footer.js  (repo-owner copyright + license link).
-   Left: TT mark + "© <year> <owner>", plus CONFIG.rightsText when the owner is in
-   scope (see rightsOwners). Right: License link. */
+    /* TooToo — footer.js  (repo-owner copyright + license link).
+   Left: favicon mark (static markup) + "© <year> <owner>", plus CONFIG.rightsText
+   when the owner is in scope (see rightsOwners). Right: License link. */
 
 const renderFooter = () => {
-  const mark = document.querySelector( '.app-footer-mark' );
-  if ( mark ) mark.src = brandMarkSrc();   // real favicon.ico if present, else CONFIG mark
   updateFooterCopyright();
 };
 
@@ -3108,7 +3054,7 @@ const updateFooterLicense = () => {
     el.title = 'Open source licenses (opensource.org)';
   }
 };
-/* TooToo — main.js  (init + wiring) for the ASSEMBLED live build.
+    /* TooToo — main.js  (init + wiring) for the ASSEMBLED live build.
    Init order per ARCHITECTURE.md: header → content → footer → detect repo →
    sidebar → fetch tree → route to a file (hash or README). Reference §40. */
 
@@ -3119,14 +3065,12 @@ window.addEventListener( 'unhandledrejection', ( e ) => console.error( 'TooToo u
 const initApp = async () => {
   // Per-repo branding: tootoo.config.js (loaded in <head>, if present) sets
   // window.TOOTOO_CONFIG; merge it over the built-in + baked config so a dropped-in
-  // repo can override theme/favicon/appName/hidden files (canonical's fork model).
+  // repo can override theme/appName/hidden files (canonical's fork model).
   if ( window.TOOTOO_CONFIG && typeof window.TOOTOO_CONFIG === 'object' ) Object.assign( CONFIG, window.TOOTOO_CONFIG );
 
   initHeader();     // header.js  — branding + appearance controls
   initContent();    // content.js — wire Copy / view-toggle / etc.
   renderFooter();   // footer.js  — brand bar
-  applyFavicon();   // core.js    — set the browser-tab favicon (generated mark; favicon.ico upgrade follows)
-  detectRealFavicon(); // core.js — if a favicon.ico sits next to index.html, prefer it for the tab + brand marks
   applyHeadingFont(); // core.js  — load + apply CONFIG.headingFont(Url) for headings/title
 
   await detectLocalMode();  // core.js — file:// drop-in: seed owner/repo, read files from disk
@@ -3200,4 +3144,3 @@ initApp();
 </body>
 
 </html>
-

@@ -1,19 +1,23 @@
 /* TooToo — footer.js  (repo-owner copyright + license link).
-   Left: TT mark + "© <year> <owner> · No rights reserved." Right: License link. */
+   Left: favicon mark (static markup) + "© <year> <owner>", plus CONFIG.rightsText
+   when the owner is in scope (see rightsOwners). Right: License link. */
 
 const renderFooter = () => {
-  const mark = document.querySelector( '.app-footer-mark' );
-  if ( mark ) mark.src = brandMarkSrc();   // real favicon.ico if present, else CONFIG mark
   updateFooterCopyright();
 };
 
-/* Copyright by the repo owner, e.g. "© 2026 pushme-pullyou · No rights reserved." */
+/* Copyright by the repo owner, e.g. "© 2026 pushme-pullyou · No rights reserved".
+   The rights phrase (CONFIG.rightsText) is appended only when CONFIG.rightsOwners
+   covers this repo's owner — null = all owners, an array = just those, [] = none —
+   so a fork asserts its rights on its own repos but stays blank on others. */
 const updateFooterCopyright = () => {
   const el = document.getElementById( 'footerCopyright' );
   if ( !el ) return;
-  el.textContent = state.owner
-    ? `© ${ new Date().getFullYear() } ${ state.owner } · No rights reserved.`
-    : 'No rights reserved.';
+  if ( !state.owner ) { el.textContent = ''; return; }
+  const owns = !CONFIG.rightsOwners ||
+    CONFIG.rightsOwners.some( ( o ) => o.toLowerCase() === state.owner.toLowerCase() );
+  const rights = ( CONFIG.rightsText && owns ) ? ` · ${ CONFIG.rightsText }` : '';
+  el.textContent = `© ${ new Date().getFullYear() } ${ state.owner }${ rights }.`;
 };
 
 /* Point the license link at the repo's own root LICENSE file (opened in-app via the

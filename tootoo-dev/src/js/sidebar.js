@@ -574,9 +574,7 @@ const initSidebar = () => {
     if ( !e.target.closest( '.branch-control' ) ) closeBranchMenu();
   } );
 
-  // Sidebar footer brand mark (from CONFIG favicon) + scroll-to-top.
-  const footImg = document.querySelector( '#btnScrollTreeTop img' );
-  if ( footImg ) footImg.src = brandMarkSrc();
+  // Sidebar footer scroll-to-top (its brand mark is static markup → favicon.ico).
   document.getElementById( 'btnScrollTreeTop' )?.addEventListener( 'click', () =>
     document.getElementById( 'treeList' ).scrollTo( { top: 0, behavior: 'smooth' } ) );
 

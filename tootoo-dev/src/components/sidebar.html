@@ -65,7 +65,7 @@
       <div id="treeList"></div>
       <div class="sidebar-footer">
         <button id="btnScrollTreeTop" type="button" title="Scroll sidebar to top" aria-label="Scroll sidebar to top">
-          <img alt="" width="20" height="20">
+          <img src="favicon.ico" alt="" width="20" height="20">
         </button>
       </div>
     </div>
@@ -118,6 +118,9 @@
 
     // Footer icon, scroll-to-top, and resizer drag now live in sidebar.js (initSidebar).
     initSidebar();
+    // Standalone page: the footer mark's static src="favicon.ico" resolves relative to
+    // this file (src/components/), so point it at the dev folder's generated one.
+    document.querySelector( '#btnScrollTreeTop img' ).src = '../../favicon.ico';
   </script>
 
 </body>

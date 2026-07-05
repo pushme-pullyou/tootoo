@@ -66,7 +66,7 @@ Each component: a **mission**, the **DOM** it owns, what state it **writes** vs
 
 ### ⬜ Footer — branding / identity
 - **Owns DOM:** the sidebar-footer mark.
-- **Reads:** `CONFIG.faviconLetters`, `CONFIG.appName`.
+- **Reads:** `CONFIG.rightsText/rightsOwners`, `state.owner`.
 - **Exposes:** `renderFooter()`.
 - **Sections:** CSS "Sidebar footer".
 

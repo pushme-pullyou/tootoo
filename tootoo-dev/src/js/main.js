@@ -9,14 +9,12 @@ window.addEventListener( 'unhandledrejection', ( e ) => console.error( 'TooToo u
 const initApp = async () => {
   // Per-repo branding: tootoo.config.js (loaded in <head>, if present) sets
   // window.TOOTOO_CONFIG; merge it over the built-in + baked config so a dropped-in
-  // repo can override theme/favicon/appName/hidden files (canonical's fork model).
+  // repo can override theme/appName/hidden files (canonical's fork model).
   if ( window.TOOTOO_CONFIG && typeof window.TOOTOO_CONFIG === 'object' ) Object.assign( CONFIG, window.TOOTOO_CONFIG );
 
   initHeader();     // header.js  — branding + appearance controls
   initContent();    // content.js — wire Copy / view-toggle / etc.
   renderFooter();   // footer.js  — brand bar
-  applyFavicon();   // core.js    — set the browser-tab favicon (generated mark; favicon.ico upgrade follows)
-  detectRealFavicon(); // core.js — if a favicon.ico sits next to index.html, prefer it for the tab + brand marks
   applyHeadingFont(); // core.js  — load + apply CONFIG.headingFont(Url) for headings/title
 
   await detectLocalMode();  // core.js — file:// drop-in: seed owner/repo, read files from disk
