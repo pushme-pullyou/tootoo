@@ -14,7 +14,7 @@ const CONFIG = {
   headingFontUrl: '', headingFont: '',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
   storagePrefix: 'tootoo',
-  hiddenFolders: [ 'Images' ], hiddenFiles: [], maxRepoFiles: 5000,
+  hiddenFolders: [], hiddenFiles: [ 'tootoo.config.js' ], maxRepoFiles: 5000,
   autoOpenFolderReadme: true,  // expanding a folder opens its own README the first time (set false to disable)
   // Footer rights line appended after "© <year> <owner>". rightsOwners scopes WHICH
   // owners it shows for: null = every repo (default), an array = only those owner logins
