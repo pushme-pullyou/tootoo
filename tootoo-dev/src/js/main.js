@@ -40,17 +40,19 @@ const initApp = async () => {
 
   if ( state.oversized ) return;
 
-  // Back/forward + address-bar hash edits re-open the file.
+  // Back/forward + address-bar hash edits re-open the file (and/or scroll to the
+  // in-file anchor after the first raw '#').
   window.addEventListener( 'hashchange', () => {
-    const p = currentHashPath();
-    const pFile = p.includes( '#' ) ? p.slice( 0, p.indexOf( '#' ) ) : p;
-    if ( p && pFile !== state.currentFilePath ) selectFile( p );
+    const { path, anchor } = parseHash();
+    if ( !path ) return;
+    if ( path === state.currentFilePath ) { if ( anchor ) scrollToAnchor( anchor ); return; }
+    selectFile( path, anchor );
   } );
 
   // File-open priority: URL hash → last-opened (this session) → README.
-  const hashPath = currentHashPath();
+  const { path: hashPath, anchor: hashAnchor } = parseHash();
   if ( hashPath ) {
-    selectFile( hashPath );
+    selectFile( hashPath, hashAnchor );
   } else {
     let last = null;
     try { last = sessionStorage.getItem( getCurrentFileKey() ); } catch ( _ ) { /* storage off */ }

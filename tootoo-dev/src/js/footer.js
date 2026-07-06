@@ -29,7 +29,7 @@ const updateFooterLicense = () => {
   const lic = state.tree?.find( ( i ) =>
     i.type === 'blob' && /^(licen[sc]e|copying)(\.\w+)?$/i.test( i.path ) );
   if ( lic ) {
-    el.href = '#' + encodePath( lic.path );   // opens it in TooToo via hash routing
+    el.href = '#' + encodeHash( lic.path );   // opens it in TooToo via hash routing
     el.removeAttribute( 'target' );
     el.removeAttribute( 'rel' );
     el.title = `View ${ lic.path }`;

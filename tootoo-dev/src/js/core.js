@@ -401,14 +401,16 @@ const promptForRepo = () => new Promise( ( resolve ) => {
   document.getElementById( 'inpRepo' ).addEventListener( 'keydown', ( e ) => { if ( e.key === 'Enter' ) go(); } );
 } );
 
-/* ── resolve a repo-relative path against a directory (Markdown links/images) ── */
+/* ── resolve a repo-relative path against a directory (Markdown links/images).
+   Segments are percent-decoded: marked emits hrefs URL-encoded (spaces → %20), but
+   tree paths and fetch helpers work with the real file names. ── */
 const resolveRepoPath = ( href, currentDir ) => {
-  if ( href.startsWith( '/' ) ) return href.replace( /^\/+/, '' );   // root-relative
+  if ( href.startsWith( '/' ) ) return safeDecode( href.replace( /^\/+/, '' ) );   // root-relative
   const stack = currentDir ? currentDir.split( '/' ) : [];
   for ( const part of href.split( '/' ) ) {
     if ( part === '' || part === '.' ) continue;
     if ( part === '..' ) stack.pop();
-    else stack.push( part );
+    else stack.push( safeDecode( part ) );
   }
   return stack.join( '/' );
 };
@@ -425,14 +427,26 @@ const getDefaultBranch = async ( signal ) => {
   return data.default_branch;
 };
 
-/* ── hash routing ── */
+/* ── hash routing ──
+   Address-bar format: #<path>#<anchor> — real slashes and readable characters, so the
+   URL is a clean permalink. Only characters that would break parsing or get silently
+   re-encoded by the browser are escaped ('%', '#', whitespace, '"<>`'). The FIRST raw
+   '#' inside the hash separates the file path from an in-file heading anchor. */
+const encodeHash = ( p ) => p.replace( /[%#"<>`\s]/g, ( c ) => encodeURIComponent( c ) );
+const safeDecode = ( s ) => { try { return decodeURIComponent( s ); } catch ( _ ) { return s; } };
+const parseHash = () => {
+  const raw = location.hash.replace( /^#/, '' );
+  const sep = raw.indexOf( '#' );
+  return sep >= 0
+    ? { path: safeDecode( raw.slice( 0, sep ) ), anchor: safeDecode( raw.slice( sep + 1 ) ) }
+    : { path: safeDecode( raw ), anchor: '' };
+};
 // Assigning location.hash (vs replaceState) creates a history entry so browser
 // back/forward navigate between files; the != guard avoids a redundant set/loop.
-const updateHash = ( path ) => {
-  const target = '#' + encodePath( path );
+const updateHash = ( path, anchor = '' ) => {
+  const target = '#' + encodeHash( path ) + ( anchor ? '#' + encodeHash( anchor ) : '' );
   if ( location.hash !== target ) { try { location.hash = target; } catch ( _ ) { /* noop */ } }
 };
-const currentHashPath = () => { try { return decodeURIComponent( location.hash.replace( /^#/, '' ) ); } catch ( _ ) { return ''; } };
 
 /* ── last-opened file (sessionStorage, per owner/repo/branch) ── */
 const getCurrentFileKey = () => storageKey( `currentFile:${ state.owner }/${ state.repo }/${ state.branch }` );

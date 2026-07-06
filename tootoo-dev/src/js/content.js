@@ -92,17 +92,43 @@ const renderMarkdown = ( text, filePath ) => {
   if ( !mdBody ) return;
   const currentDir = filePath.includes( '/' ) ? filePath.slice( 0, filePath.lastIndexOf( '/' ) ) : '';
 
-  // Links: external → new tab; in-repo → resolve against currentDir + load via selectFile.
+  // GitHub-style heading ids (marked v12 no longer generates them), so in-file
+  // #anchor links and #path#anchor permalinks have something to scroll to.
+  const slugCounts = {};
+  mdBody.querySelectorAll( 'h1, h2, h3, h4, h5, h6' ).forEach( ( h ) => {
+    if ( h.id ) return;
+    let slug = h.textContent.trim().toLowerCase().replace( /[^\w\s-]/g, '' ).replace( /\s+/g, '-' );
+    if ( !slug ) return;
+    if ( slugCounts[ slug ] != null ) slug += '-' + ( ++slugCounts[ slug ] );
+    else slugCounts[ slug ] = 0;
+    h.id = slug;
+  } );
+
+  // Links: in-file #anchor → scroll + reflect in the routing hash (never let the
+  // browser replace the file hash — that would be treated as a file path);
+  // external → new tab; in-repo → resolve against currentDir + load via selectFile,
+  // carrying any #fragment along as the anchor to scroll to.
   mdBody.querySelectorAll( 'a[href]' ).forEach( ( a ) => {
     const href = a.getAttribute( 'href' );
-    if ( !href || href.startsWith( '#' ) ) return;
+    if ( !href ) return;
+    if ( href.startsWith( '#' ) ) {
+      const anchor = safeDecode( href.slice( 1 ) );
+      a.classList.add( 'internal-link' );
+      a.addEventListener( 'click', ( e ) => {
+        e.preventDefault();
+        scrollToAnchor( anchor );
+        updateHash( state.currentFilePath, anchor );
+      } );
+      return;
+    }
     if ( /^https?:\/\//.test( href ) || href.startsWith( '//' ) ) { a.target = '_blank'; a.rel = 'noopener'; return; }
     const frag = href.indexOf( '#' );
     const clean = frag >= 0 ? href.slice( 0, frag ) : href;
     if ( !clean ) return;
     const repoPath = resolveRepoPath( clean, currentDir );
+    const anchor = frag >= 0 ? safeDecode( href.slice( frag + 1 ) ) : '';
     a.removeAttribute( 'href' ); a.classList.add( 'internal-link' );
-    a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( repoPath ); } );
+    a.addEventListener( 'click', ( e ) => { e.preventDefault(); selectFile( repoPath, anchor ); } );
   } );
 
   // Images: resolve repo-relative src against the current file's directory. The URL
@@ -216,10 +242,20 @@ const setContentHeader = ( el ) => {
   if ( existing ) existing.replaceWith( el ); else area.prepend( el );
 };
 
+/* ── scroll the rendered content to an in-file anchor (heading id / name) ── */
+const scrollToAnchor = ( anchor ) => {
+  if ( !anchor ) return false;
+  const body = document.getElementById( 'contentBody' );
+  const el = body?.querySelector( `[id="${ CSS.escape( anchor ) }"], [name="${ CSS.escape( anchor ) }"]` );
+  if ( el ) el.scrollIntoView( { block: 'start', behavior: 'auto' } );
+  return !!el;
+};
+
 /* ── selectFile: build header, fetch, dispatch by type (reference §37).
    fetchFileText reads mockFiles on standalone pages, raw GitHub in the live
-   build — so the same selectFile works offline and online. ── */
-const selectFile = async ( path ) => {
+   build — so the same selectFile works offline and online. An optional anchor
+   (from #path#anchor or a link's #fragment) is scrolled to after render. ── */
+const selectFile = async ( path, anchor = '' ) => {
   const ext = path.includes( '.' ) ? path.split( '.' ).pop().toLowerCase() : '';
   state.currentFilePath = path;               // Content owns this
   // Opening a real file dismisses any About/Token panel highlight (assembled build).
@@ -270,14 +306,17 @@ const selectFile = async ( path ) => {
       else if ( ext === 'html' || ext === 'htm' ) renderHtml( text, ext );
       else renderCode( text, ext );
     }
-    updateHash( path );
+    updateHash( path, anchor );
     saveCurrentFile( path );   // remember last-opened file for this repo (sessionStorage)
   } catch ( err ) {
     if ( err.name === 'AbortError' ) return;   // superseded by a newer selection
     lastRawText = '';
     body.innerHTML = `<p style="color:red;">${ escapeHTML( err.message ) }</p>`;
   }
-  document.getElementById( 'contentArea' ).scrollTo( { top: 0 } );
+  // Land on the requested anchor when there is one; otherwise start at the top.
+  if ( !( anchor && scrollToAnchor( anchor ) ) ) {
+    document.getElementById( 'contentArea' ).scrollTo( { top: 0 } );
+  }
 };
 
 /* ── content actions: view toggle, copy, print, new-tab (reference §38) ── */
