@@ -13,8 +13,8 @@ Object.assign( CONFIG, {
   themeColor: '#2563eb',
   // Mirror the fork's tootoo.config.js heading font so the harness is representative
   // (the dev page reads this mock, never the real tootoo.config.js).
-  headingFontUrl: 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&display=swap',
-  headingFont: '"Fraunces", serif',
+  headingFontUrl: 'https://fonts.googleapis.com/css2?family=Rammetto+One&display=swap',
+  headingFont: '"Rammetto One", sans-serif',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
   storagePrefix: 'tootoo',
   hiddenFolders: [ 'Images' ],

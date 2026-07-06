@@ -7,7 +7,5 @@ Object.assign( CONFIG, {
   subtitle: 'a GitHub repository browser',
   owner: 'Pushme-Pullyou',                       // default repo to browse
   repo: 'tootoo',
-  headingFont: '"Rammetto One", sans-serif',     // heading + title face
-  headingFontUrl: 'https://fonts.googleapis.com/css2?family=Rammetto+One&display=swap',
   // hiddenFiles: [ '/index.html' ],             // hide a name from the tree; '/name' anchors to the repo root
 } );

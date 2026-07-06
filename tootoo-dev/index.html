@@ -1197,7 +1197,7 @@ const CONFIG = {
   headingFontUrl: '', headingFont: '',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
   storagePrefix: 'tootoo',
-  hiddenFolders: [ 'Images' ], hiddenFiles: [], maxRepoFiles: 5000,
+  hiddenFolders: [], hiddenFiles: [ 'tootoo.config.js' ], maxRepoFiles: 5000,
   autoOpenFolderReadme: true,  // expanding a folder opens its own README the first time (set false to disable)
   // Footer rights line appended after "© <year> <owner>". rightsOwners scopes WHICH
   // owners it shows for: null = every repo (default), an array = only those owner logins
@@ -1670,6 +1670,8 @@ Object.assign( CONFIG, {
   subtitle: 'a GitHub repository browser',
   owner: 'Pushme-Pullyou',                       // default repo to browse
   repo: 'tootoo',
+  headingFont: '"Rammetto One", sans-serif',     // heading + title face
+  headingFontUrl: 'https://fonts.googleapis.com/css2?family=Rammetto+One&display=swap',
   // hiddenFiles: [ '/index.html' ],             // hide a name from the tree; '/name' anchors to the repo root
 } );
     /* TooToo — header.js  (the "where are we?" component).
