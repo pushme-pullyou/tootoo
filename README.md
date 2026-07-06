@@ -65,7 +65,7 @@ The [`examples/`](examples/) folder has sample content for every renderer. A few
 * **Font size controls** — A−/A+ buttons, helpful on phones
 * **GitHub token support** — optional PAT for private repos and higher rate limits (5,000/hr vs 60/hr)
 * **File text cache** — LRU in-memory + sessionStorage cache to reduce API calls without persisting file contents after the tab session
-* **Hash routing** — deep-link to any file via `#path/to/file`
+* **Hash routing** — deep-link to any file or heading via `#path/to/file#anchor`
 * **Copy / New Tab / Download** — copy raw text, open viewable files in a new tab, or save non-viewable files (3D, fonts, archives, spreadsheets, binaries) straight to disk
 * **Rendered ↔ Raw toggle** — for Markdown, HTML, and SVG files; preference saved per file type
 * **Safer HTML previews** — rendered HTML uses a strict iframe sandbox so repository scripts do not run by default
@@ -90,7 +90,7 @@ const CONFIG = {
 };
 ```
 
-These are the common knobs; `CONFIG` also supports theming and filtering options (`themeColor`, `subtitle`, `hiddenFolders`/`hiddenFiles`, `faviconLetters`, `headingFont`, `maxRepoFiles`) — see [`FORKING.md`](FORKING.md) for the full set.
+These are the common knobs; `CONFIG` also supports theming and filtering options (`themeColor`, `subtitle`, `hiddenFolders`/`hiddenFiles`, `headingFont`, `maxRepoFiles`) — see [`FORKING.md`](FORKING.md) for the full set. To brand a fork, ship a `favicon.ico` beside `index.html`.
 
 ## Fork & Customize
 
@@ -112,7 +112,7 @@ Want your own TooToo pointing at your own repo? It takes about a minute.
 
    On GitHub Pages, the top-header label and link auto-detect from the hostname (`<you>.github.io/<fork>/`), so you don't even need to set `sourceRepoUrl` for the Pages deploy. It's only used as a fallback for `file://` and custom domains.
 
-3. **Customize the favicon** (optional) — the inline SVG `<link rel="icon" ...>` in `<head>`.
+3. **Customize the favicon** (optional) — drop a `favicon.ico` beside `index.html` in your fork.
 
 4. **Enable Pages**: in your fork's *Settings → Pages*, deploy from the `main` branch root. Your fork goes live at `https://<you>.github.io/<your-fork>/`.
 
@@ -192,6 +192,8 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 
 ## Change Log
 
+* 2026-07-05 — Permalinks now keep clean slashes in the address bar and support in-file anchors: deep links use `#path/to/file#anchor`, markdown heading links scroll correctly, and browser back/forward preserves file history without misreading anchors as file paths
+* 2026-07-05 — TooToo now assumes a real `favicon.ico` beside `index.html`; the tab icon and the header/footer/sidebar brand marks all use that file directly, and the dev build auto-generates a TT placeholder icon when the sandbox folder lacks one
 * 2026-06-26 — Narrow screens now keep the `owner / repo` title beside the logo (the title shrinks and breaks only at the slash if it must) and hide the subtitle, instead of dropping the title to its own line and wasting vertical space
 * 2026-06-26 — Footer copyright's rights line is now configurable and owner-scoped: new `rightsText` / `rightsOwners` config knobs — the phrase (e.g. "No rights reserved") shows only for owners you list (your own repos) and stays blank on everyone else's
 * 2026-06-26 — Links in rendered files are underlined with a clearer hover (brighter color + tinted background pill); the header logo and title gained a matching hover effect
