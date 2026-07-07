@@ -12,6 +12,14 @@ const initApp = async () => {
   // repo can override theme/appName/hidden files (canonical's fork model).
   if ( window.TOOTOO_CONFIG && typeof window.TOOTOO_CONFIG === 'object' ) Object.assign( CONFIG, window.TOOTOO_CONFIG );
 
+  // Heartbeat for reload-vs-restore detection (read during hash routing below): stamp the
+  // time whenever this page is navigated away from. A reload re-reads it moments later; a
+  // session-restore re-reads a stale one. Registered before any early return so every exit
+  // path stamps. (CONFIG is merged first so a fork's storagePrefix is already in effect.)
+  window.addEventListener( 'pagehide', () => {
+    try { sessionStorage.setItem( storageKey( 'sessionBeat' ), String( Date.now() ) ); } catch ( _ ) { /* storage off */ }
+  } );
+
   initHeader();     // header.js  — branding + appearance controls
   initContent();    // content.js — wire Copy / view-toggle / etc.
   renderFooter();   // footer.js  — brand bar
@@ -52,15 +60,32 @@ const initApp = async () => {
     selectFile( path, anchor );
   } );
 
-  // File-open priority: URL hash → last-opened (this session) → README.
-  const { path: hashPath, anchor: hashAnchor } = parseHash();
-  if ( hashPath ) {
-    selectFile( hashPath, hashAnchor );
+  // Distinguish a RELOAD (keep your place) from a browser SESSION-RESTORE (go home).
+  // Both bring back the URL hash and sessionStorage, so we time it instead: on pagehide
+  // the app stamps `sessionBeat` (see initApp top). performance.timeOrigin is this load's
+  // navigation start, so `timeOrigin - beat` is the gap since the previous page went away —
+  // sub-second for a reload (back-to-back), but seconds+ for a restore (browser was closed).
+  // No stamp at all → a genuinely fresh context (new tab / directly opened permalink).
+  const RELOAD_GRACE_MS = 3000;          // a reload's gap is sub-second; restores far exceed this
+  let restored = false;
+  try {
+    const beat = sessionStorage.getItem( storageKey( 'sessionBeat' ) );
+    restored = beat !== null && ( performance.timeOrigin - Number( beat ) ) > RELOAD_GRACE_MS;
+  } catch ( _ ) { restored = false; }    // storage off → not a restore, so permalinks still open
+
+  if ( restored ) {
+    autoSelectReadme();                  // restored session → always the home page
   } else {
-    let last = null;
-    try { last = sessionStorage.getItem( getCurrentFileKey() ); } catch ( _ ) { /* storage off */ }
-    if ( last && state.tree?.some( ( i ) => i.path === last && i.type === 'blob' ) ) selectFile( last );
-    else autoSelectReadme();
+    // Fresh open or reload — File-open priority: URL hash → last-opened (this session) → README.
+    const { path: hashPath, anchor: hashAnchor } = parseHash();
+    if ( hashPath ) {
+      selectFile( hashPath, hashAnchor );
+    } else {
+      let last = null;
+      try { last = sessionStorage.getItem( getCurrentFileKey() ); } catch ( _ ) { /* storage off */ }
+      if ( last && state.tree?.some( ( i ) => i.path === last && i.type === 'blob' ) ) selectFile( last );
+      else autoSelectReadme();
+    }
   }
 };
 
