@@ -1,5 +1,8 @@
 # TooToo Lab — Fixes Log
 
+> **Historical (pre-graduation).** The component build became canonical on 2026-06-23;
+> these entries are the record of closing the gap to the old single-file app.
+
 Places where the component build diverged from canonical `index.html` — mostly
 regressions from simplifications made during the carve — and how each was fixed.
 Each entry is a concrete diff point: **useful raw material for the graduation diff.**

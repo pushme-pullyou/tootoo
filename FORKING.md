@@ -2,9 +2,15 @@
 
 A guide for developers who want to fork TooToo and modify it. For the basic "edit `CONFIG`, push, enable Pages" flow, see the **Fork & Customize** section of [`README.md`](README.md). This document is for people who want to add features or change behavior.
 
+> **Canonical dev vs your fork.** In the canonical `pushme-pullyou-tootoo` repo, `index.html`
+> is *generated* from component sources in [`tootoo-dev/src/`](tootoo-dev/) via `assemble.ps1`
+> (see [`PIPELINE.md`](PIPELINE.md)). This guide describes the **assembled single-file app** —
+> exactly what your fork receives. To contribute a change upstream, edit the components and
+> rebuild; to tweak only your own fork, editing the one `index.html` is fine.
+
 ## The whole app in eight bullets
 
-* **Single file.** Everything lives in [`index.html`](index.html) — HTML, CSS, JS. No build step, no modules. Open it via `file://` and it works.
+* **Single file at runtime.** The shipped [`index.html`](index.html) is self-contained — HTML, CSS, JS in one file, no modules, opens via `file://`. (In canonical dev it's assembled from `tootoo-dev/src/`; the shipped artifact itself has no build step.)
 * **Repo detection cascade** (`detectRepo`, section 9): URL params → cached repo in localStorage → `*.github.io` hostname → `.git/config` (file:// only) → `CONFIG_DEFAULTS` fallback → manual form.
 * **Pre-configuring `CONFIG`.** Setting `CONFIG.owner`, `.repo`, and `.branch` in the source skips the entire cascade and opens that exact repository on load — no URL parameters, no user input, no form. The result: visitors see your repo's files instantly, the app works identically regardless of where it's hosted (GitHub Pages, CDN, `file://`), and casual users never have to know what a repo URL is. Leave the values empty (the TooToo default) to keep auto-detection active.
 * **Tree fetch** (`fetchTree`, section 21): one call to GitHub's `/git/trees/<branch>?recursive=1`. Result is stored on `state.tree` as a flat array; `buildNestedTree` (section 17) folds it into a nested object for rendering.
@@ -68,4 +74,4 @@ To swap a CDN for a local copy, download the file into your fork and point the `
 * **Functional style.** No classes, no `this`, no `var`. `const` over `let`. Arrow functions everywhere.
 * **CSS custom properties** in `:root`, dark-mode overrides in `body.dark-mode`. No `!important` except on `.is-hidden`.
 * **`escapeHTML` everything user-controlled** that goes into a template literal. Or use `textContent`.
-* **One file.** If you need an external file, you're probably leaving the spirit of the project. Talk yourself out of it first.
+* **One file at runtime.** The shipped app is a single self-contained `index.html`. (Canonical dev keeps the *sources* split under `tootoo-dev/src/` and assembles them; the output stays one file.) If a runtime feature would need a second fetched file, talk yourself out of it first.

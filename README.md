@@ -171,13 +171,18 @@ TooToo stays intentionally small: single-file, vanilla JavaScript, static hostin
 ## Project Structure
 
 ```text
-index.html                    ← canonical single-file app
+index.html                    ← canonical production app (GENERATED — do not hand-edit)
 README.md                     ← user-facing docs (this file)
 FORKING.md                    ← architecture + recipes for forkers
 AGENTS.md                     ← AI agent guidance
-CLAUDE.md                     ← Claude-specific pointer file
-0-tootoo-agenda.md            ← priorities and ideas
-0-tootoo-journal.md           ← development notes
+CLAUDE.md                     ← Claude pointer file
+PIPELINE.md                   ← dev → promote → sync → publish release flow
+tootoo.config.js              ← this repo's own per-fork config
+tootoo-dev/                   ← SOURCE: everything index.html is built from
+  src/                        ← js/ · styles.css · components/ · config.js
+  assemble.ps1                ← builds index.html from src/
+  0-tootoo-agenda.md          ← priorities and ideas
+  0-tootoo-journal.md         ← development notes
 tootoo-test.html              ← standalone test harness for pure helpers
 tootoo-test-load.html         ← manual GitHub raw-file load tester for this repo
 examples/                     ← sample content + render fixtures, organized by file type (with index README)

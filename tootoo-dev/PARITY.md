@@ -1,5 +1,10 @@
 # TooToo Lab — Graduation / Parity Audit
 
+> **✅ GRADUATED 2026-06-23.** The assembled component build replaced the hand-maintained
+> canonical `index.html`; `tootoo-dev/src/` is now the source of truth (see
+> [`../PIPELINE.md`](../PIPELINE.md)). This audit is kept as the historical record of that
+> graduation — the "we're at step 1" / "canonical remains the source" notes below predate it.
+
 **Question:** can the assembled component build replace canonical `index.html`?
 **Answer (2026-06-21):** 🟥 blockers **and** 🟧 important items are now CLOSED (see
 below). What remains is minor 🟨 polish + a manual verification pass (the

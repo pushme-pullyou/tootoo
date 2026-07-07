@@ -9,3 +9,11 @@ desktop.ini
 .idea/
 *.swp
 *~
+
+# Timestamped backup snapshots (filename-YYYY-MM-DD-HH-MM.ext) are scratch — don't track
+# them. Deliberate archive copies live in .archive/ (force-add with `git add -f` if needed).
+*-20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9].*
+!.archive/
+
+# Local Claude Code settings — personal + machine-specific, not shared
+.claude/settings.local.json

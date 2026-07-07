@@ -1,21 +1,21 @@
-# TooToo Lab 🧪
+# TooToo Dev 🛠️
 
-An **isolated sandbox** for experimenting with a component-based architecture for
-TooToo. Nothing here is live, and nothing here can affect the live fleet.
+The **source of truth** for TooToo. The single-file `index.html` at the repo root is a
+*generated* build — you edit the component sources under [`src/`](src/), assemble, test,
+and promote. Never hand-edit a production `index.html`.
 
-## Safety charter (why this is safe to break)
+## How changes flow
 
-- **Off the pipeline.** `sync` / `publish` only touch the 14 repos listed in
-  `pushme-pullyou-tootoo/PIPELINE.md`. This folder is **not** one of them.
-- **`promote` ignores it.** Promote only reads `pushme-pullyou-tootoo/tootoo-dev/index.html`.
-- **One-way mirror.** `tootoo-reference.html` is a *read-only copy* of the current
-  canonical engine, here only as the thing we carve from. The real `index.html`
-  is never touched by anything in this folder.
-- **Nothing comes back automatically.** If an experiment turns out well, *Theo*
-  decides, by hand, whether to carry any result into the real TooToo. There is no
-  bridge.
+1. Edit the components in [`src/`](src/) — `js/`, `styles.css`, `components/`, `config.js`.
+2. `pwsh -File assemble.ps1` → builds `tootoo-dev/index.html` (the dev build); test it via `file://`.
+3. `promote` regenerates the canonical production `index.html` at the repo root
+   (`assemble.ps1 -Prod`), then `sync` → forks and `publish` → git. Full spec:
+   [`../PIPELINE.md`](../PIPELINE.md); rules: [`../AGENTS.md`](../AGENTS.md).
 
-Break it, throw it away, start over. The working TooToo never notices.
+> **History.** This began on 2026-06-21 as an isolated sandbox — a safe place to carve the
+> single-file app into components and prove they reassemble byte-for-byte. It **graduated to
+> canonical source on 2026-06-23**, when the assembled build replaced the hand-maintained
+> `index.html`. The design notes below date from that carve and are kept as background.
 
 ## The idea
 

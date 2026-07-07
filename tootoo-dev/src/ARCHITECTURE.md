@@ -1,7 +1,8 @@
 # TooToo Dev — Architecture
 
-How the component-based TooToo is organized. This is the blueprint we build the
-dev setup against. Status: **draft, 2026-06-21.**
+How the component-based TooToo is organized. Status: **implemented** — this describes the
+live `tootoo-dev/src/` layout (drafted 2026-06-21; built out and graduated to canonical
+2026-06-23). It is now the source `index.html` is assembled from, not a proposal.
 
 ## Layers
 
