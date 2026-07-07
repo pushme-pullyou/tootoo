@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-07-05 17:01">
+  <meta name="revised" content="2026-07-06 16:32">
   <title>TooToo</title>
   <!-- A real favicon.ico is assumed to sit next to index.html in every deployment
        (assemble.ps1 generates a TT-mark placeholder when the dev folder lacks one). -->
@@ -1304,6 +1304,13 @@ const isTextOpenAsPlain = ( ext ) =>
 /* ── encode an in-repo path for a URL (keep the slashes) ── */
 const encodePath = ( p ) => p.split( '/' ).map( encodeURIComponent ).join( '/' );
 
+/* ── extension of a repo path, from the FILE NAME only — a dotted folder name must
+   not bleed into the ext of an extensionless file (notes.2026/README ≠ ext "2026/readme"). ── */
+const extOf = ( path ) => {
+  const name = path.split( '/' ).pop();
+  return name.includes( '.' ) ? name.split( '.' ).pop().toLowerCase() : '';
+};
+
 /* ── blob URL tracking + revocation (reference §5) — revoked on each navigate
    so media/PDF blobs don't leak as you browse. ── */
 const blobUrls = new Set();
@@ -1581,7 +1588,8 @@ const promptForRepo = () => new Promise( ( resolve ) => {
     CONFIG.owner = owner; CONFIG.repo = repo; applyRepo(); cacheRepo(); resolve();
   };
   document.getElementById( 'btnSetRepo' ).addEventListener( 'click', go );
-  document.getElementById( 'inpRepo' ).addEventListener( 'keydown', ( e ) => { if ( e.key === 'Enter' ) go(); } );
+  [ 'inpOwner', 'inpRepo' ].forEach( ( id ) =>
+    document.getElementById( id ).addEventListener( 'keydown', ( e ) => { if ( e.key === 'Enter' ) go(); } ) );
 } );
 
 /* ── resolve a repo-relative path against a directory (Markdown links/images).
@@ -1867,22 +1875,11 @@ const updateInfoButtonState = () => {
   token?.setAttribute( 'aria-pressed', String( activePanel === 'token' ) );
 };
 
-const renderAboutPanel = async () => {
+const renderAboutPanel = () => {
   const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
   const sourceUrl = CONFIG.sourceRepoUrl;
   const repoUrl = state.owner && state.repo ? `https://github.com/${ state.owner }/${ state.repo }` : sourceUrl;
   const token = getToken();
-
-  let rateLimitInfo = 'Unable to fetch';
-  try {
-    const res = await fetch( 'https://api.github.com/rate_limit', { headers: ghHeaders() } );
-    if ( res.ok ) {
-      const data = await res.json();
-      const core = data.resources.core;
-      const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
-      rateLimitInfo = `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })`;
-    }
-  } catch ( _ ) { /* offline or blocked */ }
 
   const tokenStatus = token ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
 
@@ -1907,7 +1904,7 @@ const renderAboutPanel = async () => {
       <ul>
         <li><strong>Repo visibility:</strong> Public (private repos require a token)</li>
         <li><strong>Token:</strong> ${ escapeHTML( tokenStatus ) }</li>
-        <li><strong>Rate limit:</strong> ${ escapeHTML( rateLimitInfo ) }</li>
+        <li><strong>Rate limit:</strong> <span id="aboutRateLimit">checking…</span></li>
         <li><strong>GitHub Pages:</strong> Supported — auto-detects repos hosted on GitHub Pages</li>
       </ul>
       ${ ( () => {
@@ -1956,6 +1953,23 @@ const renderAboutPanel = async () => {
       <button id="btnSelfTest" class="secondary">🧪 Run self-test</button>
     </div>`;
   document.getElementById( 'btnSelfTest' )?.addEventListener( 'click', runSelfTest );
+
+  // The rate-limit lookup fills in AFTER the panel renders. Patching the placeholder
+  // span (gone if the user has already navigated on) means a slow response can never
+  // clobber a file the user opened while the fetch was in flight.
+  const fillRateLimit = ( text ) => {
+    const el = document.getElementById( 'aboutRateLimit' );
+    if ( el ) el.textContent = text;
+  };
+  fetch( 'https://api.github.com/rate_limit', { headers: ghHeaders() } )
+    .then( ( res ) => res.ok ? res.json() : null )
+    .then( ( data ) => {
+      if ( !data ) { fillRateLimit( 'Unable to fetch' ); return; }
+      const core = data.resources.core;
+      const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
+      fillRateLimit( `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })` );
+    } )
+    .catch( () => fillRateLimit( 'Unable to fetch' ) );   /* offline or blocked */
 };
 
 const closeInfoPanel = () => {
@@ -1983,7 +1997,10 @@ const toggleInfoPanel = async ( panel ) => {
 /* Restore persisted appearance (reference §11 initAppearance): dark mode (else OS
    preference), font size, sidebar width (+ narrow default), theme color, collapse. */
 const initAppearance = () => {
-  const stored = localStorage.getItem( storageKey( 'darkMode' ) );
+  // localStorage access THROWS when storage is blocked (cookies off, some private
+  // modes) — a bare read here would abort the whole boot, so guard every read.
+  const read = ( key ) => { try { return localStorage.getItem( storageKey( key ) ); } catch ( _ ) { return null; } };
+  const stored = read( 'darkMode' );
   const isDark = stored === null ? window.matchMedia( '(prefers-color-scheme: dark)' ).matches : stored === 'true';
   if ( isDark ) {
     document.body.classList.add( 'dark-mode' );
@@ -1991,10 +2008,10 @@ const initAppearance = () => {
   }
   setHljsTheme( isDark );
 
-  const savedFont = localStorage.getItem( storageKey( 'fontSize' ) );
+  const savedFont = read( 'fontSize' );
   if ( savedFont ) document.documentElement.style.setProperty( '--font-size', savedFont );
 
-  const savedWidth = localStorage.getItem( storageKey( 'sidebarWidth' ) );
+  const savedWidth = read( 'sidebarWidth' );
   if ( savedWidth ) document.documentElement.style.setProperty( '--sidebar-width', savedWidth );
   else if ( window.innerWidth <= 768 ) document.documentElement.style.setProperty( '--sidebar-width', Math.round( window.innerWidth * 0.25 ) + 'px' );
 
@@ -2003,7 +2020,7 @@ const initAppearance = () => {
     document.body.style.setProperty( '--highlight-color', CONFIG.themeColor );
   }
 
-  const hidden = localStorage.getItem( storageKey( 'sidebarHidden' ) ) === 'true';
+  const hidden = read( 'sidebarHidden' ) === 'true';
   document.body.classList.toggle( 'sidebar-hidden', hidden );
   updateSidebarToggle( hidden );
 };
@@ -2204,26 +2221,27 @@ const setExpandAllButton = ( expanded ) => {
   btn.setAttribute( 'aria-label', label );
 };
 
-/* ── auto-open on first manual expand. Bound to the summary click (a real gesture) so
-   the filter / expand-all opening a folder programmatically doesn't hijack the content
-   pane. A blog root opens its latest post; any other folder opens its own README. ── */
-const wireFirstOpen = ( selector, attr ) => {
+/* ── auto-open on first manual expand. Triggered only by a real user gesture — the
+   summary click below, or keyboard expansion in setupKeyboardNav — so the filter /
+   expand-all opening a folder programmatically doesn't hijack the content pane.
+   A blog root opens its latest post; any other folder opens its own README. ── */
+const autoOpenFolder = ( d ) => {
+  if ( !d || d.dataset.autoOpened ) return;
+  const path = d.dataset.blogLatest || d.dataset.readme;
+  if ( !path ) return;
+  // Let the native <details> toggle finish, then open the target if it expanded.
+  setTimeout( () => {
+    if ( d.open && typeof selectFile === 'function' ) { d.dataset.autoOpened = '1'; selectFile( path ); }
+  }, 0 );
+};
+const wireFirstOpen = ( selector ) => {
   document.querySelectorAll( selector ).forEach( ( d ) => {
-    const path = d.getAttribute( attr );
     const summary = d.querySelector( ':scope > summary' );
-    if ( !path || !summary ) return;
-    let opened = false;
-    summary.addEventListener( 'click', () => {
-      if ( opened ) return;
-      // Let the native <details> toggle finish, then open the target if it expanded.
-      setTimeout( () => {
-        if ( d.open && typeof selectFile === 'function' ) { opened = true; selectFile( path ); }
-      }, 0 );
-    } );
+    if ( summary ) summary.addEventListener( 'click', () => autoOpenFolder( d ) );
   } );
 };
-const wireBlogAutoOpen = () => wireFirstOpen( 'details[data-blog-root]', 'data-blog-latest' );
-const wireFolderReadmeAutoOpen = () => wireFirstOpen( 'details[data-readme]', 'data-readme' );
+const wireBlogAutoOpen = () => wireFirstOpen( 'details[data-blog-root]' );
+const wireFolderReadmeAutoOpen = () => wireFirstOpen( 'details[data-readme]' );
 
 /* ── render the whole tree ── */
 const renderTree = ( treeArray ) => {
@@ -2474,15 +2492,18 @@ const setupKeyboardNav = () => {
       case 'Enter':
       case ' ': {
         e.preventDefault();
-        if ( active.classList.contains( 'tree-folder' ) ) active.parentElement.open = !active.parentElement.open;
-        else selectFileItem( active );
+        if ( active.classList.contains( 'tree-folder' ) ) {
+          const d = active.parentElement;
+          d.open = !d.open;
+          if ( d.open ) autoOpenFolder( d );   // keyboard expand gets the same first-open behavior as a click
+        } else selectFileItem( active );
         break;
       }
       case 'ArrowRight': {
         e.preventDefault();
         if ( active.classList.contains( 'tree-folder' ) ) {
           const d = active.parentElement;
-          if ( !d.open ) d.open = true;
+          if ( !d.open ) { d.open = true; autoOpenFolder( d ); }
           else { const c = d.querySelector( '.tree-folder, .tree-item' ); if ( c && c !== active ) { c.focus(); selectFileItem( c ); } }
         }
         break;
@@ -2537,7 +2558,7 @@ const openBranchMenu = async () => {
     const branches = await fetchBranchList();
     menu.innerHTML = branches.map( ( b ) =>
       `<button type="button" role="option" class="branch-option${ b === state.branch ? ' is-current' : '' }" data-branch="${ escapeHTML( b ) }">${ b === state.branch ? '✓ ' : '' }${ escapeHTML( b ) }</button>`
-    ).join( '' ) + ( branches.capped ? '<div class="branch-menu-error">Showing first 100 branches.</div>' : '' );
+    ).join( '' ) + ( branches.capped ? '<div class="branch-menu-error">Showing the first 100 branches; more may exist.</div>' : '' );
   } catch ( _ ) {
     menu.innerHTML = '<div class="branch-menu-error">Could not load branches.</div>';
   }
@@ -2684,7 +2705,7 @@ const buildToggleHtml = ( ext, renderedHtml, rawText, { prefix = '', renderedCla
     `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( rawText ) }</pre>`;
 };
 
-const renderMarkdown = ( text, filePath ) => {
+const renderMarkdown = ( text, filePath, signal ) => {
   let renderedHtml, errorHtml = '';
   try { renderedHtml = DOMPurify.sanitize( marked.parse( text ) ); }
   catch ( err ) { errorHtml = `<div class="md-error">⚠️ Markdown rendering failed: ${ escapeHTML( err.message ) }</div>`; renderedHtml = ''; }
@@ -2745,8 +2766,8 @@ const renderMarkdown = ( text, filePath ) => {
     const clean = frag >= 0 ? src.slice( 0, frag ) : src;
     if ( !clean ) return;
     img.setAttribute( 'loading', 'lazy' );
-    try { img.setAttribute( 'src', await resolveMediaUrl( resolveRepoPath( clean, currentDir ) ) ); }
-    catch ( _ ) { /* repo image missing or private fetch failed */ }
+    try { img.setAttribute( 'src', await resolveMediaUrl( resolveRepoPath( clean, currentDir ), signal ) ); }
+    catch ( _ ) { /* repo image missing/private fetch failed — or aborted by navigation */ }
   } );
 
   mdBody.querySelectorAll( 'pre code' ).forEach( ( el ) => {
@@ -2860,7 +2881,7 @@ const scrollToAnchor = ( anchor ) => {
    build — so the same selectFile works offline and online. An optional anchor
    (from #path#anchor or a link's #fragment) is scrolled to after render. ── */
 const selectFile = async ( path, anchor = '' ) => {
-  const ext = path.includes( '.' ) ? path.split( '.' ).pop().toLowerCase() : '';
+  const ext = extOf( path );
   state.currentFilePath = path;               // Content owns this
   // Opening a real file dismisses any About/Token panel highlight (assembled build).
   if ( typeof updateInfoButtonState === 'function' ) { activePanel = null; updateInfoButtonState(); }
@@ -2905,7 +2926,7 @@ const selectFile = async ( path, anchor = '' ) => {
     } else {
       const text = await fetchFileText( path, signal );
       lastRawText = text;
-      if ( ext === 'md' ) renderMarkdown( text, path );
+      if ( ext === 'md' ) renderMarkdown( text, path, signal );
       else if ( ext === 'svg' ) renderSvg( text, path.split( '/' ).pop() );
       else if ( ext === 'html' || ext === 'htm' ) renderHtml( text, ext );
       else renderCode( text, ext );
@@ -2938,7 +2959,7 @@ const setupContentActions = () => {
     if ( toggleBtn ) {
       const viewRendered = document.getElementById( 'viewRendered' );
       const viewRaw = document.getElementById( 'viewRaw' );
-      const ext = state.currentFilePath.split( '.' ).pop().toLowerCase();
+      const ext = extOf( state.currentFilePath );
       const goingToRaw = getPreferredView( ext ) === 'rendered';
       if ( viewRendered ) viewRendered.style.display = goingToRaw ? 'none' : '';
       if ( viewRaw ) viewRaw.style.display = goingToRaw ? '' : 'none';
@@ -3008,7 +3029,7 @@ const runSelfTest = async () => {
 
   const testFile = async ( item ) => {
     const path = item.path;
-    const ext = path.includes( '.' ) ? path.split( '.' ).pop().toLowerCase() : '';
+    const ext = extOf( path );
     if ( ( item.size || 0 ) > LARGE_SKIP ) return { path, status: 'skip', detail: `${ formatFileSize( item.size ) } — too large` };
     try {
       if ( ext === 'md' ) { DOMPurify.sanitize( marked.parse( await fetchFileText( path, signal ) ) ); return { path, status: 'pass', detail: 'markdown parsed' }; }
@@ -3149,7 +3170,10 @@ const initApp = async () => {
   await fetchTree();                       // sidebar.js — GitHub tree → state.tree → render
   updateFooterLicense();                   // footer.js — link to the repo's own LICENSE (tree now loaded)
 
-  if ( state.oversized ) return;
+  // No tree here means fetchTree already rendered an explanation — the oversized
+  // notice, or the rate-limit/404 token panel. Stop before the hash routing below
+  // clobbers that panel with a bare fetch error (the permalink-while-rate-limited case).
+  if ( !state.tree ) return;
 
   // Back/forward + address-bar hash edits re-open the file (and/or scroll to the
   // in-file anchor after the first raw '#').

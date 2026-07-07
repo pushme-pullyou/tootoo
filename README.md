@@ -192,6 +192,7 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 
 ## Change Log
 
+* 2026-07-06 — Robustness pass from a code review: the app now boots (with default appearance) when the browser blocks localStorage; a rate-limit/not-found explanation is no longer clobbered when the URL carries a `#permalink`; expanding a folder with the keyboard auto-opens its README / latest post just like a click; the About panel renders instantly and fills the rate-limit line in when it arrives; Enter submits the repo form from either field; file extensions are read from the file name only (a dotted folder name no longer confuses the viewer); navigating away now also cancels in-flight markdown image fetches
 * 2026-07-05 — Permalinks now keep clean slashes in the address bar and support in-file anchors: deep links use `#path/to/file#anchor`, markdown heading links scroll correctly, and browser back/forward preserves file history without misreading anchors as file paths
 * 2026-07-05 — TooToo now assumes a real `favicon.ico` beside `index.html`; the tab icon and the header/footer/sidebar brand marks all use that file directly, and the dev build auto-generates a TT placeholder icon when the sandbox folder lacks one
 * 2026-06-26 — Narrow screens now keep the `owner / repo` title beside the logo (the title shrinks and breaks only at the slash if it must) and hide the subtitle, instead of dropping the title to its own line and wasting vertical space

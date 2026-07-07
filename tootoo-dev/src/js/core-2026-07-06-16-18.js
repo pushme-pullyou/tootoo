@@ -121,13 +121,6 @@ const isTextOpenAsPlain = ( ext ) =>
 /* ── encode an in-repo path for a URL (keep the slashes) ── */
 const encodePath = ( p ) => p.split( '/' ).map( encodeURIComponent ).join( '/' );
 
-/* ── extension of a repo path, from the FILE NAME only — a dotted folder name must
-   not bleed into the ext of an extensionless file (notes.2026/README ≠ ext "2026/readme"). ── */
-const extOf = ( path ) => {
-  const name = path.split( '/' ).pop();
-  return name.includes( '.' ) ? name.split( '.' ).pop().toLowerCase() : '';
-};
-
 /* ── blob URL tracking + revocation (reference §5) — revoked on each navigate
    so media/PDF blobs don't leak as you browse. ── */
 const blobUrls = new Set();
@@ -405,8 +398,7 @@ const promptForRepo = () => new Promise( ( resolve ) => {
     CONFIG.owner = owner; CONFIG.repo = repo; applyRepo(); cacheRepo(); resolve();
   };
   document.getElementById( 'btnSetRepo' ).addEventListener( 'click', go );
-  [ 'inpOwner', 'inpRepo' ].forEach( ( id ) =>
-    document.getElementById( id ).addEventListener( 'keydown', ( e ) => { if ( e.key === 'Enter' ) go(); } ) );
+  document.getElementById( 'inpRepo' ).addEventListener( 'keydown', ( e ) => { if ( e.key === 'Enter' ) go(); } );
 } );
 
 /* ── resolve a repo-relative path against a directory (Markdown links/images).

@@ -191,11 +191,22 @@ const updateInfoButtonState = () => {
   token?.setAttribute( 'aria-pressed', String( activePanel === 'token' ) );
 };
 
-const renderAboutPanel = () => {
+const renderAboutPanel = async () => {
   const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
   const sourceUrl = CONFIG.sourceRepoUrl;
   const repoUrl = state.owner && state.repo ? `https://github.com/${ state.owner }/${ state.repo }` : sourceUrl;
   const token = getToken();
+
+  let rateLimitInfo = 'Unable to fetch';
+  try {
+    const res = await fetch( 'https://api.github.com/rate_limit', { headers: ghHeaders() } );
+    if ( res.ok ) {
+      const data = await res.json();
+      const core = data.resources.core;
+      const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
+      rateLimitInfo = `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })`;
+    }
+  } catch ( _ ) { /* offline or blocked */ }
 
   const tokenStatus = token ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
 
@@ -220,7 +231,7 @@ const renderAboutPanel = () => {
       <ul>
         <li><strong>Repo visibility:</strong> Public (private repos require a token)</li>
         <li><strong>Token:</strong> ${ escapeHTML( tokenStatus ) }</li>
-        <li><strong>Rate limit:</strong> <span id="aboutRateLimit">checking…</span></li>
+        <li><strong>Rate limit:</strong> ${ escapeHTML( rateLimitInfo ) }</li>
         <li><strong>GitHub Pages:</strong> Supported — auto-detects repos hosted on GitHub Pages</li>
       </ul>
       ${ ( () => {
@@ -269,23 +280,6 @@ const renderAboutPanel = () => {
       <button id="btnSelfTest" class="secondary">🧪 Run self-test</button>
     </div>`;
   document.getElementById( 'btnSelfTest' )?.addEventListener( 'click', runSelfTest );
-
-  // The rate-limit lookup fills in AFTER the panel renders. Patching the placeholder
-  // span (gone if the user has already navigated on) means a slow response can never
-  // clobber a file the user opened while the fetch was in flight.
-  const fillRateLimit = ( text ) => {
-    const el = document.getElementById( 'aboutRateLimit' );
-    if ( el ) el.textContent = text;
-  };
-  fetch( 'https://api.github.com/rate_limit', { headers: ghHeaders() } )
-    .then( ( res ) => res.ok ? res.json() : null )
-    .then( ( data ) => {
-      if ( !data ) { fillRateLimit( 'Unable to fetch' ); return; }
-      const core = data.resources.core;
-      const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
-      fillRateLimit( `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })` );
-    } )
-    .catch( () => fillRateLimit( 'Unable to fetch' ) );   /* offline or blocked */
 };
 
 const closeInfoPanel = () => {
@@ -313,10 +307,7 @@ const toggleInfoPanel = async ( panel ) => {
 /* Restore persisted appearance (reference §11 initAppearance): dark mode (else OS
    preference), font size, sidebar width (+ narrow default), theme color, collapse. */
 const initAppearance = () => {
-  // localStorage access THROWS when storage is blocked (cookies off, some private
-  // modes) — a bare read here would abort the whole boot, so guard every read.
-  const read = ( key ) => { try { return localStorage.getItem( storageKey( key ) ); } catch ( _ ) { return null; } };
-  const stored = read( 'darkMode' );
+  const stored = localStorage.getItem( storageKey( 'darkMode' ) );
   const isDark = stored === null ? window.matchMedia( '(prefers-color-scheme: dark)' ).matches : stored === 'true';
   if ( isDark ) {
     document.body.classList.add( 'dark-mode' );
@@ -324,10 +315,10 @@ const initAppearance = () => {
   }
   setHljsTheme( isDark );
 
-  const savedFont = read( 'fontSize' );
+  const savedFont = localStorage.getItem( storageKey( 'fontSize' ) );
   if ( savedFont ) document.documentElement.style.setProperty( '--font-size', savedFont );
 
-  const savedWidth = read( 'sidebarWidth' );
+  const savedWidth = localStorage.getItem( storageKey( 'sidebarWidth' ) );
   if ( savedWidth ) document.documentElement.style.setProperty( '--sidebar-width', savedWidth );
   else if ( window.innerWidth <= 768 ) document.documentElement.style.setProperty( '--sidebar-width', Math.round( window.innerWidth * 0.25 ) + 'px' );
 
@@ -336,7 +327,7 @@ const initAppearance = () => {
     document.body.style.setProperty( '--highlight-color', CONFIG.themeColor );
   }
 
-  const hidden = read( 'sidebarHidden' ) === 'true';
+  const hidden = localStorage.getItem( storageKey( 'sidebarHidden' ) ) === 'true';
   document.body.classList.toggle( 'sidebar-hidden', hidden );
   updateSidebarToggle( hidden );
 };

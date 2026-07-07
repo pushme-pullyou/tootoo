@@ -191,11 +191,22 @@ const updateInfoButtonState = () => {
   token?.setAttribute( 'aria-pressed', String( activePanel === 'token' ) );
 };
 
-const renderAboutPanel = () => {
+const renderAboutPanel = async () => {
   const revised = document.querySelector( 'meta[name="revised"]' )?.content || 'unknown';
   const sourceUrl = CONFIG.sourceRepoUrl;
   const repoUrl = state.owner && state.repo ? `https://github.com/${ state.owner }/${ state.repo }` : sourceUrl;
   const token = getToken();
+
+  let rateLimitInfo = 'Unable to fetch';
+  try {
+    const res = await fetch( 'https://api.github.com/rate_limit', { headers: ghHeaders() } );
+    if ( res.ok ) {
+      const data = await res.json();
+      const core = data.resources.core;
+      const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
+      rateLimitInfo = `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })`;
+    }
+  } catch ( _ ) { /* offline or blocked */ }
 
   const tokenStatus = token ? 'Set' : 'Not set (anonymous — 60 requests/hour)';
 
@@ -220,7 +231,7 @@ const renderAboutPanel = () => {
       <ul>
         <li><strong>Repo visibility:</strong> Public (private repos require a token)</li>
         <li><strong>Token:</strong> ${ escapeHTML( tokenStatus ) }</li>
-        <li><strong>Rate limit:</strong> <span id="aboutRateLimit">checking…</span></li>
+        <li><strong>Rate limit:</strong> ${ escapeHTML( rateLimitInfo ) }</li>
         <li><strong>GitHub Pages:</strong> Supported — auto-detects repos hosted on GitHub Pages</li>
       </ul>
       ${ ( () => {
@@ -269,23 +280,6 @@ const renderAboutPanel = () => {
       <button id="btnSelfTest" class="secondary">🧪 Run self-test</button>
     </div>`;
   document.getElementById( 'btnSelfTest' )?.addEventListener( 'click', runSelfTest );
-
-  // The rate-limit lookup fills in AFTER the panel renders. Patching the placeholder
-  // span (gone if the user has already navigated on) means a slow response can never
-  // clobber a file the user opened while the fetch was in flight.
-  const fillRateLimit = ( text ) => {
-    const el = document.getElementById( 'aboutRateLimit' );
-    if ( el ) el.textContent = text;
-  };
-  fetch( 'https://api.github.com/rate_limit', { headers: ghHeaders() } )
-    .then( ( res ) => res.ok ? res.json() : null )
-    .then( ( data ) => {
-      if ( !data ) { fillRateLimit( 'Unable to fetch' ); return; }
-      const core = data.resources.core;
-      const reset = new Date( core.reset * 1000 ).toLocaleTimeString();
-      fillRateLimit( `${ core.remaining } / ${ core.limit } remaining (resets at ${ reset })` );
-    } )
-    .catch( () => fillRateLimit( 'Unable to fetch' ) );   /* offline or blocked */
 };
 
 const closeInfoPanel = () => {

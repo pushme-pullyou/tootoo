@@ -193,27 +193,26 @@ const setExpandAllButton = ( expanded ) => {
   btn.setAttribute( 'aria-label', label );
 };
 
-/* ── auto-open on first manual expand. Triggered only by a real user gesture — the
-   summary click below, or keyboard expansion in setupKeyboardNav — so the filter /
-   expand-all opening a folder programmatically doesn't hijack the content pane.
-   A blog root opens its latest post; any other folder opens its own README. ── */
-const autoOpenFolder = ( d ) => {
-  if ( !d || d.dataset.autoOpened ) return;
-  const path = d.dataset.blogLatest || d.dataset.readme;
-  if ( !path ) return;
-  // Let the native <details> toggle finish, then open the target if it expanded.
-  setTimeout( () => {
-    if ( d.open && typeof selectFile === 'function' ) { d.dataset.autoOpened = '1'; selectFile( path ); }
-  }, 0 );
-};
-const wireFirstOpen = ( selector ) => {
+/* ── auto-open on first manual expand. Bound to the summary click (a real gesture) so
+   the filter / expand-all opening a folder programmatically doesn't hijack the content
+   pane. A blog root opens its latest post; any other folder opens its own README. ── */
+const wireFirstOpen = ( selector, attr ) => {
   document.querySelectorAll( selector ).forEach( ( d ) => {
+    const path = d.getAttribute( attr );
     const summary = d.querySelector( ':scope > summary' );
-    if ( summary ) summary.addEventListener( 'click', () => autoOpenFolder( d ) );
+    if ( !path || !summary ) return;
+    let opened = false;
+    summary.addEventListener( 'click', () => {
+      if ( opened ) return;
+      // Let the native <details> toggle finish, then open the target if it expanded.
+      setTimeout( () => {
+        if ( d.open && typeof selectFile === 'function' ) { opened = true; selectFile( path ); }
+      }, 0 );
+    } );
   } );
 };
-const wireBlogAutoOpen = () => wireFirstOpen( 'details[data-blog-root]' );
-const wireFolderReadmeAutoOpen = () => wireFirstOpen( 'details[data-readme]' );
+const wireBlogAutoOpen = () => wireFirstOpen( 'details[data-blog-root]', 'data-blog-latest' );
+const wireFolderReadmeAutoOpen = () => wireFirstOpen( 'details[data-readme]', 'data-readme' );
 
 /* ── render the whole tree ── */
 const renderTree = ( treeArray ) => {
@@ -464,18 +463,15 @@ const setupKeyboardNav = () => {
       case 'Enter':
       case ' ': {
         e.preventDefault();
-        if ( active.classList.contains( 'tree-folder' ) ) {
-          const d = active.parentElement;
-          d.open = !d.open;
-          if ( d.open ) autoOpenFolder( d );   // keyboard expand gets the same first-open behavior as a click
-        } else selectFileItem( active );
+        if ( active.classList.contains( 'tree-folder' ) ) active.parentElement.open = !active.parentElement.open;
+        else selectFileItem( active );
         break;
       }
       case 'ArrowRight': {
         e.preventDefault();
         if ( active.classList.contains( 'tree-folder' ) ) {
           const d = active.parentElement;
-          if ( !d.open ) { d.open = true; autoOpenFolder( d ); }
+          if ( !d.open ) d.open = true;
           else { const c = d.querySelector( '.tree-folder, .tree-item' ); if ( c && c !== active ) { c.focus(); selectFileItem( c ); } }
         }
         break;
@@ -530,7 +526,7 @@ const openBranchMenu = async () => {
     const branches = await fetchBranchList();
     menu.innerHTML = branches.map( ( b ) =>
       `<button type="button" role="option" class="branch-option${ b === state.branch ? ' is-current' : '' }" data-branch="${ escapeHTML( b ) }">${ b === state.branch ? '✓ ' : '' }${ escapeHTML( b ) }</button>`
-    ).join( '' ) + ( branches.capped ? '<div class="branch-menu-error">Showing the first 100 branches; more may exist.</div>' : '' );
+    ).join( '' ) + ( branches.capped ? '<div class="branch-menu-error">Showing first 100 branches.</div>' : '' );
   } catch ( _ ) {
     menu.innerHTML = '<div class="branch-menu-error">Could not load branches.</div>';
   }

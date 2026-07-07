@@ -38,10 +38,7 @@ const initApp = async () => {
   await fetchTree();                       // sidebar.js — GitHub tree → state.tree → render
   updateFooterLicense();                   // footer.js — link to the repo's own LICENSE (tree now loaded)
 
-  // No tree here means fetchTree already rendered an explanation — the oversized
-  // notice, or the rate-limit/404 token panel. Stop before the hash routing below
-  // clobbers that panel with a bare fetch error (the permalink-while-rate-limited case).
-  if ( !state.tree ) return;
+  if ( state.oversized ) return;
 
   // Back/forward + address-bar hash edits re-open the file (and/or scroll to the
   // in-file anchor after the first raw '#').

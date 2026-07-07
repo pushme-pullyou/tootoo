@@ -80,7 +80,7 @@ const buildToggleHtml = ( ext, renderedHtml, rawText, { prefix = '', renderedCla
     `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( rawText ) }</pre>`;
 };
 
-const renderMarkdown = ( text, filePath, signal ) => {
+const renderMarkdown = ( text, filePath ) => {
   let renderedHtml, errorHtml = '';
   try { renderedHtml = DOMPurify.sanitize( marked.parse( text ) ); }
   catch ( err ) { errorHtml = `<div class="md-error">⚠️ Markdown rendering failed: ${ escapeHTML( err.message ) }</div>`; renderedHtml = ''; }
@@ -141,8 +141,8 @@ const renderMarkdown = ( text, filePath, signal ) => {
     const clean = frag >= 0 ? src.slice( 0, frag ) : src;
     if ( !clean ) return;
     img.setAttribute( 'loading', 'lazy' );
-    try { img.setAttribute( 'src', await resolveMediaUrl( resolveRepoPath( clean, currentDir ), signal ) ); }
-    catch ( _ ) { /* repo image missing/private fetch failed — or aborted by navigation */ }
+    try { img.setAttribute( 'src', await resolveMediaUrl( resolveRepoPath( clean, currentDir ) ) ); }
+    catch ( _ ) { /* repo image missing or private fetch failed */ }
   } );
 
   mdBody.querySelectorAll( 'pre code' ).forEach( ( el ) => {
@@ -256,7 +256,7 @@ const scrollToAnchor = ( anchor ) => {
    build — so the same selectFile works offline and online. An optional anchor
    (from #path#anchor or a link's #fragment) is scrolled to after render. ── */
 const selectFile = async ( path, anchor = '' ) => {
-  const ext = extOf( path );
+  const ext = path.includes( '.' ) ? path.split( '.' ).pop().toLowerCase() : '';
   state.currentFilePath = path;               // Content owns this
   // Opening a real file dismisses any About/Token panel highlight (assembled build).
   if ( typeof updateInfoButtonState === 'function' ) { activePanel = null; updateInfoButtonState(); }
@@ -301,7 +301,7 @@ const selectFile = async ( path, anchor = '' ) => {
     } else {
       const text = await fetchFileText( path, signal );
       lastRawText = text;
-      if ( ext === 'md' ) renderMarkdown( text, path, signal );
+      if ( ext === 'md' ) renderMarkdown( text, path );
       else if ( ext === 'svg' ) renderSvg( text, path.split( '/' ).pop() );
       else if ( ext === 'html' || ext === 'htm' ) renderHtml( text, ext );
       else renderCode( text, ext );
@@ -334,7 +334,7 @@ const setupContentActions = () => {
     if ( toggleBtn ) {
       const viewRendered = document.getElementById( 'viewRendered' );
       const viewRaw = document.getElementById( 'viewRaw' );
-      const ext = extOf( state.currentFilePath );
+      const ext = state.currentFilePath.split( '.' ).pop().toLowerCase();
       const goingToRaw = getPreferredView( ext ) === 'rendered';
       if ( viewRendered ) viewRendered.style.display = goingToRaw ? 'none' : '';
       if ( viewRaw ) viewRaw.style.display = goingToRaw ? '' : 'none';
@@ -404,7 +404,7 @@ const runSelfTest = async () => {
 
   const testFile = async ( item ) => {
     const path = item.path;
-    const ext = extOf( path );
+    const ext = path.includes( '.' ) ? path.split( '.' ).pop().toLowerCase() : '';
     if ( ( item.size || 0 ) > LARGE_SKIP ) return { path, status: 'skip', detail: `${ formatFileSize( item.size ) } — too large` };
     try {
       if ( ext === 'md' ) { DOMPurify.sanitize( marked.parse( await fetchFileText( path, signal ) ) ); return { path, status: 'pass', detail: 'markdown parsed' }; }
