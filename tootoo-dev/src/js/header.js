@@ -66,6 +66,7 @@ const initHeaderControls = () => {
   document.getElementById( 'btnDarkMode' )?.addEventListener( 'click', ( e ) => {
     const isDark = document.body.classList.toggle( 'dark-mode' );
     e.currentTarget.textContent = isDark ? '☀️' : '🌙';
+    e.currentTarget.setAttribute( 'aria-pressed', String( isDark ) );   // tell AT the toggle's on/off state
     setHljsTheme( isDark );
     try { localStorage.setItem( storageKey( 'darkMode' ), isDark ); } catch ( _ ) { /* storage off */ }
   } );
@@ -318,9 +319,11 @@ const initAppearance = () => {
   const read = ( key ) => { try { return localStorage.getItem( storageKey( key ) ); } catch ( _ ) { return null; } };
   const stored = read( 'darkMode' );
   const isDark = stored === null ? window.matchMedia( '(prefers-color-scheme: dark)' ).matches : stored === 'true';
-  if ( isDark ) {
-    document.body.classList.add( 'dark-mode' );
-    const b = document.getElementById( 'btnDarkMode' ); if ( b ) b.textContent = '☀️';
+  if ( isDark ) document.body.classList.add( 'dark-mode' );
+  const darkBtn = document.getElementById( 'btnDarkMode' );
+  if ( darkBtn ) {
+    darkBtn.setAttribute( 'aria-pressed', String( isDark ) );
+    darkBtn.textContent = isDark ? '☀️' : '🌙';
   }
   setHljsTheme( isDark );
 

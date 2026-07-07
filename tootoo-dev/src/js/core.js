@@ -366,7 +366,7 @@ const detectRepo = async () => {
     const cached = JSON.parse( localStorage.getItem( repoCacheKey() ) || 'null' );
     if ( cached?.owner && cached?.repo ) {
       CONFIG.owner = cached.owner; CONFIG.repo = cached.repo;
-      if ( cached.branch ) CONFIG.branch = cached.branch;
+      if ( cached.branch && !p.get( 'branch' ) ) CONFIG.branch = cached.branch;   // explicit ?branch= wins over cache
       applyRepo();
       if ( cached.updated ) state.repoUpdated = cached.updated;   // keep the title tooltip's repo date on cached loads
       return;
@@ -381,8 +381,6 @@ const detectRepo = async () => {
     CONFIG.repo = segs[ 0 ] || `${ owner }.github.io`;
     applyRepo(); cacheRepo(); return;
   }
-
-  if ( CONFIG.owner && CONFIG.repo ) { applyRepo(); return; }
 
   return promptForRepo();   // nothing detected — ask the user
 };
@@ -460,6 +458,9 @@ const updateHash = ( path, anchor = '' ) => {
 const getCurrentFileKey = () => storageKey( `currentFile:${ state.owner }/${ state.repo }/${ state.branch }` );
 const saveCurrentFile = ( path ) => { try { sessionStorage.setItem( getCurrentFileKey(), path ); } catch ( _ ) { /* storage off */ } };
 const clearCurrentFile = () => { try { sessionStorage.removeItem( getCurrentFileKey() ); } catch ( _ ) { /* storage off */ } };
+
+/* ── page-left timestamp (sessionStorage) — lets init tell a reload from a session-restore (main.js) ── */
+const sessionBeatKey = () => storageKey( 'sessionBeat' );
 
 /* ── repo statistics (reference §17) — for the About panel ── */
 const getRepoStats = () => {

@@ -89,7 +89,7 @@
   <!-- @part:header:start -->
   <header>
     <button id="btnToggleSidebar" class="header-btn" title="Close sidebar (Ctrl/⌘ B)" aria-label="Toggle sidebar"
-      aria-expanded="true">☰</button>
+      aria-controls="sidebar" aria-expanded="true">☰</button>
     <a id="headerGitHub" href="." title="View on GitHub" aria-label="View on GitHub">
       <!-- App brand mark: the deployment's favicon.ico (static; the standalone
            harness rewrites the src to ../../favicon.ico). aria-hidden: the anchor's
@@ -115,7 +115,7 @@
     <span id="headerSubtitle" class="header-subtitle" hidden></span>
 
     <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode"
-      aria-label="Toggle dark mode">🌙</button>
+      aria-label="Toggle dark mode" aria-pressed="false">🌙</button>
     <button id="btnFontDec" class="header-btn" title="Decrease Font Size" aria-label="Decrease font size">A−</button>
     <button id="btnFontInc" class="header-btn" title="Increase Font Size" aria-label="Increase font size">A+</button>
     <button id="btnHelp" class="header-btn" title="About this app" aria-label="About this app"

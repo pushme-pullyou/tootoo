@@ -80,7 +80,7 @@ const buildToggleHtml = ( ext, renderedHtml, rawText, { prefix = '', renderedCla
     `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( rawText ) }</pre>`;
 };
 
-const renderMarkdown = ( text, filePath, signal ) => {
+const renderMarkdown = ( text, filePath, signal, anchor = '' ) => {
   let renderedHtml, errorHtml = '';
   try { renderedHtml = DOMPurify.sanitize( marked.parse( text ) ); }
   catch ( err ) { errorHtml = `<div class="md-error">⚠️ Markdown rendering failed: ${ escapeHTML( err.message ) }</div>`; renderedHtml = ''; }
@@ -122,6 +122,9 @@ const renderMarkdown = ( text, filePath, signal ) => {
       return;
     }
     if ( /^https?:\/\//.test( href ) || href.startsWith( '//' ) ) { a.target = '_blank'; a.rel = 'noopener'; return; }
+    // Any other explicit scheme (mailto:, tel:, ftp:, …) — already DOMPurify-approved — is an
+    // external link, not a repo path; leave its href and open it rather than trying to fetch it.
+    if ( /^[a-z][a-z0-9+.-]*:/i.test( href ) ) { a.target = '_blank'; a.rel = 'noopener'; return; }
     const frag = href.indexOf( '#' );
     const clean = frag >= 0 ? href.slice( 0, frag ) : href;
     if ( !clean ) return;
@@ -141,6 +144,10 @@ const renderMarkdown = ( text, filePath, signal ) => {
     const clean = frag >= 0 ? src.slice( 0, frag ) : src;
     if ( !clean ) return;
     img.setAttribute( 'loading', 'lazy' );
+    // A repo image resolving above the target heading shifts layout down after the initial
+    // scroll; re-scroll once it settles so #path#anchor deep links land accurately. The
+    // signal guard avoids yanking the view if the user has already navigated away.
+    if ( anchor ) img.addEventListener( 'load', () => { if ( !signal.aborted ) scrollToAnchor( anchor ); }, { once: true } );
     try { img.setAttribute( 'src', await resolveMediaUrl( resolveRepoPath( clean, currentDir ), signal ) ); }
     catch ( _ ) { /* repo image missing/private fetch failed — or aborted by navigation */ }
   } );
@@ -301,7 +308,7 @@ const selectFile = async ( path, anchor = '' ) => {
     } else {
       const text = await fetchFileText( path, signal );
       lastRawText = text;
-      if ( ext === 'md' ) renderMarkdown( text, path, signal );
+      if ( ext === 'md' ) renderMarkdown( text, path, signal, anchor );
       else if ( ext === 'svg' ) renderSvg( text, path.split( '/' ).pop() );
       else if ( ext === 'html' || ext === 'htm' ) renderHtml( text, ext );
       else renderCode( text, ext );
@@ -345,9 +352,9 @@ const setupContentActions = () => {
       return;
     }
     const copyBtn = e.target.closest( '[data-action="copy-file"]' );
-    if ( copyBtn && lastRawText ) {
+    if ( copyBtn ) {   // button only shows for text files, so lastRawText is this file's text (may be '')
       try {
-        await navigator.clipboard.writeText( lastRawText );
+        await navigator.clipboard.writeText( lastRawText || '' );
         const orig = copyBtn.textContent; copyBtn.textContent = '✓';
         setTimeout( () => { copyBtn.textContent = orig; }, 1200 );
       } catch ( _ ) { /* clipboard blocked */ }

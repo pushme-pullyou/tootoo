@@ -41,6 +41,9 @@
   --on-highlight: #ffffff;
   /* text/icon sitting on a highlight-colored fill (button hover/active) */
   --hover-bg: #e5e7eb;
+  /* selected tree row — a bg/fg pair that clears WCAG-AA in both modes (see dark override) */
+  --active-bg: #2563eb;
+  --active-fg: #ffffff;
   --font-family: system-ui, sans-serif;
   --sidebar-width: 300px;
   --font-size: 16px;
@@ -61,6 +64,7 @@ body.dark-mode {
   --highlight-fg: color-mix(in srgb, var(--highlight-color) 65%, white);
   --on-highlight: var(--primary-bg);
   --hover-bg: #374151;
+  --active-bg: #1d4ed8;   /* darker than light mode: white text on it is ~6.7:1 (light's #3b82f6 was ~3.7:1, failing) */
   --warning-bg: #3a3000;
   --warning-border: #665200;
   --error-bg: #2d0000;
@@ -78,6 +82,15 @@ html {
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* ── Keyboard focus ring ── a clear, theme-colored indicator on any control reached by
+   keyboard. :focus-visible (not :focus) means pointer clicks don't draw it. Covers buttons,
+   links, tree rows ([role=button]) and folder <summary>s, which otherwise had only the UA
+   default; the filter/token inputs keep their own border-color focus cue. */
+:focus-visible {
+  outline: 2px solid var(--highlight-color);
+  outline-offset: 2px;
 }
 
 /* Every heading + title picks up the optional heading font. */
@@ -211,7 +224,8 @@ header {
 /* ── Buttons ── ghost pill that fills with the theme color on hover. */
 .header-btn,
 button.primary,
-button.secondary {
+button.secondary,
+.file-btn {
   background: transparent;
   color: var(--highlight-fg);
   border: 1px solid var(--highlight-fg);
@@ -238,7 +252,8 @@ button.secondary {
 
 .header-btn:hover,
 button.primary:hover,
-button.secondary:hover {
+button.secondary:hover,
+.file-btn:hover {
   background: var(--highlight-fg);
   color: var(--on-highlight);
   transform: translateY(-1px);
@@ -246,7 +261,8 @@ button.secondary:hover {
 
 .header-btn:active,
 button.primary:active,
-button.secondary:active {
+button.secondary:active,
+.file-btn:active {
   transform: translateY(0);
 }
 
@@ -564,8 +580,8 @@ details .tree-item {
 }
 
 .tree-item.active {
-  background: var(--highlight-color);
-  color: #fff;
+  background: var(--active-bg);
+  color: var(--active-fg);
 }
 
 .tree-item-size {
@@ -858,28 +874,9 @@ body.dark-mode pre {
   font-size: 0.85rem;
 }
 
-/* .file-btn shares the .header-btn pill look. */
-.file-btn {
-  background: transparent;
-  color: var(--highlight-fg);
-  border: 1px solid var(--highlight-fg);
-  padding: 0 0.4rem;
-  /* sizing comes from the shared uniform-box rule above */
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s, color 0.2s, transform 0.1s;
-}
-
-.file-btn:hover {
-  background: var(--highlight-fg);
-  color: var(--on-highlight);
-  transform: translateY(-1px);
-}
-
-.file-btn:active {
-  transform: translateY(0);
-}
+/* .file-btn shares the .header-btn pill look, so it joins those selector groups above
+   (base + :hover + :active) rather than re-declaring them here. Its box sizing comes from
+   the shared `.header-btn, .file-btn` uniform-box rule. */
 
 /* ===================================================================
    FOOTER  (carved 2026-06-21 — a new page-level footer the component
@@ -1105,7 +1102,7 @@ body.dark-mode pre {
 
   <header>
     <button id="btnToggleSidebar" class="header-btn" title="Close sidebar (Ctrl/⌘ B)" aria-label="Toggle sidebar"
-      aria-expanded="true">☰</button>
+      aria-controls="sidebar" aria-expanded="true">☰</button>
     <a id="headerGitHub" href="." title="View on GitHub" aria-label="View on GitHub">
       <!-- App brand mark: the deployment's favicon.ico (static; the standalone
            harness rewrites the src to ../../favicon.ico). aria-hidden: the anchor's
@@ -1131,7 +1128,7 @@ body.dark-mode pre {
     <span id="headerSubtitle" class="header-subtitle" hidden></span>
 
     <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode"
-      aria-label="Toggle dark mode">🌙</button>
+      aria-label="Toggle dark mode" aria-pressed="false">🌙</button>
     <button id="btnFontDec" class="header-btn" title="Decrease Font Size" aria-label="Decrease font size">A−</button>
     <button id="btnFontInc" class="header-btn" title="Increase Font Size" aria-label="Increase font size">A+</button>
     <button id="btnHelp" class="header-btn" title="About this app" aria-label="About this app"
@@ -1142,7 +1139,7 @@ body.dark-mode pre {
   </header>
 
   <main>
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
       <div class="panel-header" id="filesPanelHeader">
         <h3 id="hFiles">Files</h3>
         <button id="btnExpandAll" class="file-btn" style="display: none;" title="Expand all folders"
@@ -1549,7 +1546,7 @@ const detectRepo = async () => {
     const cached = JSON.parse( localStorage.getItem( repoCacheKey() ) || 'null' );
     if ( cached?.owner && cached?.repo ) {
       CONFIG.owner = cached.owner; CONFIG.repo = cached.repo;
-      if ( cached.branch ) CONFIG.branch = cached.branch;
+      if ( cached.branch && !p.get( 'branch' ) ) CONFIG.branch = cached.branch;   // explicit ?branch= wins over cache
       applyRepo();
       if ( cached.updated ) state.repoUpdated = cached.updated;   // keep the title tooltip's repo date on cached loads
       return;
@@ -1564,8 +1561,6 @@ const detectRepo = async () => {
     CONFIG.repo = segs[ 0 ] || `${ owner }.github.io`;
     applyRepo(); cacheRepo(); return;
   }
-
-  if ( CONFIG.owner && CONFIG.repo ) { applyRepo(); return; }
 
   return promptForRepo();   // nothing detected — ask the user
 };
@@ -1643,6 +1638,9 @@ const updateHash = ( path, anchor = '' ) => {
 const getCurrentFileKey = () => storageKey( `currentFile:${ state.owner }/${ state.repo }/${ state.branch }` );
 const saveCurrentFile = ( path ) => { try { sessionStorage.setItem( getCurrentFileKey(), path ); } catch ( _ ) { /* storage off */ } };
 const clearCurrentFile = () => { try { sessionStorage.removeItem( getCurrentFileKey() ); } catch ( _ ) { /* storage off */ } };
+
+/* ── page-left timestamp (sessionStorage) — lets init tell a reload from a session-restore (main.js) ── */
+const sessionBeatKey = () => storageKey( 'sessionBeat' );
 
 /* ── repo statistics (reference §17) — for the About panel ── */
 const getRepoStats = () => {
@@ -1750,6 +1748,7 @@ const initHeaderControls = () => {
   document.getElementById( 'btnDarkMode' )?.addEventListener( 'click', ( e ) => {
     const isDark = document.body.classList.toggle( 'dark-mode' );
     e.currentTarget.textContent = isDark ? '☀️' : '🌙';
+    e.currentTarget.setAttribute( 'aria-pressed', String( isDark ) );   // tell AT the toggle's on/off state
     setHljsTheme( isDark );
     try { localStorage.setItem( storageKey( 'darkMode' ), isDark ); } catch ( _ ) { /* storage off */ }
   } );
@@ -2002,9 +2001,11 @@ const initAppearance = () => {
   const read = ( key ) => { try { return localStorage.getItem( storageKey( key ) ); } catch ( _ ) { return null; } };
   const stored = read( 'darkMode' );
   const isDark = stored === null ? window.matchMedia( '(prefers-color-scheme: dark)' ).matches : stored === 'true';
-  if ( isDark ) {
-    document.body.classList.add( 'dark-mode' );
-    const b = document.getElementById( 'btnDarkMode' ); if ( b ) b.textContent = '☀️';
+  if ( isDark ) document.body.classList.add( 'dark-mode' );
+  const darkBtn = document.getElementById( 'btnDarkMode' );
+  if ( darkBtn ) {
+    darkBtn.setAttribute( 'aria-pressed', String( isDark ) );
+    darkBtn.textContent = isDark ? '☀️' : '🌙';
   }
   setHljsTheme( isDark );
 
@@ -2137,12 +2138,18 @@ const findLatestPost = ( blogNode, blogPath ) => {
 const sortedEntries = ( children, mode ) =>
   Object.entries( children ).sort( BLOG_CMP[ mode ] || cmpDefault );
 
-/* ── recursive folder contents (for the folder tooltip) ── */
+/* ── recursive folder contents (for the folder tooltip) ──
+   Memoized per node: renderNode renders children before asking a parent for its stats, so
+   each node's children are already cached by the time the parent sums them — keeping the
+   whole tree's tooltip stats a single O(n) pass instead of re-walking each subtree per level.
+   The WeakMap is keyed by the (freshly rebuilt) node objects, so it clears itself on re-render. */
+const folderStatsCache = new WeakMap();
 const folderStats = ( node ) => {
+  const cached = folderStatsCache.get( node );
+  if ( cached ) return cached;
   let files = 0, folders = 0, bytes = 0;
   for ( const child of Object.values( node.children ) ) {
-    const isFolder = child.type === 'tree' || Object.keys( child.children ).length > 0;
-    if ( isFolder ) {
+    if ( isFolderNode( child ) ) {
       folders++;
       const s = folderStats( child );
       files += s.files; folders += s.folders; bytes += s.bytes;
@@ -2150,7 +2157,9 @@ const folderStats = ( node ) => {
       files++; bytes += ( child.size || 0 );
     }
   }
-  return { files, folders, bytes };
+  const stats = { files, folders, bytes };
+  folderStatsCache.set( node, stats );
+  return stats;
 };
 
 /* ── one tree node -> HTML (recursive for folders) ──
@@ -2159,7 +2168,7 @@ const folderStats = ( node ) => {
    path to the latest post renders pre-expanded. */
 const renderNode = ( name, node, parentPath, blog ) => {
   const fullPath = parentPath ? `${ parentPath }/${ name }` : name;
-  const isFolder = node.type === 'tree' || Object.keys( node.children ).length > 0;
+  const isFolder = isFolderNode( node );
   const displayName = displayTreeName( name );
 
   if ( isFolder ) {
@@ -2570,6 +2579,11 @@ const toggleBranchMenu = () => {
 const switchBranch = async ( branch ) => {
   closeBranchMenu();
   if ( !branch || branch === state.branch ) return;
+  // Leaving this branch's view: clear any active filter first. renderTree rebuilds the rows
+  // for the new branch but leaves the filter input, its 'filtering' class, and the clear
+  // button as-is — which would otherwise show a stale query over an unfiltered tree.
+  const filter = document.getElementById( 'treeFilter' );
+  if ( filter && filter.value ) { filter.value = ''; runFilter(); }
   state.branch = branch;
   state.tree = null;
   branchList = null;          // re-list for the new branch context if reopened
@@ -2705,7 +2719,7 @@ const buildToggleHtml = ( ext, renderedHtml, rawText, { prefix = '', renderedCla
     `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( rawText ) }</pre>`;
 };
 
-const renderMarkdown = ( text, filePath, signal ) => {
+const renderMarkdown = ( text, filePath, signal, anchor = '' ) => {
   let renderedHtml, errorHtml = '';
   try { renderedHtml = DOMPurify.sanitize( marked.parse( text ) ); }
   catch ( err ) { errorHtml = `<div class="md-error">⚠️ Markdown rendering failed: ${ escapeHTML( err.message ) }</div>`; renderedHtml = ''; }
@@ -2747,6 +2761,9 @@ const renderMarkdown = ( text, filePath, signal ) => {
       return;
     }
     if ( /^https?:\/\//.test( href ) || href.startsWith( '//' ) ) { a.target = '_blank'; a.rel = 'noopener'; return; }
+    // Any other explicit scheme (mailto:, tel:, ftp:, …) — already DOMPurify-approved — is an
+    // external link, not a repo path; leave its href and open it rather than trying to fetch it.
+    if ( /^[a-z][a-z0-9+.-]*:/i.test( href ) ) { a.target = '_blank'; a.rel = 'noopener'; return; }
     const frag = href.indexOf( '#' );
     const clean = frag >= 0 ? href.slice( 0, frag ) : href;
     if ( !clean ) return;
@@ -2766,6 +2783,10 @@ const renderMarkdown = ( text, filePath, signal ) => {
     const clean = frag >= 0 ? src.slice( 0, frag ) : src;
     if ( !clean ) return;
     img.setAttribute( 'loading', 'lazy' );
+    // A repo image resolving above the target heading shifts layout down after the initial
+    // scroll; re-scroll once it settles so #path#anchor deep links land accurately. The
+    // signal guard avoids yanking the view if the user has already navigated away.
+    if ( anchor ) img.addEventListener( 'load', () => { if ( !signal.aborted ) scrollToAnchor( anchor ); }, { once: true } );
     try { img.setAttribute( 'src', await resolveMediaUrl( resolveRepoPath( clean, currentDir ), signal ) ); }
     catch ( _ ) { /* repo image missing/private fetch failed — or aborted by navigation */ }
   } );
@@ -2926,7 +2947,7 @@ const selectFile = async ( path, anchor = '' ) => {
     } else {
       const text = await fetchFileText( path, signal );
       lastRawText = text;
-      if ( ext === 'md' ) renderMarkdown( text, path, signal );
+      if ( ext === 'md' ) renderMarkdown( text, path, signal, anchor );
       else if ( ext === 'svg' ) renderSvg( text, path.split( '/' ).pop() );
       else if ( ext === 'html' || ext === 'htm' ) renderHtml( text, ext );
       else renderCode( text, ext );
@@ -2970,9 +2991,9 @@ const setupContentActions = () => {
       return;
     }
     const copyBtn = e.target.closest( '[data-action="copy-file"]' );
-    if ( copyBtn && lastRawText ) {
+    if ( copyBtn ) {   // button only shows for text files, so lastRawText is this file's text (may be '')
       try {
-        await navigator.clipboard.writeText( lastRawText );
+        await navigator.clipboard.writeText( lastRawText || '' );
         const orig = copyBtn.textContent; copyBtn.textContent = '✓';
         setTimeout( () => { copyBtn.textContent = orig; }, 1200 );
       } catch ( _ ) { /* clipboard blocked */ }
@@ -3149,7 +3170,7 @@ const initApp = async () => {
   // session-restore re-reads a stale one. Registered before any early return so every exit
   // path stamps. (CONFIG is merged first so a fork's storagePrefix is already in effect.)
   window.addEventListener( 'pagehide', () => {
-    try { sessionStorage.setItem( storageKey( 'sessionBeat' ), String( Date.now() ) ); } catch ( _ ) { /* storage off */ }
+    try { sessionStorage.setItem( sessionBeatKey(), String( Date.now() ) ); } catch ( _ ) { /* storage off */ }
   } );
 
   initHeader();     // header.js  — branding + appearance controls
@@ -3194,15 +3215,16 @@ const initApp = async () => {
 
   // Distinguish a RELOAD (keep your place) from a browser SESSION-RESTORE (go home).
   // Both bring back the URL hash and sessionStorage, so we time it instead: on pagehide
-  // the app stamps `sessionBeat` (see initApp top). performance.timeOrigin is this load's
-  // navigation start, so `timeOrigin - beat` is the gap since the previous page went away —
-  // sub-second for a reload (back-to-back), but seconds+ for a restore (browser was closed).
+  // the app stamps the time it last left the page (see initApp top). performance.timeOrigin
+  // is this load's navigation start — and, like Date.now(), it is Unix-epoch milliseconds, so
+  // the two are directly comparable: `timeOrigin - leftAt` is the gap since we last left,
+  // sub-second for a reload (back-to-back) but seconds+ for a restore (browser was closed).
   // No stamp at all → a genuinely fresh context (new tab / directly opened permalink).
   const RELOAD_GRACE_MS = 3000;          // a reload's gap is sub-second; restores far exceed this
   let restored = false;
   try {
-    const beat = sessionStorage.getItem( storageKey( 'sessionBeat' ) );
-    restored = beat !== null && ( performance.timeOrigin - Number( beat ) ) > RELOAD_GRACE_MS;
+    const leftAt = sessionStorage.getItem( sessionBeatKey() );
+    restored = leftAt !== null && ( performance.timeOrigin - Number( leftAt ) ) > RELOAD_GRACE_MS;
   } catch ( _ ) { restored = false; }    // storage off → not a restore, so permalinks still open
 
   if ( restored ) {

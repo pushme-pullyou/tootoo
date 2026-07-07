@@ -17,7 +17,7 @@ const initApp = async () => {
   // session-restore re-reads a stale one. Registered before any early return so every exit
   // path stamps. (CONFIG is merged first so a fork's storagePrefix is already in effect.)
   window.addEventListener( 'pagehide', () => {
-    try { sessionStorage.setItem( storageKey( 'sessionBeat' ), String( Date.now() ) ); } catch ( _ ) { /* storage off */ }
+    try { sessionStorage.setItem( sessionBeatKey(), String( Date.now() ) ); } catch ( _ ) { /* storage off */ }
   } );
 
   initHeader();     // header.js  — branding + appearance controls
@@ -62,15 +62,16 @@ const initApp = async () => {
 
   // Distinguish a RELOAD (keep your place) from a browser SESSION-RESTORE (go home).
   // Both bring back the URL hash and sessionStorage, so we time it instead: on pagehide
-  // the app stamps `sessionBeat` (see initApp top). performance.timeOrigin is this load's
-  // navigation start, so `timeOrigin - beat` is the gap since the previous page went away —
-  // sub-second for a reload (back-to-back), but seconds+ for a restore (browser was closed).
+  // the app stamps the time it last left the page (see initApp top). performance.timeOrigin
+  // is this load's navigation start — and, like Date.now(), it is Unix-epoch milliseconds, so
+  // the two are directly comparable: `timeOrigin - leftAt` is the gap since we last left,
+  // sub-second for a reload (back-to-back) but seconds+ for a restore (browser was closed).
   // No stamp at all → a genuinely fresh context (new tab / directly opened permalink).
   const RELOAD_GRACE_MS = 3000;          // a reload's gap is sub-second; restores far exceed this
   let restored = false;
   try {
-    const beat = sessionStorage.getItem( storageKey( 'sessionBeat' ) );
-    restored = beat !== null && ( performance.timeOrigin - Number( beat ) ) > RELOAD_GRACE_MS;
+    const leftAt = sessionStorage.getItem( sessionBeatKey() );
+    restored = leftAt !== null && ( performance.timeOrigin - Number( leftAt ) ) > RELOAD_GRACE_MS;
   } catch ( _ ) { restored = false; }    // storage off → not a restore, so permalinks still open
 
   if ( restored ) {

@@ -15,6 +15,9 @@
   --on-highlight: #ffffff;
   /* text/icon sitting on a highlight-colored fill (button hover/active) */
   --hover-bg: #e5e7eb;
+  /* selected tree row — a bg/fg pair that clears WCAG-AA in both modes (see dark override) */
+  --active-bg: #2563eb;
+  --active-fg: #ffffff;
   --font-family: system-ui, sans-serif;
   --sidebar-width: 300px;
   --font-size: 16px;
@@ -35,6 +38,7 @@ body.dark-mode {
   --highlight-fg: color-mix(in srgb, var(--highlight-color) 65%, white);
   --on-highlight: var(--primary-bg);
   --hover-bg: #374151;
+  --active-bg: #1d4ed8;   /* darker than light mode: white text on it is ~6.7:1 (light's #3b82f6 was ~3.7:1, failing) */
   --warning-bg: #3a3000;
   --warning-border: #665200;
   --error-bg: #2d0000;
@@ -52,6 +56,15 @@ html {
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* ── Keyboard focus ring ── a clear, theme-colored indicator on any control reached by
+   keyboard. :focus-visible (not :focus) means pointer clicks don't draw it. Covers buttons,
+   links, tree rows ([role=button]) and folder <summary>s, which otherwise had only the UA
+   default; the filter/token inputs keep their own border-color focus cue. */
+:focus-visible {
+  outline: 2px solid var(--highlight-color);
+  outline-offset: 2px;
 }
 
 /* Every heading + title picks up the optional heading font. */
@@ -185,7 +198,8 @@ header {
 /* ── Buttons ── ghost pill that fills with the theme color on hover. */
 .header-btn,
 button.primary,
-button.secondary {
+button.secondary,
+.file-btn {
   background: transparent;
   color: var(--highlight-fg);
   border: 1px solid var(--highlight-fg);
@@ -212,7 +226,8 @@ button.secondary {
 
 .header-btn:hover,
 button.primary:hover,
-button.secondary:hover {
+button.secondary:hover,
+.file-btn:hover {
   background: var(--highlight-fg);
   color: var(--on-highlight);
   transform: translateY(-1px);
@@ -220,7 +235,8 @@ button.secondary:hover {
 
 .header-btn:active,
 button.primary:active,
-button.secondary:active {
+button.secondary:active,
+.file-btn:active {
   transform: translateY(0);
 }
 
@@ -538,8 +554,8 @@ details .tree-item {
 }
 
 .tree-item.active {
-  background: var(--highlight-color);
-  color: #fff;
+  background: var(--active-bg);
+  color: var(--active-fg);
 }
 
 .tree-item-size {
@@ -832,28 +848,9 @@ body.dark-mode pre {
   font-size: 0.85rem;
 }
 
-/* .file-btn shares the .header-btn pill look. */
-.file-btn {
-  background: transparent;
-  color: var(--highlight-fg);
-  border: 1px solid var(--highlight-fg);
-  padding: 0 0.4rem;
-  /* sizing comes from the shared uniform-box rule above */
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s, color 0.2s, transform 0.1s;
-}
-
-.file-btn:hover {
-  background: var(--highlight-fg);
-  color: var(--on-highlight);
-  transform: translateY(-1px);
-}
-
-.file-btn:active {
-  transform: translateY(0);
-}
+/* .file-btn shares the .header-btn pill look, so it joins those selector groups above
+   (base + :hover + :active) rather than re-declaring them here. Its box sizing comes from
+   the shared `.header-btn, .file-btn` uniform-box rule. */
 
 /* ===================================================================
    FOOTER  (carved 2026-06-21 — a new page-level footer the component

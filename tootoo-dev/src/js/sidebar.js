@@ -109,12 +109,18 @@ const findLatestPost = ( blogNode, blogPath ) => {
 const sortedEntries = ( children, mode ) =>
   Object.entries( children ).sort( BLOG_CMP[ mode ] || cmpDefault );
 
-/* ── recursive folder contents (for the folder tooltip) ── */
+/* ── recursive folder contents (for the folder tooltip) ──
+   Memoized per node: renderNode renders children before asking a parent for its stats, so
+   each node's children are already cached by the time the parent sums them — keeping the
+   whole tree's tooltip stats a single O(n) pass instead of re-walking each subtree per level.
+   The WeakMap is keyed by the (freshly rebuilt) node objects, so it clears itself on re-render. */
+const folderStatsCache = new WeakMap();
 const folderStats = ( node ) => {
+  const cached = folderStatsCache.get( node );
+  if ( cached ) return cached;
   let files = 0, folders = 0, bytes = 0;
   for ( const child of Object.values( node.children ) ) {
-    const isFolder = child.type === 'tree' || Object.keys( child.children ).length > 0;
-    if ( isFolder ) {
+    if ( isFolderNode( child ) ) {
       folders++;
       const s = folderStats( child );
       files += s.files; folders += s.folders; bytes += s.bytes;
@@ -122,7 +128,9 @@ const folderStats = ( node ) => {
       files++; bytes += ( child.size || 0 );
     }
   }
-  return { files, folders, bytes };
+  const stats = { files, folders, bytes };
+  folderStatsCache.set( node, stats );
+  return stats;
 };
 
 /* ── one tree node -> HTML (recursive for folders) ──
@@ -131,7 +139,7 @@ const folderStats = ( node ) => {
    path to the latest post renders pre-expanded. */
 const renderNode = ( name, node, parentPath, blog ) => {
   const fullPath = parentPath ? `${ parentPath }/${ name }` : name;
-  const isFolder = node.type === 'tree' || Object.keys( node.children ).length > 0;
+  const isFolder = isFolderNode( node );
   const displayName = displayTreeName( name );
 
   if ( isFolder ) {
@@ -542,6 +550,11 @@ const toggleBranchMenu = () => {
 const switchBranch = async ( branch ) => {
   closeBranchMenu();
   if ( !branch || branch === state.branch ) return;
+  // Leaving this branch's view: clear any active filter first. renderTree rebuilds the rows
+  // for the new branch but leaves the filter input, its 'filtering' class, and the clear
+  // button as-is — which would otherwise show a stale query over an unfiltered tree.
+  const filter = document.getElementById( 'treeFilter' );
+  if ( filter && filter.value ) { filter.value = ''; runFilter(); }
   state.branch = branch;
   state.tree = null;
   branchList = null;          // re-list for the new branch context if reopened
