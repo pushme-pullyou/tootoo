@@ -62,5 +62,5 @@ This repo is canonical. All other TooToo installs are forks that carry a generat
 
 - **Edit canonical only.** Make every TooToo change here, never in a fork. A fork's `index.html` is a build artifact — hand-editing it is overwritten on the next sync and diverges the fork from the source.
 - **Per-fork differences live in `tootoo.config.js`,** not in `index.html`. Each fork's branding (owner/repo, appName, theme) comes from its own `tootoo.config.js`; the app code stays byte-identical across every copy. No process step ever edits a fork's `tootoo.config.js`.
-- **Changes flow one way:** edit in `tootoo-dev/` → `promote` (regenerates canonical production `index.html`) → `sync` (copies it to every fork) → `publish` (commits + pushes). This is specified in [`PIPELINE.md`](PIPELINE.md); the authoritative fork/target list is [`PIPELINE.md` §5](PIPELINE.md).
+- **Changes flow one way:** edit in `tootoo-dev/` → `promote` (regenerates canonical production `index.html`) → `sync` (copies it to every fork) → `publish` (commits + pushes). This is specified in [`PIPELINE.md`](PIPELINE.md); the authoritative fork/target list is [`FORK-LIST.md`](FORK-LIST.md).
 - **Don't fan out by hand.** Do not apply a fix directly to forks or sibling repos unless the task explicitly asks for cross-repo sync — that is what `sync`/`publish` are for.
