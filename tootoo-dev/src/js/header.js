@@ -131,7 +131,7 @@ const showTokenPanel = ( reasonHtml = '' ) => {
         <li><strong>Public repositories:</strong> create a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a>. A classic token with no scopes is enough for read-only access, or use a fine-grained token.</li>
         <li><strong>Private repositories:</strong> ask the repository owner to issue a fine-grained personal access token scoped to that repository, with at minimum <em>Contents: Read</em> permission, and to share it with you securely.</li>
       </ul>
-      <p>Your token is stored in this browser's <code>localStorage</code> only. It is never sent anywhere except <code>api.github.com</code>, and it is not shared with the developers of ${ escapeHTML( CONFIG.appName ) }.</p>
+      <p>Your token is stored in this browser's <code>localStorage</code> only. It is never sent anywhere except <code>api.github.com</code>, and it is not shared with the developers of ${ escapeHTML( CONFIG.appName ) }. When ${ escapeHTML( CONFIG.appName ) } runs from a local file (<code>file://</code>), any other local HTML page opened in this browser can read it too — prefer a read-only, narrowly scoped token.</p>
       <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
       <p>Wipe every preference, cached file, and the GitHub token from this browser. Useful when testing a fork or starting fresh.</p>
       <button id="btnResetAll" class="secondary" title="Wipe all ${ escapeHTML( CONFIG.appName ) } data from this browser">Reset all ${ escapeHTML( CONFIG.appName ) } data</button>

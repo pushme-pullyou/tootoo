@@ -80,15 +80,19 @@ const buildToggleHtml = ( ext, renderedHtml, rawText, { prefix = '', renderedCla
     `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( rawText ) }</pre>`;
 };
 
+const MD_PURIFY = { FORBID_TAGS: [ 'style', 'form', 'button', 'textarea', 'select' ], FORBID_ATTR: [ 'style' ] };
+
 const renderMarkdown = ( text, filePath, signal, anchor = '' ) => {
   let renderedHtml, errorHtml = '';
-  try { renderedHtml = DOMPurify.sanitize( marked.parse( text ) ); }
+  // Strip what GitHub strips: page-wide styles, inline styles (a README could cover the app
+  // with a fake form) and form controls (task-list checkboxes stay).
+  try { renderedHtml = DOMPurify.sanitize( marked.parse( text ), MD_PURIFY ); }
   catch ( err ) { errorHtml = `<div class="md-error">⚠️ Markdown rendering failed: ${ escapeHTML( err.message ) }</div>`; renderedHtml = ''; }
 
   document.getElementById( 'contentBody' ).innerHTML =
     buildToggleHtml( 'md', renderedHtml, text, { prefix: errorHtml, renderedClass: 'markdown-body' } );
 
-  const mdBody = document.getElementById( 'viewRendered' );
+  const mdBody = document.querySelector( '#contentBody > #viewRendered' );
   if ( !mdBody ) return;
   const currentDir = filePath.includes( '/' ) ? filePath.slice( 0, filePath.lastIndexOf( '/' ) ) : '';
 
@@ -370,8 +374,9 @@ const setupContentActions = () => {
     }
     const toggleBtn = e.target.closest( '[data-action="view-toggle"]' );
     if ( toggleBtn ) {
-      const viewRendered = document.getElementById( 'viewRendered' );
-      const viewRaw = document.getElementById( 'viewRaw' );
+      // Scoped to direct children: rendered Markdown may carry its own id="viewRaw".
+      const viewRendered = document.querySelector( '#contentBody > #viewRendered' );
+      const viewRaw = document.querySelector( '#contentBody > #viewRaw' );
       const ext = extOf( state.currentFilePath );
       const goingToRaw = getPreferredView( ext ) === 'rendered';
       if ( viewRendered ) viewRendered.style.display = goingToRaw ? 'none' : '';

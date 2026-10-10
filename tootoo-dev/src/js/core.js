@@ -182,12 +182,14 @@ const setPreferredView = ( ext, view ) => {
    =================================================================== */
 
 /* ── request abort (cancel in-flight fetch when navigating away) ── */
-const requests = { current: null, content: null };
+// Tree and content loads get separate controllers: opening a file must never cancel
+// a tree load still in flight (that left the sidebar stuck on "Loading tree…").
+const requests = { tree: null, content: null };
 const newAbort = ( forContent = true ) => {
-  requests.current?.abort();
+  requests.content?.abort();             // any new load replaces the file view
+  if ( !forContent ) requests.tree?.abort();
   const controller = new AbortController();
-  requests.current = controller;
-  if ( forContent ) requests.content = controller;
+  requests[ forContent ? 'content' : 'tree' ] = controller;
   return controller.signal;
 };
 // Opening an info panel cancels content without interrupting the repository tree.
@@ -372,12 +374,22 @@ const cacheRepo = () => {
   try { localStorage.setItem( repoCacheKey(), JSON.stringify( { owner: state.owner, repo: state.repo, branch: state.branch, updated: state.repoUpdated } ) ); }
   catch ( _ ) { /* storage disabled */ }
 };
+/* ── home repo: what this page browses with no URL params (tootoo.config.js / .git seed),
+   captured before params apply. Permalinks leave out ?owner/repo/branch that match it. ── */
+const homeRepo = { owner: '', repo: '', branch: '', defaultBranch: '' };
+const isHomeRepo = () => !!homeRepo.owner && !!homeRepo.repo
+  && state.owner.toLowerCase() === homeRepo.owner.toLowerCase()
+  && state.repo.toLowerCase() === homeRepo.repo.toLowerCase();
+// '' while unknown (no seeded branch and the default not yet fetched).
+const homeBranch = () => homeRepo.branch || homeRepo.defaultBranch;
+
 const applyRepo = () => { state.owner = CONFIG.owner; state.repo = CONFIG.repo; state.branch = CONFIG.branch; };
 
 /* ── repo detection (reference §9): params → localStorage cache → GitHub Pages
    hostname → CONFIG (incl. the local .git/config seed) → manual entry form. ── */
 const detectRepo = async () => {
   const p = new URLSearchParams( location.search );
+  Object.assign( homeRepo, { owner: CONFIG.owner, repo: CONFIG.repo, branch: CONFIG.branch } );
   if ( p.get( 'owner' ) ) CONFIG.owner = p.get( 'owner' );
   if ( p.get( 'repo' ) ) CONFIG.repo = p.get( 'repo' );
   // A different requested repository must not inherit the checkout's branch.
@@ -455,6 +467,7 @@ const getDefaultBranch = async ( signal ) => {
   // Capture the repo's real last-push date so the header tooltip reflects the
   // repo being viewed (incl. drop-in mode), not this file's static build date.
   state.repoUpdated = data.pushed_at || '';
+  if ( isHomeRepo() ) homeRepo.defaultBranch = data.default_branch;
   return data.default_branch;
 };
 

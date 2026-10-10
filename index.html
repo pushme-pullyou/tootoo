@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-09-18 21:45">
+  <meta name="revised" content="2026-10-09 17:01">
   <title>TooToo</title>
   <!-- A real favicon.ico is assumed to sit next to index.html in every deployment
        (assemble.ps1 generates a TT-mark placeholder when the dev folder lacks one). -->
@@ -1369,12 +1369,14 @@ const setPreferredView = ( ext, view ) => {
    =================================================================== */
 
 /* ── request abort (cancel in-flight fetch when navigating away) ── */
-const requests = { current: null, content: null };
+// Tree and content loads get separate controllers: opening a file must never cancel
+// a tree load still in flight (that left the sidebar stuck on "Loading tree…").
+const requests = { tree: null, content: null };
 const newAbort = ( forContent = true ) => {
-  requests.current?.abort();
+  requests.content?.abort();             // any new load replaces the file view
+  if ( !forContent ) requests.tree?.abort();
   const controller = new AbortController();
-  requests.current = controller;
-  if ( forContent ) requests.content = controller;
+  requests[ forContent ? 'content' : 'tree' ] = controller;
   return controller.signal;
 };
 // Opening an info panel cancels content without interrupting the repository tree.
@@ -1559,12 +1561,22 @@ const cacheRepo = () => {
   try { localStorage.setItem( repoCacheKey(), JSON.stringify( { owner: state.owner, repo: state.repo, branch: state.branch, updated: state.repoUpdated } ) ); }
   catch ( _ ) { /* storage disabled */ }
 };
+/* ── home repo: what this page browses with no URL params (tootoo.config.js / .git seed),
+   captured before params apply. Permalinks leave out ?owner/repo/branch that match it. ── */
+const homeRepo = { owner: '', repo: '', branch: '', defaultBranch: '' };
+const isHomeRepo = () => !!homeRepo.owner && !!homeRepo.repo
+  && state.owner.toLowerCase() === homeRepo.owner.toLowerCase()
+  && state.repo.toLowerCase() === homeRepo.repo.toLowerCase();
+// '' while unknown (no seeded branch and the default not yet fetched).
+const homeBranch = () => homeRepo.branch || homeRepo.defaultBranch;
+
 const applyRepo = () => { state.owner = CONFIG.owner; state.repo = CONFIG.repo; state.branch = CONFIG.branch; };
 
 /* ── repo detection (reference §9): params → localStorage cache → GitHub Pages
    hostname → CONFIG (incl. the local .git/config seed) → manual entry form. ── */
 const detectRepo = async () => {
   const p = new URLSearchParams( location.search );
+  Object.assign( homeRepo, { owner: CONFIG.owner, repo: CONFIG.repo, branch: CONFIG.branch } );
   if ( p.get( 'owner' ) ) CONFIG.owner = p.get( 'owner' );
   if ( p.get( 'repo' ) ) CONFIG.repo = p.get( 'repo' );
   // A different requested repository must not inherit the checkout's branch.
@@ -1642,6 +1654,7 @@ const getDefaultBranch = async ( signal ) => {
   // Capture the repo's real last-push date so the header tooltip reflects the
   // repo being viewed (incl. drop-in mode), not this file's static build date.
   state.repoUpdated = data.pushed_at || '';
+  if ( isHomeRepo() ) homeRepo.defaultBranch = data.default_branch;
   return data.default_branch;
 };
 
@@ -1853,7 +1866,7 @@ const showTokenPanel = ( reasonHtml = '' ) => {
         <li><strong>Public repositories:</strong> create a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a>. A classic token with no scopes is enough for read-only access, or use a fine-grained token.</li>
         <li><strong>Private repositories:</strong> ask the repository owner to issue a fine-grained personal access token scoped to that repository, with at minimum <em>Contents: Read</em> permission, and to share it with you securely.</li>
       </ul>
-      <p>Your token is stored in this browser's <code>localStorage</code> only. It is never sent anywhere except <code>api.github.com</code>, and it is not shared with the developers of ${ escapeHTML( CONFIG.appName ) }.</p>
+      <p>Your token is stored in this browser's <code>localStorage</code> only. It is never sent anywhere except <code>api.github.com</code>, and it is not shared with the developers of ${ escapeHTML( CONFIG.appName ) }. When ${ escapeHTML( CONFIG.appName ) } runs from a local file (<code>file://</code>), any other local HTML page opened in this browser can read it too — prefer a read-only, narrowly scoped token.</p>
       <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border-color);">
       <p>Wipe every preference, cached file, and the GitHub token from this browser. Useful when testing a fork or starting fresh.</p>
       <button id="btnResetAll" class="secondary" title="Wipe all ${ escapeHTML( CONFIG.appName ) } data from this browser">Reset all ${ escapeHTML( CONFIG.appName ) } data</button>
@@ -2424,11 +2437,16 @@ const fetchTree = async () => {
   treeList.innerHTML = '<p style="padding:0.5rem;">Loading tree…</p>';
   try {
     if ( !state.branch ) state.branch = await getDefaultBranch( signal );
-    // Pin the repository and branch in every permalink, including history entries.
+    // Home repo, explicit branch, default not yet known → look it up so ?branch= can be dropped.
+    else if ( isHomeRepo() && !homeBranch() ) await getDefaultBranch( signal );
+    // Pin the repository and branch in permalinks (incl. history entries) only where they
+    // differ from the page's home repo; a plain home link stays index.html#file.
     const url = new URL( location.href );
-    url.searchParams.set( 'owner', state.owner );
-    url.searchParams.set( 'repo', state.repo );
-    url.searchParams.set( 'branch', state.branch );
+    const home = isHomeRepo();
+    const pin = ( key, value, keep ) => keep ? url.searchParams.set( key, value ) : url.searchParams.delete( key );
+    pin( 'owner', state.owner, !home );
+    pin( 'repo', state.repo, !home );
+    pin( 'branch', state.branch, !home || state.branch !== homeBranch() );
     history.replaceState( null, '', url );
     cacheRepo();   // persist owner/repo/branch now that the branch is resolved
     setHeaderTimestamp();   // refresh the title tooltip with this repo's last-push date
@@ -2457,6 +2475,7 @@ const fetchTree = async () => {
     h.title = `${ folders.toLocaleString() } folder${ folders === 1 ? '' : 's' }, ` +
       `${ files.toLocaleString() } file${ files === 1 ? '' : 's' }, ${ formatFileSize( bytes ) } total`;
     treeSummaryText = h.textContent;
+    runFilter();   // re-apply a query typed while the tree was loading (or clear 'filtering')
   } catch ( err ) {
     if ( err.name === 'AbortError' ) return;
     if ( err.status === 403 ) {
@@ -2802,15 +2821,19 @@ const buildToggleHtml = ( ext, renderedHtml, rawText, { prefix = '', renderedCla
     `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( rawText ) }</pre>`;
 };
 
+const MD_PURIFY = { FORBID_TAGS: [ 'style', 'form', 'button', 'textarea', 'select' ], FORBID_ATTR: [ 'style' ] };
+
 const renderMarkdown = ( text, filePath, signal, anchor = '' ) => {
   let renderedHtml, errorHtml = '';
-  try { renderedHtml = DOMPurify.sanitize( marked.parse( text ) ); }
+  // Strip what GitHub strips: page-wide styles, inline styles (a README could cover the app
+  // with a fake form) and form controls (task-list checkboxes stay).
+  try { renderedHtml = DOMPurify.sanitize( marked.parse( text ), MD_PURIFY ); }
   catch ( err ) { errorHtml = `<div class="md-error">⚠️ Markdown rendering failed: ${ escapeHTML( err.message ) }</div>`; renderedHtml = ''; }
 
   document.getElementById( 'contentBody' ).innerHTML =
     buildToggleHtml( 'md', renderedHtml, text, { prefix: errorHtml, renderedClass: 'markdown-body' } );
 
-  const mdBody = document.getElementById( 'viewRendered' );
+  const mdBody = document.querySelector( '#contentBody > #viewRendered' );
   if ( !mdBody ) return;
   const currentDir = filePath.includes( '/' ) ? filePath.slice( 0, filePath.lastIndexOf( '/' ) ) : '';
 
@@ -3092,8 +3115,9 @@ const setupContentActions = () => {
     }
     const toggleBtn = e.target.closest( '[data-action="view-toggle"]' );
     if ( toggleBtn ) {
-      const viewRendered = document.getElementById( 'viewRendered' );
-      const viewRaw = document.getElementById( 'viewRaw' );
+      // Scoped to direct children: rendered Markdown may carry its own id="viewRaw".
+      const viewRendered = document.querySelector( '#contentBody > #viewRendered' );
+      const viewRaw = document.querySelector( '#contentBody > #viewRaw' );
       const ext = extOf( state.currentFilePath );
       const goingToRaw = getPreferredView( ext ) === 'rendered';
       if ( viewRendered ) viewRendered.style.display = goingToRaw ? 'none' : '';
@@ -3322,7 +3346,8 @@ const initApp = async () => {
   // in-file anchor after the first raw '#').
   const routeLocation = () => {
     const { path, anchor } = parseHash();
-    const branch = new URLSearchParams( location.search ).get( 'branch' );
+    // No ?branch= means the home branch (permalinks leave it out — see fetchTree).
+    const branch = new URLSearchParams( location.search ).get( 'branch' ) || ( isHomeRepo() ? homeBranch() : '' );
     if ( branch && branch !== state.branch ) { switchBranch( branch, path, anchor ); return; }
     if ( !path ) return;
     if ( path === state.currentFilePath ) { if ( anchor ) scrollToAnchor( anchor ); return; }
@@ -3342,10 +3367,14 @@ const initApp = async () => {
   // sub-second for a reload (back-to-back) but seconds+ for a restore (browser was closed).
   // No stamp at all → a genuinely fresh context (new tab / directly opened permalink).
   const RELOAD_GRACE_MS = 3000;          // a reload's gap is sub-second; restores far exceed this
+  // A followed link or typed/pasted permalink ('navigate') is never a restore, even in a tab
+  // that showed TooToo earlier — otherwise its #file would be swapped for the README.
+  const navType = performance.getEntriesByType?.( 'navigation' )[ 0 ]?.type;
   let restored = false;
   try {
     const leftAt = sessionStorage.getItem( sessionBeatKey() );
-    restored = leftAt !== null && ( performance.timeOrigin - Number( leftAt ) ) > RELOAD_GRACE_MS;
+    restored = navType !== 'navigate' && leftAt !== null &&
+      ( performance.timeOrigin - Number( leftAt ) ) > RELOAD_GRACE_MS;
   } catch ( _ ) { restored = false; }    // storage off → not a restore, so permalinks still open
 
   if ( restored ) {

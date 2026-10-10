@@ -55,7 +55,8 @@ const initApp = async () => {
   // in-file anchor after the first raw '#').
   const routeLocation = () => {
     const { path, anchor } = parseHash();
-    const branch = new URLSearchParams( location.search ).get( 'branch' );
+    // No ?branch= means the home branch (permalinks leave it out — see fetchTree).
+    const branch = new URLSearchParams( location.search ).get( 'branch' ) || ( isHomeRepo() ? homeBranch() : '' );
     if ( branch && branch !== state.branch ) { switchBranch( branch, path, anchor ); return; }
     if ( !path ) return;
     if ( path === state.currentFilePath ) { if ( anchor ) scrollToAnchor( anchor ); return; }
@@ -75,10 +76,14 @@ const initApp = async () => {
   // sub-second for a reload (back-to-back) but seconds+ for a restore (browser was closed).
   // No stamp at all → a genuinely fresh context (new tab / directly opened permalink).
   const RELOAD_GRACE_MS = 3000;          // a reload's gap is sub-second; restores far exceed this
+  // A followed link or typed/pasted permalink ('navigate') is never a restore, even in a tab
+  // that showed TooToo earlier — otherwise its #file would be swapped for the README.
+  const navType = performance.getEntriesByType?.( 'navigation' )[ 0 ]?.type;
   let restored = false;
   try {
     const leftAt = sessionStorage.getItem( sessionBeatKey() );
-    restored = leftAt !== null && ( performance.timeOrigin - Number( leftAt ) ) > RELOAD_GRACE_MS;
+    restored = navType !== 'navigate' && leftAt !== null &&
+      ( performance.timeOrigin - Number( leftAt ) ) > RELOAD_GRACE_MS;
   } catch ( _ ) { restored = false; }    // storage off → not a restore, so permalinks still open
 
   if ( restored ) {

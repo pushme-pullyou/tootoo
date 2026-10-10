@@ -353,11 +353,16 @@ const fetchTree = async () => {
   treeList.innerHTML = '<p style="padding:0.5rem;">Loading tree…</p>';
   try {
     if ( !state.branch ) state.branch = await getDefaultBranch( signal );
-    // Pin the repository and branch in every permalink, including history entries.
+    // Home repo, explicit branch, default not yet known → look it up so ?branch= can be dropped.
+    else if ( isHomeRepo() && !homeBranch() ) await getDefaultBranch( signal );
+    // Pin the repository and branch in permalinks (incl. history entries) only where they
+    // differ from the page's home repo; a plain home link stays index.html#file.
     const url = new URL( location.href );
-    url.searchParams.set( 'owner', state.owner );
-    url.searchParams.set( 'repo', state.repo );
-    url.searchParams.set( 'branch', state.branch );
+    const home = isHomeRepo();
+    const pin = ( key, value, keep ) => keep ? url.searchParams.set( key, value ) : url.searchParams.delete( key );
+    pin( 'owner', state.owner, !home );
+    pin( 'repo', state.repo, !home );
+    pin( 'branch', state.branch, !home || state.branch !== homeBranch() );
     history.replaceState( null, '', url );
     cacheRepo();   // persist owner/repo/branch now that the branch is resolved
     setHeaderTimestamp();   // refresh the title tooltip with this repo's last-push date
@@ -386,6 +391,7 @@ const fetchTree = async () => {
     h.title = `${ folders.toLocaleString() } folder${ folders === 1 ? '' : 's' }, ` +
       `${ files.toLocaleString() } file${ files === 1 ? '' : 's' }, ${ formatFileSize( bytes ) } total`;
     treeSummaryText = h.textContent;
+    runFilter();   // re-apply a query typed while the tree was loading (or clear 'filtering')
   } catch ( err ) {
     if ( err.name === 'AbortError' ) return;
     if ( err.status === 403 ) {
