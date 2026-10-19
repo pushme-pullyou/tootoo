@@ -32,7 +32,7 @@ const initApp = async () => {
   const haveExplicitRepo = new URLSearchParams( location.search ).get( 'owner' )
     || ( window.TOOTOO_CONFIG && window.TOOTOO_CONFIG.owner );
   if ( fileAccessBlocked && !haveExplicitRepo ) { showFileAccessHelp(); return; }
-  await detectRepo();       // core.js — params → cache → Pages host → CONFIG → manual form
+  await detectRepo();       // core.js — params → CONFIG → Pages host → cache → manual form
   updateHeaderFromConfig(); // header.js — repo now known, so refresh the title (owner / repo)
   updateFooterCopyright();  // footer.js — repo owner now known, set the © line
   initSidebar();    // sidebar.js — wire filter/expand/select (tree fills next)

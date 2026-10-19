@@ -1,8 +1,8 @@
 ---
-mode: ask
+name: tootoo-config
 description: Generate a pre-configured TooToo instance for a specific GitHub repo
+disable-model-invocation: true
 ---
-
 # TooToo Config
 
 Generate a copy of the current root `index.html` pre-configured for the following repository:

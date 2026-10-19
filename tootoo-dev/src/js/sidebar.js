@@ -324,13 +324,10 @@ const setupFileSelection = () => {
   } );
 };
 
-// Bail out for very large repositories (or truncated GitHub tree responses):
+// Bail out when GitHub truncates the tree response (over 100,000 entries or 7 MB):
 // keep sidebar concise and show a clear explanation + link in the content pane.
-const showOversizedRepoPanel = ( count, truncated ) => {
+const showOversizedRepoPanel = () => {
   const repoUrl = `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`;
-  const countLabel = truncated
-    ? `over ${ count.toLocaleString() } files (GitHub truncated the tree response)`
-    : `${ count.toLocaleString() } files`;
 
   document.getElementById( 'treeList' ).innerHTML =
     '<div style="padding: 0.6rem 0.5rem; font-size: 0.85rem; opacity: 0.8;">Repository too large to browse here.</div>';
@@ -339,9 +336,8 @@ const showOversizedRepoPanel = ( count, truncated ) => {
   cb.innerHTML = `
         <div class="error-panel">
           <h3 style="margin-top: 0;">Repository too large for ${ escapeHTML( CONFIG.appName ) }</h3>
-          <p><strong>${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }</strong> contains ${ escapeHTML( countLabel ) }. ${ escapeHTML( CONFIG.appName ) } is built for small-to-medium personal repositories; larger trees overwhelm the sidebar render and the per-keystroke filter.</p>
+          <p><strong>${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }</strong> is over GitHub's limit of 100,000 files or 7 MB for a single tree listing, so GitHub returned only part of it.</p>
           <p><a href="${ escapeHTML( repoUrl ) }" target="_blank" rel="noopener">Browse this repository on github.com →</a></p>
-          <p style="font-size: 0.85rem; opacity: 0.75; margin-bottom: 0;">If you maintain a fork, raise <code>CONFIG.maxRepoFiles</code> (currently ${ CONFIG.maxRepoFiles.toLocaleString() }) to override this cutoff. Truncated trees cannot be overridden — that is a GitHub API response limit.</p>
         </div>
       `;
 };
@@ -368,11 +364,10 @@ const fetchTree = async () => {
     setHeaderTimestamp();   // refresh the title tooltip with this repo's last-push date
     updateBranchControl();   // show the branch chip in the sidebar header
     const data = await ghApi( `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/git/trees/${ encodeURIComponent( state.branch ) }?recursive=1`, signal );
-    const count = data.tree?.length || 0;
-    if ( data.truncated || count > CONFIG.maxRepoFiles ) {
+    if ( data.truncated ) {
       state.tree = null;
       state.oversized = true;
-      showOversizedRepoPanel( count, data.truncated );
+      showOversizedRepoPanel();
       return;
     }
     state.oversized = false;

@@ -1,8 +1,8 @@
 ---
-mode: agent
+name: tootoo-rebuild
 description: Rebuild or extend TooToo in staged passes using the current root index.html
+disable-model-invocation: true
 ---
-
 # TooToo Rebuild
 
 Rebuild or extend the current TooToo app in staged passes.

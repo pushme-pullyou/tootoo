@@ -1,8 +1,8 @@
 ---
-mode: agent
+name: tootoo-merge
 description: Apply a focused staged merge into the current TooToo index.html
+disable-model-invocation: true
 ---
-
 # TooToo Merge
 
 Merge a focused change, prototype, or external HTML slice back into the current root `index.html`.

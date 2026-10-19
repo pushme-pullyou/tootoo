@@ -19,7 +19,6 @@ Object.assign( CONFIG, {
   storagePrefix: 'tootoo',
   hiddenFolders: [ 'Images' ],
   hiddenFiles: [],
-  maxRepoFiles: 5000,
 } );
 
 Object.assign( state, {

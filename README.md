@@ -15,7 +15,8 @@
 | [octocat/hello-world](https://pushme-pullyou.github.io/tootoo/?owner=octocat&repo=hello-world) | Tiny repo — see the basic UI in two seconds |
 | [facebook/react @ React README](https://pushme-pullyou.github.io/tootoo/?owner=facebook&repo=react#packages/react/README.md) | Big repo, deep-linked to a specific file |
 | [openai/openai-cookbook](https://pushme-pullyou.github.io/tootoo/?owner=openai&repo=openai-cookbook) | Markdown-heavy repo with notebooks |
-| [torvalds/linux @ master](https://pushme-pullyou.github.io/tootoo/?owner=torvalds&repo=linux&branch=master) | Stress test — token recommended for big trees |
+| [torvalds/linux @ master](https://pushme-pullyou.github.io/tootoo/?owner=torvalds&repo=linux&branch=master) | Too large — over GitHub's 100,000-file / 7 MB tree limit, so it shows the "too large" notice |
+| [kubernetes/kubernetes @ master](https://pushme-pullyou.github.io/tootoo/?owner=kubernetes&repo=kubernetes&branch=master) | 30,000+ files — the full tree loads and filters |
 
 <details>
 <summary>More demos</summary>
@@ -90,7 +91,7 @@ const CONFIG = {
 };
 ```
 
-These are the common knobs; `CONFIG` also supports theming and filtering options (`themeColor`, `subtitle`, `hiddenFolders`/`hiddenFiles`, `headingFont`, `maxRepoFiles`) — see [`FORKING.md`](FORKING.md) for the full set. To brand a fork, ship a `favicon.ico` beside `index.html`.
+These are the common knobs; `CONFIG` also supports theming and filtering options (`themeColor`, `subtitle`, `hiddenFolders`/`hiddenFiles`, `headingFont`) — see [`FORKING.md`](FORKING.md) for the full set. To brand a fork, ship a `favicon.ico` beside `index.html`.
 
 ## Fork & Customize
 

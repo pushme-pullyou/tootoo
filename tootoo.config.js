@@ -31,6 +31,5 @@ window.TOOTOO_CONFIG = {
   // ── Browsing ──
   // hiddenFolders: [ 'Images' ],                      // folder names to hide (any depth)
   // hiddenFiles: [ 'tootoo.config.js' ],              // file names to hide; '/name' anchors to the repo root
-  // maxRepoFiles: 5000,                               // refuse to render repos larger than this
 
 };

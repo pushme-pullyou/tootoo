@@ -14,7 +14,7 @@ const CONFIG = {
   headingFontUrl: '', headingFont: '',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
   storagePrefix: 'tootoo',
-  hiddenFolders: [], hiddenFiles: [ 'tootoo.config.js' ], maxRepoFiles: 5000,
+  hiddenFolders: [], hiddenFiles: [ 'tootoo.config.js' ],
   autoOpenFolderReadme: true,  // expanding a folder opens its own README the first time (set false to disable)
   // Footer rights line appended after "© <year> <owner>". rightsOwners scopes WHICH
   // owners it shows for: null = every repo (default), an array = only those owner logins
@@ -385,8 +385,10 @@ const homeBranch = () => homeRepo.branch || homeRepo.defaultBranch;
 
 const applyRepo = () => { state.owner = CONFIG.owner; state.repo = CONFIG.repo; state.branch = CONFIG.branch; };
 
-/* ── repo detection (reference §9): params → localStorage cache → GitHub Pages
-   hostname → CONFIG (incl. the local .git/config seed) → manual entry form. ── */
+/* ── repo detection (reference §9): params → CONFIG (incl. the local .git/config
+   seed) → GitHub Pages hostname → localStorage cache → manual entry form. The host
+   beats the cache so a bare Pages URL always returns to the repo it's served from,
+   not the last ?owner=… permalink opened there. ── */
 const detectRepo = async () => {
   const p = new URLSearchParams( location.search );
   Object.assign( homeRepo, { owner: CONFIG.owner, repo: CONFIG.repo, branch: CONFIG.branch } );
@@ -398,6 +400,15 @@ const detectRepo = async () => {
   if ( p.get( 'branch' ) ) CONFIG.branch = p.get( 'branch' );
   if ( CONFIG.owner && CONFIG.repo ) { applyRepo(); return; }
 
+  // Deployed forks: <owner>.github.io/<repo>/ → browse the repo it's served from.
+  if ( location.hostname.endsWith( '.github.io' ) ) {
+    const owner = location.hostname.split( '.' )[ 0 ];
+    const segs = location.pathname.split( '/' ).filter( Boolean );
+    CONFIG.owner = owner;
+    CONFIG.repo = segs[ 0 ] || `${ owner }.github.io`;
+    applyRepo(); cacheRepo(); return;
+  }
+
   try {
     const cached = JSON.parse( localStorage.getItem( repoCacheKey() ) || 'null' );
     if ( cached?.owner && cached?.repo ) {
@@ -408,15 +419,6 @@ const detectRepo = async () => {
       return;
     }
   } catch ( _ ) { /* malformed cache */ }
-
-  // Deployed forks: <owner>.github.io/<repo>/ → browse the repo it's served from.
-  if ( location.hostname.endsWith( '.github.io' ) ) {
-    const owner = location.hostname.split( '.' )[ 0 ];
-    const segs = location.pathname.split( '/' ).filter( Boolean );
-    CONFIG.owner = owner;
-    CONFIG.repo = segs[ 0 ] || `${ owner }.github.io`;
-    applyRepo(); cacheRepo(); return;
-  }
 
   return promptForRepo();   // nothing detected — ask the user
 };
