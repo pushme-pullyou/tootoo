@@ -7,7 +7,7 @@
    here it's synchronous for clarity. Re-add batching when we carve for real. */
 
 /* README matcher — shared by root auto-open, folder auto-open, and bold styling. */
-const README_RE = /^readme/i;
+const README_RE = /^readme(\.\w+)?$/i;   // README, README.md, readme.txt — not README-2026-….md backups
 
 /* ── build nested tree from the flat GitHub list ── */
 const buildNestedTree = ( flatTree ) => {

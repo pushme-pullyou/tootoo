@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-10-19 23:29">
+  <meta name="revised" content="2026-10-20 00:10">
   <title>TooToo</title>
   <!-- A real favicon.ico is assumed to sit next to index.html in every deployment
        (assemble.ps1 generates a TT-mark placeholder when the dev folder lacks one). -->
@@ -2097,7 +2097,7 @@ const initHeader = () => { updateHeaderFromConfig(); initAppearance(); initHeade
    here it's synchronous for clarity. Re-add batching when we carve for real. */
 
 /* README matcher — shared by root auto-open, folder auto-open, and bold styling. */
-const README_RE = /^readme/i;
+const README_RE = /^readme(\.\w+)?$/i;   // README, README.md, readme.txt — not README-2026-….md backups
 
 /* ── build nested tree from the flat GitHub list ── */
 const buildNestedTree = ( flatTree ) => {
