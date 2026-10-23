@@ -4,13 +4,18 @@ This is the current TooToo roadmap.
 
 ## Agenda
 
-
+* No-show index.html 
+* sflprs gallery
 * 2026-06-16: Photo gallery app
 * 2026-06-16 Ability to load special file format loaders on the fly
 
 ## Theming
 
+* * Allow different themes
+
 ## Content Header bar
+
+* Select repo from dropdown
 
 ### Sidebar
 
@@ -23,6 +28,7 @@ This is the current TooToo roadmap.
 ## Code
 
 ## More
+
 A few ideas that fit the vanilla JS / single-file constraints:
 
 **Medium effort, very useful:**
