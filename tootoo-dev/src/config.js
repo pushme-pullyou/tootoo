@@ -9,5 +9,8 @@ Object.assign( CONFIG, {
   repo: 'tootoo',
   headingFont: '"Rammetto One", sans-serif',     // heading + title face
   headingFontUrl: 'https://fonts.googleapis.com/css2?family=Rammetto+One&display=swap',
+  // homeUrl: 'https://theo-armour.github.io',   // ⌂ hub link in the header (forks set this in tootoo.config.js)
   // hiddenFiles: [ '/index.html' ],             // hide a name from the tree; '/name' anchors to the repo root
 } );
+
+

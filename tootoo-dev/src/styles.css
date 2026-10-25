@@ -212,6 +212,11 @@ button.secondary,
 
 /* Uniform button box: fixed height + square-ish min-width + centered content, so
    emoji and text glyphs yield the same-sized button. */
+/* .header-btn also serves anchors (the ⌂ hub link) — keep them unmistakably chip-like */
+a.header-btn {
+  text-decoration: none;
+}
+
 .header-btn,
 .file-btn {
   box-sizing: border-box;

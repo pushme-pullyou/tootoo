@@ -13,6 +13,7 @@ const CONFIG = {
   // brighter #3b82f6 win; a fork's explicit color applies to both modes
   headingFontUrl: '', headingFont: '',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
+  homeUrl: '',               // when set, the header shows a ⌂ link to this hub page
   storagePrefix: 'tootoo',
   hiddenFolders: [], hiddenFiles: [ 'tootoo.config.js' ],
   autoOpenFolderReadme: true,  // expanding a folder opens its own README the first time (set false to disable)

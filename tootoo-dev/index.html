@@ -238,6 +238,11 @@ button.secondary,
 
 /* Uniform button box: fixed height + square-ish min-width + centered content, so
    emoji and text glyphs yield the same-sized button. */
+/* .header-btn also serves anchors (the ⌂ hub link) — keep them unmistakably chip-like */
+a.header-btn {
+  text-decoration: none;
+}
+
 .header-btn,
 .file-btn {
   box-sizing: border-box;
@@ -1132,6 +1137,9 @@ body.dark-mode pre {
       <div id="branchMenu" class="branch-menu" role="listbox" aria-label="Branches" hidden></div>
     </span>
 
+    <!-- ⌂ hub link: hidden unless CONFIG.homeUrl is set (header.js wires it at init) -->
+    <a id="headerHome" class="header-btn" hidden title="Home" aria-label="Home page">⌂</a>
+
     <span id="headerSubtitle" class="header-subtitle" hidden></span>
 
     <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode"
@@ -1200,6 +1208,7 @@ const CONFIG = {
   // brighter #3b82f6 win; a fork's explicit color applies to both modes
   headingFontUrl: '', headingFont: '',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
+  homeUrl: '',               // when set, the header shows a ⌂ link to this hub page
   storagePrefix: 'tootoo',
   hiddenFolders: [], hiddenFiles: [ 'tootoo.config.js' ],
   autoOpenFolderReadme: true,  // expanding a folder opens its own README the first time (set false to disable)
@@ -1737,6 +1746,7 @@ Object.assign( CONFIG, {
   repo: 'tootoo',
   headingFont: '"Rammetto One", sans-serif',     // heading + title face
   headingFontUrl: 'https://fonts.googleapis.com/css2?family=Rammetto+One&display=swap',
+  // homeUrl: 'https://theo-armour.github.io',   // ⌂ hub link in the header (forks set this in tootoo.config.js)
   // hiddenFiles: [ '/index.html' ],             // hide a name from the tree; '/name' anchors to the repo root
 } );
     /* TooToo — header.js  (the "where are we?" component).
@@ -1844,6 +1854,15 @@ const initHeaderControls = () => {
   } );
 
   document.getElementById( 'headerGitHub' )?.setAttribute( 'href', CONFIG.sourceRepoUrl || '#' );
+
+  // ⌂ hub link: a fork's tootoo.config.js sets homeUrl to its hub page (e.g. the
+  // owner's github.io); without one the anchor stays hidden.
+  const headerHome = document.getElementById( 'headerHome' );
+  if ( headerHome && CONFIG.homeUrl ) {
+    headerHome.href = CONFIG.homeUrl;
+    headerHome.title = `Home — ${ CONFIG.homeUrl }`;
+    headerHome.hidden = false;
+  }
 };
 
 /* ── token panel (header owns the dialog; it renders into the content area) ── */

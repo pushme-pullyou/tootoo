@@ -103,6 +103,15 @@ const initHeaderControls = () => {
   } );
 
   document.getElementById( 'headerGitHub' )?.setAttribute( 'href', CONFIG.sourceRepoUrl || '#' );
+
+  // ⌂ hub link: a fork's tootoo.config.js sets homeUrl to its hub page (e.g. the
+  // owner's github.io); without one the anchor stays hidden.
+  const headerHome = document.getElementById( 'headerHome' );
+  if ( headerHome && CONFIG.homeUrl ) {
+    headerHome.href = CONFIG.homeUrl;
+    headerHome.title = `Home — ${ CONFIG.homeUrl }`;
+    headerHome.hidden = false;
+  }
 };
 
 /* ── token panel (header owns the dialog; it renders into the content area) ── */
