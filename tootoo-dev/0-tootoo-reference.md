@@ -1,14 +1,14 @@
 # Reference
 
-## Canonical vs forks
+## Canonical vs installs
 
 **`pushme-pullyou-tootoo` is the canonical home of TooToo — the single source of truth.**
-All the other repos below are **forks**: each carries a generated, vendored copy of the
-canonical `index.html`, customized only through its own `tootoo.config.js`. Never edit a
-fork's `index.html` by hand; changes are made in the canonical repo and fanned out with
+All the other repos below are **installs**: each carries a generated, vendored copy of the
+canonical `index.html`, customized only through its own `tootoo.config.js`. Never edit an
+install's `index.html` by hand; changes are made in the canonical repo and fanned out with
 `promote` → `sync` → `publish`. See [`../AGENTS.md`](../AGENTS.md) ("Canonical Source &
-Forks") and [`../PIPELINE.md`](../PIPELINE.md). The **authoritative fork/target list** is
-[`../FORK-LIST.md`](../FORK-LIST.md) — keep that in sync when a fork is added, not this file.
+Installs") and [`../PIPELINE.md`](../PIPELINE.md). The **authoritative install/target list** is
+[`../INSTALL-LIST.md`](../INSTALL-LIST.md) — keep that in sync when an install is added, not this file.
 
 ## Repos
 

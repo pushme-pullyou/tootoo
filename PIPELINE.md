@@ -7,7 +7,7 @@ the dev sandbox out to every published copy:
 
 ```
 edit in dev  →  promote  →  sync  →  publish
-                (to prod)   (to forks)  (to the web)
+                (to prod)   (to installs)  (to the web)
 ```
 
 You type a single word in chat. Claude performs the whole stage and reports back.
@@ -32,7 +32,7 @@ You type a single word in chat. Claude performs the whole stage and reports back
   shared `src/index.template.html`, so once `promote` reassembles both, dev and production
   carry the **same** date. `assemble.ps1 -Prod` performs the config swap deterministically —
   `promote` runs it rather than copying + hand-reconciling.
-- **Per-fork customization lives in `tootoo.config.js`,** not in `index.html`.
+- **Per-install customization lives in `tootoo.config.js`,** not in `index.html`.
   Every downstream repo has its own `tootoo.config.js` carrying its branding
   (owner/repo, appName, theme, etc.). **No pipeline command ever touches
   `tootoo.config.js`.** This is what makes `sync` a safe plain copy.
@@ -167,8 +167,8 @@ GitHub Pages redeploys automatically on push, so "live" follows from the push.
 
 ## 5. Target set (downstream copies)
 
-The list of fork targets lives in its own file: **[FORK-LIST.md](FORK-LIST.md)**. `sync`
-and `publish` read it; when a fork is added, moved or retired, edit it there.
+The list of install targets lives in its own file: **[INSTALL-LIST.md](INSTALL-LIST.md)**. `sync`
+and `publish` read it; when an install is added, moved or retired, edit it there.
 
 ---
 

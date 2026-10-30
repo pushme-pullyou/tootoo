@@ -18,7 +18,7 @@ Repo-local guidance for this project. These instructions override global default
 
 ## What This Repo Is
 
-**`pushme-pullyou-tootoo` is the canonical home of TooToo — the single source of truth.** Every other TooToo installation (in `heritage-happenings.github.io`, the `theo-armour-*` repos, the other `pushme-pullyou-*` repos, `i:\My Drive\tech`, and any future copy) is a **fork**: a generated, vendored copy of this repo's `index.html`. Forks are outputs, never sources. See the **Canonical Source & Forks** section below and [`PIPELINE.md`](PIPELINE.md) for how changes flow out to them.
+**`pushme-pullyou-tootoo` is the canonical home of TooToo — the single source of truth.** Every other TooToo installation (in `heritage-happenings.github.io`, the `theo-armour-*` repos, the other `pushme-pullyou-*` repos, `j:\My Drive\tech`, and any future copy) is an **install**: a generated, vendored copy of this repo's `index.html`. Installs are outputs, never sources. See the **Canonical Source & Installs** section below and [`PIPELINE.md`](PIPELINE.md) for how changes flow out to them.
 
 Key file: [`index.html`](index.html) - the canonical production app.
 
@@ -39,7 +39,7 @@ Reference files:
 
 ## Development Workflow
 
-- **Don't hand-edit the production [`index.html`](index.html) — it is a generated artifact.** All changes are made in [`tootoo-dev/`](tootoo-dev/) and tested via `file://`, then `promote` regenerates production `index.html` and `sync` / `publish` fan it out to the forks. See [`PIPELINE.md`](PIPELINE.md) for the full flow.
+- **Don't hand-edit the production [`index.html`](index.html) — it is a generated artifact.** All changes are made in [`tootoo-dev/`](tootoo-dev/) and tested via `file://`, then `promote` regenerates production `index.html` and `sync` / `publish` fan it out to the installs. See [`PIPELINE.md`](PIPELINE.md) for the full flow.
 - The `<meta name="revised" content="YYYY-MM-DD HH:MM">` stamp (Pacific Time) on production `index.html` is written by `promote`; the Files tooltip and About page read this value.
 - Before non-trivial edits, define 2-4 concrete success checks, then verify them.
 - Use the test and sample folders to exercise file rendering behavior when relevant.
@@ -56,11 +56,11 @@ Before editing the canonical app, create or update a dated backup snapshot.
 - If a backup for the current timestamp already exists, update that backup rather than creating a near-duplicate.
 - Keep backups as complete copies of `index.html`, not patches or partial excerpts.
 
-## Canonical Source & Forks
+## Canonical Source & Installs
 
-This repo is canonical. All other TooToo installs are forks that carry a generated copy of this repo's `index.html`.
+This repo is canonical. All other TooToo installs carry a generated copy of this repo's `index.html`. (An *install* is not a GitHub *fork* — forking the source to change the code is a different thing, covered in [`FORKING.md`](FORKING.md).)
 
-- **Edit canonical only.** Make every TooToo change here, never in a fork. A fork's `index.html` is a build artifact — hand-editing it is overwritten on the next sync and diverges the fork from the source.
-- **Per-fork differences live in `tootoo.config.js`,** not in `index.html`. Each fork's branding (owner/repo, appName, theme) comes from its own `tootoo.config.js`; the app code stays byte-identical across every copy. No process step ever edits a fork's `tootoo.config.js`.
-- **Changes flow one way:** edit in `tootoo-dev/` → `promote` (regenerates canonical production `index.html`) → `sync` (copies it to every fork) → `publish` (commits + pushes). This is specified in [`PIPELINE.md`](PIPELINE.md); the authoritative fork/target list is [`FORK-LIST.md`](FORK-LIST.md).
-- **Don't fan out by hand.** Do not apply a fix directly to forks or sibling repos unless the task explicitly asks for cross-repo sync — that is what `sync`/`publish` are for.
+- **Edit canonical only.** Make every TooToo change here, never in an install. An install's `index.html` is a build artifact — hand-editing it is overwritten on the next sync and diverges the install from the source.
+- **Per-install differences live in `tootoo.config.js`,** not in `index.html`. Each install's branding (owner/repo, appName, theme) comes from its own `tootoo.config.js`; the app code stays byte-identical across every copy. No process step ever edits an install's `tootoo.config.js`.
+- **Changes flow one way:** edit in `tootoo-dev/` → `promote` (regenerates canonical production `index.html`) → `sync` (copies it to every install) → `publish` (commits + pushes). This is specified in [`PIPELINE.md`](PIPELINE.md); the authoritative install/target list is [`INSTALL-LIST.md`](INSTALL-LIST.md).
+- **Don't fan out by hand.** Do not apply a fix directly to installs or sibling repos unless the task explicitly asks for cross-repo sync — that is what `sync`/`publish` are for.
