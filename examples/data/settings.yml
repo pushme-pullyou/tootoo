@@ -1,0 +1,41 @@
+# TooToo Settings
+app:
+  name: TooToo File Browser
+  version: 1.0.0
+  environment: production
+
+server:
+  host: theo-armour.github.io
+  basePath: /sandbox/tootoo/
+  protocol: https
+
+cache:
+  enabled: true
+  storage: sessionStorage
+  keyPrefix: tree-
+  ttl: 3600
+
+display:
+  defaultFile: README.md
+  showHidden: false
+  skipPatterns:
+    - node_modules
+    - .git
+    - .DS_Store
+  iconEmoji: true
+  indentSize: 16
+
+markdown:
+  renderer: inline
+  sanitize: true
+  features:
+    - headings
+    - bold
+    - italic
+    - strikethrough
+    - code
+    - fencedBlocks
+    - links
+    - images
+    - lists
+    - horizontalRules

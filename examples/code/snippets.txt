@@ -1,0 +1,40 @@
+// copyright 2021 Theo Armour. MIT license.
+/* global COR, main, divMainContent, showdown */
+// jshint esversion: 6
+// jshint loopfunc: true
+
+<label title="do it"> Slider / Range <output id=out >50</output>
+	<input [ type=range ] id=rng oninput=outInp.value=value;>
+</label>
+
+
+<span class="info"><img class=infoImg height=30px
+		src="https://pushme-pullyou.github.io/tootoo-2021/lib/assets/icons/noun_Information_585560.svg">
+	<span class="infoTooltip gmd-5">
+		Howdy! test test test test test abc 123
+	</span>
+</span>
+
+
+function requestFile ( url = "https://example.com", callback = onLoad ) {
+
+	url = "https://cdn.jsdelivr.net/gh/pushme-pullyou/tootoo-2021@master/README.md";
+	const urlCORS = ""; //https://cors-anywhere.herokuapp.com/";
+
+	xhr = new XMLHttpRequest();
+	xhr.open( "GET", urlCORS + url, true );
+	xhr.responseType = "text";
+	xhr.onerror = ( xhr ) => console.log( "error:", xhr );
+	//xhr.onprogress = ( xhr ) => console.log( "bytes loaded:", xhr.loaded );
+	xhr.onload = ( xhr ) => callback( xhr.target.response );
+	xhr.send( null );
+
+}
+
+function onLoad ( response ) {
+
+	console.log( "response", response );
+
+	divContent.innerText = response;
+
+}

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="400" height="250">
+  <!-- Background -->
+  <rect width="400" height="250" fill="#f6f8fa" rx="8"/>
+
+  <!-- Boxes -->
+  <rect x="30" y="30" width="100" height="50" rx="6" fill="#0969da" stroke="#d0d7de"/>
+  <text x="80" y="60" text-anchor="middle" font-family="Arial" font-size="13" fill="white">Fetch Tree</text>
+
+  <rect x="150" y="30" width="100" height="50" rx="6" fill="#0969da" stroke="#d0d7de"/>
+  <text x="200" y="60" text-anchor="middle" font-family="Arial" font-size="13" fill="white">Build Tree</text>
+
+  <rect x="270" y="30" width="100" height="50" rx="6" fill="#0969da" stroke="#d0d7de"/>
+  <text x="320" y="60" text-anchor="middle" font-family="Arial" font-size="13" fill="white">Render</text>
+
+  <!-- Arrows -->
+  <line x1="130" y1="55" x2="150" y2="55" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="250" y1="55" x2="270" y2="55" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- User action -->
+  <rect x="150" y="120" width="100" height="50" rx="6" fill="#238636" stroke="#d0d7de"/>
+  <text x="200" y="150" text-anchor="middle" font-family="Arial" font-size="13" fill="white">Click File</text>
+
+  <rect x="150" y="200" width="100" height="35" rx="6" fill="#da3633" stroke="#d0d7de"/>
+  <text x="200" y="222" text-anchor="middle" font-family="Arial" font-size="13" fill="white">Load Content</text>
+
+  <line x1="200" y1="170" x2="200" y2="200" stroke="#57606a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Arrow marker -->
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#57606a"/>
+    </marker>
+  </defs>
+</svg>
