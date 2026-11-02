@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-11-01 16:28">
+  <meta name="revised" content="2026-11-01 17:42">
   <title>TooToo</title>
   <!-- A real favicon.ico is assumed to sit next to index.html in every deployment
        (assemble.ps1 generates a TT-mark placeholder when the dev folder lacks one). -->
@@ -1739,13 +1739,43 @@ const pagesBase = () => state.repo.toLowerCase() === `${ state.owner.toLowerCase
   : `${ ownerSiteUrl() }/${ encodeURIComponent( state.repo ) }`;
 const pagesUrl = ( path ) => `${ pagesBase() }/${ encodePath( path ) }`;
 
-/* Positive evidence the browsed repo is published on Pages: it's an <owner>.github.io
-   site repo, it's the repo this app is itself served from on github.io, or the install
-   asserts it for every repo it browses (CONFIG.preferPagesUrls — single-owner hubs). */
-const repoHasPages = () => !!state.owner && !!state.repo && (
-  CONFIG.preferPagesUrls
-  || state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`
-  || ( location.origin + location.pathname ).toLowerCase().startsWith( pagesBase().toLowerCase() + '/' ) );
+/* What GitHub's repo details said about Pages (has_pages), remembered per repo across
+   visits and pages of this install: true / false, or undefined when not yet seen. */
+const pagesStoreKey = () => `${ CONFIG.storagePrefix }:pages`;
+let pagesSeen = null;
+const readPagesSeen = () => {
+  if ( !pagesSeen ) {
+    try { pagesSeen = JSON.parse( localStorage.getItem( pagesStoreKey() ) || '{}' ) || {}; }
+    catch ( _ ) { pagesSeen = {}; }
+  }
+  return pagesSeen;
+};
+const pagesKnown = ( owner, repo ) => readPagesSeen()[ `${ owner }/${ repo }`.toLowerCase() ];
+const rememberPages = ( owner, repo, has ) => {
+  readPagesSeen()[ `${ owner }/${ repo }`.toLowerCase() ] = has;
+  try { localStorage.setItem( pagesStoreKey(), JSON.stringify( pagesSeen ) ); } catch ( _ ) { /* storage off */ }
+};
+
+/* Is the browsed repo published on Pages? Certain when the install asserts it for every
+   repo (CONFIG.preferPagesUrls — single-owner hubs) or this app is served from that
+   site; otherwise GitHub's remembered answer; failing that, assume only an
+   <owner>.github.io site repo is published. Unknown → raw, which always exists. */
+const repoHasPages = () => {
+  if ( !state.owner || !state.repo ) return false;
+  if ( CONFIG.preferPagesUrls
+    || ( location.origin + location.pathname ).toLowerCase().startsWith( pagesBase().toLowerCase() + '/' ) ) return true;
+  const known = pagesKnown( state.owner, state.repo );
+  if ( known !== undefined ) return known;
+  return state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`;
+};
+
+/* Does the owner have a <owner>.github.io site? Same evidence, for the site repo. */
+const ownerHasSite = () => {
+  if ( !state.owner ) return false;
+  const site = `${ state.owner.toLowerCase() }.github.io`;
+  return !!CONFIG.preferPagesUrls || location.hostname.toLowerCase() === site
+    || pagesKnown( state.owner, site ) === true;
+};
 
 /* ── URL to open in a new tab / download: the local file in drop-in mode; downloads
    keep the raw URL (direct save); viewable files open the live GitHub Pages copy
@@ -1763,6 +1793,7 @@ const getDefaultBranch = async ( signal ) => {
   // Capture the repo's real last-push date so the header tooltip reflects the
   // repo being viewed (incl. drop-in mode), not this file's static build date.
   state.repoUpdated = data.pushed_at || '';
+  if ( typeof data.has_pages === 'boolean' ) rememberPages( state.owner, state.repo, data.has_pages );
   if ( isHomeRepo() ) homeRepo.defaultBranch = data.default_branch;
   return data.default_branch;
 };
@@ -1906,11 +1937,12 @@ const updateHeaderFromConfig = () => {
   // Render owner / repo as two nowrap segments so a narrow header can wrap at the
   // slash (either side) instead of forcing one long unbreakable line. Each segment is
   // a live link — owner/repo can arrive from the URL (?owner=…) so they are untrusted:
-  // the URL helpers percent-encode them and every attribute is HTML-escaped. The repo
-  // links to its Pages site only on positive evidence (repoHasPages), else github.com;
-  // clicking the slash or the gaps still resets to home (see initHeaderControls).
+  // the URL helpers percent-encode them and every attribute is HTML-escaped. Owner and
+  // repo each link to their github.io site when it's known to exist (ownerHasSite /
+  // repoHasPages), else github.com; clicking the slash or the gaps still resets to
+  // home (see initHeaderControls).
   if ( state.owner && state.repo ) {
-    const ownerSite = CONFIG.preferPagesUrls ? ownerSiteUrl() : `https://github.com/${ encodeURIComponent( state.owner ) }`;
+    const ownerSite = ownerHasSite() ? ownerSiteUrl() : `https://github.com/${ encodeURIComponent( state.owner ) }`;
     const repoSite = repoHasPages() ? pagesBase()
       : `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`;
     titleEl.innerHTML =
@@ -2624,7 +2656,7 @@ const fetchTree = async () => {
     pin( 'branch', state.branch, !home || state.branch !== homeBranch() );
     history.replaceState( null, '', url );
     cacheRepo();   // persist owner/repo/branch now that the branch is resolved
-    setHeaderTimestamp();   // refresh the title tooltip with this repo's last-push date
+    updateHeaderFromConfig();   // owner / repo links (Pages now known) + last-push tooltip
     updateBranchControl();   // show the branch chip in the sidebar header
     const data = await ghApi( `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/git/trees/${ encodeURIComponent( state.branch ) }?recursive=1`, signal );
     if ( data.truncated ) {
