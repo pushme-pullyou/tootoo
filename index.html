@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-11-01 21:54">
+  <meta name="revised" content="2026-11-01 22:35">
   <title>TooToo</title>
   <!-- A real favicon.ico is assumed to sit next to index.html in every deployment
        (assemble.ps1 generates a TT-mark placeholder when the dev folder lacks one). -->
@@ -359,7 +359,15 @@ main {
   padding: 0;
   overflow: hidden;
   container-type: inline-size;
-  position: relative;   /* anchors the floating #btnTreeTop over the tree */
+  position: relative;   /* anchors the floating #btnTreeTop over the sidebar */
+}
+
+.sidebar-scroll-area {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
 @container (max-width: 220px) {
@@ -542,19 +550,7 @@ main {
 /* ── Tree list ── */
 #treeList {
   padding: 0 0.5rem;
-  flex: 1;
-  overflow-y: auto;
-}
-
-/* ── Sidebar footer ── */
-.sidebar-footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0.15rem;
-  border-top: 1px solid var(--border-color);
-  background: var(--primary-bg);
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 
 /* ── Resizer ── */
@@ -736,8 +732,7 @@ details {
   justify-content: center;
 }
 
-/* the sidebar's ↑ shares .back-to-top's look; this modifier shrinks it and floats
-   it over the tree, just above the sidebar footer */
+/* the sidebar's ↑ shares .back-to-top's look and floats over the scroll area */
 .panel-to-top {
   font-size: 1rem;
   height: 1.9rem;
@@ -746,7 +741,7 @@ details {
 
 #btnTreeTop {
   position: absolute;
-  bottom: 2.6rem;
+  bottom: 0.9rem;
   right: 0.9rem;
 }
 
@@ -1203,23 +1198,20 @@ body.dark-mode pre {
 
   <main>
     <div class="sidebar" id="sidebar">
-      <div class="panel-header" id="filesPanelHeader">
-        <h3 id="hFiles">Files</h3>
-        <button id="btnExpandAll" class="file-btn" style="display: none;" title="Expand all folders"
-          aria-label="Expand all folders">⊞</button>
+      <div class="sidebar-scroll-area" id="sidebarScrollArea">
+        <div class="panel-header" id="filesPanelHeader">
+          <h3 id="hFiles">Files</h3>
+          <button id="btnExpandAll" class="file-btn" style="display: none;" title="Expand all folders"
+            aria-label="Expand all folders">⊞</button>
+        </div>
+        <div class="filter-wrap">
+          <label for="treeFilter" class="sr-only">Filter files by name</label>
+          <input type="text" id="treeFilter" placeholder="Filter files…" title="Filter files by name">
+          <button id="btnFilterClear" title="Clear filter" aria-label="Clear filter">✕</button>
+        </div>
+        <div id="treeList"></div>
       </div>
-      <div class="filter-wrap">
-        <label for="treeFilter" class="sr-only">Filter files by name</label>
-        <input type="text" id="treeFilter" placeholder="Filter files…" title="Filter files by name">
-        <button id="btnFilterClear" title="Clear filter" aria-label="Clear filter">✕</button>
-      </div>
-      <div id="treeList"></div>
-      <button id="btnTreeTop" class="back-to-top panel-to-top" title="Scroll files to top" aria-label="Scroll files to top">↑</button>
-      <div class="sidebar-footer">
-        <button id="btnScrollTreeTop" type="button" title="Scroll sidebar to top" aria-label="Scroll sidebar to top">
-          <img src="favicon.ico" alt="" width="20" height="20">
-        </button>
-      </div>
+      <button id="btnTreeTop" class="back-to-top panel-to-top" title="Scroll sidebar to top" aria-label="Scroll sidebar to top">↑</button>
     </div>
     <div class="resizer" id="resizer" title="Drag to Resize Sidebar"></div>
     <div class="content-area" id="contentArea">
@@ -2301,8 +2293,8 @@ const initHeader = () => { updateHeaderFromConfig(); initAppearance(); initHeade
    Depends on core.js helpers + globals CONFIG/state (mock-data.js in the preview).
    renderTree is synchronous (the reference batched huge repos with a "% rendered" status). */
 
-/* README matcher — shared by root auto-open, folder auto-open, and bold styling. */
-const README_RE = /^readme(\.\w+)?$/i;   // README, README.md, readme.txt — not README-2026-….md backups
+/* README matcher — shared by sorting, root/folder auto-open, and bold styling. */
+const README_RE = /^readme/i;
 
 /* ── build nested tree from the flat GitHub list ── */
 const buildNestedTree = ( flatTree ) => {
@@ -2400,9 +2392,19 @@ const findLatestPost = ( blogNode, blogPath ) => {
   return { expandPaths, postPath: posts[ 0 ].path };
 };
 
-/* ── sort entries; `mode` (blog context) picks the comparator, else default. ── */
+/* README-prefixed files lead the file group; folders keep their context order. */
 const sortedEntries = ( children, mode ) =>
-  Object.entries( children ).sort( BLOG_CMP[ mode ] || cmpDefault );
+  Object.entries( children ).sort( ( a, b ) => {
+    const compare = BLOG_CMP[ mode ] || cmpDefault;
+    const aFile = !isFolderNode( a[ 1 ] );
+    const bFile = !isFolderNode( b[ 1 ] );
+    if ( aFile && bFile ) {
+      const aReadme = README_RE.test( a[ 0 ] );
+      const bReadme = README_RE.test( b[ 0 ] );
+      if ( aReadme !== bReadme ) return aReadme ? -1 : 1;
+    }
+    return compare( a, b );
+  } );
 
 /* ── recursive folder contents (for the folder tooltip) ──
    Memoized per node: renderNode renders children before asking a parent for its stats, so
@@ -2944,25 +2946,19 @@ const initSidebar = () => {
     if ( !e.target.closest( '.branch-control' ) ) closeBranchMenu();
   } );
 
-  // Sidebar footer scroll-to-top (its brand mark is static markup → favicon.ico).
-  document.getElementById( 'btnScrollTreeTop' )?.addEventListener( 'click', () =>
-    document.getElementById( 'treeList' ).scrollTo( { top: 0, behavior: 'smooth' } ) );
-
-  // Floating ↑ over the tree, like the content area's: appears once the tree has
-  // scrolled a bit, returns it to the top.
-  const treeList = document.getElementById( 'treeList' );
+  // Show ↑ whenever the sidebar overflows so the scroll affordance is visible immediately.
+  const sidebarScrollArea = document.getElementById( 'sidebarScrollArea' );
   const treeTop = document.getElementById( 'btnTreeTop' );
-  if ( treeList && treeTop ) {
-    let shown = false;   // write style only on show/hide transitions, not every scroll frame
-    treeList.addEventListener( 'scroll', () => {
-      const want = treeList.scrollTop > 150;
-      if ( want === shown ) return;
-      shown = want;
-      treeTop.style.display = want ? 'flex' : 'none';
-    } );
+  if ( sidebarScrollArea && treeTop ) {
+    const updateTreeTopVisibility = () => {
+      treeTop.style.display = sidebarScrollArea.scrollHeight > sidebarScrollArea.clientHeight ? 'flex' : 'none';
+    };
+    updateTreeTopVisibility();
+    new ResizeObserver( updateTreeTopVisibility ).observe( document.getElementById( 'treeList' ) );
+    window.addEventListener( 'resize', updateTreeTopVisibility );
     treeTop.addEventListener( 'click', ( e ) => {
       e.stopPropagation();
-      treeList.scrollTo( { top: 0, behavior: 'smooth' } );
+      sidebarScrollArea.scrollTo( { top: 0, behavior: 'smooth' } );
     } );
   }
 

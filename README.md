@@ -153,6 +153,7 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 
 ## Change Log
 
+* 2026-11-01 — Sidebar: a floating go-to-top button appears when the panel overflows. README-prefixed files, including descriptive names and dated backups, now appear first among each folder's files.
 * 2026-11-01 — Sidebar: a branch that doesn't exist now says so, instead of being reported as a private repo with a token prompt. The file count resets when a tree fails to load, and Left Arrow while filtering no longer strands keyboard focus.
 * 2026-11-01 — github.io links: TooToo now remembers which repos have a GitHub Pages site. It learns this from the repo lookup it already makes, with no extra requests. The owner and repo title links, New Tab, and HTML previews then use the github.io site when one exists and fall back to github.com or raw files when it doesn't. The header links update as soon as this is known.
 * 2026-11-01 — Header: the brand icon now always goes back to the start (this page, no `?owner=…` or `#file`); on narrow screens the right-hand buttons slide over the subtitle and move to a second row only when they'd cover owner / repo. `headingFontUrl` now also accepts a `.ttf` / `.woff2` font file, not just a Google Fonts stylesheet. Fixed a token save that could fail silently.
