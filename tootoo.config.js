@@ -13,7 +13,7 @@ window.TOOTOO_CONFIG = {
   // ── Identity ──
   // appName: 'TooToo',                                          // <title>, header text, About heading
   // storagePrefix: 'tootoo',                                    // localStorage namespace — unique per fork
-  // sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',  // header GitHub icon + About link
+  // sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',  // "Source" link in the About (?) panel
 
   // ── Branding ──
   themeColor: '#3a8856',                              // --highlight-color (light + dark)
