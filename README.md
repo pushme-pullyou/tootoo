@@ -77,7 +77,11 @@ const CONFIG = {
 };
 ```
 
-These are the common knobs; `CONFIG` also supports theming and filtering options (`themeColor`, `subtitle`, `hiddenFolders`/`hiddenFiles`, `headingFont`) — see [`FORKING.md`](FORKING.md) for the full set. To brand a fork, ship a `favicon.ico` beside `index.html`.
+These are the common knobs; `CONFIG` also supports theming and filtering options (`themeColor`, `subtitle`, `hiddenFolders`/`hiddenFiles`, `headingFont`) — see [`FORKING.md`](FORKING.md) for the full set. To brand an install, ship a `favicon.ico` beside `index.html` and set `faviconFile: 'favicon.ico'` in its `tootoo.config.js`. An omitted or empty `faviconFile` hides the app's icon marks; no icons are generated.
+
+Dated backup snapshots are hidden by default; set `hideDatedBackups: false` to show them. Date-first content remains visible.
+
+HTML/HTM files run in **unsandboxed iframes**: open only trusted HTML, whose scripts may access the app's document and storage, including a stored GitHub token. Matching local files and published Pages files load at their real URLs so relative config and assets work. Other remote HTML uses a blob fallback. An embedded TooToo copy opens its README rather than recursively resuming the parent's file selection.
 
 ## Fork & Customize
 
@@ -99,7 +103,7 @@ Want your own TooToo pointing at your own repo? It takes about a minute.
 
    On GitHub Pages, the repo to browse auto-detects from the hostname (`<you>.github.io/<fork>/`), so `owner`/`repo` can stay empty for the Pages deploy. The brand icon at the top left always returns to the start — this page, with no `?owner=…` or `#file`.
 
-3. **Customize the favicon** (optional) — drop a `favicon.ico` beside `index.html` in your fork.
+3. **Customize the favicon** (optional) — drop a `favicon.ico` beside `index.html` and set `faviconFile: 'favicon.ico'` in `tootoo.config.js`.
 
 4. **Enable Pages**: in your fork's *Settings → Pages*, deploy from the `main` branch root. Your fork goes live at `https://<you>.github.io/<your-fork>/`.
 
@@ -153,6 +157,7 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 
 ## Change Log
 
+* 2026-11-02 — HTML/HTM previews now run scripts without a sandbox and load actual local or published Pages URLs when available, preserving config/assets and repository detection. Embedded app copies avoid recursive self-previews, and root-site `/index.html` detects the correct repository. Only open trusted HTML. Dated backups are hidden by default (`hideDatedBackups: false` shows them). Added `faviconFile` for supplied icon files or URLs; unset means no app icon marks. Removed fallback icon generation.
 * 2026-11-01 — Sidebar: a floating go-to-top button appears when the panel overflows. README-prefixed files, including descriptive names and dated backups, now appear first among each folder's files.
 * 2026-11-01 — Sidebar: a branch that doesn't exist now says so, instead of being reported as a private repo with a token prompt. The file count resets when a tree fails to load, and Left Arrow while filtering no longer strands keyboard focus.
 * 2026-11-01 — github.io links: TooToo now remembers which repos have a GitHub Pages site. It learns this from the repo lookup it already makes, with no extra requests. The owner and repo title links, New Tab, and HTML previews then use the github.io site when one exists and fall back to github.com or raw files when it doesn't. The header links update as soon as this is known.
