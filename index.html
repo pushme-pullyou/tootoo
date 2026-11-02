@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-10-19 17:14">
+  <meta name="revised" content="2026-11-01 16:28">
   <title>TooToo</title>
   <!-- A real favicon.ico is assumed to sit next to index.html in every deployment
        (assemble.ps1 generates a TT-mark placeholder when the dev folder lacks one). -->
@@ -174,10 +174,26 @@ header {
   transition: color 0.15s, background-color 0.15s;
 }
 
-#headerTitle:hover {
-  color: var(--highlight-color);
+/* header title segments are live links; each highlights on its own (the slash
+   between them keeps the title's click-to-reset) */
+#headerTitle a {
+  border-radius: 6px;
+  color: inherit;
+  padding: 0.05rem 0.35rem;
+  text-decoration: none;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+#headerTitle a:hover {
   background: color-mix(in srgb, var(--highlight-color), transparent 85%);
+  color: var(--highlight-color);
   text-decoration: underline;
+}
+
+/* a visible break between the two links */
+.title-sep {
+  margin: 0 0.35rem;
+  opacity: 0.5;
 }
 
 .header-subtitle {
@@ -186,6 +202,23 @@ header {
   font-size: 0.9rem;
   color: var(--highlight-fg);
   white-space: nowrap;
+  /* The one part of the header that gives way: a zero basis means it never forces a
+     wrap, and it grows into whatever room is left, so on a narrowing screen the
+     buttons slide over it (ending in …) before anything moves to a second row. */
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The right-hand buttons travel as one group: pushed right, never shrunk, and
+   wrapped to their own row only when they would otherwise cover owner / repo. */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 /* Keep owner and repo each on one line, so a long "owner / repo" title may break
@@ -238,6 +271,11 @@ button.secondary,
 
 /* Uniform button box: fixed height + square-ish min-width + centered content, so
    emoji and text glyphs yield the same-sized button. */
+/* .header-btn also serves anchors (the ⌂ hub link) — keep them unmistakably chip-like */
+a.header-btn {
+  text-decoration: none;
+}
+
 .header-btn,
 .file-btn {
   box-sizing: border-box;
@@ -270,10 +308,6 @@ button.secondary:active,
 .header-btn.active {
   background: var(--highlight-fg);
   color: var(--on-highlight);
-}
-
-.dark-mode-btn {
-  margin-left: auto;
 }
 
 /* Sidebar toggle (☰): hide sidebar + resizer when body.sidebar-hidden. */
@@ -325,6 +359,7 @@ main {
   padding: 0;
   overflow: hidden;
   container-type: inline-size;
+  position: relative;   /* anchors the floating #btnTreeTop over the tree */
 }
 
 @container (max-width: 220px) {
@@ -699,6 +734,20 @@ details {
   cursor: pointer;
   align-items: center;
   justify-content: center;
+}
+
+/* the sidebar's ↑ shares .back-to-top's look; this modifier shrinks it and floats
+   it over the tree, just above the sidebar footer */
+.panel-to-top {
+  font-size: 1rem;
+  height: 1.9rem;
+  width: 1.9rem;
+}
+
+#btnTreeTop {
+  position: absolute;
+  bottom: 2.6rem;
+  right: 0.9rem;
 }
 
 /* ── Content Viewer ── */
@@ -1110,9 +1159,9 @@ body.dark-mode pre {
   <header>
     <button id="btnToggleSidebar" class="header-btn" title="Close sidebar (Ctrl/⌘ B)" aria-label="Toggle sidebar"
       aria-controls="sidebar" aria-expanded="true">☰</button>
-    <a id="headerGitHub" href="." title="View on GitHub" aria-label="View on GitHub">
+    <a id="headerGitHub" href="." title="Back to the start" aria-label="Back to the start">
       <!-- App brand mark: the deployment's favicon.ico (static; the standalone
-           harness rewrites the src to ../../favicon.ico). aria-hidden: the anchor's
+           harness rewrites the src to ../../../favicon.ico). aria-hidden: the anchor's
            aria-label names the link. -->
       <img id="headerBrand" src="favicon.ico" width="18" height="18" alt="" aria-hidden="true">
     </a>
@@ -1132,17 +1181,24 @@ body.dark-mode pre {
       <div id="branchMenu" class="branch-menu" role="listbox" aria-label="Branches" hidden></div>
     </span>
 
+    <!-- ⌂ hub link: hidden unless CONFIG.homeUrl is set (header.js wires it at init) -->
+    <a id="headerHome" class="header-btn" hidden title="Home" aria-label="Home page">⌂</a>
+
     <span id="headerSubtitle" class="header-subtitle" hidden></span>
 
-    <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode"
-      aria-label="Toggle dark mode" aria-pressed="false">🌙</button>
-    <button id="btnFontDec" class="header-btn" title="Decrease Font Size" aria-label="Decrease font size">A−</button>
-    <button id="btnFontInc" class="header-btn" title="Increase Font Size" aria-label="Increase font size">A+</button>
-    <button id="btnHelp" class="header-btn" title="About this app" aria-label="About this app"
-      aria-pressed="false">?</button>
-    <button id="btnToken" class="header-btn" title="GitHub API rate limit — click to set a token"
-      aria-label="Set GitHub personal access token" aria-pressed="false">⚙️</button>
-    <div id="rateBadge" class="rate-limit-badge" title="API Rate Limit" aria-live="polite"></div>
+    <!-- One group, so a narrow header moves all the buttons to a second row together
+         rather than splitting them; until then they slide over the subtitle. -->
+    <span class="header-actions">
+      <button id="btnDarkMode" class="header-btn dark-mode-btn" title="Toggle Dark Mode"
+        aria-label="Toggle dark mode" aria-pressed="false">🌙</button>
+      <button id="btnFontDec" class="header-btn" title="Decrease Font Size" aria-label="Decrease font size">A−</button>
+      <button id="btnFontInc" class="header-btn" title="Increase Font Size" aria-label="Increase font size">A+</button>
+      <button id="btnHelp" class="header-btn" title="About this app" aria-label="About this app"
+        aria-pressed="false">?</button>
+      <button id="btnToken" class="header-btn" title="GitHub API rate limit — click to set a token"
+        aria-label="Set GitHub personal access token" aria-pressed="false">⚙️</button>
+      <div id="rateBadge" class="rate-limit-badge" title="API Rate Limit" aria-live="polite"></div>
+    </span>
   </header>
 
   <main>
@@ -1158,6 +1214,7 @@ body.dark-mode pre {
         <button id="btnFilterClear" title="Clear filter" aria-label="Clear filter">✕</button>
       </div>
       <div id="treeList"></div>
+      <button id="btnTreeTop" class="back-to-top panel-to-top" title="Scroll files to top" aria-label="Scroll files to top">↑</button>
       <div class="sidebar-footer">
         <button id="btnScrollTreeTop" type="button" title="Scroll sidebar to top" aria-label="Scroll sidebar to top">
           <img src="favicon.ico" alt="" width="20" height="20">
@@ -1200,8 +1257,11 @@ const CONFIG = {
   // brighter #3b82f6 win; a fork's explicit color applies to both modes
   headingFontUrl: '', headingFont: '',
   sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo',
+  homeUrl: '',               // when set, the header shows a ⌂ link to this hub page
   storagePrefix: 'tootoo',
   hiddenFolders: [], hiddenFiles: [ 'tootoo.config.js' ],
+  hideDatedBackups: false,     // hide "name-2026-10-24…" backup snapshots from the tree (date-FIRST names stay)
+  preferPagesUrls: false,      // this install's owner serves every repo on GitHub Pages → New Tab / header links use the live sites
   autoOpenFolderReadme: true,  // expanding a folder opens its own README the first time (set false to disable)
   // Footer rights line appended after "© <year> <owner>". rightsOwners scopes WHICH
   // owners it shows for: null = every repo (default), an array = only those owner logins
@@ -1277,11 +1337,17 @@ const hiddenFileSet = () => new Set( ( CONFIG.hiddenFiles || [] ).map( ( s ) => 
 /* Dotfiles/dotfolders and CONFIG-hidden names are dropped from the sidebar. A hiddenFiles
    entry hides that bare name wherever it appears, unless it starts with '/', which anchors
    it to the repo root — so '/index.html' hides only the root file, not nested ones. */
+
+/* A date AFTER a name marks a backup snapshot ("index-2026-10-24….html",
+   "README 2026 09 18.md"); a date at the START is content ("2026-01-04-essay.md"). */
+const DATED_BACKUP_RE = /^.+20\d\d[-_ .]\d\d/;
+
 const isVisibleTreeItem = ( item, folders, files ) => {
   const parts = item.path.split( '/' );
   if ( parts.some( ( p ) => p.startsWith( '.' ) || folders.has( p.toLowerCase() ) ) ) return false;
   if ( item.type !== 'blob' ) return true;
   const name = parts[ parts.length - 1 ].toLowerCase();
+  if ( CONFIG.hideDatedBackups && DATED_BACKUP_RE.test( name ) ) return false;
   return !( files.has( name ) || files.has( '/' + item.path.toLowerCase() ) );
 };
 
@@ -1333,18 +1399,35 @@ const GITHUB_SVG_ICON =
    sidebar brand <img>s all point at it statically). assemble.ps1 creates a TT-mark
    placeholder when the dev folder lacks one; forks ship their own. ── */
 
-/* ── optional heading typeface (reference §11): load CONFIG.headingFontUrl into
-   <head> and set --heading-font, which the h1–h6/#headerTitle CSS already consumes.
-   Omitting either knob is a no-op (the var falls back to the body font). ── */
+/* ── optional heading typeface (reference §11): load CONFIG.headingFontUrl and set
+   --heading-font, which the h1–h6/#headerTitle CSS already consumes. The URL may be
+   a stylesheet (e.g. Google Fonts) or a font file (.woff2/.woff/.ttf/.otf); a font
+   file is registered under the first family in CONFIG.headingFont. Omitting either
+   knob is a no-op (the var falls back to the body font). ── */
+const isFontFileUrl = ( url ) => /\.(woff2?|ttf|otf)([?#]|$)/i.test( url || '' );
+// First family of a CSS font-family list, unquoted: '"Windsor", serif' → 'Windsor'.
+const firstFontFamily = ( list ) => ( list || '' ).split( ',' )[ 0 ].trim().replace( /^["']|["']$/g, '' );
+const loadedFontFiles = new Set();
+const loadFontFile = ( url, family ) => {
+  const key = `${ family }|${ url }`;
+  if ( !family || loadedFontFiles.has( key ) ) return;
+  loadedFontFiles.add( key );
+  const face = new FontFace( family, `url("${ url.replace( /"/g, '%22' ) }")` );
+  document.fonts.add( face );
+  face.load().catch( () => console.warn( `Heading font failed to load: ${ url }` ) );
+};
 const applyHeadingFont = () => {
-  if ( CONFIG.headingFontUrl ) {
+  const url = CONFIG.headingFontUrl;
+  const family = CONFIG.headingFont || ( isFontFileUrl( url ) ? '"TooToo Heading", serif' : '' );
+  if ( isFontFileUrl( url ) ) loadFontFile( url, firstFontFamily( family ) );
+  else if ( url ) {
     const link = document.createElement( 'link' );
     link.rel = 'stylesheet';
-    link.href = CONFIG.headingFontUrl;
+    link.href = url;
     document.head.appendChild( link );
   }
-  if ( CONFIG.headingFont ) {
-    document.documentElement.style.setProperty( '--heading-font', CONFIG.headingFont );
+  if ( family ) {
+    document.documentElement.style.setProperty( '--heading-font', family );
   }
 };
 
@@ -1647,9 +1730,33 @@ const resolveRepoPath = ( href, currentDir ) => {
   return stack.join( '/' );
 };
 
-/* ── URL to open in a new tab / download (reference §31, simplified): the local
-   file in drop-in mode, else the raw GitHub URL (text/images view, binaries download). ── */
-const getNewTabUrl = ( path ) => localUrlFor( path ) || rawUrl( path );
+/* ── GitHub Pages addresses — so New Tab runs a page instead of showing source (the
+   Rendered/Raw toggle covers reading code). The special <owner>.github.io repo serves
+   from the domain root. Used only when Pages is a safe bet (repoHasPages). ── */
+const ownerSiteUrl = () => `https://${ encodeURIComponent( state.owner.toLowerCase() ) }.github.io`;
+const pagesBase = () => state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`
+  ? ownerSiteUrl()
+  : `${ ownerSiteUrl() }/${ encodeURIComponent( state.repo ) }`;
+const pagesUrl = ( path ) => `${ pagesBase() }/${ encodePath( path ) }`;
+
+/* Positive evidence the browsed repo is published on Pages: it's an <owner>.github.io
+   site repo, it's the repo this app is itself served from on github.io, or the install
+   asserts it for every repo it browses (CONFIG.preferPagesUrls — single-owner hubs). */
+const repoHasPages = () => !!state.owner && !!state.repo && (
+  CONFIG.preferPagesUrls
+  || state.repo.toLowerCase() === `${ state.owner.toLowerCase() }.github.io`
+  || ( location.origin + location.pathname ).toLowerCase().startsWith( pagesBase().toLowerCase() + '/' ) );
+
+/* ── URL to open in a new tab / download: the local file in drop-in mode; downloads
+   keep the raw URL (direct save); viewable files open the live GitHub Pages copy
+   when the repo is known to have one, else the raw URL. ── */
+const getNewTabUrl = ( path ) => {
+  const local = localUrlFor( path );
+  if ( local ) return local;
+  const ext = extOf( path );
+  const willDownload = isDownloadAction( ext ) && !isTextOpenAsPlain( ext );
+  return ( !willDownload && repoHasPages() ) ? pagesUrl( path ) : rawUrl( path );
+};
 
 const getDefaultBranch = async ( signal ) => {
   const data = await ghApi( `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`, signal );
@@ -1756,6 +1863,35 @@ const setHeaderTimestamp = () => {
   titleEl.title = `Last updated: ${ when } · click to reload`;
 };
 
+// The repo whose index.html is running: <owner>.github.io/<repo>/ from the address,
+// else the install's own repo (homeRepo, or CONFIG before detection runs).
+const hostRepoLabel = () => {
+  if ( location.hostname.endsWith( '.github.io' ) ) {
+    const owner = location.hostname.split( '.' )[ 0 ];
+    const first = location.pathname.split( '/' ).filter( Boolean )[ 0 ] || '';
+    return `${ owner } / ${ first && !/\.html?$/i.test( first ) ? first : `${ owner }.github.io` }`;
+  }
+  const owner = homeRepo.owner || CONFIG.owner;
+  const repo = homeRepo.repo || CONFIG.repo;
+  return owner && repo ? `${ owner } / ${ repo }` : '';
+};
+
+const resetToStart = () => {
+  clearCurrentFile();
+  try { localStorage.removeItem( repoCacheKey() ); } catch ( _ ) { /* storage off */ }
+  if ( location.search || location.hash ) location.replace( location.pathname );
+  else location.reload();
+};
+
+const updateBrandLink = () => {
+  const brand = document.getElementById( 'headerGitHub' );
+  if ( !brand ) return;
+  const host = hostRepoLabel();
+  const tip = host ? `Back to the start — ${ host }` : 'Back to the start';
+  brand.title = tip;
+  brand.setAttribute( 'aria-label', tip );
+};
+
 const updateHeaderFromConfig = () => {
   if ( CONFIG.themeColor ) {
     document.documentElement.style.setProperty( '--highlight-color', CONFIG.themeColor );
@@ -1768,13 +1904,24 @@ const updateHeaderFromConfig = () => {
   const subtitleEl = document.getElementById( 'headerSubtitle' );
   document.title = CONFIG.subtitle ? `${ label } · ${ CONFIG.subtitle }` : label;
   // Render owner / repo as two nowrap segments so a narrow header can wrap at the
-  // slash (either side) instead of forcing one long unbreakable line.
+  // slash (either side) instead of forcing one long unbreakable line. Each segment is
+  // a live link — owner/repo can arrive from the URL (?owner=…) so they are untrusted:
+  // the URL helpers percent-encode them and every attribute is HTML-escaped. The repo
+  // links to its Pages site only on positive evidence (repoHasPages), else github.com;
+  // clicking the slash or the gaps still resets to home (see initHeaderControls).
   if ( state.owner && state.repo ) {
-    titleEl.innerHTML = `<span class="title-seg">${ escapeHTML( state.owner ) }</span> / <span class="title-seg">${ escapeHTML( state.repo ) }</span>`;
+    const ownerSite = CONFIG.preferPagesUrls ? ownerSiteUrl() : `https://github.com/${ encodeURIComponent( state.owner ) }`;
+    const repoSite = repoHasPages() ? pagesBase()
+      : `https://github.com/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`;
+    titleEl.innerHTML =
+      `<a class="title-seg" href="${ escapeHTML( ownerSite ) }" target="_blank" rel="noopener" title="${ escapeHTML( ownerSite ) }">${ escapeHTML( state.owner ) }</a>` +
+      `<span class="title-sep">/</span>` +
+      `<a class="title-seg" href="${ escapeHTML( repoSite ) }" target="_blank" rel="noopener" title="${ escapeHTML( repoSite ) }">${ escapeHTML( state.repo ) }</a>`;
   } else {
     titleEl.textContent = CONFIG.appName;
   }
   setHeaderTimestamp();
+  updateBrandLink();
   if ( subtitleEl ) {
     if ( CONFIG.subtitle ) {
       subtitleEl.textContent = '· ' + CONFIG.subtitle;
@@ -1831,15 +1978,35 @@ const initHeaderControls = () => {
   document.getElementById( 'btnToggleSidebar' )?.addEventListener( 'click', toggleSidebar );
 
   // Header title → reset to the home repo: clear hash/query, cached repo, last file.
+  // The owner/repo segments are live links — their clicks pass through untouched;
+  // only the slash between them and the title's background reset.
   document.getElementById( 'headerTitle' )?.addEventListener( 'click', ( e ) => {
+    if ( e.target.closest( 'a' ) ) return;
     e.preventDefault();
-    clearCurrentFile();
-    try { localStorage.removeItem( repoCacheKey() ); } catch ( _ ) { /* storage off */ }
-    if ( location.search || location.hash ) location.replace( location.pathname );
-    else location.reload();
+    resetToStart();
   } );
 
-  document.getElementById( 'headerGitHub' )?.setAttribute( 'href', CONFIG.sourceRepoUrl || '#' );
+  // Brand icon → the same reset. The owner/repo links can wander anywhere; this is
+  // the fixed way back to the page that loaded TooToo. A plain href keeps
+  // middle-click / open-in-new-tab working.
+  const brand = document.getElementById( 'headerGitHub' );
+  if ( brand ) {
+    brand.href = location.pathname;
+    brand.addEventListener( 'click', ( e ) => {
+      if ( e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey ) return;
+      e.preventDefault();
+      resetToStart();
+    } );
+  }
+
+  // ⌂ hub link: a fork's tootoo.config.js sets homeUrl to its hub page (e.g. the
+  // owner's github.io); without one the anchor stays hidden.
+  const headerHome = document.getElementById( 'headerHome' );
+  if ( headerHome && CONFIG.homeUrl ) {
+    headerHome.href = CONFIG.homeUrl;
+    headerHome.title = `Home — ${ CONFIG.homeUrl }`;
+    headerHome.hidden = false;
+  }
 };
 
 /* ── token panel (header owns the dialog; it renders into the content area) ── */
@@ -1856,6 +2023,7 @@ const showTokenPanel = ( reasonHtml = '' ) => {
         <label for="inpToken">Token${ hasToken ? ' (currently set)' : '' }</label>
         <input id="inpToken" type="password" placeholder="${ hasToken ? '•••••••• (leave blank to keep)' : 'ghp_…' }" autocomplete="off" spellcheck="false">
         <label><input id="inpTokenShow" type="checkbox"> Show token</label>
+        <p id="tokenSaveError" class="error-panel" role="alert" hidden></p>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
           <button id="btnTokenSave" class="primary" title="Save token and reload">Save</button>
           <button id="btnTokenClear" class="secondary" title="Clear stored token">Clear</button>
@@ -1877,9 +2045,18 @@ const showTokenPanel = ( reasonHtml = '' ) => {
   inp.focus();
   document.getElementById( 'inpTokenShow' ).addEventListener( 'change', ( e ) => { inp.type = e.target.checked ? 'text' : 'password'; } );
   const save = () => {
+    const error = document.getElementById( 'tokenSaveError' );
+    error.hidden = true;
+    error.textContent = '';
     const v = inp.value;
     if ( v === '' && hasToken ) return;   // blank = keep existing
-    try { localStorage.setItem( tokenStorageKey(), v ); } catch ( _ ) { /* storage disabled */ }
+    try {
+      localStorage.setItem( tokenStorageKey(), v );
+    } catch ( err ) {
+      error.textContent = `Unable to save token in browser storage: ${ err.message }`;
+      error.hidden = false;
+      return;
+    }
     clearFileCache();
     location.reload();
   };
@@ -1984,7 +2161,7 @@ const renderAboutPanel = () => {
       <h3>Tips</h3>
       <ul>
         <li>Use the filter input in the sidebar to search file names</li>
-        <li>Click the title in the header to reload</li>
+        <li>The owner and repo names in the header are links to their live sites; click the slash between them to reload</li>
         <li>Use <strong>A−</strong> / <strong>A+</strong> to adjust font size — helpful on phones and small screens</li>
         <li>Click <strong>🌙</strong> to toggle dark mode — your choice is saved across visits</li>
         <li>Click <strong>?</strong> or <strong>⚙️ Token</strong> again to close the panel and return to your file</li>
@@ -2035,7 +2212,7 @@ const closeInfoPanel = () => {
   else autoSelectReadme();
 };
 
-const toggleInfoPanel = async ( panel ) => {
+const toggleInfoPanel = ( panel ) => {
   // No content area to render into (e.g. the standalone header component page) →
   // the ?/⚙️ buttons are inert rather than throwing. Mirrors showTokenPanel's guard,
   // but here it also avoids leaving the button stuck pressed + a broken close path.
@@ -2046,7 +2223,7 @@ const toggleInfoPanel = async ( panel ) => {
   state.currentFilePath = '';
   activePanel = panel;
   updateInfoButtonState();
-  if ( panel === 'about' ) await renderAboutPanel();
+  if ( panel === 'about' ) renderAboutPanel();
   else showTokenPanel();
 };
 
@@ -2723,6 +2900,24 @@ const initSidebar = () => {
   document.getElementById( 'btnScrollTreeTop' )?.addEventListener( 'click', () =>
     document.getElementById( 'treeList' ).scrollTo( { top: 0, behavior: 'smooth' } ) );
 
+  // Floating ↑ over the tree, like the content area's: appears once the tree has
+  // scrolled a bit, returns it to the top.
+  const treeList = document.getElementById( 'treeList' );
+  const treeTop = document.getElementById( 'btnTreeTop' );
+  if ( treeList && treeTop ) {
+    let shown = false;   // write style only on show/hide transitions, not every scroll frame
+    treeList.addEventListener( 'scroll', () => {
+      const want = treeList.scrollTop > 150;
+      if ( want === shown ) return;
+      shown = want;
+      treeTop.style.display = want ? 'flex' : 'none';
+    } );
+    treeTop.addEventListener( 'click', ( e ) => {
+      e.stopPropagation();
+      treeList.scrollTo( { top: 0, behavior: 'smooth' } );
+    } );
+  }
+
   // Resizer drag (real app does this in setupListeners; minimal version here).
   const resizer = document.getElementById( 'resizer' );
   if ( resizer ) {
@@ -2818,7 +3013,47 @@ const buildToggleHtml = ( ext, renderedHtml, rawText, { prefix = '', renderedCla
     `<pre id="viewRaw" style="${ rawDisplay }">${ escapeHTML( rawText ) }</pre>`;
 };
 
-const MD_PURIFY = { FORBID_TAGS: [ 'style', 'form', 'button', 'textarea', 'select' ], FORBID_ATTR: [ 'style' ] };
+const MD_PURIFY = { ADD_TAGS: [ 'iframe' ], ADD_ATTR: [ 'allow', 'allowfullscreen' ], FORBID_TAGS: [ 'style', 'form', 'button', 'textarea', 'select' ], FORBID_ATTR: [ 'style' ] };
+
+/* ── iframes in markdown: whatever sandbox the author wrote is replaced by a safe one.
+   Done INSIDE the sanitizer because a frame's sandbox is fixed when it starts loading —
+   changing it after insertion is too late. Frames on the origins where the GitHub token
+   lives (this page, the home owner's github.io) get scripts but never same-origin, so
+   they can't read the token; frames from other sites (YouTube, maps…) keep their own
+   origin, which they need to work and which can't reach this app's storage anyway.
+   https sources load as written; relative ones are held back and resolved per repo by
+   renderMarkdown; anything else (http:, data:, javascript:) is dropped. ── */
+const FRAME_SANDBOX = 'allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox';
+const tokenOrigins = () => [ location.origin, `https://${ ( homeRepo.owner || CONFIG.owner ).toLowerCase() }.github.io` ];
+
+if ( window.DOMPurify ) DOMPurify.addHook( 'afterSanitizeAttributes', ( node ) => {
+  if ( node.tagName !== 'IFRAME' ) return;
+  node.setAttribute( 'sandbox', FRAME_SANDBOX );
+  node.setAttribute( 'loading', 'lazy' );
+  const src = ( node.getAttribute( 'src' ) || '' ).trim();
+  if ( /^https:\/\//i.test( src ) ) {
+    let origin = '';
+    try { origin = new URL( src ).origin; } catch ( _ ) { /* malformed → stays fully sandboxed */ }
+    if ( origin && !tokenOrigins().includes( origin ) ) node.setAttribute( 'sandbox', FRAME_SANDBOX + ' allow-same-origin' );
+    return;
+  }
+  node.removeAttribute( 'src' );
+  if ( src && !/^[a-z][\w+.-]*:/i.test( src ) && !src.startsWith( '//' ) ) node.setAttribute( 'data-repo-src', src );
+} );
+
+/* ── give a held-back relative iframe its real address: the local file in drop-in mode
+   (unsandboxed, the same rule as renderHtml — over file:// the sandbox protects nothing
+   and blocks the page's own neighbouring files), else the repo's published Pages copy
+   when the repo is known to have one, else the raw URL (shows source rather than nothing).
+   Any ?query/#hash on the original src is kept. ── */
+const setRepoFrameSrc = ( frame, currentDir ) => {
+  const raw = frame.dataset.repoSrc;
+  const suffix = raw.match( /[?#].*$/ )?.[ 0 ] || '';
+  const path = resolveRepoPath( raw, currentDir );
+  const local = localUrlFor( path );
+  if ( local ) frame.removeAttribute( 'sandbox' );
+  frame.src = ( local || ( repoHasPages() ? pagesUrl( path ) : rawUrl( path ) ) ) + suffix;
+};
 
 const renderMarkdown = ( text, filePath, signal, anchor = '' ) => {
   let renderedHtml, errorHtml = '';
@@ -2899,6 +3134,9 @@ const renderMarkdown = ( text, filePath, signal, anchor = '' ) => {
     try { img.setAttribute( 'src', await resolveMediaUrl( resolveRepoPath( clean, currentDir ), signal ) ); }
     catch ( _ ) { /* repo image missing/private fetch failed — or aborted by navigation */ }
   } );
+
+  // Relative iframes the sanitizer held back: point each at its repo file.
+  mdBody.querySelectorAll( 'iframe[data-repo-src]' ).forEach( ( frame ) => setRepoFrameSrc( frame, currentDir ) );
 
   mdBody.querySelectorAll( 'pre code' ).forEach( ( el ) => {
     try { hljs.highlightElement( el ); } catch ( _ ) { /* plain fallback */ }

@@ -93,11 +93,11 @@ Want your own TooToo pointing at your own repo? It takes about a minute.
      branch: '',                 // empty = use the default branch
      storagePrefix: 'mybrowser', // localStorage namespace
      appName: 'MyBrowser',       // <title> + About heading
-     sourceRepoUrl: 'https://github.com/you/your-fork', // file:// fallback for the header
+     sourceRepoUrl: 'https://github.com/you/your-fork', // "Source" link in the About (?) panel
    };
    ```
 
-   On GitHub Pages, the top-header label and link auto-detect from the hostname (`<you>.github.io/<fork>/`), so you don't even need to set `sourceRepoUrl` for the Pages deploy. It's only used as a fallback for `file://` and custom domains.
+   On GitHub Pages, the repo to browse auto-detects from the hostname (`<you>.github.io/<fork>/`), so `owner`/`repo` can stay empty for the Pages deploy. The brand icon at the top left always returns to the start — this page, with no `?owner=…` or `#file`.
 
 3. **Customize the favicon** (optional) — drop a `favicon.ico` beside `index.html` in your fork.
 
@@ -153,4 +153,5 @@ MIT — Copyright pushme-pullyou. See [`LICENSE`](LICENSE).
 
 ## Change Log
 
+* 2026-11-01 — Header: the brand icon now always goes back to the start (this page, no `?owner=…` or `#file`); on narrow screens the right-hand buttons slide over the subtitle and move to a second row only when they'd cover owner / repo. `headingFontUrl` now also accepts a `.ttf` / `.woff2` font file, not just a Google Fonts stylesheet. Fixed a token save that could fail silently.
 * 2026-10-31 — Fresh start: this repo is now just the finished app — `index.html`, its config, and the `examples/` content. Development (component sources, assembler, pipeline, tests) moved to the [Dolittle workshop](https://github.com/pushme-pullyou/dolittle); the previous repo, with the full 2026-04 → 2026-10 changelog and archives, lives on as [tootoo-2026-10](https://github.com/pushme-pullyou/tootoo-2026-10)
