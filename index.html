@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="revised" content="2026-11-01 17:42">
+  <meta name="revised" content="2026-11-01 21:54">
   <title>TooToo</title>
   <!-- A real favicon.ico is assumed to sit next to index.html in every deployment
        (assemble.ps1 generates a TT-mark placeholder when the dev folder lacks one). -->
@@ -2294,12 +2294,12 @@ const initAppearance = () => {
 
 const initHeader = () => { updateHeaderFromConfig(); initAppearance(); initHeaderControls(); };
     /* TooToo — sidebar.js  (the "what files exist & how they're shown" component).
-   Ported from reference §18-§26. Reads: state.tree, CONFIG.hidden*.
-   Writes: nothing global — display only. Hands off via Content's selectFile(path).
-   Depends on core.js helpers + globals CONFIG/state (mock-data.js).
-
-   NOTE: the real renderTree batches with a "% rendered" status for huge repos;
-   here it's synchronous for clarity. Re-add batching when we carve for real. */
+   Ported from reference §18-§27. Reads: CONFIG.hidden*, state.owner/repo.
+   Writes: state.tree / branch / oversized, the URL's owner/repo/branch params, and the
+   repo cache. Hands off via Content's selectFile(path). Also runs the branch switcher,
+   whose chip + menu markup sit in the header component.
+   Depends on core.js helpers + globals CONFIG/state (mock-data.js in the preview).
+   renderTree is synchronous (the reference batched huge repos with a "% rendered" status). */
 
 /* README matcher — shared by root auto-open, folder auto-open, and bold styling. */
 const README_RE = /^readme(\.\w+)?$/i;   // README, README.md, readme.txt — not README-2026-….md backups
@@ -2637,15 +2637,26 @@ const showOversizedRepoPanel = () => {
       `;
 };
 
+/* A tree 404 means a private/missing repo — or just a bad branch in an accessible repo. */
+const repoIsReadable = async ( signal ) => {
+  try { await ghApi( `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }`, signal ); return true; }
+  catch ( _ ) { return false; }
+};
+
 /* ── fetchTree: load the repo tree from GitHub (writes state.tree) ── */
 const fetchTree = async () => {
   const signal = newAbort( false );   // tree loading can continue while an info panel is open
   const treeList = document.getElementById( 'treeList' );
   treeList.innerHTML = '<p style="padding:0.5rem;">Loading tree…</p>';
+  // Clear the previous tree's summary so a failed or oversized load can't leave it showing.
+  const hFiles = document.getElementById( 'hFiles' );
+  hFiles.textContent = treeSummaryText = 'Files';
+  hFiles.title = '';
+  let repoReadable = false;
   try {
-    if ( !state.branch ) state.branch = await getDefaultBranch( signal );
+    if ( !state.branch ) { state.branch = await getDefaultBranch( signal ); repoReadable = true; }
     // Home repo, explicit branch, default not yet known → look it up so ?branch= can be dropped.
-    else if ( isHomeRepo() && !homeBranch() ) await getDefaultBranch( signal );
+    else if ( isHomeRepo() && !homeBranch() ) { await getDefaultBranch( signal ); repoReadable = true; }
     // Pin the repository and branch in permalinks (incl. history entries) only where they
     // differ from the page's home repo; a plain home link stays index.html#file.
     const url = new URL( location.href );
@@ -2657,7 +2668,7 @@ const fetchTree = async () => {
     history.replaceState( null, '', url );
     cacheRepo();   // persist owner/repo/branch now that the branch is resolved
     updateHeaderFromConfig();   // owner / repo links (Pages now known) + last-push tooltip
-    updateBranchControl();   // show the branch chip in the sidebar header
+    updateBranchControl();   // show the branch chip in the header
     const data = await ghApi( `https://api.github.com/repos/${ encodeURIComponent( state.owner ) }/${ encodeURIComponent( state.repo ) }/git/trees/${ encodeURIComponent( state.branch ) }?recursive=1`, signal );
     if ( data.truncated ) {
       state.tree = null;
@@ -2675,7 +2686,7 @@ const fetchTree = async () => {
     const folders = vis.filter( ( i ) => i.type === 'tree' ).length;
     const files = vis.filter( ( i ) => i.type === 'blob' ).length;
     const bytes = vis.reduce( ( s, i ) => s + ( i.type === 'blob' ? ( i.size || 0 ) : 0 ), 0 );
-    const h = document.getElementById( 'hFiles' );
+    const h = hFiles;
     h.textContent = `${ files.toLocaleString() } file${ files === 1 ? '' : 's' } · ${ formatFileSize( bytes ) }`;
     // Spelled-out tooltip (includes the folder count + truncated summary on a narrow sidebar).
     h.title = `${ folders.toLocaleString() } folder${ folders === 1 ? '' : 's' }, ` +
@@ -2690,6 +2701,11 @@ const fetchTree = async () => {
       return;
     }
     if ( err.status === 404 ) {
+      if ( repoReadable || await repoIsReadable( signal ) ) {
+        treeList.innerHTML = `<p style="padding:0.5rem;color:red;">Branch “${ escapeHTML( state.branch ) }” not found in ${ escapeHTML( state.owner ) }/${ escapeHTML( state.repo ) }. Pick another from the branch menu.</p>`;
+        return;
+      }
+      if ( signal.aborted ) return;
       treeList.innerHTML = `<p style="padding:0.5rem;color:red;">${ escapeHTML( PRIVATE_REPO_MESSAGE ) }</p>`;
       showTokenPanel( privateRepoReasonHtml() );
       return;
@@ -2796,7 +2812,7 @@ const setupKeyboardNav = () => {
           const d = active.parentElement;
           if ( d.open ) d.open = false;
           else { const ps = d.parentElement?.closest( 'details' )?.querySelector( ':scope > summary' ); if ( ps ) ps.focus(); }
-        } else {
+        } else if ( !treeList.classList.contains( 'filtering' ) ) {   // folder rows aren't navigable while filtering
           const ps = active.closest( 'details' )?.querySelector( ':scope > summary' ); if ( ps ) ps.focus();
         }
         break;
@@ -2950,7 +2966,7 @@ const initSidebar = () => {
     } );
   }
 
-  // Resizer drag (real app does this in setupListeners; minimal version here).
+  // Resizer drag; the width is saved per page and restored by the header's initAppearance.
   const resizer = document.getElementById( 'resizer' );
   if ( resizer ) {
     let dragging = false;
