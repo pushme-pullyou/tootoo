@@ -18,6 +18,12 @@ pipeline write this repo's `index.html`.
 - `tootoo.config.js` — this install's own branding. No pipeline command ever touches it.
 - `favicon.ico`, `tootoo-screenshot.jpeg` — assets (the screenshot is refreshed by `promote`).
 
+## Releases
+
+`releases/rN/` folders hold frozen, runnable copies of earlier builds (`r1`, `r2`, …),
+each matching a GitHub Release and tag of the same name. They are written only by the
+workshop's `release` command. Never edit, move or delete one.
+
 ## Conventions
 
 - Vanilla JavaScript, single file, static hosting, `file://` friendly — see the
