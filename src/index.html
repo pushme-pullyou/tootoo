@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TooToo</title>
+<meta name="tootoo-release" content="dev">
+
+<!-- TOOTOO-CONFIG-START: your settings. Updates carry this block forward unchanged. -->
+<script>
+window.TOOTOO_CONFIG = {
+
+  // Which repo to show. Empty = detect from ?owner=&repo=, then the *.github.io address
+  // owner: '',                  // GitHub user or organization, e.g. 'theo-armour'
+  // repo: '',                   // repository name, e.g. 'pages'
+  // branch: '',                 // empty = the repo's default branch
+
+  // view: 'browser',            // the app type; v1 has 'browser' only
+
+  // Branding
+  // appName: 'TooToo',          // name in the header and the page title
+  // subtitle: '',               // short line beside the name
+  // themeColor: '',             // highlight color, e.g. '#3a8856'; empty = the built-in color
+  // headingFontUrl: '',         // stylesheet URL for a heading font, e.g. a Google Fonts link
+  // headingFont: '',            // CSS font-family for headings, e.g. '"Patua One", serif'
+  // faviconFile: '',            // icon file name or URL; empty = no icon
+  // sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo', // the "made with" link in About
+  // homeUrl: '',                // when set, the header shows a ⌂ link to this page
+
+  // storagePrefix: 'tootoo',    // prefix for saved settings; give each install its own
+
+  // What the tree hides
+  // hiddenFolders: [],          // folder names to hide, at any depth, e.g. [ 'Images' ]
+  // hiddenFiles: [],            // file names to hide, at any depth (index.bak is always hidden)
+  // hideDatedBackups: true,     // hide backups named like "name-2026-11-21-08-30.md"
+  // autoOpenFolderReadme: true, // opening a folder shows its README the first time
+
+  // Footer
+  // rightsText: 'No rights reserved', // shown after "© <year> <owner>"
+  // rightsOwners: null,         // null = every repo; [ 'login' ] = only these owners; [] = never
+
+  // Updates
+  // checkForUpdates: true,      // tell the maintainer when a newer release exists (at most once a day)
+  // updateUrl: 'https://pushme-pullyou.github.io/tootoo/releases/latest.json', // where to look
+
+};
+</script>
+<!-- TOOTOO-CONFIG-END -->
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.1/dist/purify.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app"></div>
+
+<!-- App scripts in load order. tests/index.html loads the same list. -->
+<script src="core/config.js"></script>
+<script src="core/state.js"></script>
+<script src="core/router.js"></script>
+<script src="sources/github.js"></script>
+<script src="sources/local.js"></script>
+<script src="loaders/index.js"></script>
+<script src="ui/shell.js"></script>
+<script src="ui/tree.js"></script>
+<script src="ui/content.js"></script>
+<script src="views/browser.js"></script>
+
+<script>
+// Startup: mount the view CONFIG.view names (v1 has 'browser' only).
+{
+  const views = { browser: BrowserView };
+  ( views[ CONFIG.view ] || BrowserView ).mount( document.getElementById( 'app' ) );
+}
+</script>
+
+</body>
+</html>

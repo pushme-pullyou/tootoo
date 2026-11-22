@@ -1,0 +1,178 @@
+// test-ui.js: Stage 3, the Browser view over the mock: shell, tree and content.
+
+// The next time `name` is emitted with a detail that passes `check`.
+const nextEvent = ( name, check = () => true ) => new Promise( ( resolve ) => {
+  const listener = ( detail ) => { if ( check( detail ) ) { Events.off( name, listener ); resolve( detail ); } };
+  Events.on( name, listener );
+} );
+
+// Mounts the view on the mock, off screen (rendered, so rows can take focus).
+const mountMock = async ( source = MockSource ) => {
+  const box = document.createElement( 'div' );
+  box.style.cssText = 'position: absolute; left: -10000px; top: 0; width: 900px; height: 600px;';
+  document.body.append( box );
+  await BrowserView.mount( box, { source, repo: { owner: 'mock', repo: 'mock-repo', branch: '' } } );
+  const find = ( selector ) => box.querySelector( selector );
+  const done = () => {
+    BrowserView.unmount();
+    box.remove();
+    history.replaceState( null, '', location.pathname + location.search );
+    document.title = 'TooToo tests';
+  };
+  return { box, find, done };
+};
+
+const names = ( nodes ) => nodes.map( ( node ) => node.name );
+const press = ( key, options = {} ) => document.activeElement.dispatchEvent( new KeyboardEvent( 'keydown', { key, bubbles: true, cancelable: true, ...options } ) );
+
+// ── Tree rules (pure) ──
+
+test( 'tree: folders first, then README, then files; hidden rules applied', async () => {
+  const items = await MockSource.listTree();
+  const nodes = Tree.build( items, { ...CONFIG, hiddenFolders: [ 'Images' ] } );
+  assertEqual( names( nodes ), [ 'blog', 'code', 'data', 'docs', 'media', 'pages', 'README.md', 'notes.txt' ] );
+  assertEqual( names( nodes.find( ( node ) => node.name === 'docs' ).children ), [ 'README.md', 'guide.md', 'paper.pdf' ] );
+  assert( names( Tree.build( items ) ).includes( 'Images' ), 'Images shows when not hidden' );
+} );
+
+test( 'tree: blog mode sorts months, years and posts newest first', async () => {
+  const blog = Tree.build( await MockSource.listTree() ).find( ( node ) => node.name === 'blog' );
+  assertEqual( blog.mode, 'blog' );
+  assertEqual( names( blog.children ), [ '11-November', '06-June', '2025' ] );
+  assertEqual( names( blog.children[ 0 ].children ), [ '2026-11-20-latest.md', '2026-11-02-first.md' ] );
+  assertEqual( Tree.latestPost( blog ), 'blog/11-November/2026-11-20-latest.md' );
+} );
+
+test( 'tree: what is hidden', () => {
+  const show = ( path, config = {}, type = 'file' ) => Tree.isVisible( { path, type }, { ...CONFIG, ...config } );
+  assertEqual( [ show( '.github/x.yml' ), show( 'docs/.env' ), show( '.github', {}, 'folder' ) ], [ false, false, false ], 'dot names:' );
+  assertEqual( [ show( 'Images/a.png', { hiddenFolders: [ 'images' ] } ), show( 'docs/IMAGES', { hiddenFolders: [ 'images' ] }, 'folder' ) ],
+    [ false, false ], 'hidden folders, any depth, any case:' );
+  assertEqual( [ show( 'a/secret.md', { hiddenFiles: [ 'secret.md' ] } ), show( 'index.html', { hiddenFiles: [ '/index.html' ] } ),
+    show( 'sub/index.html', { hiddenFiles: [ '/index.html' ] } ) ], [ false, false, true ], 'hidden files; "/" anchors to the root:' );
+  assertEqual( [ show( 'index.bak', { hiddenFiles: [ 'other.md' ] } ), show( 'sub/index.bak' ) ], [ false, false ], 'index.bak always:' );
+  assertEqual( [ show( 'notes-2026-11-21-08-30.md' ), show( 'README 2026 09 18.md' ), show( '2026-01-04-essay.md' ),
+    show( 'notes-2026-11-21-08-30.md', { hideDatedBackups: false } ) ], [ false, false, true, true ], 'dated backups:' );
+} );
+
+test( 'tree: the root README is the shortest README name', () => {
+  const items = [ 'README RFP.md', 'README.md', 'docs/README.md', 'readme-old-2026-01-01.md' ].map( ( path ) => ( { path, type: 'file' } ) );
+  assertEqual( Tree.readmeIn( '', items ), 'README.md' );
+  assertEqual( Tree.readmeIn( 'docs', items ), 'docs/README.md' );
+  assertEqual( Tree.readmeIn( 'none', items ), '' );
+} );
+
+test( 'shell: the rights line follows rightsOwners', () => {
+  const line = ( owner, rightsOwners ) => Shell.rightsLine( owner, { ...CONFIG, rightsOwners }, 2026 );
+  assertEqual( line( 'mock', null ), '© 2026 mock · No rights reserved' );
+  assertEqual( line( 'Mock', [ 'mock' ] ), '© 2026 Mock · No rights reserved' );
+  assertEqual( line( 'mock', [ 'someone-else' ] ), '© 2026 mock' );
+  assertEqual( line( 'mock', [] ), '© 2026 mock' );
+  assertEqual( line( '', null ), '' );
+} );
+
+// ── The mounted view ──
+
+test( 'view: mounts on the mock and opens the README', async () => {
+  const view = await mountMock();
+  assertEqual( view.find( '.app-name' ).textContent, 'TooToo' );
+  assertEqual( view.find( '.repo-links' ).textContent, 'mock / mock-repo' );
+  assert( view.find( '.app-footer' ).textContent.startsWith( '© ' ), 'no footer' );
+  assertEqual( state.currentPath, 'README.md' );
+  assert( view.find( '.file-body' ).textContent.includes( '# Mock repo' ), 'README not shown' );
+  assertEqual( view.find( '.tree-count' ).textContent, '17 files' );
+  assert( ! view.find( '.tree' ).textContent.includes( 'index.bak' ), 'index.bak should be hidden' );
+  assertEqual( location.hash, '#README.md' );
+  view.done();
+} );
+
+test( 'view: selecting a file emits file-selected, then file-rendered', async () => {
+  const view = await mountMock();
+  const seen = [];
+  const selected = ( detail ) => seen.push( [ 'file-selected', detail.path ] );
+  const rendered = ( detail ) => seen.push( [ 'file-rendered', detail.path ] );
+  Events.on( 'file-selected', selected );
+  Events.on( 'file-rendered', rendered );
+  await Content.open( 'docs/guide.md' );
+  Events.off( 'file-selected', selected );
+  Events.off( 'file-rendered', rendered );
+  assertEqual( seen, [ [ 'file-selected', 'docs/guide.md' ], [ 'file-rendered', 'docs/guide.md' ] ] );
+  assertEqual( view.find( '.breadcrumbs' ).textContent, 'mock-repo / docs / guide.md' );
+  assert( view.find( '.breadcrumbs a[href="#docs/README.md"]' ), 'docs links to its README' );
+  assertEqual( view.find( '.tree-item.active' ).dataset.path, 'docs/guide.md' );
+  assert( view.find( 'details[data-path="docs"]' ).open, 'docs opened to show the active file' );
+  view.done();
+} );
+
+test( 'view: a deep link opens the file', async () => {
+  const view = await mountMock();
+  const rendered = nextEvent( 'file-rendered', ( detail ) => detail.path === 'data/table.csv' );
+  location.hash = 'data/table.csv#top';
+  await rendered;
+  assertEqual( state.currentPath, 'data/table.csv' );
+  assert( view.find( '.file-body' ).textContent.includes( 'apples,3' ), 'CSV text not shown' );
+  view.done();
+} );
+
+test( 'view: a missing file says so', async () => {
+  const view = await mountMock();
+  await Content.open( 'no/such.md' );
+  assertEqual( view.find( '.file-body' ).textContent, 'Not found: no/such.md' );
+  view.done();
+} );
+
+test( 'view: the filter finds names with hyphens or spaces, and Escape restores the tree', async () => {
+  const view = await mountMock();
+  const filter = view.find( '.tree-filter' );
+  const shown = () => [ ...view.box.querySelectorAll( '.tree-item:not(.is-hidden)' ) ].filter( Tree.isShown ).map( ( item ) => item.dataset.path );
+  assert( Tree.matches( '2025-12-01-last-year.md', 'Last Year' ) && Tree.matches( '2025-12-01-last-year.md', 'last-year' ), 'matches' );
+  filter.value = 'last year';
+  filter.dispatchEvent( new Event( 'input' ) );
+  assertEqual( shown(), [ 'blog/2025/2025-12-01-last-year.md' ] );
+  assertEqual( view.find( '.tree-count' ).textContent, '1 match' );
+  filter.dispatchEvent( new KeyboardEvent( 'keydown', { key: 'Escape' } ) );
+  assertEqual( view.find( '.tree-count' ).textContent, '17 files' );
+  assert( ! view.find( 'details[data-path="blog"]' ).open, 'blog closes again' );
+  view.done();
+} );
+
+test( 'view: keyboard moves through the tree and opens files', async () => {
+  const view = await mountMock();
+  const rowText = () => document.activeElement.textContent.trim();
+  view.find( '.tree summary' ).focus();
+  assertEqual( rowText(), '📁 blog' );
+  press( 'ArrowDown' );
+  assertEqual( rowText(), '📁 code' );
+  press( 'ArrowRight' );
+  assert( view.find( 'details[data-path="code"]' ).open, 'ArrowRight opens the folder' );
+  const rendered = nextEvent( 'file-rendered', ( detail ) => detail.path === 'code/app.js' );
+  press( 'ArrowDown' );
+  assertEqual( document.activeElement.dataset.path, 'code/app.js' );
+  await rendered;
+  press( 'ArrowLeft' );
+  assertEqual( rowText(), '📁 code', 'ArrowLeft goes to the folder:' );
+  press( 'ArrowLeft' );
+  assert( ! view.find( 'details[data-path="code"]' ).open, 'ArrowLeft closes the folder' );
+  press( 'End' );
+  assertEqual( document.activeElement.dataset.path, 'notes.txt' );
+  press( '/' );
+  assertEqual( document.activeElement, view.find( '.tree-filter' ) );
+  press( '\\' );
+  assert( view.find( '.tree' ).contains( document.activeElement ), '\\ goes back to the tree' );
+  // Narrow windows start collapsed, so check that Ctrl+B flips the state, whatever it was.
+  const hidden = () => view.box.classList.contains( 'sidebar-hidden' );
+  const before = hidden();
+  press( 'b', { ctrlKey: true } );
+  assertEqual( hidden(), ! before, 'Ctrl+B flips the files:' );
+  press( 'b', { ctrlKey: true } );
+  assertEqual( hidden(), before, 'and back:' );
+  view.done();
+} );
+
+test( 'view: a token error shows its message and opens the token panel', async () => {
+  const failing = { ...MockSource, listTree: async () => { throw GitHub.errorFor( 'rate-limit' ); } };
+  const view = await mountMock( failing );
+  assert( view.find( '.file-body' ).textContent.includes( '60 requests an hour' ), 'no message' );
+  assert( ! view.find( '.panel' ).hidden && view.find( '.panel .token-input' ), 'token panel not open' );
+  view.done();
+} );

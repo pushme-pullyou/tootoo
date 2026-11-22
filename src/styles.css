@@ -1,0 +1,218 @@
+/* styles.css: design tokens first, then one section per part. */
+
+:root {
+  --color-text: #222;
+  --color-muted: #666;
+  --color-background: #fff;
+  --color-panel: #f5f5f5;
+  --color-border: #ddd;
+  --color-accent: #2563eb;      /* CONFIG.themeColor overrides this */
+  --color-on-accent: #fff;
+  --color-active: rgba(37, 99, 235, 0.12);
+
+  --font-body: system-ui, sans-serif;
+  --font-heading: var(--font-body);   /* CONFIG.headingFont overrides this */
+  --font-mono: ui-monospace, Consolas, monospace;
+  --font-size: 16px;            /* A− / A+ change this */
+
+  --space: 1rem;
+  --radius: 4px;
+  --sidebar-width: 280px;       /* dragging the divider changes this */
+}
+
+body.dark-mode {
+  --color-text: #ddd;
+  --color-muted: #999;
+  --color-background: #1a1a1a;
+  --color-panel: #252525;
+  --color-border: #3a3a3a;
+  --color-accent: #3b82f6;
+  --color-active: rgba(59, 130, 246, 0.22);
+}
+
+/* ── Base ── */
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }   /* even on elements styled display: flex or inline-block */
+
+body {
+  margin: 0;
+  font: var(--font-size) / 1.5 var(--font-body);
+  color: var(--color-text);
+  background: var(--color-background);
+}
+
+h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); line-height: 1.25; }
+a { color: var(--color-accent); }
+code, kbd, pre { font-family: var(--font-mono); font-size: 0.9em; }
+
+button, .button {
+  font: inherit;
+  font-size: 0.9em;
+  padding: 0.25em 0.6em;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+button:hover, .button:hover { border-color: var(--color-accent); }
+button.primary, .button.primary { color: var(--color-on-accent); background: var(--color-accent); border-color: var(--color-accent); }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+
+/* ── Browser view layout: header / (sidebar | divider | content) / footer ── */
+
+.browser-view {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr);   /* never wider than the screen */
+  height: 100vh;
+  height: 100dvh;
+}
+
+.app-body { display: flex; min-height: 0; position: relative; }
+
+/* ── Shell: header, panels, footer ── */
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;   /* on a phone the buttons move to a second row */
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.4em 0.75em;
+  border-bottom: 1px solid var(--color-border);
+  border-top: 3px solid var(--color-accent);
+  min-width: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-family: var(--font-heading);
+  font-size: 1.25em;
+  font-weight: bold;
+  color: var(--color-accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.brand-icon { width: 1.4em; height: 1.4em; }
+.repo-links { white-space: nowrap; }
+.subtitle { color: var(--color-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1 1 0; }
+.header-actions { display: flex; gap: 0.3em; margin-left: auto; flex: none; }
+.sidebar-toggle { flex: none; }
+
+.panel {
+  position: relative;
+  margin: var(--space);
+  padding: 0.5em var(--space);
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+.panel-close { position: absolute; top: 0.5em; right: 0.5em; }
+.panel .notice, .start-message:not(:empty) { padding: 0.5em; border-left: 3px solid var(--color-accent); background: var(--color-background); }
+.token-input { font: inherit; padding: 0.25em 0.5em; width: min(100%, 24em); }
+
+.app-footer {
+  padding: 0.3em 0.75em;
+  font-size: 0.85em;
+  color: var(--color-muted);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Tree: the sidebar ── */
+
+.sidebar {
+  width: var(--sidebar-width);
+  flex: none;
+  overflow: auto;
+  background: var(--color-panel);
+  font-size: 0.92em;
+}
+.sidebar-hidden .sidebar, .sidebar-hidden .resizer { display: none; }
+
+.sidebar-top {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.5em;
+  background: var(--color-panel);
+  border-bottom: 1px solid var(--color-border);
+}
+.tree-filter { flex: 1; min-width: 0; font: inherit; padding: 0.2em 0.4em; }
+.tree-count { color: var(--color-muted); font-size: 0.85em; white-space: nowrap; }
+
+.tree { padding: 0.25em 0 1em; }
+.tree details > :not(summary) { margin-left: 1em; }
+.tree summary, .tree-item {
+  display: block;
+  padding: 0.1em 0.5em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.tree summary { list-style: none; }
+.tree summary::-webkit-details-marker { display: none; }
+.tree summary::before { content: '▸ '; color: var(--color-muted); }
+.tree details[open] > summary::before { content: '▾ '; }
+.tree-item { color: var(--color-text); text-decoration: none; }
+.tree-item.readme { font-weight: bold; }
+.tree summary:hover, .tree-item:hover { background: var(--color-active); }
+.tree-item.active { background: var(--color-active); color: var(--color-accent); }
+.tree .is-hidden { display: none; }
+
+.resizer { width: 5px; flex: none; cursor: col-resize; background: var(--color-border); touch-action: none; }
+.resizer:hover { background: var(--color-accent); }
+
+/* ── Content: the open file ── */
+
+.content { flex: 1; min-width: 0; overflow: auto; }
+
+.file-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.4em var(--space);
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.9em;
+}
+.file-header[hidden] { display: none; }
+.breadcrumbs { flex: 1; min-width: 12em; overflow-wrap: anywhere; }
+.file-actions { display: flex; flex-wrap: wrap; gap: 0.3em; }
+
+.file-body { padding: 0 var(--space) 2em; max-width: 60em; }
+.message { color: var(--color-muted); padding: var(--space) 0; }
+.text-view { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* ── Local: the file:// start panel ── */
+
+.start-panel { max-width: 36em; margin: 2em auto; padding: var(--space); }
+.start-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5em; }
+
+/* ── Narrow screens: the sidebar slides over the content ── */
+
+@media (max-width: 700px) {
+  .browser-view .sidebar {
+    position: absolute;
+    z-index: 10;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(85vw, 320px);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.25);
+  }
+  .resizer, .subtitle { display: none; }
+  .header-actions { gap: 0.15em; }
+  .file-body { padding: 0 0.75em 2em; }
+}

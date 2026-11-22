@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TooToo tests</title>
+<style>
+  :root { --pass: #15803d; --fail: #c00; }
+  body { font: 15px / 1.5 system-ui, sans-serif; margin: 1rem; }
+  .pass { color: var(--pass); }
+  .fail { color: var(--fail); }
+  #summary { font-weight: bold; }
+  iframe { width: 400px; height: 200px; border: 1px solid #ccc; }
+</style>
+<script src="test.js"></script>
+</head>
+<body>
+
+<h1>🧪 TooToo tests</h1>
+<p id="mode"></p>
+<ol id="results"></ol>
+<p id="summary">running…</p>
+
+<script>
+// ?release=1 runs the suite against ../build/index.html in a frame instead of src/.
+const releaseMode = new URLSearchParams( location.search ).has( 'release' );
+document.getElementById( 'mode' ).textContent = releaseMode ? 'Mode: release (build/index.html)' : 'Mode: src/';
+
+// Loads the release file once and resolves to its window.
+let releaseFrame = null;
+const openRelease = () => {
+  releaseFrame = releaseFrame || new Promise( ( resolve ) => {
+    const frame = document.createElement( 'iframe' );
+    frame.src = '../build/index.html';
+    frame.addEventListener( 'load', () => resolve( frame.contentWindow ) );
+    document.body.append( frame );
+  } );
+  return releaseFrame;
+};
+</script>
+
+<!-- 1. The app's src/ scripts, in the same order as src/index.html (a test checks this). -->
+<script src="../src/core/config.js"></script>
+<script src="../src/core/state.js"></script>
+<script src="../src/core/router.js"></script>
+<script src="../src/sources/github.js"></script>
+<script src="../src/sources/local.js"></script>
+<script src="../src/loaders/index.js"></script>
+<script src="../src/ui/shell.js"></script>
+<script src="../src/ui/tree.js"></script>
+<script src="../src/ui/content.js"></script>
+<script src="../src/views/browser.js"></script>
+
+<!-- 2. Test helpers and test files. -->
+<script src="mock-source.js"></script>
+<script src="source-contract.js"></script>
+<script src="test-scaffold.js"></script>
+<script src="test-core.js"></script>
+<script src="test-sources.js"></script>
+<script src="test-ui.js"></script>
+
+<!-- 3. Run. -->
+<script>
+runTests( document.getElementById( 'results' ), document.getElementById( 'summary' ) );
+</script>
+
+</body>
+</html>
