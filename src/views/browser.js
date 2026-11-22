@@ -17,6 +17,7 @@ const BrowserView = {
       </nav>
       <div class="resizer" role="separator" aria-orientation="vertical" title="Drag to resize"></div>
       <main class="content">
+        <section class="update-notice" hidden></section>
         <section class="panel" hidden></section>
         <div class="file-view"></div>
       </main>
@@ -29,12 +30,16 @@ const BrowserView = {
     element.classList.add( 'browser-view' );
     element.innerHTML = BrowserView.layout;
     BrowserView.element = element;
+    state.tree = null;   // no files until this mount's source lists them
     BrowserView.unmounts = [
       Shell.mount( { header: find( '.app-header' ), footer: find( '.app-footer' ), panel: find( '.panel' ) } ),
       Tree.mount( element ),
       Content.mount( find( '.file-view' ) ),
+      Update.mount( find( '.update-notice' ) ),
     ];
-    const { source, repo } = options.source ? options : await BrowserView.chooseSource( find( '.file-view' ) );
+    // The start panel goes inside content's own body, so the first message after it replaces it
+    // (drawn over the whole .file-view, it would wipe out content's header and body).
+    const { source, repo } = options.source ? options : await BrowserView.chooseSource( find( '.file-body' ) );
     state.source = source;   // the view picks the source, so it owns state.source and state.tree
     Router.start( repo );
     await BrowserView.loadTree();
@@ -46,21 +51,13 @@ const BrowserView = {
     BrowserView.element.classList.remove( 'browser-view', 'sidebar-hidden' );
   },
 
-  loadScript: ( src ) => new Promise( ( resolve, reject ) => {
-    const script = document.createElement( 'script' );
-    script.src = src;
-    script.onload = resolve;
-    script.onerror = () => reject( new Error( `Could not load ${ src }` ) );
-    document.head.append( script );
-  } ),
-
   // → { source, repo }. On file:// the start panel asks first (decision 32).
   chooseSource: async ( element ) => {
-    // The one debug hook: src/index.html?source=mock. The release build has no
-    // <script src="core/config.js"> (it's inlined), so there it's ignored.
+    // The one debug hook: src/index.html?source=mock. In the release build config.js is
+    // inlined, so no script tag points to it, and the hook is ignored.
     const isSourcePage = Boolean( document.querySelector( 'script[src="core/config.js"]' ) );
     if ( isSourcePage && new URLSearchParams( location.search ).get( 'source' ) === 'mock' ) {
-      await BrowserView.loadScript( '../tests/mock-source.js' );
+      await Loaders.loadLibrary( '../tests/mock-source.js' );
       return { source: MockSource, repo: { owner: 'mock', repo: 'mock-repo', branch: '' } };
     }
     if ( location.protocol === 'file:' ) {

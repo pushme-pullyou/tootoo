@@ -10,9 +10,11 @@
   .pass { color: var(--pass); }
   .fail { color: var(--fail); }
   #summary { font-weight: bold; }
-  iframe { width: 400px; height: 200px; border: 1px solid #ccc; }
+  iframe { width: 1200px; height: 800px; border: 1px solid #ccc; }   /* wide, so the app isn't in phone layout */
 </style>
-<script src="test.js"></script>
+<!-- The startup libraries, as in src/index.html (the Markdown tests need them, so need the network). -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.1/dist/purify.min.js"></script>
 </head>
 <body>
 
@@ -22,46 +24,60 @@
 <p id="summary">running…</p>
 
 <script>
-// ?release=1 runs the suite against ../build/index.html in a frame instead of src/.
+// One suite, run two ways:
+//   tests/index.html            loads the src/ files into this page, then the tests;
+//   tests/index.html?release=1  opens build/index.html in a frame and runs the same tests inside it,
+//                               so they test the assembled file's own inlined code.
 const releaseMode = new URLSearchParams( location.search ).has( 'release' );
-document.getElementById( 'mode' ).textContent = releaseMode ? 'Mode: release (build/index.html)' : 'Mode: src/';
 
-// Loads the release file once and resolves to its window.
-let releaseFrame = null;
-const openRelease = () => {
-  releaseFrame = releaseFrame || new Promise( ( resolve ) => {
-    const frame = document.createElement( 'iframe' );
-    frame.src = '../build/index.html';
-    frame.addEventListener( 'load', () => resolve( frame.contentWindow ) );
-    document.body.append( frame );
-  } );
-  return releaseFrame;
+// The app's src/ scripts, in the same order as src/index.html (a test checks this).
+const appScripts = [
+  'core/config.js', 'core/state.js', 'core/router.js', 'core/update.js',
+  'sources/github.js', 'sources/local.js',
+  'loaders/markdown.js', 'loaders/code.js', 'loaders/media.js', 'loaders/text.js',
+  'loaders/pdf.js', 'loaders/csv.js', 'loaders/html.js', 'loaders/index.js',
+  'ui/shell.js', 'ui/tree.js', 'ui/content.js', 'views/browser.js',
+].map( ( path ) => `../src/${ path }` );
+
+// test.js first (it counts scripts that fail to load), then the helpers, then the tests.
+const testScripts = [ 'test.js', 'mock-source.js', 'source-contract.js', 'test-scaffold.js', 'test-core.js',
+  'test-sources.js', 'test-ui.js', 'test-loaders.js', 'test-update.js', 'test-release.js' ];
+
+// Adds scripts to a document one after another, each after the one before has run.
+const loadInto = async ( doc, urls ) => {
+  for ( const url of urls ) {
+    await new Promise( ( resolve ) => {
+      const script = doc.createElement( 'script' );
+      script.src = url;
+      script.onload = resolve;
+      script.onerror = resolve;   // test.js reports it as a failure
+      doc.body.append( script );
+    } );
+  }
 };
-</script>
 
-<!-- 1. The app's src/ scripts, in the same order as src/index.html (a test checks this). -->
-<script src="../src/core/config.js"></script>
-<script src="../src/core/state.js"></script>
-<script src="../src/core/router.js"></script>
-<script src="../src/sources/github.js"></script>
-<script src="../src/sources/local.js"></script>
-<script src="../src/loaders/index.js"></script>
-<script src="../src/ui/shell.js"></script>
-<script src="../src/ui/tree.js"></script>
-<script src="../src/ui/content.js"></script>
-<script src="../src/views/browser.js"></script>
+// Release mode: build/index.html in a frame, its own startup view removed, the tests added.
+const openRelease = async () => {
+  const frame = document.createElement( 'iframe' );
+  frame.src = '../build/index.html';
+  document.body.append( frame );
+  await new Promise( ( resolve ) => frame.addEventListener( 'load', resolve, { once: true } ) );
+  const app = frame.contentWindow;
+  // Top-level const names aren't window properties, so they're reached through eval.
+  app.eval( 'BrowserView.unmount()' );   // the tests mount their own views
+  app.releaseMode = true;
+  await loadInto( app.document, testScripts.map( ( name ) => `../tests/${ name }` ) );
+  return app;
+};
 
-<!-- 2. Test helpers and test files. -->
-<script src="mock-source.js"></script>
-<script src="source-contract.js"></script>
-<script src="test-scaffold.js"></script>
-<script src="test-core.js"></script>
-<script src="test-sources.js"></script>
-<script src="test-ui.js"></script>
+const start = async () => {
+  document.getElementById( 'mode' ).textContent = releaseMode ? 'Mode: release (build/index.html)' : 'Mode: src/';
+  if ( ! releaseMode ) { await loadInto( document, [ testScripts[ 0 ], ...appScripts, ...testScripts.slice( 1 ) ] ); }
+  const app = releaseMode ? await openRelease() : window;
+  app.eval( 'runTests' )( document.getElementById( 'results' ), document.getElementById( 'summary' ) );
+};
 
-<!-- 3. Run. -->
-<script>
-runTests( document.getElementById( 'results' ), document.getElementById( 'summary' ) );
+start().catch( ( error ) => { document.getElementById( 'summary' ).textContent = `The suite could not start: ${ error.message }`; } );
 </script>
 
 </body>

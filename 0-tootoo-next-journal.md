@@ -240,3 +240,111 @@
     previous run. `run-tests.ps1` now passes `--window-size=1200,800`.
   * Screenshots checked: desktop (blog mode open on the latest post), phone
     width, and the `file://` start panel. No console errors.
+
+* **Stage 4 built: loaders** (JS + CSS now 1,815 of 2,500).
+  * Each loader file defines one object; `loaders/index.js` loads last and
+    builds the extension table from them. Loader contract:
+    `{ extensions, library?, toggle?( ext ), render( file, element ) }`.
+  * `markdown.js`: marked → DOMPurify into an inert `<template>`, so images
+    don't start loading from the wrong place while links are fixed. Headings
+    get GitHub-style ids, with `-1`, `-2` for repeats. Relative links become
+    `#path#heading` (a folder opens its README); relative images load through
+    the source. Fenced code is highlighted. A heading in the open file now only
+    scrolls, without re-rendering.
+  * `code.js`: highlight.js 11.9.0 (common languages), the one CDN library
+    loaded on demand. Its colors are our own CSS rules, so dark mode needs no
+    theme file. The Raw view of Markdown, HTML, CSV and SVG goes through it.
+  * `media.js` (images, SVG, audio, video), `pdf.js` (the browser's viewer in
+    a frame), `csv.js` (a small hand-written parser, first 2,000 rows),
+    `text.js`.
+  * `html.js`: an unsandboxed frame. It loads the real published page when
+    running on the repo's own Pages site, or the file beside the app on
+    `file://` when the picked folder is the app's folder (same size).
+    Otherwise it uses a blob copy. A page containing `TOOTOO_CONFIG` is never
+    previewed, so the app can't show itself recursively.
+  * Unknown types: text, unless the first 4 KB hold a zero byte, then a
+    download note. Known binary types (zip, docx, fonts…) skip that read.
+    Text over 2 MB is offered for download. Copy hides for binary types.
+  * Typed blob URLs (SVG, audio, video, PDF), because raw GitHub serves them
+    as plain bytes. They are freed when the next file opens.
+  * Tests (`tests/test-loaders.js`, 11): every mock sample, Markdown links /
+    images / ids / sanitizing, the TooToo guard, unknown text and binary,
+    library-once (with `tests/fake-library.js`), toggles, path resolving, CSV
+    quoting. The test page now loads marked and DOMPurify from the CDN, so
+    the suite needs the network.
+  * Screenshots checked: Markdown, highlighted code, CSV table, HTML frame. No
+    console errors.
+
+* **Stage 5 built: update check and swap** (`core/update.js`, 168 lines; JS +
+  CSS now 1,987 of 2,500).
+  * The check runs only on a numbered release (never `dev`), only for a likely
+    maintainer (`file://` or a saved token), and only if `checkForUpdates`.
+    It reads `updateUrl` at most once a day, and remembers both the time and
+    the answer (`<storagePrefix>:update`), so the notice shows all day without
+    asking again. `r9` < `r10`. Failures, a 404 and a malformed `latest.json`
+    are all silent.
+  * The notice sits above the file: "TooToo rN available (this page has rM)",
+    What's new, **⬇ Download updated index.html**, ✕.
+  * The swap replaces rN's block, markers included, with the page's own, as
+    text. The page's source is fetched for exact bytes; when that isn't allowed
+    (`file://` without the flag), the block is rebuilt from the DOM's comment
+    and `<script>` nodes, where the browser has already turned CRLF into LF. A
+    missing, doubled or backwards marker is a clear error, and the notice then
+    explains the by-hand swap.
+  * The markers are built from parts in `update.js`, so the assembled file
+    still has each one exactly once.
+  * Tests (`tests/test-update.js`, 10): numbers, the maintainer rule, once a
+    day with a fake clock, the quiet cases, silent failures, byte-for-byte
+    swap (CRLF, comments, unknown and duplicated keys, non-ASCII), marker
+    errors, `src/index.html` swapping into itself unchanged, the DOM rebuild,
+    and the notice → download → saved file.
+  * **Checked end to end on real files:** r2 and r3 assembled into a scratch
+    folder, the r2 install given its own block (theme color, ☕, a retired key,
+    CRLF) and a local `latest.json`. Opened via `file://`, it showed "TooToo r3
+    available" in its own theme color. The merged file was byte-identical to
+    r3 with the install's block (94,475 bytes).
+
+* **Stage 6 built: release mode, live page, checklist, docs.** v1 is ready to
+  release as r2, once `live.html` and the checklist pass by hand.
+  * **`?release=1` now runs the whole suite inside `build/index.html`.**
+    `tests/index.html` keeps one list of test files. In `src/` mode it loads the
+    source files and the tests into itself. In release mode it opens the build
+    in a frame, unmounts the build's own startup view, adds the same test files
+    to the frame, and reads the results back. The tests therefore exercise the
+    inlined code. (Top-level `const` names aren't `window` properties, so the
+    page reaches `BrowserView` and `runTests` through `contentWindow.eval`.)
+    Checked by breaking `index.bak` hiding in the build only: the `src/` run
+    passed, the release run failed 4 tests.
+  * `tests/test-release.js` (4, release mode only): the suite runs on inlined
+    code; no `<script src>` or stylesheet link points into `src/`; exactly one
+    release stamp; each marker once; the block matches `src/index.html`. It
+    caught a comment in `browser.js` that spelled out a script tag.
+  * `tests/live.html` (5 tests, about 7 requests): the tootoo tree on its
+    default branch, the source contract on GitHub, missing branch, missing
+    repo, and the release site (`latest.json` 200 or 404, r1 published). It
+    shows the remaining API quota. Passed once in headless Chrome.
+  * `tests/CHECKLIST.md`: the §9 manual list, plus what the headless runs
+    can't reach: IndexedDB on `file://`, the real picker, dark mode, media
+    playback, and a step-by-step fake r1 → r2 update.
+  * `INSTALL-LIST.md` (16 installs, all r1, Julia-Morgan left out), `AGENTS.md`
+    (rules, the four commands, where things are), and `README.md` (open, test,
+    changelog).
+  * Totals: `src PASS 75 / FAIL 0`, `release PASS 78 / FAIL 0`, JS + CSS 1,987
+    of 2,500.
+
+* **Fix: the README never replaced the start panel** (found by Theo on the
+  checklist: the sandbox folder's tree loaded, but the content still said
+  "Open this repo from disk?").
+  * Cause: the panel was drawn over the whole `.file-view`, wiping content's
+    header and body. The README then rendered into the old, detached body.
+    The tests always passed the mock source directly, so they never went
+    through the start panel.
+  * Fix: the panel goes inside `.file-body`, so the first message replaces it.
+    The view clears `state.tree` on mount, and content ignores
+    `open-requested` until a tree has loaded. A stale hash change from an
+    earlier test had re-opened the old tree's README over the panel, and in
+    real use a hash change before the tree loads could have done the same.
+  * New test: the real startup path on `file://` with a fake picker. Pick a
+    folder; its README shows, the panel is gone, the header says 📂 pages. It
+    fails without the fix.
+  * `src PASS 76 / FAIL 0`, `release PASS 79 / FAIL 0`.

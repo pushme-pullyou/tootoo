@@ -79,7 +79,7 @@ test( 'view: mounts on the mock and opens the README', async () => {
   assertEqual( view.find( '.repo-links' ).textContent, 'mock / mock-repo' );
   assert( view.find( '.app-footer' ).textContent.startsWith( '© ' ), 'no footer' );
   assertEqual( state.currentPath, 'README.md' );
-  assert( view.find( '.file-body' ).textContent.includes( '# Mock repo' ), 'README not shown' );
+  assertEqual( view.find( '.file-body h1' ).textContent, 'Mock repo', 'README rendered:' );
   assertEqual( view.find( '.tree-count' ).textContent, '17 files' );
   assert( ! view.find( '.tree' ).textContent.includes( 'index.bak' ), 'index.bak should be hidden' );
   assertEqual( location.hash, '#README.md' );
@@ -110,7 +110,7 @@ test( 'view: a deep link opens the file', async () => {
   location.hash = 'data/table.csv#top';
   await rendered;
   assertEqual( state.currentPath, 'data/table.csv' );
-  assert( view.find( '.file-body' ).textContent.includes( 'apples,3' ), 'CSV text not shown' );
+  assertEqual( view.find( '.file-body td' ).textContent, 'apples', 'CSV table shown:' );
   view.done();
 } );
 
@@ -167,6 +167,31 @@ test( 'view: keyboard moves through the tree and opens files', async () => {
   press( 'b', { ctrlKey: true } );
   assertEqual( hidden(), before, 'and back:' );
   view.done();
+} );
+
+test( 'view: on file://, a folder picked in the start panel replaces the panel with its README', async () => {
+  // The real startup path (no source given), with a fake picker that returns fakeClone() from test-sources.js.
+  const picker = window.showDirectoryPicker;
+  window.showDirectoryPicker = async () => fakeClone();
+  const box = document.createElement( 'div' );
+  box.style.cssText = 'position: absolute; left: -10000px; top: 0; width: 900px; height: 600px;';
+  document.body.append( box );
+  try {
+    const mounted = BrowserView.mount( box );
+    await waitFor( () => box.querySelector( '.start-panel button' ) );
+    [ ...box.querySelectorAll( '.start-panel button' ) ].find( ( button ) => button.textContent.includes( 'Open folder' ) ).click();
+    await mounted;
+    assertEqual( box.querySelector( '.file-body h1' ) && box.querySelector( '.file-body h1' ).textContent, 'Pages', 'README shown:' );
+    assert( ! box.querySelector( '.start-panel' ), 'the start panel is gone' );
+    assert( ! box.querySelector( '.file-header' ).hidden, 'the file header shows' );
+    assertEqual( box.querySelector( '.repo-links' ).textContent, '📂 pages' );
+  } finally {
+    window.showDirectoryPicker = picker;
+    BrowserView.unmount();
+    box.remove();
+    history.replaceState( null, '', location.pathname + location.search );
+    document.title = 'TooToo tests';
+  }
 } );
 
 test( 'view: a token error shows its message and opens the token panel', async () => {

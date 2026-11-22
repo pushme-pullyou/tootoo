@@ -9,19 +9,10 @@ test( 'assertThrows checks the error message', () => {
   assertThrows( () => { throw new Error( 'missing marker' ); }, /marker/ );
 } );
 
-test( 'tests/index.html loads the same src/ scripts as src/index.html, in order', async () => {
-  const html = await ( await fetch( '../src/index.html' ) ).text();
-  const appScripts = [ ...html.matchAll( /<script src="(?!https?:|\/\/)([^"]+)"/g ) ].map( ( m ) => m[ 1 ] );
-  const testScripts = [ ...document.querySelectorAll( 'script[src^="../src/"]' ) ]
-    .map( ( script ) => script.getAttribute( 'src' ).slice( '../src/'.length ) );
-  assertEqual( testScripts, appScripts );
-} );
-
-if ( releaseMode ) {
-  test( 'build/index.html loads in a frame', async () => {
-    const app = await openRelease();
-    assertEqual( app.document.title, 'TooToo' );
-    const stamp = app.document.querySelector( 'meta[name="tootoo-release"]' );
-    assert( stamp && stamp.content, 'release stamp missing' );
+if ( ! releaseMode ) {
+  test( 'tests/index.html loads the same src/ scripts as src/index.html, in order', async () => {
+    const html = await ( await fetch( '../src/index.html' ) ).text();
+    const inApp = [ ...html.matchAll( /<script src="(?!https?:|\/\/)([^"]+)"/g ) ].map( ( m ) => `../src/${ m[ 1 ] }` );
+    assertEqual( appScripts, inApp );
   } );
 }

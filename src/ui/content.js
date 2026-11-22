@@ -26,8 +26,12 @@ const Content = {
     return () => Events.off( 'open-requested', Content.onOpenRequested );
   },
 
-  // An empty hash means the start: the root README.
-  onOpenRequested: ( { path, heading } ) => Content.open( path || Tree.readmeIn( '' ), heading ),
+  // An empty hash means the start: the root README. A heading in the open file just scrolls.
+  onOpenRequested: ( { path, heading } ) => {
+    if ( ! state.tree ) { return; }   // too early (e.g. the start panel is up): the view opens the deep link after the tree loads
+    if ( path && path === state.currentPath && heading ) { Content.scrollTo( heading ); return; }
+    Content.open( path || Tree.readmeIn( '' ), heading );
+  },
 
   showMessage: ( text ) => {
     Content.ticket += 1;
@@ -35,13 +39,8 @@ const Content = {
     Content.el.body.innerHTML = `<p class="message">${ Shell.escape( text ) }</p>`;
   },
 
-  extOf: ( path ) => {
-    const name = path.split( '/' ).pop();
-    return name.includes( '.' ) ? name.split( '.' ).pop().toLowerCase() : '';
-  },
-
   // Raw or rendered, remembered per file type.
-  isRaw: ( path ) => Shell.load( `raw:${ Content.extOf( path ) }` ) === true,
+  isRaw: ( path ) => Shell.load( `raw:${ Loaders.extOf( path ) }` ) === true,
 
   open: async ( path, heading = '' ) => {
     const item = ( state.tree || [] ).find( ( entry ) => entry.path === path && entry.type === 'file' );
@@ -60,9 +59,10 @@ const Content = {
 
     // Drawn off-page, then swapped in, so a slower earlier file never lands on top.
     const fresh = document.createElement( 'div' );
-    const file = { path, name: path.split( '/' ).pop(), ext: Content.extOf( path ), size: item.size, source: state.source };
+    const file = { path, name: path.split( '/' ).pop(), ext: Loaders.extOf( path ), size: item.size, source: state.source };
+    const notice = ( text ) => { if ( ticket === Content.ticket ) { body.innerHTML = `<p class="message">${ Shell.escape( text ) }</p>`; } };
     try {
-      await Loaders.render( file, fresh, { raw: Content.isRaw( path ) } );
+      await Loaders.render( file, fresh, { raw: Content.isRaw( path ), notice } );
     } catch ( error ) {
       fresh.innerHTML = `<p class="message">Couldn't show ${ Shell.escape( path ) }: ${ Shell.escape( error.message ) }</p>`;
     }
@@ -98,6 +98,7 @@ const Content = {
     const { toggle } = Content.el;
     toggle.hidden = ! Loaders.canToggle( path );
     toggle.textContent = Content.isRaw( path ) ? '👁 Rendered' : '</> Raw';
+    Content.el.header.querySelector( '[data-action=copy]' ).hidden = ! Loaders.isText( path );
     Content.el.header.hidden = false;
   },
 
@@ -108,7 +109,7 @@ const Content = {
     const action = button.dataset.action;
     try {
       if ( action === 'toggle' ) {
-        Shell.save( `raw:${ Content.extOf( path ) }`, ! Content.isRaw( path ) );
+        Shell.save( `raw:${ Loaders.extOf( path ) }`, ! Content.isRaw( path ) );
         Content.open( path );
       }
       if ( action === 'copy' ) {

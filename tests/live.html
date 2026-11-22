@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TooToo live tests</title>
+<style>
+  :root { --pass: #15803d; --fail: #c00; }
+  body { font: 15px / 1.5 system-ui, sans-serif; margin: 1rem; max-width: 50em; }
+  .pass { color: var(--pass); }
+  .fail { color: var(--fail); }
+  #summary { font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>🌐 TooToo live tests</h1>
+<p>The GitHub source against the real API and the real release site: about seven requests,
+  of the 60 an hour GitHub allows without a token. Run by hand before a release (SPEC.md §9);
+  <code>run-tests.ps1</code> never runs it.</p>
+<p id="rate"></p>
+<ol id="results"></ol>
+<p id="summary">running…</p>
+
+<script src="test.js"></script>
+<script src="../src/core/config.js"></script>
+<script src="../src/core/state.js"></script>
+<script src="../src/core/router.js"></script>
+<script src="../src/core/update.js"></script>
+<script src="../src/sources/github.js"></script>
+<script src="source-contract.js"></script>
+
+<script>
+const errorOf = ( promise ) => promise.then( () => null, ( error ) => error );
+const useRepo = ( owner, repo, branch = '' ) => Object.assign( state, { owner, repo, branch } );
+
+test( 'live: the tootoo tree, on its default branch', async () => {
+  useRepo( 'pushme-pullyou', 'tootoo' );
+  const tree = await GitHub.listTree();
+  assert( state.branch, 'no default branch' );
+  assert( tree.some( ( item ) => item.path === 'README.md' && item.type === 'file' ), 'no README.md' );
+  assert( tree.some( ( item ) => item.type === 'folder' ), 'no folders' );
+} );
+
+test( 'live: the GitHub source keeps the source contract', async () => {
+  useRepo( 'pushme-pullyou', 'tootoo', state.branch || 'main' );
+  await checkSourceContract( GitHub, 'README.md' );
+} );
+
+test( 'live: a missing branch says so', async () => {
+  useRepo( 'pushme-pullyou', 'tootoo', 'no-such-branch-for-tootoo-tests' );
+  const error = await errorOf( GitHub.listTree() );
+  assertEqual( error && error.kind, 'missing-branch' );
+} );
+
+test( 'live: a missing repo asks for a token', async () => {
+  useRepo( 'pushme-pullyou', 'no-such-repo-for-tootoo-tests' );
+  const error = await errorOf( GitHub.listTree() );
+  assertEqual( [ error && error.kind, error && error.needsToken ], [ 'private', true ] );
+} );
+
+test( 'live: the release site answers (latest.json, or a 404 until r2 is cut)', async () => {
+  const response = await fetch( CONFIG.updateUrl, { cache: 'no-cache' } );
+  assert( response.status === 200 || response.status === 404, `latest.json gave ${ response.status }` );
+  const latest = await Update.fetchLatest( CONFIG.updateUrl );
+  assert( latest === null || /^r\d+$/.test( latest.release ), JSON.stringify( latest ) );
+  const r1 = await fetch( 'https://pushme-pullyou.github.io/tootoo/releases/r1/index.html', { cache: 'no-cache' } );
+  assertEqual( r1.status, 200, 'r1 is published:' );
+} );
+
+// Show the remaining quota (this call doesn't count against it), then run.
+fetch( 'https://api.github.com/rate_limit', { headers: GitHub.headers() } )
+  .then( ( response ) => response.json() )
+  .then( ( data ) => { document.getElementById( 'rate' ).textContent = `GitHub API: ${ data.rate.remaining } of ${ data.rate.limit } requests left this hour${ GitHub.getToken() ? ' (with your token)' : '' }.`; } )
+  .catch( () => {} );
+
+runTests( document.getElementById( 'results' ), document.getElementById( 'summary' ) );
+</script>
+
+</body>
+</html>
