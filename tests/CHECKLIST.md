@@ -15,7 +15,7 @@ Open [`build/index.html`](../build/index.html) by double-clicking it.
 
 - [x] **First visit:** the start panel shows **📂 Open folder** and **Browse GitHub instead**. Nothing loads from GitHub yet.
 - [x] **Open folder:** pick a cloned repo (e.g. `theo-armour-sandbox`). Its tree shows, `.git` doesn't, and the README opens. The header shows 📂 and the folder name.
-- [#] An edited, not-yet-pushed file shows its new text.
+- [x] An edited, not-yet-pushed file shows its new text.
 - [x] **Reopen:** reload the page. The panel offers **📂 Reopen \<folder\>** first. One click and a permission prompt reopen it.
 - [x] **Browse \<owner/repo\> on GitHub instead:** the panel names the folder's repo. It browses that repo on GitHub, and on the next visit that button comes first.
 - [x] **Per page:** a second copy of the build in another folder remembers its own choice. It also has its own dark mode, text size and sidebar width, so it starts with the defaults (by design, as in r1).
@@ -29,25 +29,25 @@ Open [`build/index.html`](../build/index.html) by double-clicking it.
 
 Open `build/index.html?owner=theo-armour&repo=pages`, choose Browse GitHub, and check:
 
-- [ ] Tree, README, a deep link (`#path#heading`) and the back button.
-- [ ] **⚙️ Token:** save a token, and the page reloads using it. **Remove** it again.
-- [ ] A private repo without a token opens the token panel with a clear reason.
+- [x] Tree, README, a deep link (`#path#heading`) and the back button.
+- [x] **⚙️ Token:** save a token, and the page reloads using it. **Remove** it again.
+- [x] A private repo without a token opens the token panel with a clear reason.
 
 ## Files
 
-- [ ] Markdown: headings, tables, images, relative links, and a link to a heading.
-- [ ] Code is highlighted; **Raw** ↔ **Rendered** on Markdown, HTML, CSV and SVG is remembered per type.
-- [ ] An image, a video that plays, a PDF in the browser's viewer, and a CSV table.
-- [ ] An HTML page runs in its frame. A TooToo `index.html` shows the "not previewed" note instead.
-- [ ] **Copy**, **New tab** and **Download** each work once.
+- [x] Markdown: headings, tables, images, relative links, and a link to a heading.
+- [x] Code is highlighted; **Raw** ↔ **Rendered** on Markdown, HTML, CSV and SVG is remembered per type.
+- [x] An image, a video that plays, a PDF in the browser's viewer, and a CSV table.
+- [x] An HTML page runs in its frame. A TooToo `index.html` shows the "not previewed" note instead.
+- [x] **Copy**, **New tab** and **Download** each work once.
 
 ## Look and feel
 
-- [ ] **Dark mode** (🌓): text, code colors, tables and panels are all readable. It's remembered after a reload.
-- [ ] **A− / A+** change the text size, remembered after a reload.
-- [ ] Drag the divider, and collapse with ☰ or **Ctrl+B**: both are remembered.
-- [ ] Keys: `/` filter, `\` tree, arrows, Home / End, Enter / Space.
-- [ ] **Phone width** (DevTools device mode, 390 px): the sidebar starts closed and slides over the content, and the buttons wrap.
+- [x] **Dark mode** (🌓): text, code colors, tables and panels are all readable. It's remembered after a reload.
+- [x] **A− / A+** change the text size, remembered after a reload.
+- [x] Drag the divider, and collapse with ☰ or **Ctrl+B**: both are remembered.
+- [x] Keys: `/` filter, `\` tree, arrows, Home / End, Enter / Space.
+- [x] **Phone width** (DevTools device mode, 390 px): the sidebar starts closed and slides over the content, and the buttons wrap.
 
 ## The update notice and the swap
 
@@ -58,10 +58,10 @@ The notice needs a numbered release and a newer one to point at. To fake that:
 3. Next to them, write a `latest.json`: `{ "release": "r2", "url": "file:///…/releases/r2/index.html", "notes": "https://example.com" }`.
 4. In `install/index.html`'s config block, set a theme color, a subtitle with a non-ASCII character, and `updateUrl: 'file:///…/latest.json'`.
 
-- [ ] Opened via `file://`, the install shows **TooToo r2 available**.
-- [ ] **⬇ Download updated index.html** saves an `index.html` stamped r2, with the install's block byte for byte (compare the two files).
-- [ ] The notice shows again the same day without a new request, and not at all on an `https://` page without a token.
-- [ ] Run `pwsh -File assemble.ps1` afterwards, to put `build/` back to `dev`.
+- [x] Opened via `file://`, the install shows **TooToo r2 available**.
+- [x] **⬇ Download updated index.html** saves an `index.html` stamped r2, with the install's block byte for byte (compare the two files).
+- [x] The notice shows again the same day without a new request, and not at all on an `https://` page without a token.
+- [x] Run `pwsh -File assemble.ps1` afterwards, to put `build/` back to `dev`.
 
 ## Real installs
 
