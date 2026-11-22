@@ -18,8 +18,12 @@ Open [`build/index.html`](../build/index.html) by double-clicking it.
 - [#] An edited, not-yet-pushed file shows its new text.
 - [x] **Reopen:** reload the page. The panel offers **📂 Reopen \<folder\>** first. One click and a permission prompt reopen it.
 - [x] **Browse \<owner/repo\> on GitHub instead:** the panel names the folder's repo. It browses that repo on GitHub, and on the next visit that button comes first.
-- [ ] **Per page:** a second copy of the build in another folder remembers its own choice.
-- [ ] **Upload fallback:** in Firefox (or after cancelling the picker), **📤 Choose folder (upload)** reads the folder after Chrome's "Upload N files?" prompt.
+- [x] **Per page:** a second copy of the build in another folder remembers its own choice. It also has its own dark mode, text size and sidebar width, so it starts with the defaults (by design, as in r1).
+- [X] **Upload fallback:** the backup way to open a folder, for browsers without the folder picker (Firefox, Safari) or when it fails. Nothing leaves your computer, but the folder isn't remembered: no Reopen next time. To test it in Chrome:
+  1. Click **📂 Open folder**, then **Cancel** in the folder dialog.
+  2. The panel says "No folder opened…" and shows **📤 Choose folder (upload)**. Click it.
+  3. Pick the folder and accept Chrome's "Upload N files to this site?" prompt.
+  4. The tree and README load, as with the picker.
 
 ## GitHub
 
