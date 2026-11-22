@@ -14,10 +14,10 @@ Start from a fresh build: `pwsh -File assemble.ps1` writes `build/index.html`.
 Open [`build/index.html`](../build/index.html) by double-clicking it.
 
 - [x] **First visit:** the start panel shows **📂 Open folder** and **Browse GitHub instead**. Nothing loads from GitHub yet.
-- [ ] **Open folder:** pick a cloned repo (e.g. `theo-armour-sandbox`). Its tree shows, `.git` doesn't, and the README opens. The header shows 📂 and the folder name.
-- [ ] An edited, not-yet-pushed file shows its new text.
-- [ ] **Reopen:** reload the page. The panel offers **📂 Reopen \<folder\>** first. One click and a permission prompt reopen it.
-- [ ] **Browse \<owner/repo\> on GitHub instead:** the panel names the folder's repo. It browses that repo on GitHub, and on the next visit that button comes first.
+- [x] **Open folder:** pick a cloned repo (e.g. `theo-armour-sandbox`). Its tree shows, `.git` doesn't, and the README opens. The header shows 📂 and the folder name.
+- [#] An edited, not-yet-pushed file shows its new text.
+- [x] **Reopen:** reload the page. The panel offers **📂 Reopen \<folder\>** first. One click and a permission prompt reopen it.
+- [x] **Browse \<owner/repo\> on GitHub instead:** the panel names the folder's repo. It browses that repo on GitHub, and on the next visit that button comes first.
 - [ ] **Per page:** a second copy of the build in another folder remembers its own choice.
 - [ ] **Upload fallback:** in Firefox (or after cancelling the picker), **📤 Choose folder (upload)** reads the folder after Chrome's "Upload N files?" prompt.
 
