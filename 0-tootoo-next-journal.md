@@ -461,3 +461,28 @@
     byte for byte; the r2 file is now `index.bak`. Committed only those two
     files; Theo's uncommitted edit stayed out, and a pending remote commit
     was rebased in with `--autostash`.
+
+## 2026-11-23
+
+* **The other 15 installs moved to r3** (r1 → r3 directly; the sandbox was
+  already on r3). Each commit: r3's `index.html` with the install's
+  `tootoo.config.js` pasted between the markers, the r1 file as `index.bak`,
+  `tootoo.config.js` removed. All 15 checked from `file://` first (title,
+  stamp, theme color); 13 Pages sites serve r3.
+  * Settings choices (Theo): heritage-happenings.github.io and
+    heritage-happenings-documents took their uncommitted `tootoo.config.js`
+    edits (the latter with "papees" → "papers"). theo-armour-2026's
+    uncommitted file held pushme-pullyou's settings, a stray paste, so its
+    committed settings went in; the stray copy is kept in the scratch folder.
+  * **Google Drive vs git.** In 5 repos the deleted `tootoo.config.js` came
+    back before the commit, so it was kept (or, in documents, committed with
+    Theo's edit); follow-up commits removed it. In theo-armour-pages a stale
+    `.git/index.lock` blocked the commit, and after it the index was
+    reported corrupt; removing the stale lock, then rebuilding the index
+    from HEAD (`git reset`), fixed it. Nothing was lost; GitHub had every
+    commit. Lesson for batch git work on `G:`: one repo at a time, and
+    verify each commit's files before pushing.
+  * theo-armour-agenda and theo-armour-wikitheo: their Pages builds had
+    been failing for weeks before r3 (since 2026-11-20 and 2026-11-02), so
+    their live sites still show old pages. Pre-existing; the r3 commits
+    started a new build for each.
