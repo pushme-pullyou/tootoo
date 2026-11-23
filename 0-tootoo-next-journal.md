@@ -411,3 +411,11 @@
   * `Shell.titleLinks( owner, repo )` holds the rules, as a pure function
     with its own test. The view test checks the four links in order.
   * `src PASS 77 / FAIL 0`, `release PASS 80 / FAIL 0`; JS + CSS 2,021 / 2,500.
+
+* **The file on GitHub** (SPEC §6 File header, settled today). A small GitHub
+  mark before the breadcrumbs links to the open file's page on GitHub,
+  `…/blob/<branch or HEAD>/<path>`. For r3.
+  * `Content.githubUrl( owner, repo, branch, path )` is pure and tested
+    (spaces, a branch with a slash, no repo). The view tests check the link on
+    the mock, and on a local clone with its "may differ" title.
+  * `src PASS 78 / FAIL 0`, `release PASS 81 / FAIL 0`; JS + CSS 2,031 / 2,500.

@@ -85,16 +85,24 @@ const Content = {
     if ( target ) { target.scrollIntoView(); } else { ( Content.el.element.closest( '.content' ) || Content.el.element ).scrollTop = 0; }
   },
 
-  // root / folder / … / file. A folder links to its own README when it has one.
+  // The file's page on GitHub, or '' when no GitHub repo is known. No branch = HEAD, the default branch.
+  githubUrl: ( owner, repo, branch, path ) => ( owner && repo
+    ? `https://github.com/${ encodeURIComponent( owner ) }/${ encodeURIComponent( repo ) }/blob/${ Router.encodePath( branch || 'HEAD' ) }/${ Router.encodePath( path ) }`
+    : '' ),
+
+  // [GitHub mark] root / folder / … / file. A folder links to its own README when it has one.
   renderHeader: ( path ) => {
     const esc = Shell.escape;
+    const github = Content.githubUrl( state.owner, state.repo, state.branch, path );
+    const local = ( state.source || {} ).name === 'local';
+    const mark = github ? `<a class="github-link" href="${ esc( github ) }" title="${ local ? 'On GitHub (may differ from your local copy)' : 'On GitHub' }">${ Shell.githubMark }</a> ` : '';
     const parts = path.split( '/' );
     const rootName = ( state.source && state.source.folderName ) || state.repo || CONFIG.appName;
     const folders = parts.slice( 0, -1 ).map( ( part, i ) => {
       const readme = Tree.readmeIn( parts.slice( 0, i + 1 ).join( '/' ) );
       return readme ? `<a href="#${ esc( Router.encodePath( readme ) ) }">${ esc( part ) }</a>` : `<span>${ esc( part ) }</span>`;
     } );
-    Content.el.crumbs.innerHTML = [ `<a href="#">${ esc( rootName ) }</a>`, ...folders, `<strong>${ esc( parts[ parts.length - 1 ] ) }</strong>` ].join( ' / ' );
+    Content.el.crumbs.innerHTML = mark + [ `<a href="#">${ esc( rootName ) }</a>`, ...folders, `<strong>${ esc( parts[ parts.length - 1 ] ) }</strong>` ].join( ' / ' );
     const { toggle } = Content.el;
     toggle.hidden = ! Loaders.canToggle( path );
     toggle.textContent = Content.isRaw( path ) ? '👁 Rendered' : '</> Raw';

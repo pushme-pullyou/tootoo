@@ -192,6 +192,8 @@ button.primary, .button.primary { color: var(--color-on-accent); background: var
 }
 .file-header[hidden] { display: none; }
 .breadcrumbs { flex: 1; min-width: 12em; overflow-wrap: anywhere; }
+.github-link { color: var(--color-text); }
+.github-link .brand-icon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; }
 .file-actions { display: flex; flex-wrap: wrap; gap: 0.3em; }
 
 .file-body { padding: 0 var(--space) 2em; max-width: 60em; }

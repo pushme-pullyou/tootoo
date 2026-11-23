@@ -26,6 +26,7 @@ The rebuild of TooToo, the single-file GitHub repository viewer, and of the Doli
 ### 2026-11-22
 
 * The header title follows the new SPEC §6 Header: icon → GitHub, owner → home page, repo → Pages site, app name → start. For r3.
+* The file header has a GitHub mark linking to the open file on GitHub (SPEC §6 File header). For r3.
 * A root `index.html`: r2, browsing this repo. INSTALL-LIST has it as the 17th install.
 * v1 built in seven stages (0–6) from the build prompt: the scaffold and tests; config, state and router; the GitHub and local sources; shell, tree, content and the Browser view; the loaders; the update check and the swap; release mode and docs.
 * The suite has 75 tests on `src/`, and the same tests plus 4 release checks inside the build. `live.html` has 5.

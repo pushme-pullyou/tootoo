@@ -230,6 +230,14 @@ Then the buttons, unchanged: ⌂ (when `homeUrl` is set), 🌓, A−, A+, ⚙️
 - **A local folder** that is a GitHub clone: owner / repo links as usual, with 📂 in front to show the files come from disk. Without a GitHub repo: 📂 and the folder name in place of owner / repo, with no links.
 - **No repo known:** owner and repo are left out, and the icon links nowhere.
 
+### File header: the file on GitHub
+
+Settled 2026-11-22; ships in the next release. In the content panel's header, a small GitHub mark sits before the breadcrumbs, linking to the open file's source on GitHub: `https://github.com/<owner>/<repo>/blob/<branch>/<path>`, with `HEAD` (the default branch) when no branch is set. Same tab, like the other GitHub links.
+
+- The breadcrumbs are unchanged: the first one still goes back to the repo's README in TooToo.
+- **↗ New tab** stays as it is: it opens the raw file; this opens the GitHub page (history, blame, edit).
+- **A local clone:** the mark links to the pushed file, titled "on GitHub (may differ from your local copy)". **No GitHub repo:** no mark.
+
 ## 7. Migration of existing installs
 
 Settled 2026-11-21 (decisions 30–31).

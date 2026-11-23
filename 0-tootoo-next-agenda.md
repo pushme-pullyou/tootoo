@@ -20,3 +20,12 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (Header). For the next r
 * No GitHub repo: 📂 and the folder name in place of owner / repo, with no links.
 
 **No repo known:** owner and repo are left out, and the icon links nowhere.
+
+## File header: the file on GitHub
+
+Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the next release.
+
+* A small GitHub mark before the breadcrumbs, linking to the open file on GitHub: `https://github.com/<owner>/<repo>/blob/<branch>/<path>` (`HEAD` when no branch is set). Same tab.
+* The breadcrumbs stay as they are; the first still goes back to the repo's README.
+* **↗ New tab** stays: it opens the raw file, this opens the GitHub page.
+* A local clone links to the pushed file, titled "on GitHub (may differ from your local copy)". No GitHub repo, no mark.

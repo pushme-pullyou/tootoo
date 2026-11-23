@@ -82,6 +82,13 @@ test( 'shell: the title links (SPEC §6 Header)', () => {
   assertEqual( Shell.titleLinks( '', '' ), { github: '', home: '', pages: '' } );
 } );
 
+test( 'content: the file on GitHub (SPEC §6 File header)', () => {
+  assertEqual( Content.githubUrl( 'pushme-pullyou', 'tootoo-next', '', 'docs/my notes.md' ),
+    'https://github.com/pushme-pullyou/tootoo-next/blob/HEAD/docs/my%20notes.md' );
+  assertEqual( Content.githubUrl( 'o', 'r', 'feature/x', 'a.md' ), 'https://github.com/o/r/blob/feature/x/a.md', 'a branch with a slash:' );
+  assertEqual( Content.githubUrl( '', '', '', 'a.md' ), '', 'no repo, no link:' );
+} );
+
 // ── The mounted view ──
 
 test( 'view: mounts on the mock and opens the README', async () => {
@@ -111,7 +118,8 @@ test( 'view: selecting a file emits file-selected, then file-rendered', async ()
   Events.off( 'file-selected', selected );
   Events.off( 'file-rendered', rendered );
   assertEqual( seen, [ [ 'file-selected', 'docs/guide.md' ], [ 'file-rendered', 'docs/guide.md' ] ] );
-  assertEqual( view.find( '.breadcrumbs' ).textContent, 'mock-repo / docs / guide.md' );
+  assertEqual( view.find( '.breadcrumbs' ).textContent.trim(), 'mock-repo / docs / guide.md' );
+  assertEqual( view.find( '.breadcrumbs .github-link' ).getAttribute( 'href' ), 'https://github.com/mock/mock-repo/blob/HEAD/docs/guide.md', 'the file on GitHub:' );
   assert( view.find( '.breadcrumbs a[href="#docs/README.md"]' ), 'docs links to its README' );
   assertEqual( view.find( '.tree-item.active' ).dataset.path, 'docs/guide.md' );
   assert( view.find( 'details[data-path="docs"]' ).open, 'docs opened to show the active file' );
@@ -200,6 +208,9 @@ test( 'view: on file://, a folder picked in the start panel replaces the panel w
     assert( ! box.querySelector( '.start-panel' ), 'the start panel is gone' );
     assert( ! box.querySelector( '.file-header' ).hidden, 'the file header shows' );
     assertEqual( box.querySelector( '.repo-links' ).textContent, '📂 theo-armour / pages', 'a clone: 📂, then owner / repo:' );
+    const github = box.querySelector( '.breadcrumbs .github-link' );
+    assertEqual( [ github.getAttribute( 'href' ), github.title ],
+      [ 'https://github.com/theo-armour/pages/blob/main/README.md', 'On GitHub (may differ from your local copy)' ], 'a clone links to the pushed file:' );
   } finally {
     window.showDirectoryPicker = picker;
     BrowserView.unmount();
