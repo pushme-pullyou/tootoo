@@ -384,3 +384,11 @@
     `faviconFile: 'favicon.ico'`; the other 15 will need the same line.
   * Committed in the sandbox as `67c9a03`.
   * **Next:** live with it a few days, locally and on Pages, then the other 15.
+
+* **A root `index.html` for the workshop.** The repo, now
+  `pushme-pullyou/tootoo-next`, had no front page. Its root `index.html` is
+  r2 with its own settings switched on in the default block (owner/repo,
+  appName "TooToo Next", subtitle, theme, `storagePrefix: 'tootoo-next'`,
+  rights owners), so Pages and `file://` both browse this repo. It's the
+  17th row in INSTALL-LIST, updated with `update tootoo-next`, never by hand.
+  The release, not `build/`, because a build changes with every edit.

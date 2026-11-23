@@ -2,7 +2,7 @@
 
 Theo's own installs of TooToo, as a checklist: where each one lives and which release it runs. It is for convenience only. Strangers never need it, and nothing pushes to the installs it lists (SPEC.md §8). The `update <install>` command moves one install to the latest release and updates its row.
 
-Copied 2026-11-22 from `pushme-pullyou-dolittle/INSTALL-LIST.md`, leaving out `Julia-Morgan-Building.github.io`: its `index.html` is a hand-customized Hub build, and its `index-tootoo.html` waits for the Hub view. All 16 run r1, today's build.
+Copied 2026-11-22 from `pushme-pullyou-dolittle/INSTALL-LIST.md`, leaving out `Julia-Morgan-Building.github.io`: its `index.html` is a hand-customized Hub build, and its `index-tootoo.html` waits for the Hub view. All 16 run r1, today's build. The 17th row, added 2026-11-22, is this workshop's own root `index.html`: it started on r2.
 
 | Local index.html path | Owner/repo | Branch | Release |
 | --- | --- | --- | --- |
@@ -21,6 +21,7 @@ Copied 2026-11-22 from `pushme-pullyou-dolittle/INSTALL-LIST.md`, leaving out `J
 | `g:\My Drive\2026-theo-github\theo-armour-qdata\index.html` | theo-armour/qdata | main | r1 |
 | `g:\My Drive\2026-theo-github\theo-armour-sandbox\index.html` | theo-armour/sandbox | main | r2 |
 | `g:\My Drive\2026-theo-github\theo-armour-wikitheo\index.html` | theo-armour/wikitheo | main | r1 |
+| `g:\My Drive\2026-theo-github\pushme-pullyou-tootoo-next\index.html` | pushme-pullyou/tootoo-next | main | r2 |
 | `j:\My Drive\tech\index.html` | heritage-happenings/tech | main | r1 |
 
 ## Notes

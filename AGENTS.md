@@ -35,6 +35,7 @@ Rules carried over from today's `release`: confirm before every git write; never
 
 ## Where things are
 
+- `index.html` (root): an install of the latest release, browsing this repo. It's a generated copy like any install: never hand-edit it; `update tootoo-next` moves it to a new release.
 - `src/`: the app. `src/index.html` is the dev page and runs straight from `file://`; `?source=mock` browses the test mock.
 - `tests/`: [index.html](tests/index.html) (the suite; `?release=1` runs it inside the build), [live.html](tests/live.html) (the real GitHub API, by hand), [CHECKLIST.md](tests/CHECKLIST.md) (by hand), `mock-source.js`.
 - `assemble.ps1` inlines `src/` into `build/index.html`. `run-tests.ps1` assembles, then runs both headless suites.
