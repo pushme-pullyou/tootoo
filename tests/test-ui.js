@@ -171,6 +171,7 @@ test( 'view: keyboard moves through the tree and opens files', async () => {
 
 test( 'view: on file://, a folder picked in the start panel replaces the panel with its README', async () => {
   // The real startup path (no source given), with a fake picker that returns fakeClone() from test-sources.js.
+  if ( location.protocol !== 'file:' ) { return; }   // the start panel only shows on file:// (the suite also runs on Pages)
   const picker = window.showDirectoryPicker;
   window.showDirectoryPicker = async () => fakeClone();
   const box = document.createElement( 'div' );

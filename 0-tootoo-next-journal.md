@@ -392,3 +392,7 @@
   rights owners), so Pages and `file://` both browse this repo. It's the
   17th row in INSTALL-LIST, updated with `update tootoo-next`, never by hand.
   The release, not `build/`, because a build changes with every edit.
+  * Live check after the push: the root page and `/src/` browse the repo on
+    Pages (47 files, README). `/tests/` ran `PASS 75 / FAIL 1`: the
+    start-panel test only applies on `file://`. It now returns early
+    elsewhere. `run-tests.ps1` still `PASS 76 / FAIL 0` and `PASS 79 / FAIL 0`.
