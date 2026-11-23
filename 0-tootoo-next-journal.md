@@ -368,3 +368,19 @@
     v1 per prefix, so a saved token must be entered again once. The release
     notes say so.
   * **Next:** Stage 7, the pilot: `update theo-armour-sandbox`.
+
+* **Pilot: `update theo-armour-sandbox`** (Stage 7).
+  * r2's `index.html` with the sandbox's `tootoo.config.js` pasted as-is
+    between the markers, inside a `<script>`. Everything after the block is
+    byte-identical to `releases/r2/index.html`. The old r1 file is now
+    `index.bak`, and `tootoo.config.js` is deleted. `INSTALL-LIST.md` row → r2.
+  * Checked via `file://` in headless Chrome: Sandbox in Patua One, the gold
+    theme, the second `subtitle`, the start panel, no console errors.
+  * **Learned:** the Claude in Chrome extension can't open `file://` pages, so
+    the `update` check uses headless Chrome (`--screenshot`, `--dump-dom`).
+  * **Learned:** r1 linked `favicon.ico` in its own `<head>`. In r2 the tab
+    icon comes only from `faviconFile`, so an as-is paste leaves an install
+    with no icon unless its block sets that key. The sandbox's block now sets
+    `faviconFile: 'favicon.ico'`; the other 15 will need the same line.
+  * Committed in the sandbox as `67c9a03`.
+  * **Next:** live with it a few days, locally and on Pages, then the other 15.

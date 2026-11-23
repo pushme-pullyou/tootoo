@@ -19,7 +19,7 @@ Copied 2026-11-22 from `pushme-pullyou-dolittle/INSTALL-LIST.md`, leaving out `J
 | `g:\My Drive\2026-theo-github\theo-armour-genealogy\index.html` | theo-armour/genealogy | main | r1 |
 | `g:\My Drive\2026-theo-github\theo-armour-pages\index.html` | theo-armour/pages | main | r1 |
 | `g:\My Drive\2026-theo-github\theo-armour-qdata\index.html` | theo-armour/qdata | main | r1 |
-| `g:\My Drive\2026-theo-github\theo-armour-sandbox\index.html` | theo-armour/sandbox | main | r1 |
+| `g:\My Drive\2026-theo-github\theo-armour-sandbox\index.html` | theo-armour/sandbox | main | r2 |
 | `g:\My Drive\2026-theo-github\theo-armour-wikitheo\index.html` | theo-armour/wikitheo | main | r1 |
 | `j:\My Drive\tech\index.html` | heritage-happenings/tech | main | r1 |
 
