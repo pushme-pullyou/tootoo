@@ -438,3 +438,26 @@
   * Also from the preview: the breadcrumbs drop the repo name at the start,
     since the GitHub mark already leads to the repo. They read
     `folder / … / file`. Tests unchanged in number: 79 and 82, FAIL 0.
+
+* **Release r3 cut** (`release`, 2026-11-22): the new header, no repeated
+  names, and the file-on-GitHub mark.
+  * Gate: `src PASS 79 / FAIL 0`, `release PASS 82 / FAIL 0`, `live.html`
+    `PASS 5 / FAIL 0` (headless). The by-hand checklist wasn't rerun; Theo
+    reviewed the header from screenshots, and two rounds of his feedback went
+    in before the cut.
+  * tootoo-next `9315831`, tag `r3`, release on `pushme-pullyou/tootoo-next`.
+    `pushme-pullyou-tootoo` `0137096`: `releases/r3/index.html`, root
+    `index.html` as r3 with its own block carried over byte for byte,
+    `latest.json` → r3. GitHub Release `r3 — 2026-11-22` with `index.html`
+    (100,098 bytes). All four URLs serve 200; the demo's header shows
+    `pushme-pullyou / tootoo` with "TooToo" hidden.
+  * Learned: running `assemble.ps1` from a nested `pwsh` under the Bash
+    tool is blocked by the execution policy, and the release script then
+    copied the old `dev` build without stopping. Caught before any commit;
+    the release script now checks the build's stamp.
+  * Next: the sandbox (on r2) should now show "r3 available" when opened
+    from disk. A real test of the update notice.
+  * `update theo-armour-sandbox` to r3: sandbox `dcfb7b9`. Block carried
+    byte for byte; the r2 file is now `index.bak`. Committed only those two
+    files; Theo's uncommitted edit stayed out, and a pending remote commit
+    was rebased in with `--autostash`.
