@@ -419,3 +419,12 @@
     (spaces, a branch with a slash, no repo). The view tests check the link on
     the mock, and on a local clone with its "may differ" title.
   * `src PASS 78 / FAIL 0`, `release PASS 81 / FAIL 0`; JS + CSS 2,031 / 2,500.
+
+* **The root `index.html` runs the latest build** (Theo: a broken build on the
+  front page gets fixed sooner). `assemble.ps1` step 4: on a `dev` build only,
+  it rewrites the root with the new build plus the root's own config block,
+  the same text swap as an update. `-Release rN` leaves it alone, so cutting a
+  release can't stamp it. Checked: block byte-identical, stamp `dev`, new
+  header in place; `src PASS 78 / FAIL 0`, `release PASS 81 / FAIL 0`.
+  INSTALL-LIST's 17th row now says `dev (every build)`; SPEC §4 notes the
+  addition.

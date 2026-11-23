@@ -10,7 +10,7 @@ The rebuild of TooToo, the single-file GitHub repository viewer, and of the Doli
 
 ## Open it
 
-* **This repo, browsed by its own release:** [index.html](index.html), live at [pushme-pullyou.github.io/tootoo-next](https://pushme-pullyou.github.io/tootoo-next/). It's an install like any other, updated with `update tootoo-next`.
+* **This repo, browsed by the latest build:** [index.html](index.html), live at [pushme-pullyou.github.io/tootoo-next](https://pushme-pullyou.github.io/tootoo-next/). Every `pwsh -File assemble.ps1` (and so every test run) refreshes it, keeping its own settings block.
 * **Live on Pages:** the current source as the app at [/src/](https://pushme-pullyou.github.io/tootoo-next/src/), and the test suite at [/tests/](https://pushme-pullyou.github.io/tootoo-next/tests/).
 * **The app from source:** double-click [src/index.html](src/index.html). On `file://` it offers to open a folder, or to browse GitHub. Add `?source=mock` to browse the test mock instead.
 * **The release file:** `pwsh -File assemble.ps1` writes `build/index.html` (`-Release r2` stamps a release number).
@@ -27,6 +27,7 @@ The rebuild of TooToo, the single-file GitHub repository viewer, and of the Doli
 
 * The header title follows the new SPEC §6 Header: icon → GitHub, owner → home page, repo → Pages site, app name → start. For r3.
 * The file header has a GitHub mark linking to the open file on GitHub (SPEC §6 File header). For r3.
+* The root `index.html` now runs the latest build: `assemble.ps1` refreshes it on every dev build, carrying its settings block over.
 * A root `index.html`: r2, browsing this repo. INSTALL-LIST has it as the 17th install.
 * v1 built in seven stages (0–6) from the build prompt: the scaffold and tests; config, state and router; the GitHub and local sources; shell, tree, content and the Browser view; the loaders; the update check and the swap; release mode and docs.
 * The suite has 75 tests on `src/`, and the same tests plus 4 release checks inside the build. `live.html` has 5.

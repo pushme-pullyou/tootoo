@@ -3,11 +3,14 @@
 #   pwsh -File assemble.ps1              # release stamp 'dev'
 #   pwsh -File assemble.ps1 -Release r2  # release stamp 'r2'
 #
-# It does three things and nothing else (SPEC.md §4 "The assembler"):
+# It does three things to the build (SPEC.md §4 "The assembler"):
 #   1. stamps <meta name="tootoo-release" content="…">
 #   2. inlines each <script src="…"> that points into src/
 #   3. inlines each <link rel="stylesheet" href="…"> that points into src/
 # CDN tags (http:, https:, //) are left alone. The config block is never touched.
+#
+# Then, for a dev build only, it refreshes this repo's own root index.html: the new build with the
+# root's config block carried over unchanged, so the workshop's front page always runs the latest build.
 
 param( [string] $Release = 'dev' )
 
@@ -63,3 +66,22 @@ $out = Join-Path $buildFolder 'index.html'
 
 $lines = ( $html -split "`n" ).Count
 Write-Host "assemble: wrote build/index.html ($lines lines, release $Release)"
+
+# 4. Dev builds only: the root index.html = this build + the root's own config block (the same swap as an update).
+$root = Join-Path $PSScriptRoot 'index.html'
+if ( $Release -eq 'dev' -and ( Test-Path $root ) ) {
+  $start = '<!-- TOOTOO-CONFIG-START'
+  $end = '<!-- TOOTOO-CONFIG-END -->'
+  $blockOf = {
+    param( [string] $text, [string] $name )
+    $a = $text.IndexOf( $start ); $b = $text.IndexOf( $end )
+    if ( $a -lt 0 -or $b -lt $a -or $text.IndexOf( $start, $a + 1 ) -ge 0 ) { throw "$name needs each config marker exactly once" }
+    return @{ from = $a; to = $b + $end.Length }
+  }
+  $own = [IO.File]::ReadAllText( $root )
+  $ownBlock = & $blockOf $own 'index.html (root)'
+  $newBlock = & $blockOf $html 'the build'
+  $merged = $html.Substring( 0, $newBlock.from ) + $own.Substring( $ownBlock.from, $ownBlock.to - $ownBlock.from ) + $html.Substring( $newBlock.to )
+  [IO.File]::WriteAllText( $root, $merged, [Text.UTF8Encoding]::new( $false ) )
+  Write-Host 'assemble: refreshed index.html (root) with its own config block'
+}

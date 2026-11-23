@@ -139,6 +139,8 @@ The one-writer rule from today's `ARCHITECTURE.md` carries over. Each field of `
 
 `assemble.ps1` reads `src/index.html` and replaces each `<script src="…">` and `<link rel="stylesheet" href="…">` that points into `src/` with the file's contents inline. It stamps the `tootoo-release` meta and writes one `index.html`. CDN tags are left alone. Nothing else: no config swap, no templates.
 
+One addition (2026-11-22): a `dev` build also refreshes this repo's own root `index.html` with the new build, carrying the root's config block over unchanged (the same text swap as an update). So the workshop's front page always runs the latest build, and a broken build shows there first. Release builds (`-Release rN`) leave it alone.
+
 ### The config block (settled: decisions 12–14)
 
 ```html
