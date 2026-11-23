@@ -348,3 +348,23 @@
     folder; its README shows, the panel is gone, the header says 📂 pages. It
     fails without the fix.
   * `src PASS 76 / FAIL 0`, `release PASS 79 / FAIL 0`.
+
+* **Release r2 cut** (`release`, 2026-11-22). The gate: `src PASS 76 / FAIL 0`,
+  `release PASS 79 / FAIL 0`, `live.html` passed, CHECKLIST worked through by
+  Theo (the Pages install item waits for the pilot).
+  * `pushme-pullyou-tootoo` commit `91bd46a`: `releases/r2/index.html` (the
+    default block), `releases/latest.json`, and the root `index.html` as r2
+    with tootoo's own settings switched on in the default block (theme,
+    subtitle, Fraunces, rights owners), rather than its old
+    `tootoo.config.js` pasted as-is: the root is the demo strangers copy, and
+    that file's comments describe r1. `tootoo.config.js` deleted;
+    `releases/r1/` keeps its own copy.
+  * README rewritten where it described r1 (config, storage keys, SheetJS,
+    sandboxed previews); FORKING.md marked as r1; AGENTS.md and CLAUDE.md
+    point at this repo as the workshop.
+  * GitHub Release `r2 — 2026-11-22` with `index.html` attached (96,588
+    bytes). Tag `r2` here on `d2001ab`.
+  * Learned: r1 kept the token per page (`<prefix>:<pathname>:githubToken`),
+    v1 per prefix, so a saved token must be entered again once. The release
+    notes say so.
+  * **Next:** Stage 7, the pilot: `update theo-armour-sandbox`.

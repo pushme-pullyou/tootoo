@@ -25,7 +25,7 @@ The rebuild of TooToo, the single-file GitHub repository viewer, and of the Doli
 
 * v1 built in seven stages (0–6) from the build prompt: the scaffold and tests; config, state and router; the GitHub and local sources; shell, tree, content and the Browser view; the loaders; the update check and the swap; release mode and docs.
 * The suite has 75 tests on `src/`, and the same tests plus 4 release checks inside the build. `live.html` has 5.
-* Ready to release as r2, once the live page and the checklist pass.
+* Released as r2 in `pushme-pullyou-tootoo`, after the live page and the checklist passed.
 
 ### 2026-11-21
 
