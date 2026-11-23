@@ -486,3 +486,19 @@
     been failing for weeks before r3 (since 2026-11-20 and 2026-11-02), so
     their live sites still show old pages. Pre-existing; the r3 commits
     started a new build for each.
+
+* **Pages builds and `.nojekyll`.** wikitheo's Pages build had failed since
+  2026-11-02: `timeline/rive-gaouch-m-and-wisconsin-dc.md` was a JPEG, which
+  Jekyll can't read. Renamed to `.jpg` (wikitheo `d370fdb`). agenda's failed
+  on Wikipedia `{{cite …}}` markup that Jekyll reads as Liquid.
+  * Added an empty `.nojekyll` to wikitheo and 12 more public installs
+    (pages and qdata had one), so Pages serves files as they are and no file
+    can break the build. All 13 rebuilt and serve r3 (tootoo-next: `dev`).
+    Checked first: no install uses front matter or Liquid; genealogy's
+    `_codex-backup…` folders become servable, but that repo is public.
+  * **Private repos, public Pages:** theo-armour/agenda and theo-armour/aa
+    are private, but their Pages sites are public, so their files are
+    readable by URL without a token. TooToo's token rule only covers what
+    TooToo reads through the API. Left alone, no `.nojekyll`; the fix is
+    Theo's setting: Pages → Source: None. TooToo still reads them locally,
+    or online from another install with a token.
