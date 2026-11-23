@@ -40,14 +40,20 @@ const Shell = {
     };
   },
 
+  // The GitHub mark (Octicons, MIT), drawn in the text color: the icon when faviconFile isn't set.
+  githubMark: `<svg class="brand-icon" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>`,
+
+  // The title, left to right (SPEC §6 Header): icon → the repo on GitHub, owner → their home page,
+  // repo → its Pages site, app name → back to the start, subtitle. The links are filled in by showRepo.
   headerHtml: () => {
     const esc = Shell.escape;
-    const icon = CONFIG.faviconFile ? `<img class="brand-icon" src="${ esc( CONFIG.faviconFile ) }" alt="">` : '';
+    const icon = CONFIG.faviconFile ? `<img class="brand-icon" src="${ esc( CONFIG.faviconFile ) }" alt="">` : Shell.githubMark;
     const home = CONFIG.homeUrl ? `<a class="button" href="${ esc( CONFIG.homeUrl ) }" title="Home">⌂</a>` : '';
     return `
       <button class="sidebar-toggle" type="button" title="Show or hide the files (Ctrl+B)" aria-label="Show or hide the files">☰</button>
-      <a class="brand" href="${ esc( location.pathname ) }" title="Back to the start">${ icon }<span class="app-name">${ esc( CONFIG.appName ) }</span></a>
+      <a class="icon-link">${ icon }</a>
       <span class="repo-links"></span>
+      <a class="brand" href="${ esc( location.pathname ) }" title="Back to the start"><span class="app-name">${ esc( CONFIG.appName ) }</span></a>
       <span class="subtitle">${ esc( CONFIG.subtitle ) }</span>
       <span class="header-actions">
         ${ home }
@@ -84,19 +90,42 @@ const Shell = {
 
   showTitle: ( { path } ) => { document.title = `${ path.split( '/' ).pop() } · ${ CONFIG.appName }`; },
 
-  // Owner / repo links, or the local folder's name; then the footer.
+  // The three links for owner / repo. The owner's own site repo (<owner>.github.io) has no repo link.
+  // Always the Pages addresses: checking whether a repo has Pages is for later.
+  titleLinks: ( owner, repo ) => {
+    if ( ! ( owner && repo ) ) { return { github: '', home: '', pages: '' }; }
+    const home = `https://${ owner.toLowerCase() }.github.io/`;
+    const isSiteRepo = repo.toLowerCase() === `${ owner.toLowerCase() }.github.io`;
+    return {
+      github: `https://github.com/${ encodeURIComponent( owner ) }/${ encodeURIComponent( repo ) }`,
+      home,
+      pages: isSiteRepo ? '' : `${ home }${ encodeURIComponent( repo ) }/`,
+    };
+  },
+
+  // The icon's link, owner / repo links (📂 first for a local folder), then the footer.
   showRepo: () => {
     const esc = Shell.escape;
-    const links = Shell.el.header.querySelector( '.repo-links' );
-    const source = state.source || {};
-    if ( source.name === 'local' ) {
-      links.innerHTML = `<span title="A folder on this computer">📂 ${ esc( source.folderName ) }</span>`;
-    } else if ( state.owner && state.repo ) {
-      const owner = `https://github.com/${ encodeURIComponent( state.owner ) }`;
-      links.innerHTML = `<a href="${ owner }">${ esc( state.owner ) }</a> / <a href="${ owner }/${ encodeURIComponent( state.repo ) }">${ esc( state.repo ) }</a>`;
+    const header = Shell.el.header;
+    const links = Shell.titleLinks( state.owner, state.repo );
+    const iconLink = header.querySelector( '.icon-link' );
+    if ( links.github ) {
+      iconLink.href = links.github;
+      iconLink.title = `${ state.owner }/${ state.repo } on GitHub`;
     } else {
-      links.innerHTML = '';
+      iconLink.removeAttribute( 'href' );   // no repo known: the icon links nowhere
+      iconLink.removeAttribute( 'title' );
     }
+    const local = ( state.source || {} ).name === 'local';
+    const folder = local ? `<span title="A folder on this computer">📂</span> ` : '';
+    let html = '';
+    if ( links.home ) {
+      html = `${ folder }<a href="${ esc( links.home ) }">${ esc( state.owner ) }</a>`;
+      if ( links.pages ) { html += ` / <a href="${ esc( links.pages ) }">${ esc( state.repo ) }</a>`; }
+    } else if ( local ) {
+      html = `${ folder }${ esc( state.source.folderName ) }`;
+    }
+    header.querySelector( '.repo-links' ).innerHTML = html;
     Shell.el.footer.textContent = Shell.rightsLine( state.owner );
   },
 

@@ -98,8 +98,9 @@ button.primary, .button.primary { color: var(--color-on-accent); background: var
   text-decoration: none;
   white-space: nowrap;
 }
-.brand-icon { width: 1.4em; height: 1.4em; }
-.repo-links { white-space: nowrap; }
+.icon-link { display: flex; flex: none; color: var(--color-text); }
+.brand-icon { width: 1.75em; height: 1.75em; }
+.repo-links { white-space: nowrap; font-weight: bold; }
 .subtitle { color: var(--color-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1 1 0; }
 .header-actions { display: flex; gap: 0.3em; margin-left: auto; flex: none; }
 .sidebar-toggle { flex: none; }

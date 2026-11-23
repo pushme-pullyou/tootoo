@@ -205,7 +205,7 @@ Agreed 2026-11-21. Drawn from today's build (`pushme-pullyou-tootoo/README.md` f
 | **Content** | Markdown; highlighted code; images; audio / video; SVG; raw ↔ rendered toggle; copy / new tab / download; deep links `#file#heading` | **Carry** |
 | **Heavy formats** | PDF, CSV, HTML preview | **v1, as loaders fetched on demand** |
 | | Spreadsheets (SheetJS), notebooks | **Later**, as loaders |
-| **Navigation** | ⌂ home link; plain owner / repo links | **Carry** |
+| **Navigation** | ⌂ home link; plain owner / repo links | **Carry.** The header title is settled below (Header) |
 | | Branch switcher; repo picker form; smart Pages-vs-GitHub links (`has_pages`) | **Later** |
 | **Update** | "rN available" notice (§5) | **New in v1** |
 | **Extras** | Self-test in About | **Drop from the app**; moves into the test pages (§9) |
@@ -213,6 +213,22 @@ Agreed 2026-11-21. Drawn from today's build (`pushme-pullyou-tootoo/README.md` f
 | | Config editor tool, header preview editor | **Drop for v1** (decision 15) |
 | **Views** | Browser | **v1** |
 | | Hub, Gallery | **Later**, the first views after v1 |
+
+### Header
+
+Settled 2026-11-22, after r2; it ships in the next release. The title part of the header, left to right:
+
+1. **Icon:** the `faviconFile` image; when none is set, a small built-in GitHub mark. It links to the repo on GitHub: `https://github.com/<owner>/<repo>`.
+2. **Owner:** the owner's GitHub login as-is (e.g. `pushme-pullyou`), linking to their home page: `https://<owner>.github.io`.
+3. **Repo:** the repo name, linking to its Pages site: `https://<owner>.github.io/<repo>`. Always the Pages URL; checking whether a repo has Pages (`has_pages`) stays **Later**.
+4. **App name:** `appName`, linking back to the start: this page with no file open.
+5. **Subtitle:** `subtitle`.
+
+Then the buttons, unchanged: ⌂ (when `homeUrl` is set), 🌓, A−, A+, ⚙️, ?.
+
+- **The owner's own site repo** (`<owner>/<owner>.github.io`): the repo is left out; only the owner shows, linking to `https://<owner>.github.io`.
+- **A local folder** that is a GitHub clone: owner / repo links as usual, with 📂 in front to show the files come from disk. Without a GitHub repo: 📂 and the folder name in place of owner / repo, with no links.
+- **No repo known:** owner and repo are left out, and the icon links nowhere.
 
 ## 7. Migration of existing installs
 

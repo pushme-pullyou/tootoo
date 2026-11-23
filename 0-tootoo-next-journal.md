@@ -396,3 +396,18 @@
     Pages (47 files, README). `/tests/` ran `PASS 75 / FAIL 1`: the
     start-panel test only applies on `file://`. It now returns early
     elsewhere. `run-tests.ps1` still `PASS 76 / FAIL 0` and `PASS 79 / FAIL 0`.
+  * Favicon: the pushmi-pullyu icon from `pushme-pullyou-assets`, copied as
+    `favicon.svg` and set as `faviconFile` in the root page's block. A
+    relative name works on Pages and on `file://`.
+
+* **Header title rebuilt** to the new SPEC §6 Header (settled today in
+  `0-tootoo-next-agenda.md`). For r3.
+  * Left to right: the icon (`faviconFile`, or a built-in GitHub mark in the
+    text color) → the repo on GitHub; the owner → `https://<owner>.github.io/`;
+    the repo → its Pages site; the app name → back to the start; the subtitle.
+  * The owner's own site repo shows only the owner. A local clone shows 📂
+    before owner / repo; a folder without a GitHub repo shows 📂 and its name.
+    With no repo, the icon has no link.
+  * `Shell.titleLinks( owner, repo )` holds the rules, as a pure function
+    with its own test. The view test checks the four links in order.
+  * `src PASS 77 / FAIL 0`, `release PASS 80 / FAIL 0`; JS + CSS 2,021 / 2,500.

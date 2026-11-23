@@ -71,12 +71,26 @@ test( 'shell: the rights line follows rightsOwners', () => {
   assertEqual( line( '', null ), '' );
 } );
 
+test( 'shell: the title links (SPEC §6 Header)', () => {
+  assertEqual( Shell.titleLinks( 'pushme-pullyou', 'tootoo-next' ), {
+    github: 'https://github.com/pushme-pullyou/tootoo-next',
+    home: 'https://pushme-pullyou.github.io/',
+    pages: 'https://pushme-pullyou.github.io/tootoo-next/',
+  } );
+  assertEqual( Shell.titleLinks( 'Theo-Armour', 'theo-armour.github.io' ).pages, '', 'the site repo has no repo link:' );
+  assertEqual( Shell.titleLinks( 'Theo-Armour', 'theo-armour.github.io' ).home, 'https://theo-armour.github.io/' );
+  assertEqual( Shell.titleLinks( '', '' ), { github: '', home: '', pages: '' } );
+} );
+
 // ── The mounted view ──
 
 test( 'view: mounts on the mock and opens the README', async () => {
   const view = await mountMock();
   assertEqual( view.find( '.app-name' ).textContent, 'TooToo' );
   assertEqual( view.find( '.repo-links' ).textContent, 'mock / mock-repo' );
+  assertEqual( [ ...view.find( '.app-header' ).querySelectorAll( '.icon-link, .repo-links a, .brand' ) ].map( ( link ) => link.getAttribute( 'href' ) ),
+    [ 'https://github.com/mock/mock-repo', 'https://mock.github.io/', 'https://mock.github.io/mock-repo/', location.pathname ], 'icon, owner, repo, app name:' );
+  assert( view.find( '.icon-link svg' ), 'the GitHub mark when faviconFile is empty' );
   assert( view.find( '.app-footer' ).textContent.startsWith( '© ' ), 'no footer' );
   assertEqual( state.currentPath, 'README.md' );
   assertEqual( view.find( '.file-body h1' ).textContent, 'Mock repo', 'README rendered:' );
@@ -185,7 +199,7 @@ test( 'view: on file://, a folder picked in the start panel replaces the panel w
     assertEqual( box.querySelector( '.file-body h1' ) && box.querySelector( '.file-body h1' ).textContent, 'Pages', 'README shown:' );
     assert( ! box.querySelector( '.start-panel' ), 'the start panel is gone' );
     assert( ! box.querySelector( '.file-header' ).hidden, 'the file header shows' );
-    assertEqual( box.querySelector( '.repo-links' ).textContent, '📂 pages' );
+    assertEqual( box.querySelector( '.repo-links' ).textContent, '📂 theo-armour / pages', 'a clone: 📂, then owner / repo:' );
   } finally {
     window.showDirectoryPicker = picker;
     BrowserView.unmount();
