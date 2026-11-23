@@ -90,19 +90,19 @@ const Content = {
     ? `https://github.com/${ encodeURIComponent( owner ) }/${ encodeURIComponent( repo ) }/blob/${ Router.encodePath( branch || 'HEAD' ) }/${ Router.encodePath( path ) }`
     : '' ),
 
-  // [GitHub mark] root / folder / … / file. A folder links to its own README when it has one.
+  // [GitHub mark] folder / … / file. A folder links to its own README when it has one.
+  // No repo name first: the mark already leads to the repo, and the header names it.
   renderHeader: ( path ) => {
     const esc = Shell.escape;
     const github = Content.githubUrl( state.owner, state.repo, state.branch, path );
     const local = ( state.source || {} ).name === 'local';
     const mark = github ? `<a class="github-link" href="${ esc( github ) }" title="${ local ? 'On GitHub (may differ from your local copy)' : 'On GitHub' }">${ Shell.githubMark }</a> ` : '';
     const parts = path.split( '/' );
-    const rootName = ( state.source && state.source.folderName ) || state.repo || CONFIG.appName;
     const folders = parts.slice( 0, -1 ).map( ( part, i ) => {
       const readme = Tree.readmeIn( parts.slice( 0, i + 1 ).join( '/' ) );
       return readme ? `<a href="#${ esc( Router.encodePath( readme ) ) }">${ esc( part ) }</a>` : `<span>${ esc( part ) }</span>`;
     } );
-    Content.el.crumbs.innerHTML = mark + [ `<a href="#">${ esc( rootName ) }</a>`, ...folders, `<strong>${ esc( parts[ parts.length - 1 ] ) }</strong>` ].join( ' / ' );
+    Content.el.crumbs.innerHTML = mark + [ ...folders, `<strong>${ esc( parts[ parts.length - 1 ] ) }</strong>` ].join( ' / ' );
     const { toggle } = Content.el;
     toggle.hidden = ! Loaders.canToggle( path );
     toggle.textContent = Content.isRaw( path ) ? '👁 Rendered' : '</> Raw';

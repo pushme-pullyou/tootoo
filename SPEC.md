@@ -223,7 +223,7 @@ Settled 2026-11-22, after r2; it ships in the next release. The title part of th
 1. **Icon:** the `faviconFile` image; when none is set, a small built-in GitHub mark. It links to the repo on GitHub: `https://github.com/<owner>/<repo>`.
 2. **Owner:** the owner's GitHub login as-is (e.g. `pushme-pullyou`), linking to their home page: `https://<owner>.github.io`.
 3. **Repo:** the repo name, linking to its Pages site: `https://<owner>.github.io/<repo>`. Always the Pages URL; checking whether a repo has Pages (`has_pages`) stays **Later**.
-4. **App name:** `appName`, linking back to the start: this page with no file open.
+4. **App name:** `appName`, linking back to the start: this page with no file open. Left out when it only repeats the name before it, ignoring case, spaces and punctuation ("TooToo Next" after `tootoo-next`). It still names the tab and About.
 5. **Subtitle:** `subtitle`.
 
 Then the buttons, unchanged: ⌂ (when `homeUrl` is set), 🌓, A−, A+, ⚙️, ?.
@@ -236,7 +236,7 @@ Then the buttons, unchanged: ⌂ (when `homeUrl` is set), 🌓, A−, A+, ⚙️
 
 Settled 2026-11-22; ships in the next release. In the content panel's header, a small GitHub mark sits before the breadcrumbs, linking to the open file's source on GitHub: `https://github.com/<owner>/<repo>/blob/<branch>/<path>`, with `HEAD` (the default branch) when no branch is set. Same tab, like the other GitHub links.
 
-- The breadcrumbs are unchanged: the first one still goes back to the repo's README in TooToo.
+- The breadcrumbs no longer start with the repo name: the mark already leads to the repo, and the header names it. They read `folder / … / file`, and a folder still links to its own README. The way back to the repo's README is the tree (or, online, the header's repo link).
 - **↗ New tab** stays as it is: it opens the raw file; this opens the GitHub page (history, blame, edit).
 - **A local clone:** the mark links to the pushed file, titled "on GitHub (may differ from your local copy)". **No GitHub repo:** no mark.
 

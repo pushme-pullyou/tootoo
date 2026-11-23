@@ -103,7 +103,14 @@ const Shell = {
     };
   },
 
+  // True when two names differ only in case, spaces or punctuation: 'TooToo Next' = 'tootoo-next'.
+  sameName: ( a, b ) => {
+    const plain = ( name ) => String( name || '' ).toLowerCase().replace( /[^a-z0-9]/g, '' );
+    return plain( a ) !== '' && plain( a ) === plain( b );
+  },
+
   // The icon's link, owner / repo links (📂 first for a local folder), then the footer.
+  // The app name is left out when it only repeats the name just before it.
   showRepo: () => {
     const esc = Shell.escape;
     const header = Shell.el.header;
@@ -126,6 +133,8 @@ const Shell = {
       html = `${ folder }${ esc( state.source.folderName ) }`;
     }
     header.querySelector( '.repo-links' ).innerHTML = html;
+    const shownName = links.pages ? state.repo : links.home ? state.owner : '';
+    header.querySelector( '.brand' ).hidden = Shell.sameName( CONFIG.appName, shownName );
     Shell.el.footer.textContent = Shell.rightsLine( state.owner );
   },
 

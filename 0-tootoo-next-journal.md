@@ -428,3 +428,13 @@
   header in place; `src PASS 78 / FAIL 0`, `release PASS 81 / FAIL 0`.
   INSTALL-LIST's 17th row now says `dev (every build)`; SPEC §4 notes the
   addition.
+
+* **No repeated name in the header** (Theo, from the r3 preview: "tootoo-next"
+  then "TooToo Next"). The app name is now left out when it only repeats the
+  name before it, ignoring case, spaces and punctuation
+  (`Shell.sameName`, tested). "Pages" after `theo-armour.github.io` still
+  shows. SPEC §6 Header item 4 updated. r3 held for this.
+  * `src PASS 79 / FAIL 0`, `release PASS 82 / FAIL 0`; JS + CSS 2,040 / 2,500.
+  * Also from the preview: the breadcrumbs drop the repo name at the start,
+    since the GitHub mark already leads to the repo. They read
+    `folder / … / file`. Tests unchanged in number: 79 and 82, FAIL 0.

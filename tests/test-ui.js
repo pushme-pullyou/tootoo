@@ -82,6 +82,11 @@ test( 'shell: the title links (SPEC §6 Header)', () => {
   assertEqual( Shell.titleLinks( '', '' ), { github: '', home: '', pages: '' } );
 } );
 
+test( 'shell: the app name is hidden when it repeats the repo name', () => {
+  assertEqual( [ Shell.sameName( 'TooToo Next', 'tootoo-next' ), Shell.sameName( 'Pages', 'theo-armour.github.io' ),
+    Shell.sameName( 'TooToo', 'mock-repo' ), Shell.sameName( '', '' ) ], [ true, false, false, false ] );
+} );
+
 test( 'content: the file on GitHub (SPEC §6 File header)', () => {
   assertEqual( Content.githubUrl( 'pushme-pullyou', 'tootoo-next', '', 'docs/my notes.md' ),
     'https://github.com/pushme-pullyou/tootoo-next/blob/HEAD/docs/my%20notes.md' );
@@ -98,6 +103,7 @@ test( 'view: mounts on the mock and opens the README', async () => {
   assertEqual( [ ...view.find( '.app-header' ).querySelectorAll( '.icon-link, .repo-links a, .brand' ) ].map( ( link ) => link.getAttribute( 'href' ) ),
     [ 'https://github.com/mock/mock-repo', 'https://mock.github.io/', 'https://mock.github.io/mock-repo/', location.pathname ], 'icon, owner, repo, app name:' );
   assert( view.find( '.icon-link svg' ), 'the GitHub mark when faviconFile is empty' );
+  assert( ! view.find( '.brand' ).hidden, 'TooToo differs from mock-repo, so the app name shows' );
   assert( view.find( '.app-footer' ).textContent.startsWith( '© ' ), 'no footer' );
   assertEqual( state.currentPath, 'README.md' );
   assertEqual( view.find( '.file-body h1' ).textContent, 'Mock repo', 'README rendered:' );
@@ -118,7 +124,7 @@ test( 'view: selecting a file emits file-selected, then file-rendered', async ()
   Events.off( 'file-selected', selected );
   Events.off( 'file-rendered', rendered );
   assertEqual( seen, [ [ 'file-selected', 'docs/guide.md' ], [ 'file-rendered', 'docs/guide.md' ] ] );
-  assertEqual( view.find( '.breadcrumbs' ).textContent.trim(), 'mock-repo / docs / guide.md' );
+  assertEqual( view.find( '.breadcrumbs' ).textContent.trim(), 'docs / guide.md', 'no repo name first:' );
   assertEqual( view.find( '.breadcrumbs .github-link' ).getAttribute( 'href' ), 'https://github.com/mock/mock-repo/blob/HEAD/docs/guide.md', 'the file on GitHub:' );
   assert( view.find( '.breadcrumbs a[href="#docs/README.md"]' ), 'docs links to its README' );
   assertEqual( view.find( '.tree-item.active' ).dataset.path, 'docs/guide.md' );
