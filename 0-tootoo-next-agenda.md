@@ -15,4 +15,8 @@
 ### Settings Button
 
 * Explanation about Tootoo.
-* lnks to pushme pullyou
+* links to pushme pullyou
+
+Dolittle should, somehow, stay as the core effort. It spawns TooToo, GubGub, DabDab and more.
+
+I think I should just rename the current tootoo to Tootoo-2026 and Rename Tootoo-next to simply Tootoo. 

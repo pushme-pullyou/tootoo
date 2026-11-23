@@ -66,4 +66,4 @@ The notice needs a numbered release and a newer one to point at. To fake that:
 ## Real installs
 
 - [ ] **One install via `file://`:** paste `theo-armour-sandbox`'s `tootoo.config.js` into a copy of the build, open it, and check its branding (theme color, heading font, subtitle). About lists the ignored keys (`faviconLetters`, `faviconColor`).
-- [ ] **One install on Pages:** the same copy served from a Pages site (or the pilot, Stage 7) browses its repo with no URL parameters, and its HTML files open as the published pages.
+- [x] **One install on Pages:** the same copy served from a Pages site (or the pilot, Stage 7) browses its repo with no URL parameters, and its HTML files open as the published pages. (2026-11-23: the sandbox on r3 browses its 509 files, and `sample-page.html` opens at its published URL; 14 installs serve r3.)

@@ -2,7 +2,7 @@
 
 Theo's own installs of TooToo, as a checklist: where each one lives and which release it runs. It is for convenience only. Strangers never need it, and nothing pushes to the installs it lists (SPEC.md §8). The `update <install>` command moves one install to the latest release and updates its row.
 
-Copied 2026-11-22 from `pushme-pullyou-dolittle/INSTALL-LIST.md`, leaving out `Julia-Morgan-Building.github.io`: its `index.html` is a hand-customized Hub build, and its `index-tootoo.html` waits for the Hub view. All 16 run r1, today's build. The 17th row, added 2026-11-22, is this workshop's own root `index.html`: it runs the latest build (`dev`), which `assemble.ps1` refreshes, so it never needs `update`.
+Copied 2026-11-22 from `pushme-pullyou-dolittle/INSTALL-LIST.md`, leaving out `Julia-Morgan-Building.github.io`: its `index.html` is a hand-customized Hub build, and its `index-tootoo.html` waits for the Hub view. All 16 ran r1 then; since 2026-11-23 they run r3. The 17th row, added 2026-11-22, is this workshop's own root `index.html`: it runs the latest build (`dev`), which `assemble.ps1` refreshes, so it never needs `update`.
 
 | Local index.html path | Owner/repo | Branch | Release |
 | --- | --- | --- | --- |
@@ -26,6 +26,7 @@ Copied 2026-11-22 from `pushme-pullyou-dolittle/INSTALL-LIST.md`, leaving out `J
 
 ## Notes
 
-- **Pilot:** `theo-armour-sandbox` moves to r2 first (SPEC.md §7). The other 15 follow in one batch after a few days.
+- **Migration (done):** `theo-armour-sandbox` piloted r2 on 2026-11-22, then r3; the other 15 moved from r1 straight to r3 on 2026-11-23.
+- **Private repos:** don't publish Pages for a private repo (`theo-armour/agenda`, `theo-armour/aa`): a Pages site is public, so its files are readable by URL without a token. Browse them with TooToo locally, or from another install with a token.
 - **`tech`:** its Google Drive letter can change between machines (it has been `i:` and `j:`). A "missing" install usually means a new drive letter, not a deleted one.
 - **Adding an install:** add a row with its path, `owner/repo`, branch and release.

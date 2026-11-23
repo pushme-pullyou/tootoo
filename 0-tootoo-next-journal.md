@@ -533,3 +533,12 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
     TooToo reads through the API. Left alone, no `.nojekyll`; the fix is
     Theo's setting: Pages → Source: None. TooToo still reads them locally,
     or online from another install with a token.
+
+* **Tidy-up.** CHECKLIST's last item ticked: the live sandbox (r3) browses
+  its repo with no parameters and opens `sample-page.html` at its published
+  URL. INSTALL-LIST: the intro and the pilot note brought up to date, plus a
+  note never to publish Pages for a private repo. `tests/release-scratch/`
+  (Theo's checklist copies of the build, about 6,300 lines) removed; git
+  keeps them.
+  * Still untested on a real install: the "rN available" notice and its
+    download. Next release: open any install from disk and use the button.
