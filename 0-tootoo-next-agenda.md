@@ -2,6 +2,8 @@
 
 ## 2026-11-23
 
+* Release date
+
 ### Settings Button
 
 * Explanation about Tootoo.
