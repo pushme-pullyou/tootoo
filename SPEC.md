@@ -242,6 +242,10 @@ Settled 2026-11-23; ships in the next release.
 - **Description:** the page carries `<meta name="description">` with TooToo's own sentence. A new setting, `description`, lets an install describe its repo: at startup it replaces the tag's text. About shows whichever applies, under the subtitle. Search engines read the replaced text; link previews that don't run scripts see TooToo's sentence.
 - **Banner:** a comment under the doctype, for whoever opens the file: the release, the build date, the source repo, and "edit only the settings block".
 
+### Back to top
+
+Settled 2026-11-23; ships in the next release. The files panel and the open file each have a round ↑ button floating at their bottom right. It appears once that panel has scrolled about 200 px, and a click scrolls the panel back to its top. Carried from the 2026 build, which had the same two buttons.
+
 ### File header: the file on GitHub
 
 Settled 2026-11-22; ships in the next release. In the content panel's header, a small GitHub mark sits before the breadcrumbs, linking to the open file's source on GitHub: `https://github.com/<owner>/<repo>/blob/<branch>/<path>`, with `HEAD` (the default branch) when no branch is set. Same tab, like the other GitHub links.

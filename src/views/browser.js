@@ -5,7 +5,10 @@ const BrowserView = {
 
   name: 'browser',
 
-  layout: `
+  // The ↑ that floats at the bottom of a scrolling panel (SPEC §6 Back to top).
+  toTop: '<div class="to-top-holder"><button type="button" class="to-top" title="Back to top" aria-label="Back to top" hidden>↑</button></div>',
+
+  layout: () => `
     <header class="app-header"></header>
     <div class="app-body">
       <nav class="sidebar" aria-label="Files">
@@ -14,22 +17,32 @@ const BrowserView = {
           <span class="tree-count"></span>
         </div>
         <div class="tree"></div>
+        ${ BrowserView.toTop }
       </nav>
       <div class="resizer" role="separator" aria-orientation="vertical" title="Drag to resize"></div>
       <main class="content">
         <section class="update-notice" hidden></section>
         <section class="panel" hidden></section>
         <div class="file-view"></div>
+        ${ BrowserView.toTop }
       </main>
     </div>
     <footer class="app-footer"></footer>`,
+
+  // The panel's ↑ shows once the panel has scrolled a little, and a click goes back to the top.
+  addToTop: ( panel ) => {
+    const button = panel.querySelector( ':scope > .to-top-holder > .to-top' );
+    panel.addEventListener( 'scroll', () => { button.hidden = panel.scrollTop < 200; } );
+    button.addEventListener( 'click', () => panel.scrollTo( { top: 0, behavior: 'smooth' } ) );
+  },
 
   // options.source and options.repo skip the choice (the tests use the mock this way).
   mount: async ( element, options = {} ) => {
     const find = ( selector ) => element.querySelector( selector );
     element.classList.add( 'browser-view' );
-    element.innerHTML = BrowserView.layout;
+    element.innerHTML = BrowserView.layout();
     BrowserView.element = element;
+    [ find( '.sidebar' ), find( '.content' ) ].forEach( BrowserView.addToTop );
     state.tree = null;   // no files until this mount's source lists them
     BrowserView.unmounts = [
       Shell.mount( { header: find( '.app-header' ), footer: find( '.app-footer' ), panel: find( '.panel' ) } ),

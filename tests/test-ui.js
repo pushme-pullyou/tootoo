@@ -124,6 +124,29 @@ test( 'view: mounts on the mock and opens the README', async () => {
   view.done();
 } );
 
+test( 'view: back to top in the files and in the open file (SPEC §6 Back to top)', async () => {
+  const view = await mountMock();
+  for ( const name of [ '.sidebar', '.content' ] ) {
+    const panel = view.find( name );
+    const button = panel.querySelector( '.to-top' );
+    assert( button.hidden, `${ name }: hidden at the top` );
+    panel.style.cssText = 'display: block; height: 200px; overflow: auto;';   // a scrolling panel, with or without styles.css
+    panel.insertAdjacentHTML( 'afterbegin', '<div class="tall" style="height: 3000px"></div>' );
+    panel.scrollTop = 500;
+    panel.dispatchEvent( new Event( 'scroll' ) );
+    assert( ! button.hidden, `${ name }: shown after scrolling (scrollTop ${ panel.scrollTop })` );
+    const asked = [];
+    panel.scrollTo = ( options ) => asked.push( options.top );
+    button.click();
+    assertEqual( asked, [ 0 ], `${ name }: a click asks for the top:` );
+    panel.scrollTop = 0;
+    panel.dispatchEvent( new Event( 'scroll' ) );
+    assert( button.hidden, `${ name }: hidden again at the top` );
+    panel.querySelector( '.tall' ).remove();
+  }
+  view.done();
+} );
+
 test( 'view: selecting a file emits file-selected, then file-rendered', async () => {
   const view = await mountMock();
   const seen = [];

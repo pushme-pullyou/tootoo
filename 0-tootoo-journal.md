@@ -602,3 +602,24 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
     operating system, while dark mode here is the reader's toggle, so the
     two would disagree after a toggle.
   * Tests: one new in `test-ui.js`, one new release check. 81 and 85 pass.
+
+* **Back to top** (Theo's agenda; SPEC.md §6 Back to top). A round ↑ at the
+  bottom right of the files panel and of the open file, shown after about
+  200 px of scrolling. The 2026 build had the same two buttons.
+  * How: the view (`src/views/browser.js`) adds a zero-height holder with
+    `position: sticky; bottom: 0` as each panel's last child, and the button
+    sits just above it. No fixed positioning, so it works the same when the
+    sidebar slides over the content on a phone.
+  * Learned: `tests/index.html` runs `src/` without `styles.css`, so a test
+    that needs a scrolling panel must set the panel's height and overflow
+    itself.
+  * Checked by eye in headless Chrome on the mock: both buttons sit inside
+    their panel's bottom-right corner. 82 and 86 pass.
+
+* **Retired icon settings removed from the installs** (Theo's agenda).
+  `faviconLetters` and `faviconColor` deleted from the settings blocks of
+  nine installs: 2025, 2026, aa, agenda, pages, qdata, sandbox, wikitheo and
+  tech. The app already ignored them (r2 on); the only visible effect is
+  that About no longer lists them under "Settings this release ignores".
+  Each block was run after the edit to confirm it is still valid. The
+  source keeps its tests for retired keys: any older block may hold one.

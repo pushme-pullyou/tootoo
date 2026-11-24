@@ -225,6 +225,24 @@ body.dark-mode .hljs-string, body.dark-mode .hljs-attr, body.dark-mode .hljs-sym
 body.dark-mode .hljs-number, body.dark-mode .hljs-literal, body.dark-mode .hljs-variable { color: #d19a66; }
 body.dark-mode .hljs-title, body.dark-mode .hljs-section, body.dark-mode .hljs-name { color: #61afef; }
 
+/* ── Back to top: a ↑ floating at the bottom of the files and of the open file ── */
+
+/* The holder sticks to the panel's bottom edge and takes no room; the button sits just above it. */
+.to-top-holder { position: sticky; bottom: 0; height: 0; z-index: 5; }
+.to-top {
+  position: absolute;
+  right: 1em;
+  bottom: 1em;
+  width: 2.2em;
+  height: 2.2em;
+  padding: 0;
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
 /* ── Local: the file:// start panel ── */
 
 .start-panel { max-width: 36em; margin: 2em auto; padding: var(--space); }

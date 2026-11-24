@@ -2,12 +2,7 @@
 
 ## 2026-11-23
 
-* in the index.html Add: build date, and Description.  anything else?
-
-* Remove: faviconLetters, faviconColor
-* Want back to top icons
 * Build for new repo utility
-* What do do ith previous tootoo
 * Select fonts
 * Select colors
 
