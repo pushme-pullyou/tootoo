@@ -10,7 +10,7 @@ const Config = {
   defaults: Object.freeze( {
     owner: '', repo: '', branch: '',
     view: 'browser',
-    appName: 'TooToo', subtitle: '',
+    appName: 'TooToo', subtitle: '', description: '',
     themeColor: '', headingFontUrl: '', headingFont: '', faviconFile: '',
     sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo', homeUrl: '',
     storagePrefix: 'tootoo',

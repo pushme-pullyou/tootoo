@@ -2,10 +2,9 @@
 
 ## 2026-11-23
 
-* Add: Release date
-* Add: Description, anything else
+* in the index.html Add: build date, and Description.  anything else?
+
 * Remove: faviconLetters, faviconColor
-* When GitHub.io no need "TooToo"
 * Want back to top icons
 * Build for new repo utility
 * What do do ith previous tootoo

@@ -4,7 +4,8 @@
 #   pwsh -File assemble.ps1 -Release r2  # release stamp 'r2'
 #
 # It does three things to the build (SPEC.md §4 "The assembler"):
-#   1. stamps <meta name="tootoo-release" content="…">
+#   1. stamps <meta name="tootoo-release" content="…"> and <meta name="tootoo-built" content="YYYY-MM-DD">,
+#      and adds a one-line banner comment under the doctype
 #   2. inlines each <script src="…"> that points into src/
 #   3. inlines each <link rel="stylesheet" href="…"> that points into src/
 # CDN tags (http:, https:, //) are left alone. The config block is never touched.
@@ -27,6 +28,16 @@ $stamp = '<meta name="tootoo-release" content="[^"]*">'
 $count = ( [regex]::Matches( $html, $stamp ) ).Count
 if ( $count -ne 1 ) { throw "src/index.html needs exactly one tootoo-release meta (found $count)" }
 $html = $html -replace $stamp, "<meta name=`"tootoo-release`" content=`"$Release`">"
+
+# The build date (date only, so a rebuild on the same day changes nothing), and a banner for whoever opens the file.
+$built = Get-Date -Format 'yyyy-MM-dd'
+$builtStamp = '<meta name="tootoo-built" content="[^"]*">'
+if ( ( [regex]::Matches( $html, $builtStamp ) ).Count -ne 1 ) { throw 'src/index.html needs exactly one tootoo-built meta' }
+$html = $html -replace $builtStamp, "<meta name=`"tootoo-built`" content=`"$built`">"
+$doctype = '<!doctype html>'
+if ( -not $html.StartsWith( $doctype ) ) { throw "src/index.html must start with $doctype" }
+$banner = "<!-- TooToo $Release, built $built. Generated from https://github.com/pushme-pullyou/tootoo. Edit only the settings block below: updates replace everything else. -->"
+$html = $doctype + "`n" + $banner + $html.Substring( $doctype.Length )
 
 # Read one src/ file to inline, refusing text that would break the page or the swap.
 $readSourceFile = {

@@ -139,6 +139,8 @@ The one-writer rule from today's `ARCHITECTURE.md` carries over. Each field of `
 
 `assemble.ps1` reads `src/index.html` and replaces each `<script src="…">` and `<link rel="stylesheet" href="…">` that points into `src/` with the file's contents inline. It stamps the `tootoo-release` meta and writes one `index.html`. CDN tags are left alone. Nothing else: no config swap, no templates.
 
+Added 2026-11-23: it also stamps `<meta name="tootoo-built" content="YYYY-MM-DD">` with the build date, and writes a one-line banner comment under the doctype naming the release, the date and the source repo. The date has no time, so a rebuild on the same day gives the same file.
+
 One addition (2026-11-22): a `dev` build also refreshes this repo's own root `index.html` with the new build, carrying the root's config block over unchanged (the same text swap as an update). So the workshop's front page always runs the latest build, and a broken build shows there first. Release builds (`-Release rN`) leave it alone.
 
 ### The config block (settled: decisions 12–14)
@@ -232,6 +234,14 @@ Then the buttons, unchanged: ⌂ (when `homeUrl` is set), 🌓, A−, A+, ⚙️
 - **A local folder** that is a GitHub clone: owner / repo links as usual, with 📂 in front to show the files come from disk. Without a GitHub repo: 📂 and the folder name in place of owner / repo, with no links.
 - **No repo known:** owner and repo are left out, and the icon links nowhere.
 
+### Page head and About: build date and description
+
+Settled 2026-11-23; ships in the next release.
+
+- **Build date:** the `tootoo-built` stamp (§4, the assembler). About shows it after the release number: "TooToo release r4 · built 2026-11-23".
+- **Description:** the page carries `<meta name="description">` with TooToo's own sentence. A new setting, `description`, lets an install describe its repo: at startup it replaces the tag's text. About shows whichever applies, under the subtitle. Search engines read the replaced text; link previews that don't run scripts see TooToo's sentence.
+- **Banner:** a comment under the doctype, for whoever opens the file: the release, the build date, the source repo, and "edit only the settings block".
+
 ### File header: the file on GitHub
 
 Settled 2026-11-22; ships in the next release. In the content panel's header, a small GitHub mark sits before the breadcrumbs, linking to the open file's source on GitHub: `https://github.com/<owner>/<repo>/blob/<branch>/<path>`, with `HEAD` (the default branch) when no branch is set. Same tab, like the other GitHub links.
@@ -317,6 +327,7 @@ tests/
 - **Release file** (`?release=1`):
   - no `<script src>` or stylesheet link points into `src/`;
   - exactly one `tootoo-release` stamp;
+  - exactly one `tootoo-built` stamp holding a date, the banner under the doctype, and one description;
   - each config marker appears exactly once;
   - the suite passes against the assembled file.
 

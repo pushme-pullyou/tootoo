@@ -92,6 +92,12 @@ test( 'shell: the app name shows only when the install names itself', () => {
     Shell.showsAppName( 'TooToo Next', 'tootoo-next' ), Shell.showsAppName( 'Sandbox', '' ) ], [ true, false, false, true ] );
 } );
 
+test( 'shell: About gives the build date and a description (SPEC §6 Page head and About)', () => {
+  assertEqual( [ Shell.builtText( '2026-11-23' ), Shell.builtText( 'dev' ), Shell.builtText( '' ) ], [ ' · built 2026-11-23', '', '' ] );
+  assertEqual( Shell.description( 'My family history' ), 'My family history', 'the install\'s own wins:' );
+  assertEqual( CONFIG.description, '', 'no description by default:' );
+} );
+
 test( 'content: the file on GitHub (SPEC §6 File header)', () => {
   assertEqual( Content.githubUrl( 'pushme-pullyou', 'tootoo-next', '', 'docs/my notes.md' ),
     'https://github.com/pushme-pullyou/tootoo-next/blob/HEAD/docs/my%20notes.md' );

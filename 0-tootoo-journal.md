@@ -587,3 +587,18 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
   * Found on the way: the local folder `pushme-pullyou-tootoo-2026-10` had
     its remote pointing at `pushme-pullyou/tootoo`, now this repo. Repointed
     to `pushme-pullyou/tootoo-2026-10`.
+
+* **Build date and description, in the page head and in About** (Theo's
+  agenda). SPEC.md §4 (the assembler) and §6 (Page head and About).
+  * `assemble.ps1` stamps `<meta name="tootoo-built">` with the date and
+    writes a banner comment under the doctype: release, date, source repo,
+    "edit only the settings block". Date only, so the root `index.html`
+    changes at most once a day from rebuilds.
+  * The page has `<meta name="description">` with TooToo's own sentence. New
+    setting `description`: an install's own sentence replaces it at startup.
+    About shows the description under the subtitle, and "· built
+    YYYY-MM-DD" after the release number.
+  * Considered and dropped: `<meta name="color-scheme">`. It follows the
+    operating system, while dark mode here is the reader's toggle, so the
+    two would disagree after a toggle.
+  * Tests: one new in `test-ui.js`, one new release check. 81 and 85 pass.

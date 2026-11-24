@@ -19,6 +19,13 @@ const Shell = {
 
   release: () => ( document.querySelector( 'meta[name="tootoo-release"]' ) || {} ).content || 'dev',
 
+  // The build date assemble.ps1 stamps, e.g. '2026-11-23'. 'dev' when src/ runs unbuilt.
+  built: () => ( document.querySelector( 'meta[name="tootoo-built"]' ) || {} ).content || 'dev',
+  builtText: ( built ) => ( /^\d{4}-\d\d-\d\d$/.test( built ) ? ` · built ${ built }` : '' ),
+
+  // The install's own description, else the one written in the page (TooToo's).
+  description: ( own = CONFIG.description ) => own || ( document.querySelector( 'meta[name="description"]' ) || {} ).content || '',
+
   // ── Mount ──
 
   // elements: { header, footer, panel }. Returns the unmount function.
@@ -85,6 +92,8 @@ const Shell = {
     if ( CONFIG.faviconFile ) {
       document.head.insertAdjacentHTML( 'beforeend', `<link rel="icon" href="${ Shell.escape( CONFIG.faviconFile ) }">` );
     }
+    const meta = document.querySelector( 'meta[name="description"]' );
+    if ( meta && CONFIG.description ) { meta.content = CONFIG.description; }
     document.title = CONFIG.appName;
   },
 
@@ -213,8 +222,9 @@ const Shell = {
     return `<button type="button" class="panel-close" data-action="close" aria-label="Close">✕</button>
       <h2>${ esc( CONFIG.appName ) }</h2>
       ${ CONFIG.subtitle ? `<p>${ esc( CONFIG.subtitle ) }</p>` : '' }
+      ${ Shell.description() ? `<p class="about-description">${ esc( Shell.description() ) }</p>` : '' }
       <p>Showing ${ where }: ${ files.toLocaleString() } files.</p>
-      <p>TooToo release <strong>${ esc( Shell.release() ) }</strong> · <a href="${ esc( CONFIG.sourceRepoUrl ) }">source and updates</a></p>
+      <p>TooToo release <strong>${ esc( Shell.release() ) }</strong>${ esc( Shell.builtText( Shell.built() ) ) } · <a href="${ esc( CONFIG.sourceRepoUrl ) }">source and updates</a></p>
       <p>Keys: <kbd>/</kbd> filter · <kbd>\\</kbd> tree · arrows move · <kbd>Ctrl</kbd>+<kbd>B</kbd> files</p>
       ${ unknown.length ? `<p>Settings this release ignores: ${ unknown.map( ( key ) => `<code>${ esc( key ) }</code>` ).join( ', ' ) }</p>` : '' }`;
   },

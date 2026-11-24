@@ -27,6 +27,15 @@ if ( releaseMode ) {
     assertEqual( [ count( text, 'TOOTOO-CONFIG-START' ), count( text, 'TOOTOO-CONFIG-END' ) ], [ 1, 1 ], 'START, END:' );
   } );
 
+  test( 'release: a build date, a banner under the doctype and a description', async () => {
+    const text = await buildText();
+    assert( /^\d{4}-\d\d-\d\d$/.test( Shell.built() ), `built stamp: ${ Shell.built() }` );
+    assertEqual( count( text, '<meta name="tootoo-built" content="' ), 1, 'built stamps:' );
+    assert( text.startsWith( `<!doctype html>\n<!-- TooToo ${ Shell.release() }, built ${ Shell.built() }. ` ), text.slice( 0, 80 ) );
+    assertEqual( count( text, '<meta name="description" content="' ), 1, 'descriptions:' );
+    assert( Shell.aboutHtml().includes( ` · built ${ Shell.built() }` ) && Shell.aboutHtml().includes( 'about-description' ), 'About shows both' );
+  } );
+
   test( 'release: the config block is the same as in src/index.html', async () => {
     const source = await ( await fetch( '../src/index.html' ) ).text();
     assertEqual( Update.blockOf( await buildText(), 'build' ).block, Update.blockOf( source, 'src' ).block );
