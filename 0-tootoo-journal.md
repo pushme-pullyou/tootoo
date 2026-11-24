@@ -568,3 +568,22 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
     point to `/tootoo/`. The root page's block now says `repo: 'tootoo'`,
     `appName: 'TooToo'` (hidden as a repeat). `storagePrefix` stays
     `'tootoo-next'`, so saved settings and the token survive.
+
+* **Header: the default app name is no longer shown.** Theo saw "TooToo" in
+  genealogy's header. Not a broken copy: genealogy sets no `appName`, so the
+  default showed, and "TooToo" doesn't repeat "genealogy".
+  theo-armour.github.io had the same gap. New rule (SPEC.md §6 Header, item
+  4): the app name shows only when the install sets its own `appName` and it
+  isn't a repeat of the name before it. `Shell.showsAppName` in
+  `src/ui/shell.js`; one new test, one changed. The tab title and About
+  still use the default.
+  * For the next release: installs see the change only after r4 and
+    `update <install>`.
+
+* **`tootoo-2026` renamed `tootoo-2026-11`** (Theo), to sit beside
+  `tootoo-2026-10`. The entries above keep the name as it was at the time.
+  SPEC.md, the old repo's README banner, the pushme-pullyou.github.io README
+  and the global instructions now say `tootoo-2026-11`.
+  * Found on the way: the local folder `pushme-pullyou-tootoo-2026-10` had
+    its remote pointing at `pushme-pullyou/tootoo`, now this repo. Repointed
+    to `pushme-pullyou/tootoo-2026-10`.

@@ -87,6 +87,11 @@ test( 'shell: the app name is hidden when it repeats the repo name', () => {
     Shell.sameName( 'TooToo', 'mock-repo' ), Shell.sameName( '', '' ) ], [ true, false, false, false ] );
 } );
 
+test( 'shell: the app name shows only when the install names itself', () => {
+  assertEqual( [ Shell.showsAppName( 'Pages', 'theo-armour.github.io' ), Shell.showsAppName( undefined, 'genealogy' ),
+    Shell.showsAppName( 'TooToo Next', 'tootoo-next' ), Shell.showsAppName( 'Sandbox', '' ) ], [ true, false, false, true ] );
+} );
+
 test( 'content: the file on GitHub (SPEC §6 File header)', () => {
   assertEqual( Content.githubUrl( 'pushme-pullyou', 'tootoo-next', '', 'docs/my notes.md' ),
     'https://github.com/pushme-pullyou/tootoo-next/blob/HEAD/docs/my%20notes.md' );
@@ -103,7 +108,7 @@ test( 'view: mounts on the mock and opens the README', async () => {
   assertEqual( [ ...view.find( '.app-header' ).querySelectorAll( '.icon-link, .repo-links a, .brand' ) ].map( ( link ) => link.getAttribute( 'href' ) ),
     [ 'https://github.com/mock/mock-repo', 'https://mock.github.io/', 'https://mock.github.io/mock-repo/', location.pathname ], 'icon, owner, repo, app name:' );
   assert( view.find( '.icon-link svg' ), 'the GitHub mark when faviconFile is empty' );
-  assert( ! view.find( '.brand' ).hidden, 'TooToo differs from mock-repo, so the app name shows' );
+  assert( view.find( '.brand' ).hidden, 'no name of its own (the default TooToo), so the app name is hidden' );
   assert( view.find( '.app-footer' ).textContent.startsWith( '© ' ), 'no footer' );
   assertEqual( state.currentPath, 'README.md' );
   assertEqual( view.find( '.file-body h1' ).textContent, 'Mock repo', 'README rendered:' );

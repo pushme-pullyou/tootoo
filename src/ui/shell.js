@@ -109,6 +109,9 @@ const Shell = {
     return plain( a ) !== '' && plain( a ) === plain( b );
   },
 
+  // The header shows the app name only when the install names itself (not the default) and it isn't a repeat.
+  showsAppName: ( ownName, shownName ) => Boolean( ownName ) && ! Shell.sameName( ownName, shownName ),
+
   // The icon's link, owner / repo links (📂 first for a local folder), then the footer.
   // The app name is left out when it only repeats the name just before it.
   showRepo: () => {
@@ -134,7 +137,7 @@ const Shell = {
     }
     header.querySelector( '.repo-links' ).innerHTML = html;
     const shownName = links.pages ? state.repo : links.home ? state.owner : '';
-    header.querySelector( '.brand' ).hidden = Shell.sameName( CONFIG.appName, shownName );
+    header.querySelector( '.brand' ).hidden = ! Shell.showsAppName( ( window.TOOTOO_CONFIG || {} ).appName, shownName );
     Shell.el.footer.textContent = Shell.rightsLine( state.owner );
   },
 
