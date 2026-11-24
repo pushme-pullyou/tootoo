@@ -33,4 +33,6 @@ Your thoughts on this?
 
 I'm thinking about what to do about other repositories that don't yet have a Tootoo. Should we build a utility that looks at a given folder or repository and creates a Tootoo based on a form that is filled in?
 
-Also, it would be nice to be able to update any Tootoo using a form. 
+Also, it would be nice to be able to update any and all parameters of any Tootoo using a form.
+
+Also, Currently, there are some tootoos that think there are r3, but aren't the latest r3, so it might be useful to have something that checks a repository for current release integrity.
