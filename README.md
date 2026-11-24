@@ -1,6 +1,15 @@
 # TooToo Next
 
-The rebuild of TooToo, the single-file GitHub repository viewer, and of the Dolittle workshop that builds it. In the new design, each install keeps its own self-contained `index.html`, with its settings in a marked config block, and pulls numbered releases when it chooses. Nothing is pushed out to the installs. Today's TooToo, in `pushme-pullyou-dolittle` and `pushme-pullyou-tootoo`, keeps running on release r1 until this replaces it.
+TooToo, the single-file GitHub repository viewer: drop one `index.html` into a repo, and the repo becomes a browsable site. This repo is its workshop and its release host. Each install keeps its own self-contained `index.html`, with its settings in a marked config block, and pulls numbered releases when it chooses; nothing is pushed out to installs. TooToo is one animal in the [pushme-pullyou Menagerie](https://pushme-pullyou.github.io/#README.md), born in the [Dolittle](https://github.com/pushme-pullyou/dolittle) workshop.
+
+## Get TooToo
+
+The page at this repo's Pages address runs the **latest build**, for trying things out. For your own repo, take a **release**:
+
+1. Download `index.html` from the [latest release](https://github.com/pushme-pullyou/tootoo/releases/latest) (or from `releases/rN/index.html`).
+2. Put it in your repo. Opened from disk, it offers 📂 Open folder; on your Pages site, it browses that repo with no settings.
+3. To brand it, edit the config block near the top (between `TOOTOO-CONFIG-START` and `TOOTOO-CONFIG-END`); every setting is listed there.
+4. To update later: open it from disk, and when it says **rN available**, click **⬇ Download updated index.html**. Your config block carries over.
 
 * [SPEC.md](SPEC.md): the specification.
 * [BUILD-PROMPT.md](BUILD-PROMPT.md): the staged build prompt for an AI agent ("build stage N").
@@ -22,6 +31,11 @@ The rebuild of TooToo, the single-file GitHub repository viewer, and of the Doli
 * Before a release: [tests/live.html](tests/live.html) against the real GitHub API, and [tests/CHECKLIST.md](tests/CHECKLIST.md) by hand.
 
 ## Changelog
+
+### 2026-11-23
+
+* The repo prepares to become `pushme-pullyou/tootoo` (SPEC decision 28, revised): `releases/` (r1–r3, `latest.json`) copied in byte for byte; README "Get TooToo" for strangers; AGENTS and SPEC updated.
+* All 16 installs on r3; `.nojekyll` added to the public installs.
 
 ### 2026-11-22
 

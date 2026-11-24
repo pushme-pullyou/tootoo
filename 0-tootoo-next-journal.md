@@ -542,3 +542,18 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
   keeps them.
   * Still untested on a real install: the "rN available" notice and its
     download. Next release: open any install from disk and use the button.
+
+* **Decision 28 revised: tootoo-next becomes `tootoo`; Dolittle stays the
+  core.** Theo: rename today's `tootoo` to `tootoo-2026` (left active) and
+  this repo to `tootoo`; Dolittle stays the family's core, which spawns
+  TooToo, GubGub, DabDab and JipJip (the Menagerie). Shared code moves into
+  Dolittle when GubGub begins ("always afraid of abstracting too soon").
+  * The catch: every install's update check reads
+    `pushme-pullyou.github.io/tootoo/releases/latest.json`, and Pages
+    addresses aren't forwarded on a rename. So this repo becomes the release
+    host too: `releases/` copied in from the old repo's committed blobs, all
+    five files byte-identical.
+  * The root page stays the latest build (Theo); the README's new "Get
+    TooToo" section points strangers to Releases.
+  * Step 1 of 6 done (prepare). Next: rename old `tootoo` → `tootoo-2026`,
+    then this repo → `tootoo`, then fix GitHub Releases, links and Dolittle.

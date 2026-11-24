@@ -69,7 +69,7 @@ What drives the rebuild:
 | 25 | **Agents verify with headless Chrome** (`--dump-dom`) and read the `PASS n / FAIL n` line. | The build prompt's stages can check themselves, with no installs. |
 | 26 | **Live GitHub tests on a separate smoke page**, run by hand before a release. | Real-world coverage without spending quota on every run. |
 | 27 | **Release gate:** the suite on `src/` and on the assembled file, the live smoke page, and a short manual checklist. | Some things only a person can check: the picker click, how it looks, phone width. |
-| 28 | **This repo becomes Dolittle.** After migration the old one is archived as `dolittle-2026-11`, and this one is published as `pushme-pullyou/dolittle` (§8). | The workshop keeps its name and story, with a clean history, as in the 2026-10-31 split. |
+| 28 | ~~**This repo becomes Dolittle.**~~ **Revised 2026-11-23: this repo becomes `pushme-pullyou/tootoo`**, TooToo's own workshop and release host; today's `tootoo` is renamed `tootoo-2026` and stays active. **Dolittle stays the family's core**: the Menagerie hub (TooToo, GubGub, DabDab, JipJip) with the shared rules and plans (§8). | TooToo keeps the name people know, and one repo holds its source and releases. Shared code moves into Dolittle when GubGub begins, not before: what's worth sharing shows up with the second animal, so no abstracting too soon. |
 | 29 | **Workshop commands: `build`, `test`, `release`, `update <install>`.** `INSTALL-LIST.md` becomes Theo's checklist with a release column (§8). | Theo can update his own installs in one step, while every install still chooses its release. |
 | 30 | **Migration: r2 is the first rebuild release. Pilot on `theo-armour-sandbox`**, then the other 15 in one batch (§7). | One low-stakes install proves the paste-as-is path first. |
 | 31 | **Delete each install's `tootoo.config.js` in its migration commit.** | No stale second config to confuse anyone. Git keeps it, and rollback is a revert. |
@@ -169,13 +169,13 @@ window.TOOTOO_CONFIG = {
 
 - Releases are numbered `r1`, `r2`, … The first was cut on 2026-11-21 from the old build, so the rebuild's first release continues from r2.
 - Each release is one self-contained `index.html` with a default config block.
-- **Release host** (decision 16), all in `pushme-pullyou/tootoo`, served at `https://pushme-pullyou.github.io/tootoo/`:
+- **Release host** (decision 16), all in `pushme-pullyou/tootoo`, served at `https://pushme-pullyou.github.io/tootoo/`. Since 2026-11-23 (decision 28, revised) that repo is this workshop itself, so `releases/` sits beside `src/`; r1–r3 were copied over byte for byte from the old repo, now `tootoo-2026`:
 
   | Path | What |
   | --- | --- |
   | `releases/rN/index.html` | Each release, frozen and never changed once cut |
   | `releases/latest.json` | The marker installs read, e.g. `{ "release": "r2", "date": "2026-12-01", "url": "https://pushme-pullyou.github.io/tootoo/releases/r2/index.html", "notes": "https://github.com/pushme-pullyou/tootoo/releases/tag/r2" }` |
-  | `index.html` (root) | Always the latest release; also the live demo |
+  | `index.html` (root) | The latest build (`dev`), refreshed by every `assemble.ps1`; also the live demo. Strangers download a release instead (the README says how) |
   | GitHub Release `rN` | The release notes page, with `index.html` attached |
 
 - **The check** (decisions 17–19):
@@ -266,11 +266,12 @@ Settled 2026-11-21 (decisions 30–31).
 
 Settled 2026-11-21 (decisions 28–29).
 
-- **Home:** this repo becomes the Dolittle workshop. After migration:
-  1. Archive the old GitHub repo as `pushme-pullyou/dolittle-2026-11`.
-  2. Publish this one as `pushme-pullyou/dolittle`.
+- **Home** (decision 28, revised 2026-11-23): this repo becomes `pushme-pullyou/tootoo`, TooToo's workshop and release host in one.
+  1. Copy `releases/` from today's `tootoo` (done 2026-11-23).
+  2. Rename today's `pushme-pullyou/tootoo` to `tootoo-2026`. It stays active, with a README banner pointing here.
+  3. Rename this repo, `pushme-pullyou/tootoo-next`, to `tootoo`. Its Pages site then serves `/tootoo/releases/latest.json` again.
 
-  This is the same pattern as the 2026-10-31 split. Until then it stays a local repo.
+  **Dolittle** (`pushme-pullyou/dolittle`) stays the family's core: the Menagerie hub, the shared rules (vanilla, `file://`, the config block, pull-based releases, the workshop commands) and the roadmap. Its r1 pipeline (`promote` / `sync` / `publish`, `PIPELINE.md`) is retired. Shared code moves into it when GubGub begins.
 - **Commands.** Typed in chat; Claude runs the whole step and reports back.
 
   | Command | Does | Writes git? |

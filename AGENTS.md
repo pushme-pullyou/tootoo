@@ -1,6 +1,6 @@
 # TooToo Next: rules for AI agents
 
-This repo rebuilds TooToo, the single-file GitHub repository viewer, and will become the Dolittle workshop (SPEC.md decision 28). **[SPEC.md](SPEC.md) is the authority.** Read it before changing anything, then [0-tootoo-next-journal.md](0-tootoo-next-journal.md) for what was decided and learned since.
+This repo is TooToo, the single-file GitHub repository viewer: its workshop (source, tests, build) and its release host (`releases/`). It is becoming `pushme-pullyou/tootoo` (SPEC.md decision 28, revised 2026-11-23); Dolittle stays the family's core. **[SPEC.md](SPEC.md) is the authority.** Read it before changing anything, then [0-tootoo-next-journal.md](0-tootoo-next-journal.md) for what was decided and learned since.
 
 ## Hard rules
 
@@ -28,7 +28,7 @@ Theo types them in chat; the agent runs the whole step and reports back.
 | --- | --- | --- |
 | `build` | `pwsh -File assemble.ps1` → `build/index.html` (gitignored) | No |
 | `test` | `pwsh -File run-tests.ps1`: the suite on `src/`, then inside the build | No |
-| `release` | Checks the release gate (SPEC.md §9: both test runs, [tests/live.html](tests/live.html), [tests/CHECKLIST.md](tests/CHECKLIST.md)). Then, in the `pushme-pullyou-tootoo` repo: writes `releases/rN/index.html` (`assemble.ps1 -Release rN`), updates `releases/latest.json`, and makes the root `index.html` the new release with tootoo's own block. Commits and pushes, creates the GitHub Release `rN — YYYY-MM-DD` with `index.html` attached, and tags `rN` here | Yes, after confirmation |
+| `release` | Checks the release gate (SPEC.md §9: both test runs, [tests/live.html](tests/live.html), [tests/CHECKLIST.md](tests/CHECKLIST.md)). Then, in this repo (the release host since 2026-11-23): writes `releases/rN/index.html` (`assemble.ps1 -Release rN`, checking the build is stamped `rN`) and updates `releases/latest.json`. Rebuilds `dev` afterwards, so the root stays the latest build. Commits and pushes, tags `rN`, and creates the GitHub Release `rN — YYYY-MM-DD` with `releases/rN/index.html` attached as `index.html` | Yes, after confirmation |
 | `update <install>` | For one install in [INSTALL-LIST.md](INSTALL-LIST.md): takes the latest release, moves the install's config block into it (or pastes `tootoo.config.js` the first time), renames the old file to `index.bak`, and checks it via `file://`. Then shows the diff, and commits and pushes after confirmation. Updates the install's row | Yes, after confirmation |
 
 Rules carried over from today's `release`: confirm before every git write; never force-push; never move or delete an `rN` tag, a GitHub Release or a `releases/rN/` folder.
@@ -36,6 +36,7 @@ Rules carried over from today's `release`: confirm before every git write; never
 ## Where things are
 
 - `index.html` (root): the latest build, browsing this repo. Every `dev` build (`assemble.ps1`, so every `run-tests.ps1`) rewrites it, keeping its config block. Never hand-edit it outside that block, and commit it with the `src/` change that produced it.
+- `releases/`: `rN/index.html` for each release, frozen once cut, and `latest.json`, the marker every install's update check reads. Never edit, move or delete a release folder.
 - `src/`: the app. `src/index.html` is the dev page and runs straight from `file://`; `?source=mock` browses the test mock.
 - `tests/`: [index.html](tests/index.html) (the suite; `?release=1` runs it inside the build), [live.html](tests/live.html) (the real GitHub API, by hand), [CHECKLIST.md](tests/CHECKLIST.md) (by hand), `mock-source.js`.
 - `assemble.ps1` inlines `src/` into `build/index.html`. `run-tests.ps1` assembles, then runs both headless suites.

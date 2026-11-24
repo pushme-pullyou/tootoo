@@ -17,6 +17,14 @@
 * Explanation about Tootoo.
 * links to pushme pullyou
 
+### Updates
+
+Regarding next bigger steps for TooToo, I need to consider how it fits within the broader ecosystem of Dolittle and its related projects.
+
 Dolittle should, somehow, stay as the core effort. It spawns TooToo, GubGub, DabDab and more.
 
-I think I should just rename the current tootoo to Tootoo-2026 and Rename Tootoo-next to simply Tootoo. 
+I think we should just rename the current tootoo to tootoo-2026 and Rename tootoo-next to simply tootoo.
+
+and update Dolittle as appropriate.
+
+Your thoughts on this?
