@@ -754,3 +754,13 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
     in the same repo. Cleared the stale locks and committed the staged
     files with a plain `git commit`, which worked. Lesson for that repo:
     stage, then commit without paths.
+
+* **Private repos.** README gains a "Private repos" section: a read-only
+  fine-grained token, and three ways to open a private repo with no Pages
+  site (from the folder, from GitHub, or through any public install with
+  `?owner=&repo=`). No code changed: TooToo already reads private repos
+  through the API when a token is saved.
+  * agenda's Pages site unpublished (it was public; the repo is private).
+  * The same note sits in each of Theo's three private repos (agenda, aa,
+    qdata) as a comment-only `.gitignore`: it travels with the repo and is
+    not content. **qdata is private but still has a public Pages site.**

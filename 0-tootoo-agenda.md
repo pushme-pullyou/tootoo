@@ -2,8 +2,10 @@
 
 ## 2026-11-23
 
-* 
+*
 * Build for new repo utility
+* Private repo support notes
+* Show iframes
 * Select fonts
 * Select colors
 

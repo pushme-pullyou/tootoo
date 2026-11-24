@@ -33,6 +33,29 @@ links: [ { label: 'Pages', url: 'https://theo-armour.github.io/pages/' } ],   //
 
 `noindex: true` asks search engines not to list a site. It does not make anything private: a Pages site is readable by anyone who has the address.
 
+## Private repos
+
+TooToo can show a private repo without publishing anything. Don't turn on GitHub Pages for a private repo: a Pages site is public, so every file in it can be read by anyone with the address.
+
+**1. Make a token.** On GitHub: Settings → Developer settings → [Fine-grained tokens](https://github.com/settings/personal-access-tokens/new). Limit it to the private repos you want to read, give it one permission, **Contents: Read-only**, and set an expiry date.
+
+**2. Open the repo one of three ways.**
+
+* **From its folder on your computer.** Double-click the repo's `index.html` and choose **📂 Open folder**. No token and no network: it reads the files on disk, including edits you haven't committed.
+* **From GitHub, on your computer.** The same file, **Browse GitHub instead**, then ⚙️ to save the token.
+* **From anywhere, a phone included.** Use any public TooToo as the viewer and name the repo in the address:
+
+  `https://<owner>.github.io/?owner=<owner>&repo=<private-repo>`
+
+  Press ⚙️ and save the token once in that browser. The public page holds none of your files; they travel only between GitHub and your browser. Bookmark the address.
+
+**What to know.**
+
+* The token is kept in that browser only, under the install's `storagePrefix`. Keep it read-only: other pages at the same site address could read a saved token.
+* With a token, files come through GitHub's API, and pictures, PDFs, audio and video are shown from memory, so nothing needs a public address.
+* An HTML page inside a private repo displays, but the pictures and scripts it links to don't load.
+* Without the token, the address shows "Repository not found" and the token box. It gives away the repo's name and nothing else.
+
 ## Examples
 
 [examples/](examples/) holds one or two small files of every type TooToo shows (Markdown, code, CSV, images, SVG, audio, video, PDF, HTML), a blog folder, and folders five levels deep. Its [README](examples/README.md) is a short tour: what to try in each folder.
@@ -64,7 +87,7 @@ links: [ { label: 'Pages', url: 'https://theo-armour.github.io/pages/' } ],   //
 
 * **r4 released.** Back to top in both panels; About and the GitHub token as pop-ups; a description and the build date in the page and in About; six new settings (`description`, `startFile`, `links`, `noindex`, `darkMode`, `bodyFont`); `view` and `sourceRepoUrl` retired; the header no longer shows the default name "TooToo".
 * `examples/` added: sample files of every type, with credits.
-* This README gains Settings and Examples sections.
+* This README gains Settings, Private repos and Examples sections.
 * The repo prepares to become `pushme-pullyou/tootoo` (SPEC decision 28, revised): `releases/` (r1–r3, `latest.json`) copied in byte for byte; README "Get TooToo" for strangers; AGENTS and SPEC updated.
 * All 16 installs on r3; `.nojekyll` added to the public installs.
 
