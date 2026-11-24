@@ -98,6 +98,18 @@ test( 'shell: About gives the build date and a description (SPEC §6 Page head a
   assertEqual( CONFIG.description, '', 'no description by default:' );
 } );
 
+test( 'settings: startFile, links and noindex (SPEC §6 Start file, links, noindex)', async () => {
+  const items = await MockSource.listTree();
+  const start = ( startFile ) => Content.startPath( { startFile }, items );
+  assertEqual( [ start( '' ), start( 'notes.txt' ), start( '/docs/guide.md' ), start( 'docs' ), start( 'docs/' ), start( 'no-such.md' ), start( 'media' ) ],
+    [ 'README.md', 'notes.txt', 'docs/guide.md', 'docs/README.md', 'docs/README.md', 'README.md', 'README.md' ], 'the start file:' );
+  assertEqual( Shell.linksHtml( [ { label: 'A & B', url: 'https://example.com/?a=1&b=2' }, { label: 'no url' }, { label: 'x', url: 'javascript:alert(1)' }, null ] ),
+    '<a href="https://example.com/?a=1&amp;b=2">A &amp; B</a>', 'links:' );
+  assertEqual( [ Shell.linksHtml( [] ), Shell.linksHtml( 'oops' ), CONFIG.links.length ], [ '', '', 0 ], 'no links by default:' );
+  assertEqual( [ Shell.robotsHtml( { noindex: true } ), Shell.robotsHtml( { noindex: false } ), CONFIG.noindex ],
+    [ '<meta name="robots" content="noindex">', '', false ], 'noindex:' );
+} );
+
 test( 'content: the file on GitHub (SPEC §6 File header)', () => {
   assertEqual( Content.githubUrl( 'pushme-pullyou', 'tootoo-next', '', 'docs/my notes.md' ),
     'https://github.com/pushme-pullyou/tootoo-next/blob/HEAD/docs/my%20notes.md' );

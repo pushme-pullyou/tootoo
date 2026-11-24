@@ -98,7 +98,7 @@ const BrowserView = {
     }
     Events.emit( 'tree-loaded', { tree: state.tree } );
     const { path, heading } = Router.current();
-    await Content.open( path || Tree.readmeIn( '' ), heading );
+    await Content.open( path || Content.startPath(), heading );
   },
 
 };

@@ -623,3 +623,20 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
   that About no longer lists them under "Settings this release ignores".
   Each block was run after the edit to confirm it is still valid. The
   source keeps its tests for retired keys: any older block may hold one.
+
+* **Default description reworded** (Theo): "Content brought to you by
+  TooToo, the single-file GitHub repository viewer."
+
+* **Three new settings: `startFile`, `links`, `noindex`** (SPEC.md §6 Start
+  file, links, noindex).
+  * `startFile`: `Content.startPath` picks the start: the named file, or the
+    named folder's README, else the root README. Used at first load and for
+    an empty address (the app name's link).
+  * `links`: `Shell.linksHtml` draws `[ { label, url } ]` at the right of
+    the footer and in About. The footer is now a flex row: rights line left,
+    links right.
+  * `noindex`: `Shell.robotsHtml` adds the robots tag at startup. A request
+    only: private-repo Pages sites are still public by address (see the
+    note above on agenda and aa).
+  * One new test covers all three. 83 and 87 pass; 2,106 of 2,500 lines.
+  * Not yet seen in a browser: the footer with links in it.

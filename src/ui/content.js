@@ -26,11 +26,18 @@ const Content = {
     return () => Events.off( 'open-requested', Content.onOpenRequested );
   },
 
-  // An empty hash means the start: the root README. A heading in the open file just scrolls.
+  // The file the start opens: startFile when it names a file, or a folder with a README; else the root README.
+  startPath: ( config = CONFIG, items = state.tree || [] ) => {
+    const start = String( config.startFile || '' ).replace( /^\/+|\/+$/g, '' );
+    const isFile = start && items.some( ( item ) => item.type === 'file' && item.path === start );
+    return isFile ? start : ( start && Tree.readmeIn( start, items ) ) || Tree.readmeIn( '', items );
+  },
+
+  // An empty hash means the start (startPath). A heading in the open file just scrolls.
   onOpenRequested: ( { path, heading } ) => {
     if ( ! state.tree ) { return; }   // too early (e.g. the start panel is up): the view opens the deep link after the tree loads
     if ( path && path === state.currentPath && heading ) { Content.scrollTo( heading ); return; }
-    Content.open( path || Tree.readmeIn( '' ), heading );
+    Content.open( path || Content.startPath(), heading );
   },
 
   showMessage: ( text ) => {

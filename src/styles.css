@@ -124,6 +124,10 @@ button.primary, .button.primary { color: var(--color-on-accent); background: var
   font-size: 0.85em;
   color: var(--color-muted);
   border-top: 1px solid var(--color-border);
+  display: flex;   /* the rights line on the left, the install's links on the right */
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25em 1em;
 }
 
 /* ── Tree: the sidebar ── */

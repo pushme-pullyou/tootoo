@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TooToo</title>
-<meta name="description" content="TooToo: a single-file viewer for a GitHub repository.">
+<meta name="description" content="Content brought to you by TooToo, the single-file GitHub repository viewer.">
 <meta name="tootoo-release" content="dev">
 <meta name="tootoo-built" content="dev">
 
@@ -16,6 +16,7 @@ window.TOOTOO_CONFIG = {
   // owner: '',                  // GitHub user or organization, e.g. 'theo-armour'
   // repo: '',                   // repository name, e.g. 'pages'
   // branch: '',                 // empty = the repo's default branch
+  // startFile: '',              // the file to open first, e.g. '0-agenda.md' or a folder; empty = the README
 
   // view: 'browser',            // the app type; v1 has 'browser' only
 
@@ -41,6 +42,10 @@ window.TOOTOO_CONFIG = {
   // Footer
   // rightsText: 'No rights reserved', // shown after "© <year> <owner>"
   // rightsOwners: null,         // null = every repo; [ 'login' ] = only these owners; [] = never
+  // links: [],                  // links in the footer and About, e.g. [ { label: 'Pages', url: 'https://example.com/' } ]
+
+  // Search engines
+  // noindex: false,             // true asks search engines not to list this site
 
   // Updates
   // checkForUpdates: true,      // tell the maintainer when a newer release exists (at most once a day)

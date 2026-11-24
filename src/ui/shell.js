@@ -92,10 +92,19 @@ const Shell = {
     if ( CONFIG.faviconFile ) {
       document.head.insertAdjacentHTML( 'beforeend', `<link rel="icon" href="${ Shell.escape( CONFIG.faviconFile ) }">` );
     }
+    document.head.insertAdjacentHTML( 'beforeend', Shell.robotsHtml() );
     const meta = document.querySelector( 'meta[name="description"]' );
     if ( meta && CONFIG.description ) { meta.content = CONFIG.description; }
     document.title = CONFIG.appName;
   },
+
+  // noindex: true asks search engines not to list the site. Only crawlers that run scripts see it.
+  robotsHtml: ( config = CONFIG ) => ( config.noindex ? '<meta name="robots" content="noindex">' : '' ),
+
+  // CONFIG.links as links: [ { label, url } ]. An entry without both, or with a script address, is skipped.
+  linksHtml: ( links = CONFIG.links ) => ( Array.isArray( links ) ? links : [] )
+    .filter( ( link ) => link && link.label && link.url && ! /^\s*javascript:/i.test( link.url ) )
+    .map( ( link ) => `<a href="${ Shell.escape( link.url ) }">${ Shell.escape( link.label ) }</a>` ).join( ' · ' ),
 
   showTitle: ( { path } ) => { document.title = `${ path.split( '/' ).pop() } · ${ CONFIG.appName }`; },
 
@@ -147,7 +156,7 @@ const Shell = {
     header.querySelector( '.repo-links' ).innerHTML = html;
     const shownName = links.pages ? state.repo : links.home ? state.owner : '';
     header.querySelector( '.brand' ).hidden = ! Shell.showsAppName( ( window.TOOTOO_CONFIG || {} ).appName, shownName );
-    Shell.el.footer.textContent = Shell.rightsLine( state.owner );
+    Shell.el.footer.innerHTML = `<span>${ esc( Shell.rightsLine( state.owner ) ) }</span><span class="footer-links">${ Shell.linksHtml() }</span>`;
   },
 
   // '© 2026 owner · No rights reserved'. rightsOwners: null = every owner, a list = only those, [] = none.
@@ -225,6 +234,7 @@ const Shell = {
       ${ Shell.description() ? `<p class="about-description">${ esc( Shell.description() ) }</p>` : '' }
       <p>Showing ${ where }: ${ files.toLocaleString() } files.</p>
       <p>TooToo release <strong>${ esc( Shell.release() ) }</strong>${ esc( Shell.builtText( Shell.built() ) ) } · <a href="${ esc( CONFIG.sourceRepoUrl ) }">source and updates</a></p>
+      ${ Shell.linksHtml() ? `<p>Links: ${ Shell.linksHtml() }</p>` : '' }
       <p>Keys: <kbd>/</kbd> filter · <kbd>\\</kbd> tree · arrows move · <kbd>Ctrl</kbd>+<kbd>B</kbd> files</p>
       ${ unknown.length ? `<p>Settings this release ignores: ${ unknown.map( ( key ) => `<code>${ esc( key ) }</code>` ).join( ', ' ) }</p>` : '' }`;
   },

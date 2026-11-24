@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TooToo</title>
-<meta name="description" content="TooToo: a single-file viewer for a GitHub repository.">
+<meta name="description" content="Content brought to you by TooToo, the single-file GitHub repository viewer.">
 <meta name="tootoo-release" content="dev">
 <meta name="tootoo-built" content="2026-11-23">
 
@@ -179,6 +179,10 @@ button.primary, .button.primary { color: var(--color-on-accent); background: var
   font-size: 0.85em;
   color: var(--color-muted);
   border-top: 1px solid var(--color-border);
+  display: flex;   /* the rights line on the left, the install's links on the right */
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25em 1em;
 }
 
 /* ── Tree: the sidebar ── */
@@ -337,7 +341,7 @@ body.dark-mode .hljs-title, body.dark-mode .hljs-section, body.dark-mode .hljs-n
 const Config = {
 
   defaults: Object.freeze( {
-    owner: '', repo: '', branch: '',
+    owner: '', repo: '', branch: '', startFile: '',
     view: 'browser',
     appName: 'TooToo', subtitle: '', description: '',
     themeColor: '', headingFontUrl: '', headingFont: '', faviconFile: '',
@@ -345,7 +349,8 @@ const Config = {
     storagePrefix: 'tootoo',
     hiddenFolders: Object.freeze( [] ), hiddenFiles: Object.freeze( [] ),   // the tree always hides index.bak
     hideDatedBackups: true, autoOpenFolderReadme: true,
-    rightsText: 'No rights reserved', rightsOwners: null,
+    rightsText: 'No rights reserved', rightsOwners: null, links: Object.freeze( [] ),
+    noindex: false,
     checkForUpdates: true, updateUrl: 'https://pushme-pullyou.github.io/tootoo/releases/latest.json',
   } ),
 
@@ -1495,10 +1500,19 @@ const Shell = {
     if ( CONFIG.faviconFile ) {
       document.head.insertAdjacentHTML( 'beforeend', `<link rel="icon" href="${ Shell.escape( CONFIG.faviconFile ) }">` );
     }
+    document.head.insertAdjacentHTML( 'beforeend', Shell.robotsHtml() );
     const meta = document.querySelector( 'meta[name="description"]' );
     if ( meta && CONFIG.description ) { meta.content = CONFIG.description; }
     document.title = CONFIG.appName;
   },
+
+  // noindex: true asks search engines not to list the site. Only crawlers that run scripts see it.
+  robotsHtml: ( config = CONFIG ) => ( config.noindex ? '<meta name="robots" content="noindex">' : '' ),
+
+  // CONFIG.links as links: [ { label, url } ]. An entry without both, or with a script address, is skipped.
+  linksHtml: ( links = CONFIG.links ) => ( Array.isArray( links ) ? links : [] )
+    .filter( ( link ) => link && link.label && link.url && ! /^\s*javascript:/i.test( link.url ) )
+    .map( ( link ) => `<a href="${ Shell.escape( link.url ) }">${ Shell.escape( link.label ) }</a>` ).join( ' · ' ),
 
   showTitle: ( { path } ) => { document.title = `${ path.split( '/' ).pop() } · ${ CONFIG.appName }`; },
 
@@ -1550,7 +1564,7 @@ const Shell = {
     header.querySelector( '.repo-links' ).innerHTML = html;
     const shownName = links.pages ? state.repo : links.home ? state.owner : '';
     header.querySelector( '.brand' ).hidden = ! Shell.showsAppName( ( window.TOOTOO_CONFIG || {} ).appName, shownName );
-    Shell.el.footer.textContent = Shell.rightsLine( state.owner );
+    Shell.el.footer.innerHTML = `<span>${ esc( Shell.rightsLine( state.owner ) ) }</span><span class="footer-links">${ Shell.linksHtml() }</span>`;
   },
 
   // '© 2026 owner · No rights reserved'. rightsOwners: null = every owner, a list = only those, [] = none.
@@ -1628,6 +1642,7 @@ const Shell = {
       ${ Shell.description() ? `<p class="about-description">${ esc( Shell.description() ) }</p>` : '' }
       <p>Showing ${ where }: ${ files.toLocaleString() } files.</p>
       <p>TooToo release <strong>${ esc( Shell.release() ) }</strong>${ esc( Shell.builtText( Shell.built() ) ) } · <a href="${ esc( CONFIG.sourceRepoUrl ) }">source and updates</a></p>
+      ${ Shell.linksHtml() ? `<p>Links: ${ Shell.linksHtml() }</p>` : '' }
       <p>Keys: <kbd>/</kbd> filter · <kbd>\\</kbd> tree · arrows move · <kbd>Ctrl</kbd>+<kbd>B</kbd> files</p>
       ${ unknown.length ? `<p>Settings this release ignores: ${ unknown.map( ( key ) => `<code>${ esc( key ) }</code>` ).join( ', ' ) }</p>` : '' }`;
   },
@@ -1960,11 +1975,18 @@ const Content = {
     return () => Events.off( 'open-requested', Content.onOpenRequested );
   },
 
-  // An empty hash means the start: the root README. A heading in the open file just scrolls.
+  // The file the start opens: startFile when it names a file, or a folder with a README; else the root README.
+  startPath: ( config = CONFIG, items = state.tree || [] ) => {
+    const start = String( config.startFile || '' ).replace( /^\/+|\/+$/g, '' );
+    const isFile = start && items.some( ( item ) => item.type === 'file' && item.path === start );
+    return isFile ? start : ( start && Tree.readmeIn( start, items ) ) || Tree.readmeIn( '', items );
+  },
+
+  // An empty hash means the start (startPath). A heading in the open file just scrolls.
   onOpenRequested: ( { path, heading } ) => {
     if ( ! state.tree ) { return; }   // too early (e.g. the start panel is up): the view opens the deep link after the tree loads
     if ( path && path === state.currentPath && heading ) { Content.scrollTo( heading ); return; }
-    Content.open( path || Tree.readmeIn( '' ), heading );
+    Content.open( path || Content.startPath(), heading );
   },
 
   showMessage: ( text ) => {
@@ -2175,7 +2197,7 @@ const BrowserView = {
     }
     Events.emit( 'tree-loaded', { tree: state.tree } );
     const { path, heading } = Router.current();
-    await Content.open( path || Tree.readmeIn( '' ), heading );
+    await Content.open( path || Content.startPath(), heading );
   },
 
 };

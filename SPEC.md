@@ -242,6 +242,14 @@ Settled 2026-11-23; ships in the next release.
 - **Description:** the page carries `<meta name="description">` with TooToo's own sentence. A new setting, `description`, lets an install describe its repo: at startup it replaces the tag's text. About shows whichever applies, under the subtitle. Search engines read the replaced text; link previews that don't run scripts see TooToo's sentence.
 - **Banner:** a comment under the doctype, for whoever opens the file: the release, the build date, the source repo, and "edit only the settings block".
 
+### Start file, links, noindex
+
+Settled 2026-11-23; ship in the next release. Three settings.
+
+- **`startFile`:** the file the start opens, in place of the root README: at first load with no file in the address, and from the app name's "back to the start" link. It may name a file (`0-agenda.md`) or a folder, which opens that folder's README. A name that matches nothing falls back to the root README. A file named in the address still wins.
+- **`links`:** a list of `{ label, url }`, shown at the right of the footer and in About, in the order given. An entry missing either part is skipped, and so is a `javascript:` address.
+- **`noindex`:** `true` adds `<meta name="robots" content="noindex">` at startup, asking search engines not to list the site. It is a request, not access control: the files stay readable by address, and a crawler that doesn't run scripts never sees the tag.
+
 ### Back to top
 
 Settled 2026-11-23; ships in the next release. The files panel and the open file each have a round ↑ button floating at their bottom right. It appears once that panel has scrolled about 200 px, and a click scrolls the panel back to its top. Carried from the 2026 build, which had the same two buttons.
