@@ -15,11 +15,11 @@ Copied 2026-11-22 from `pushme-pullyou-dolittle/INSTALL-LIST.md`, leaving out `J
 | `g:\My Drive\2026-theo-github\theo-armour-2026\index.html` | theo-armour/2026 | main | r3 |
 | `g:\My Drive\2026-theo-github\theo-armour-aa\index.html` | theo-armour/aa | main | r3 |
 | `g:\My Drive\2026-theo-github\theo-armour-agenda\index.html` | theo-armour/agenda | main | r3 |
-| `g:\My Drive\2026-theo-github\theo-armour-collection\index.html` | theo-armour/collection | main | r3 |
+| `g:\My Drive\2026-theo-github\theo-armour-collection\index.html` | theo-armour/collection | main | r4 |
 | `g:\My Drive\2026-theo-github\theo-armour-genealogy\index.html` | theo-armour/genealogy | main | r3 |
 | `g:\My Drive\2026-theo-github\theo-armour-pages\index.html` | theo-armour/pages | main | r3 |
 | `g:\My Drive\2026-theo-github\theo-armour-qdata\index.html` | theo-armour/qdata | main | r3 |
-| `g:\My Drive\2026-theo-github\theo-armour-sandbox\index.html` | theo-armour/sandbox | main | r3 |
+| `g:\My Drive\2026-theo-github\theo-armour-sandbox\index.html` | theo-armour/sandbox | main | r4 |
 | `g:\My Drive\2026-theo-github\theo-armour-wikitheo\index.html` | theo-armour/wikitheo | main | r3 |
 | `g:\My Drive\2026-theo-github\pushme-pullyou-tootoo\index.html` | pushme-pullyou/tootoo | main | dev (every build) |
 | `j:\My Drive\tech\index.html` | heritage-happenings/tech | main | r3 |

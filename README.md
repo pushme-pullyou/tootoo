@@ -11,8 +11,36 @@ The page at this repo's Pages address runs the **latest build**, for trying thin
 3. To brand it, edit the config block near the top (between `TOOTOO-CONFIG-START` and `TOOTOO-CONFIG-END`); every setting is listed there.
 4. To update later: open it from disk, and when it says **rN available**, click **⬇ Download updated index.html**. Your config block carries over.
 
+## Settings
+
+Every setting is a line in the config block, commented out until you need it. Each has a note beside it; the full rules are in [SPEC.md](SPEC.md) §6.
+
+| For | Settings |
+| --- | --- |
+| Which repo, and where it starts | `owner`, `repo`, `branch`, `startFile` |
+| Name and look | `appName`, `subtitle`, `description`, `themeColor`, `headingFont`, `headingFontUrl`, `bodyFont`, `darkMode`, `faviconFile`, `homeUrl` |
+| What the tree hides | `hiddenFolders`, `hiddenFiles`, `hideDatedBackups`, `autoOpenFolderReadme` |
+| Footer | `rightsText`, `rightsOwners`, `links` |
+| Search engines and updates | `noindex`, `checkForUpdates`, `updateUrl` |
+| Saved choices | `storagePrefix`: give each install its own |
+
+Two examples:
+
+```js
+startFile: '0-agenda.md',       // open this file first, not the README
+links: [ { label: 'Pages', url: 'https://theo-armour.github.io/pages/' } ],   // shown in the footer and in About
+```
+
+`noindex: true` asks search engines not to list a site. It does not make anything private: a Pages site is readable by anyone who has the address.
+
+## Examples
+
+[examples/](examples/) holds one or two small files of every type TooToo shows (Markdown, code, CSV, images, SVG, audio, video, PDF, HTML), a blog folder, and folders five levels deep. Its [README](examples/README.md) is a short tour: what to try in each folder.
+
+## In this repo
+
 * [SPEC.md](SPEC.md): the specification.
-* [BUILD-PROMPT.md](BUILD-PROMPT.md): the staged build prompt for an AI agent ("build stage N").
+* [BUILD-PROMPT.md](BUILD-PROMPT.md): the staged build prompt that built v1 ("build stage N"). History now.
 * [AGENTS.md](AGENTS.md): the rules for agents, and the workshop commands.
 * [INSTALL-LIST.md](INSTALL-LIST.md): Theo's installs and the release each runs.
 * [0-tootoo-journal.md](0-tootoo-journal.md): the development journal.
@@ -34,6 +62,9 @@ The page at this repo's Pages address runs the **latest build**, for trying thin
 
 ### 2026-11-23
 
+* **r4 released.** Back to top in both panels; About and the GitHub token as pop-ups; a description and the build date in the page and in About; six new settings (`description`, `startFile`, `links`, `noindex`, `darkMode`, `bodyFont`); `view` and `sourceRepoUrl` retired; the header no longer shows the default name "TooToo".
+* `examples/` added: sample files of every type, with credits.
+* This README gains Settings and Examples sections.
 * The repo prepares to become `pushme-pullyou/tootoo` (SPEC decision 28, revised): `releases/` (r1–r3, `latest.json`) copied in byte for byte; README "Get TooToo" for strangers; AGENTS and SPEC updated.
 * All 16 installs on r3; `.nojekyll` added to the public installs.
 

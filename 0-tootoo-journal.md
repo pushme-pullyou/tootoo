@@ -722,3 +722,20 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
   page kept as `index.bak`. Checked from `file://` before the push (header
   shows only the owner, About says r4 · built 2026-11-23), and the live
   page matched the local file a minute after it. INSTALL-LIST row to r4.
+
+* **Two more installs on r4, moved by Theo:** collection (`1725978`) and
+  sandbox (`64daa09`). Both are committed and live on r4, and Theo reports
+  r4 working there "and elsewhere", which stands in for the by-hand look
+  that the release skipped. INSTALL-LIST rows to r4. Three installs are on
+  r4; thirteen remain on r3.
+  * Not recorded: whether he used the "r4 available" notice and its
+    download. Neither repo has the r3 page as `index.bak`.
+
+* **Docs caught up with r4.** README: Settings and Examples sections, and
+  the r4 changelog entry. CHECKLIST: an "Added in r4" section (unticked),
+  and the real-install step no longer asks for `tootoo.config.js`.
+  BUILD-PROMPT: marked done and kept as history, with a note that
+  "never edit `pushme-pullyou-tootoo`" meant the old repo.
+  * Left alone: the workshop page's `storagePrefix: 'tootoo-next'`.
+    Changing it would drop the page's saved token, dark mode and sidebar
+    width for anyone who has used it.

@@ -49,6 +49,17 @@ Open `build/index.html?owner=theo-armour&repo=pages`, choose Browse GitHub, and 
 - [x] Keys: `/` filter, `\` tree, arrows, Home / End, Enter / Space.
 - [x] **Phone width** (DevTools device mode, 390 px): the sidebar starts closed and slides over the content, and the buttons wrap.
 
+## Added in r4
+
+Open the live workshop page, or the build pointed at this repo, and use [examples/](../examples/README.md) for the files.
+
+- [ ] **Back to top:** scroll a long file (`examples/docs/markdown-help.md`): a ↑ appears at the bottom right and returns to the top. The same in the file list, when it is long enough to scroll.
+- [ ] **Pop-ups:** scroll down, then press **?** and **⚙️**: each opens centred over a dimmed page. Escape, the ✕ and a click outside all close it.
+- [ ] **About** shows a description and "built YYYY-MM-DD" after the release number, and "source and updates" goes to the TooToo repo.
+- [ ] **The header** shows no "TooToo" on an install that sets no `appName`.
+- [ ] **Settings:** in a copy of the build, set `startFile`, `links`, `darkMode: 'dark'` and `bodyFont`. It opens that file, starts dark, shows the links at the right of the footer and in About, and uses the font.
+- [ ] Dark mode and phone width again, with a pop-up open and the footer links showing.
+
 ## The update notice and the swap
 
 The notice needs a numbered release and a newer one to point at. To fake that:
@@ -65,5 +76,5 @@ The notice needs a numbered release and a newer one to point at. To fake that:
 
 ## Real installs
 
-- [ ] **One install via `file://`:** paste `theo-armour-sandbox`'s `tootoo.config.js` into a copy of the build, open it, and check its branding (theme color, heading font, subtitle). About lists the ignored keys (`faviconLetters`, `faviconColor`).
+- [ ] **One install via `file://`:** copy the settings block from a real install (e.g. `theo-armour-sandbox/index.html`) into a copy of the build, open it, and check its branding (theme color, heading font, subtitle). If the block holds a retired setting (`view`, `sourceRepoUrl`), About lists it as ignored.
 - [x] **One install on Pages:** the same copy served from a Pages site (or the pilot, Stage 7) browses its repo with no URL parameters, and its HTML files open as the published pages. (2026-11-23: the sandbox on r3 browses its 509 files, and `sample-page.html` opens at its published URL; 14 installs serve r3.)

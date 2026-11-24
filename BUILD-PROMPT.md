@@ -1,6 +1,8 @@
 # TooToo Next — Build Prompt
 
-**Status:** draft · **Created:** 2026-11-21 · **Authority:** [SPEC.md](SPEC.md)
+**Status:** done; kept as history · **Created:** 2026-11-21 · **Authority:** [SPEC.md](SPEC.md)
+
+> **Read this as a record, not as instructions.** It built v1 in seven stages, finished 2026-11-22. Names have changed since: this repo was `tootoo-next` and is now `pushme-pullyou/tootoo`, in the folder `pushme-pullyou-tootoo`. Where the text below says "never edit `pushme-pullyou-tootoo`", it meant the old repo, now `pushme-pullyou-tootoo-2026-11`. For today's rules, see [AGENTS.md](AGENTS.md).
 
 You are building TooToo v1 in this repo, one stage at a time. Theo starts each stage with a message like **"build stage 2"**. Do only that stage, verify it, report, and stop. If this prompt and `SPEC.md` disagree, `SPEC.md` wins. Say so in your report.
 
