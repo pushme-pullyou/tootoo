@@ -2,7 +2,7 @@
 
 ## 2026-11-23
 
-*
+* Titles to use current font
 * Build for new repo utility
 * Private repo support notes
 * Show iframes
