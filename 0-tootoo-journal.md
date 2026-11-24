@@ -701,3 +701,18 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
     (`Shell.onPanelKey`, `Shell.onOutsideClick`).
   * Checked by eye in headless Chrome on the mock, with the page scrolled.
     One new test. 86 and 90 pass; 2,134 of 2,500 lines.
+
+* **r4 released** (commit `2e7bc04`, tag `r4`, GitHub Release "r4 —
+  2026-11-23" with `index.html` attached). In it: the default app name
+  hidden, build date and description, back to top, the pop-up panels, six
+  new settings (`description`, `startFile`, `links`, `noindex`, `darkMode`,
+  `bodyFont`), and `view` and `sourceRepoUrl` retired.
+  * Gate: suite 86 and 90 pass; `tests/live.html` 5 pass (run headless).
+    The by-hand checklist was **not** worked through for r4 (Theo's call
+    to release): dark mode, phone width and the new settings are unseen in
+    a real browser.
+  * Pages served `latest.json` = r4 and `releases/r4/index.html` within a
+    minute of the push; the published file matches the local one byte for
+    byte.
+  * No install updated yet: all 16 stay on r3 until `update <install>` or
+    the "r4 available" download, which is the notice's first real test.
