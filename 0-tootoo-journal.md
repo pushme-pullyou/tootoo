@@ -739,3 +739,18 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
   * Left alone: the workshop page's `storagePrefix: 'tootoo-next'`.
     Changing it would drop the page's saved token, dark mode and sidebar
     width for anyone who has used it.
+
+* **All 16 installs on r4.** The remaining 13 moved from r3 in one pass,
+  one repo at a time: r4's page with the install's settings block carried
+  over byte for byte, and the r3 page kept as `index.bak`. Before each
+  commit: the page outside its block equals `releases/r4/index.html`, the
+  block equals the old one, and the new file opens from `file://` with its
+  header. INSTALL-LIST rows to r4.
+  * A check of mine misread the release stamp (a pattern that also matched
+    the "r" in "release"), so the first pass swapped all 13 and committed
+    none. The swaps were right; a second pass verified and committed them.
+  * **agenda again:** `git commit -- <paths>` crashed (segmentation fault)
+    and left `index.lock` and `next-index-*.lock`, as it did earlier today
+    in the same repo. Cleared the stale locks and committed the staged
+    files with a plain `git commit`, which worked. Lesson for that repo:
+    stage, then commit without paths.
