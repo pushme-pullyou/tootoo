@@ -105,13 +105,21 @@ button.primary, .button.primary { color: var(--color-on-accent); background: var
 .header-actions { display: flex; gap: 0.3em; margin-left: auto; flex: none; }
 .sidebar-toggle { flex: none; }
 
+/* About and the GitHub token: a pop-up over the page, so it shows wherever the page has scrolled to. */
 .panel {
-  position: relative;
-  margin: var(--space);
+  position: fixed;
+  z-index: 30;
+  top: 4em;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(36em, calc(100vw - 2 * var(--space)));
+  max-height: calc(100vh - 6em);
+  overflow: auto;
   padding: 0.5em var(--space);
   background: var(--color-panel);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.35), 0 8px 30px rgba(0, 0, 0, 0.4);   /* the first shadow dims the page behind */
 }
 .panel-close { position: absolute; top: 0.5em; right: 0.5em; }
 .update-notice { margin: var(--space) var(--space) 0; padding: 0.5em var(--space); border: 1px solid var(--color-accent); border-radius: var(--radius); }

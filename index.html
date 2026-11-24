@@ -158,13 +158,21 @@ button.primary, .button.primary { color: var(--color-on-accent); background: var
 .header-actions { display: flex; gap: 0.3em; margin-left: auto; flex: none; }
 .sidebar-toggle { flex: none; }
 
+/* About and the GitHub token: a pop-up over the page, so it shows wherever the page has scrolled to. */
 .panel {
-  position: relative;
-  margin: var(--space);
+  position: fixed;
+  z-index: 30;
+  top: 4em;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(36em, calc(100vw - 2 * var(--space)));
+  max-height: calc(100vh - 6em);
+  overflow: auto;
   padding: 0.5em var(--space);
   background: var(--color-panel);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.35), 0 8px 30px rgba(0, 0, 0, 0.4);   /* the first shadow dims the page behind */
 }
 .panel-close { position: absolute; top: 0.5em; right: 0.5em; }
 .update-notice { margin: var(--space) var(--space) 0; padding: 0.5em var(--space); border: 1px solid var(--color-accent); border-radius: var(--radius); }
@@ -1441,6 +1449,8 @@ const Shell = {
     elements.header.innerHTML = Shell.headerHtml();
     elements.header.addEventListener( 'click', Shell.onClick );
     elements.panel.addEventListener( 'click', Shell.onClick );
+    document.addEventListener( 'keydown', Shell.onPanelKey );
+    document.addEventListener( 'click', Shell.onOutsideClick );
     Events.on( 'repo-changed', Shell.showRepo );
     Events.on( 'file-selected', Shell.showTitle );
     Shell.restorePrefs();
@@ -1448,6 +1458,8 @@ const Shell = {
     return () => {
       elements.header.removeEventListener( 'click', Shell.onClick );
       elements.panel.removeEventListener( 'click', Shell.onClick );
+      document.removeEventListener( 'keydown', Shell.onPanelKey );
+      document.removeEventListener( 'click', Shell.onOutsideClick );
       Events.off( 'repo-changed', Shell.showRepo );
       Events.off( 'file-selected', Shell.showTitle );
     };
@@ -1618,13 +1630,21 @@ const Shell = {
     }
   },
 
-  // ── Panels, shown above the file ──
+  // ── Panels: About and the GitHub token, as a pop-up over the page (SPEC §6 Pop-up panels) ──
 
   openPanel: ( name, reason = '' ) => {
     const panel = Shell.el.panel;
     panel.innerHTML = name === 'about' ? Shell.aboutHtml() : Shell.tokenHtml( reason );
     panel.dataset.open = name;
     panel.hidden = false;
+    ( panel.querySelector( '.token-input' ) || panel.querySelector( '.panel-close' ) ).focus();
+  },
+
+  // Escape closes the pop-up, and so does a click outside it (the header's own buttons toggle it themselves).
+  onPanelKey: ( event ) => { if ( event.key === 'Escape' && ! Shell.el.panel.hidden ) { Shell.closePanel(); } },
+  onOutsideClick: ( event ) => {
+    const { panel, header } = Shell.el;
+    if ( ! panel.hidden && ! panel.contains( event.target ) && ! header.contains( event.target ) ) { Shell.closePanel(); }
   },
 
   closePanel: () => {
@@ -2127,12 +2147,12 @@ const BrowserView = {
       <div class="resizer" role="separator" aria-orientation="vertical" title="Drag to resize"></div>
       <main class="content">
         <section class="update-notice" hidden></section>
-        <section class="panel" hidden></section>
         <div class="file-view"></div>
         ${ BrowserView.toTop }
       </main>
     </div>
-    <footer class="app-footer"></footer>`,
+    <footer class="app-footer"></footer>
+    <section class="panel" role="dialog" aria-label="About and the GitHub token" hidden></section>`,
 
   // The panel's ↑ shows once the panel has scrolled a little, and a click goes back to the top.
   addToTop: ( panel ) => {

@@ -22,12 +22,12 @@ const BrowserView = {
       <div class="resizer" role="separator" aria-orientation="vertical" title="Drag to resize"></div>
       <main class="content">
         <section class="update-notice" hidden></section>
-        <section class="panel" hidden></section>
         <div class="file-view"></div>
         ${ BrowserView.toTop }
       </main>
     </div>
-    <footer class="app-footer"></footer>`,
+    <footer class="app-footer"></footer>
+    <section class="panel" role="dialog" aria-label="About and the GitHub token" hidden></section>`,
 
   // The panel's ↑ shows once the panel has scrolled a little, and a click goes back to the top.
   addToTop: ( panel ) => {

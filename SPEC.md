@@ -264,6 +264,14 @@ Settled 2026-11-23; from the next release. Both are ignored like any unknown key
 - **`view`:** dropped while there is one view.
 - **`sourceRepoUrl`:** dropped. About's "source and updates" link always goes to TooToo's own repo. Fourteen installs had set it to their own repo, a meaning carried over from the 2026 build, so the link led to the wrong place. An install's own repo is the header's icon link.
 
+### Pop-up panels: About and the GitHub token
+
+Settled 2026-11-23; ships in the next release. About (?) and the GitHub token (⚙️) open as a pop-up centred over the page, with the page dimmed behind it. Before, they opened at the top of the open file and were out of sight on a page that had been scrolled.
+
+- **Closing:** the ✕, the Escape key, a click outside the pop-up, or the same header button again. The other header button switches from one to the other.
+- **Focus:** opening the token pop-up puts the cursor in its box; opening About puts focus on ✕.
+- A tall pop-up scrolls inside itself, so it always fits the window.
+
 ### Back to top
 
 Settled 2026-11-23; ships in the next release. The files panel and the open file each have a round ↑ button floating at their bottom right. It appears once that panel has scrolled about 200 px, and a click scrolls the panel back to its top. Carried from the 2026 build, which had the same two buttons.

@@ -36,6 +36,8 @@ const Shell = {
     elements.header.innerHTML = Shell.headerHtml();
     elements.header.addEventListener( 'click', Shell.onClick );
     elements.panel.addEventListener( 'click', Shell.onClick );
+    document.addEventListener( 'keydown', Shell.onPanelKey );
+    document.addEventListener( 'click', Shell.onOutsideClick );
     Events.on( 'repo-changed', Shell.showRepo );
     Events.on( 'file-selected', Shell.showTitle );
     Shell.restorePrefs();
@@ -43,6 +45,8 @@ const Shell = {
     return () => {
       elements.header.removeEventListener( 'click', Shell.onClick );
       elements.panel.removeEventListener( 'click', Shell.onClick );
+      document.removeEventListener( 'keydown', Shell.onPanelKey );
+      document.removeEventListener( 'click', Shell.onOutsideClick );
       Events.off( 'repo-changed', Shell.showRepo );
       Events.off( 'file-selected', Shell.showTitle );
     };
@@ -213,13 +217,21 @@ const Shell = {
     }
   },
 
-  // ── Panels, shown above the file ──
+  // ── Panels: About and the GitHub token, as a pop-up over the page (SPEC §6 Pop-up panels) ──
 
   openPanel: ( name, reason = '' ) => {
     const panel = Shell.el.panel;
     panel.innerHTML = name === 'about' ? Shell.aboutHtml() : Shell.tokenHtml( reason );
     panel.dataset.open = name;
     panel.hidden = false;
+    ( panel.querySelector( '.token-input' ) || panel.querySelector( '.panel-close' ) ).focus();
+  },
+
+  // Escape closes the pop-up, and so does a click outside it (the header's own buttons toggle it themselves).
+  onPanelKey: ( event ) => { if ( event.key === 'Escape' && ! Shell.el.panel.hidden ) { Shell.closePanel(); } },
+  onOutsideClick: ( event ) => {
+    const { panel, header } = Shell.el;
+    if ( ! panel.hidden && ! panel.contains( event.target ) && ! header.contains( event.target ) ) { Shell.closePanel(); }
   },
 
   closePanel: () => {

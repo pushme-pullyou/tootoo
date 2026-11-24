@@ -291,3 +291,26 @@ test( 'view: a token error shows its message and opens the token panel', async (
   assert( ! view.find( '.panel' ).hidden && view.find( '.panel .token-input' ), 'token panel not open' );
   view.done();
 } );
+
+test( 'view: About and the token open as a pop-up, closed by Escape or a click outside (SPEC §6 Pop-up panels)', async () => {
+  const view = await mountMock();
+  const panel = view.find( '.panel' );
+  const about = view.find( '[data-action=about]' );
+  assert( panel.hidden && ! view.find( '.content' ).contains( panel ), 'starts closed, and outside the scrolling page' );
+  about.click();
+  assert( ! panel.hidden && panel.textContent.includes( 'source and updates' ), 'About opens' );
+  document.dispatchEvent( new KeyboardEvent( 'keydown', { key: 'Escape', bubbles: true } ) );
+  assert( panel.hidden, 'Escape closes it' );
+  about.click();
+  panel.querySelector( 'p' ).click();
+  assert( ! panel.hidden, 'a click inside keeps it open' );
+  view.find( '.file-body' ).click();
+  assert( panel.hidden, 'a click outside closes it' );
+  view.find( '[data-action=token]' ).click();
+  assertEqual( [ panel.dataset.open, document.activeElement.className ], [ 'token', 'token-input' ], 'the token pop-up, ready to type in:' );
+  about.click();
+  assertEqual( panel.dataset.open, 'about', 'the other button switches the pop-up:' );
+  about.click();
+  assert( panel.hidden, 'the same button closes it' );
+  view.done();
+} );

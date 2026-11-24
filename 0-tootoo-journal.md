@@ -691,3 +691,13 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
   * READMEs rewritten for this TooToo: what to try in each folder.
   * Not yet seen in a browser: the page reads GitHub, and these are not
     pushed.
+
+* **About and the GitHub token are pop-ups** (Theo: at the top of the page
+  they were invisible once you had scrolled). SPEC.md §6 Pop-up panels.
+  * The `.panel` section moved out of the scrolling `.content` to the end
+    of the view, and is `position: fixed`, centred. One large box-shadow
+    dims the page behind it, so there is no extra backdrop element.
+  * Closes on ✕, Escape, a click outside, or the same header button
+    (`Shell.onPanelKey`, `Shell.onOutsideClick`).
+  * Checked by eye in headless Chrome on the mock, with the page scrolled.
+    One new test. 86 and 90 pass; 2,134 of 2,500 lines.
