@@ -716,3 +716,9 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
     byte.
   * No install updated yet: all 16 stay on r3 until `update <install>` or
     the "r4 available" download, which is the notice's first real test.
+
+* **First install on r4: theo-armour.github.io** (`c0895c6`). r4's page
+  with the install's settings block carried over byte for byte; the r3
+  page kept as `index.bak`. Checked from `file://` before the push (header
+  shows only the owner, About says r4 · built 2026-11-23), and the live
+  page matched the local file a minute after it. INSTALL-LIST row to r4.
