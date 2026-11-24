@@ -117,6 +117,11 @@ test( 'settings: darkMode and bodyFont (SPEC §6 Dark mode and text font)', () =
   assertEqual( [ CONFIG.darkMode, CONFIG.bodyFont ], [ 'auto', '' ], 'the defaults:' );
 } );
 
+test( 'shell: About links to TooToo, whatever the install sets (sourceRepoUrl is retired)', () => {
+  assert( Shell.aboutHtml().includes( '<a href="https://github.com/pushme-pullyou/tootoo">source and updates</a>' ), 'the TooToo link' );
+  assertEqual( [ Config.isKnown( 'sourceRepoUrl' ), Config.isKnown( 'view' ) ], [ false, false ], 'retired settings:' );
+} );
+
 test( 'content: the file on GitHub (SPEC §6 File header)', () => {
   assertEqual( Content.githubUrl( 'pushme-pullyou', 'tootoo-next', '', 'docs/my notes.md' ),
     'https://github.com/pushme-pullyou/tootoo-next/blob/HEAD/docs/my%20notes.md' );

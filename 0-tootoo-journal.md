@@ -651,3 +651,43 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
     `<body>` doesn't reach the headings. `applyBranding` therefore sets
     both, then `headingFont` on top when the install has one.
   * One new test. 2,114 of 2,500 lines.
+
+* **Simplifying, after an audit** (Theo asked what could go). The audit
+  found no unused functions, styles or style variables. Four changes:
+  * **`sourceRepoUrl` retired.** About's "source and updates" link now
+    always goes to TooToo (`Shell.tootooUrl`). Fourteen installs had set
+    the key to their own repo, a meaning left over from the 2026 build, so
+    the link led to the wrong place.
+  * **`view` retired** while there is one view; startup mounts
+    `BrowserView` directly. Decision 5 and the View contract in SPEC.md
+    say it returns with a second view.
+  * **One `release()`.** `Shell.release` was a copy of `Update.release`;
+    removed.
+  * **Install settings cleaned** (all 17, the workshop's own page
+    included): `sourceRepoUrl`, `preferPagesUrls` (one install; never a
+    TooToo setting) and commented-out `view` lines removed, and
+    `tootoo.config.js` taken out of `hiddenFiles` (the file went at r3).
+    Each block was run before and after to confirm nothing else changed.
+  * Left for later: `theme-changed` has no listener in the app; four
+    settings no install uses (`hideDatedBackups`, `autoOpenFolderReadme`,
+    `rightsText`, `updateUrl`).
+  * 85 and 89 pass.
+
+* **`examples/` is back** (Theo): one or two small files of every type
+  TooToo shows, plus folders for the tree. The live demo had nothing but
+  source code to show, and nobody had a set of files to look at before a
+  release.
+  * Carried over from the 2026 repo's `examples/` (102 files, 6.4 MB):
+    80 files here. Left out: types with no viewer yet (3D models, zip,
+    Excel), near-duplicate HTML folders, and the old bug-repro note.
+  * **Pictures need a credit** (Theo's rule): kept only what can be
+    credited, with the credits in `examples/README.md`. Left out for lack
+    of one: the Noun Project icon, `complexity.png`, `pano.mp4`, the BART
+    map (© BART) and the photo-album PDF (another person's). Also left
+    out: `concept.md`, which belongs to another project.
+  * `heritage-front.jpg` (Theo's photo) is a 1600-pixel copy, 476 KB, not
+    the 1.2 MB original. The two Dolittle pictures were the same drawing;
+    one kept.
+  * READMEs rewritten for this TooToo: what to try in each folder.
+  * Not yet seen in a browser: the page reads GitHub, and these are not
+    pushed.

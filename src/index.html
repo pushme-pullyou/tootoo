@@ -18,8 +18,6 @@ window.TOOTOO_CONFIG = {
   // branch: '',                 // empty = the repo's default branch
   // startFile: '',              // the file to open first, e.g. '0-agenda.md' or a folder; empty = the README
 
-  // view: 'browser',            // the app type; v1 has 'browser' only
-
   // Branding
   // appName: 'TooToo',          // name in the header and the page title
   // subtitle: '',               // short line beside the name
@@ -30,7 +28,6 @@ window.TOOTOO_CONFIG = {
   // bodyFont: '',               // CSS font-family for the text, e.g. 'Georgia, serif'; headings follow unless headingFont is set
   // darkMode: 'auto',           // how the page starts: 'auto' follows the device, or 'light' or 'dark'
   // faviconFile: '',            // icon file name or URL; empty = no icon
-  // sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo', // the "made with" link in About
   // homeUrl: '',                // when set, the header shows a ⌂ link to this page
 
   // storagePrefix: 'tootoo',    // prefix for saved settings; give each install its own
@@ -86,11 +83,8 @@ window.TOOTOO_CONFIG = {
 <script src="views/browser.js"></script>
 
 <script>
-// Startup: mount the view CONFIG.view names (v1 has 'browser' only).
-{
-  const views = { browser: BrowserView };
-  ( views[ CONFIG.view ] || BrowserView ).mount( document.getElementById( 'app' ) );
-}
+// Startup: mount the one view there is. A setting to choose returns when a second view exists.
+BrowserView.mount( document.getElementById( 'app' ) );
 </script>
 
 </body>

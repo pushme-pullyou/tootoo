@@ -17,7 +17,8 @@ const Shell = {
     try { localStorage.setItem( Shell.key( name ), JSON.stringify( value ) ); } catch ( error ) { /* not saved */ }
   },
 
-  release: () => ( document.querySelector( 'meta[name="tootoo-release"]' ) || {} ).content || 'dev',
+  // Where TooToo itself lives: About's "source and updates" link. Not a setting: an install's own repo is in the header.
+  tootooUrl: 'https://github.com/pushme-pullyou/tootoo',
 
   // The build date assemble.ps1 stamps, e.g. '2026-11-23'. 'dev' when src/ runs unbuilt.
   built: () => ( document.querySelector( 'meta[name="tootoo-built"]' ) || {} ).content || 'dev',
@@ -241,7 +242,7 @@ const Shell = {
       ${ CONFIG.subtitle ? `<p>${ esc( CONFIG.subtitle ) }</p>` : '' }
       ${ Shell.description() ? `<p class="about-description">${ esc( Shell.description() ) }</p>` : '' }
       <p>Showing ${ where }: ${ files.toLocaleString() } files.</p>
-      <p>TooToo release <strong>${ esc( Shell.release() ) }</strong>${ esc( Shell.builtText( Shell.built() ) ) } · <a href="${ esc( CONFIG.sourceRepoUrl ) }">source and updates</a></p>
+      <p>TooToo release <strong>${ esc( Update.release() ) }</strong>${ esc( Shell.builtText( Shell.built() ) ) } · <a href="${ Shell.tootooUrl }">source and updates</a></p>
       ${ Shell.linksHtml() ? `<p>Links: ${ Shell.linksHtml() }</p>` : '' }
       <p>Keys: <kbd>/</kbd> filter · <kbd>\\</kbd> tree · arrows move · <kbd>Ctrl</kbd>+<kbd>B</kbd> files</p>
       ${ unknown.length ? `<p>Settings this release ignores: ${ unknown.map( ( key ) => `<code>${ esc( key ) }</code>` ).join( ', ' ) }</p>` : '' }`;

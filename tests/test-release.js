@@ -31,7 +31,7 @@ if ( releaseMode ) {
     const text = await buildText();
     assert( /^\d{4}-\d\d-\d\d$/.test( Shell.built() ), `built stamp: ${ Shell.built() }` );
     assertEqual( count( text, '<meta name="tootoo-built" content="' ), 1, 'built stamps:' );
-    assert( text.startsWith( `<!doctype html>\n<!-- TooToo ${ Shell.release() }, built ${ Shell.built() }. ` ), text.slice( 0, 80 ) );
+    assert( text.startsWith( `<!doctype html>\n<!-- TooToo ${ Update.release() }, built ${ Shell.built() }. ` ), text.slice( 0, 80 ) );
     assertEqual( count( text, '<meta name="description" content="' ), 1, 'descriptions:' );
     assert( Shell.aboutHtml().includes( ` · built ${ Shell.built() }` ) && Shell.aboutHtml().includes( 'about-description' ), 'About shows both' );
   } );

@@ -46,7 +46,7 @@ What drives the rebuild:
 | 2 | **Pull, not push.** Each install holds its own fully working `index.html`. Dolittle publishes numbered releases (`rN`) and never writes into installs. | The installer, whether Theo or a stranger, decides when to upgrade, and the 16-repo sync and publish goes away. |
 | 3 | **Update check = notify only.** From time to time the install checks for a newer `rN` and shows "rN available" with a link. It does not rewrite itself. | A web page can't write its own file without extra permissions, and staying passive keeps the page safe and simple. |
 | 4 | **Config inside `index.html`.** One clearly marked block holds all per-install settings. `tootoo.config.js` goes away. | One file is the whole install. The marked block can be moved mechanically during an update. |
-| 5 | **One core + views + loaders, one release.** The core holds the tree, data sources (GitHub API, local folder), routing and config. A config setting picks the view (browser, Hub, gallery). Heavy file-type loaders are fetched only when needed. | One product and one update channel, with a small core. New app types become views, not new apps. |
+| 5 | **One core + views + loaders, one release.** The core holds the tree, data sources (GitHub API, local folder), routing and config. A config setting picks the view (browser, Hub, gallery); revised 2026-11-23: with one view there is no `view` setting, and it returns when a second view exists. Heavy file-type loaders are fetched only when needed. | One product and one update channel, with a small core. New app types become views, not new apps. |
 | 6 | **Constraints unchanged:** see §2. | They are what make TooToo work anywhere with no install. |
 | 7 | **The swap is doable by hand** by any installer: a few plain steps, possibly helped by a tool (§10). | Strangers must be able to update without Theo's agent. |
 | 8 | **New sibling repo**, `pushme-pullyou-tootoo-next`. Today's Dolittle and installs stay on r1 until this replaces them. Releases still go to `pushme-pullyou/tootoo`, so the public URL and rN numbering continue. | The working system is not disturbed while the new one takes shape. |
@@ -114,7 +114,7 @@ assemble.ps1            inline <script src> / <link> → one release index.html
   - `readBlob( path )`
   - `fileUrl( path )`: a URL for a new tab or an iframe (raw GitHub, Pages, or a blob URL).
 - **Loader:** `{ extensions: [ … ], library?: [ pinned CDN URLs ], render( file, element ) }`. `loaders/index.js` picks the loader by extension, loads its libraries the first time (once per page), then calls `render`. Unknown types fall back to the text or download loader.
-- **View:** `{ name, mount( element ), unmount() }`. `CONFIG.view` picks one at startup, `'browser'` by default. A view composes the `ui/` parts and subscribes to events. It never reaches into another view.
+- **View:** `{ name, mount( element ), unmount() }`. With one view, startup mounts `BrowserView` directly (the `view` setting was dropped 2026-11-23 and returns with a second view). A view composes the `ui/` parts and subscribes to events. It never reaches into another view.
 - **Events:** emitted by the part that owns the state change. Initial set:
   - `repo-changed`
   - `tree-loaded`
@@ -256,6 +256,13 @@ Settled 2026-11-23; ship in the next release. Two settings.
 
 - **`darkMode`:** how the page starts for a reader who has never used 🌓: `'auto'` (the default) follows the device, `'light'` and `'dark'` fix it. Once the reader toggles, their own choice is remembered and wins.
 - **`bodyFont`:** a CSS font-family for the text. Headings follow it unless `headingFont` is set. A web font is loaded the same way as a heading font: a stylesheet address in `headingFontUrl` can carry both families.
+
+### Retired settings: view, sourceRepoUrl
+
+Settled 2026-11-23; from the next release. Both are ignored like any unknown key, and About lists them for an install that still has one.
+
+- **`view`:** dropped while there is one view.
+- **`sourceRepoUrl`:** dropped. About's "source and updates" link always goes to TooToo's own repo. Fourteen installs had set it to their own repo, a meaning carried over from the 2026 build, so the link led to the wrong place. An install's own repo is the header's icon link.
 
 ### Back to top
 

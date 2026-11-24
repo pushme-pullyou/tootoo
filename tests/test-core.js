@@ -11,7 +11,7 @@ test( 'config: a key in the block overrides its default', () => {
   const settings = Config.merge( { appName: 'Pages', hiddenFolders: [ 'Images' ] } );
   assertEqual( settings.appName, 'Pages' );
   assertEqual( settings.hiddenFolders, [ 'Images' ] );
-  assertEqual( settings.view, 'browser', 'other keys keep their defaults:' );
+  assertEqual( settings.storagePrefix, 'tootoo', 'other keys keep their defaults:' );
 } );
 
 test( 'config: an undefined value uses the default', () => {

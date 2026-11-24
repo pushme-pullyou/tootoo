@@ -18,7 +18,6 @@ window.TOOTOO_CONFIG = {
   repo: 'tootoo',                        // repository name, e.g. 'pages'
   // branch: '',                 // empty = the repo's default branch
 
-  // view: 'browser',            // the app type; v1 has 'browser' only
 
   // Branding
   appName: 'TooToo',               // name in the header and the page title
@@ -27,7 +26,6 @@ window.TOOTOO_CONFIG = {
   // headingFontUrl: '',         // stylesheet URL for a heading font, e.g. a Google Fonts link
   // headingFont: '',            // CSS font-family for headings, e.g. '"Patua One", serif'
   faviconFile: 'favicon.svg',  // icon file name or URL; empty = no icon
-  // sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo', // the "made with" link in About
   // homeUrl: '',                // when set, the header shows a ⌂ link to this page
 
   storagePrefix: 'tootoo-next',    // prefix for saved settings; give each install its own
@@ -342,10 +340,9 @@ const Config = {
 
   defaults: Object.freeze( {
     owner: '', repo: '', branch: '', startFile: '',
-    view: 'browser',
     appName: 'TooToo', subtitle: '', description: '',
     themeColor: '', headingFontUrl: '', headingFont: '', bodyFont: '', darkMode: 'auto', faviconFile: '',
-    sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo', homeUrl: '',
+    homeUrl: '',
     storagePrefix: 'tootoo',
     hiddenFolders: Object.freeze( [] ), hiddenFiles: Object.freeze( [] ),   // the tree always hides index.bak
     hideDatedBackups: true, autoOpenFolderReadme: true,
@@ -1425,7 +1422,8 @@ const Shell = {
     try { localStorage.setItem( Shell.key( name ), JSON.stringify( value ) ); } catch ( error ) { /* not saved */ }
   },
 
-  release: () => ( document.querySelector( 'meta[name="tootoo-release"]' ) || {} ).content || 'dev',
+  // Where TooToo itself lives: About's "source and updates" link. Not a setting: an install's own repo is in the header.
+  tootooUrl: 'https://github.com/pushme-pullyou/tootoo',
 
   // The build date assemble.ps1 stamps, e.g. '2026-11-23'. 'dev' when src/ runs unbuilt.
   built: () => ( document.querySelector( 'meta[name="tootoo-built"]' ) || {} ).content || 'dev',
@@ -1649,7 +1647,7 @@ const Shell = {
       ${ CONFIG.subtitle ? `<p>${ esc( CONFIG.subtitle ) }</p>` : '' }
       ${ Shell.description() ? `<p class="about-description">${ esc( Shell.description() ) }</p>` : '' }
       <p>Showing ${ where }: ${ files.toLocaleString() } files.</p>
-      <p>TooToo release <strong>${ esc( Shell.release() ) }</strong>${ esc( Shell.builtText( Shell.built() ) ) } · <a href="${ esc( CONFIG.sourceRepoUrl ) }">source and updates</a></p>
+      <p>TooToo release <strong>${ esc( Update.release() ) }</strong>${ esc( Shell.builtText( Shell.built() ) ) } · <a href="${ Shell.tootooUrl }">source and updates</a></p>
       ${ Shell.linksHtml() ? `<p>Links: ${ Shell.linksHtml() }</p>` : '' }
       <p>Keys: <kbd>/</kbd> filter · <kbd>\\</kbd> tree · arrows move · <kbd>Ctrl</kbd>+<kbd>B</kbd> files</p>
       ${ unknown.length ? `<p>Settings this release ignores: ${ unknown.map( ( key ) => `<code>${ esc( key ) }</code>` ).join( ', ' ) }</p>` : '' }`;
@@ -2212,11 +2210,8 @@ const BrowserView = {
 </script>
 
 <script>
-// Startup: mount the view CONFIG.view names (v1 has 'browser' only).
-{
-  const views = { browser: BrowserView };
-  ( views[ CONFIG.view ] || BrowserView ).mount( document.getElementById( 'app' ) );
-}
+// Startup: mount the one view there is. A setting to choose returns when a second view exists.
+BrowserView.mount( document.getElementById( 'app' ) );
 </script>
 
 </body>

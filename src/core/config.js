@@ -9,10 +9,9 @@ const Config = {
 
   defaults: Object.freeze( {
     owner: '', repo: '', branch: '', startFile: '',
-    view: 'browser',
     appName: 'TooToo', subtitle: '', description: '',
     themeColor: '', headingFontUrl: '', headingFont: '', bodyFont: '', darkMode: 'auto', faviconFile: '',
-    sourceRepoUrl: 'https://github.com/pushme-pullyou/tootoo', homeUrl: '',
+    homeUrl: '',
     storagePrefix: 'tootoo',
     hiddenFolders: Object.freeze( [] ), hiddenFiles: Object.freeze( [] ),   // the tree always hides index.bak
     hideDatedBackups: true, autoOpenFolderReadme: true,
