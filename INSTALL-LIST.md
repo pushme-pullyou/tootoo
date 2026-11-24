@@ -21,7 +21,7 @@ Copied 2026-11-22 from `pushme-pullyou-dolittle/INSTALL-LIST.md`, leaving out `J
 | `g:\My Drive\2026-theo-github\theo-armour-qdata\index.html` | theo-armour/qdata | main | r3 |
 | `g:\My Drive\2026-theo-github\theo-armour-sandbox\index.html` | theo-armour/sandbox | main | r3 |
 | `g:\My Drive\2026-theo-github\theo-armour-wikitheo\index.html` | theo-armour/wikitheo | main | r3 |
-| `g:\My Drive\2026-theo-github\pushme-pullyou-tootoo-next\index.html` | pushme-pullyou/tootoo-next | main | dev (every build) |
+| `g:\My Drive\2026-theo-github\pushme-pullyou-tootoo-next\index.html` | pushme-pullyou/tootoo | main | dev (every build) |
 | `j:\My Drive\tech\index.html` | heritage-happenings/tech | main | r3 |
 
 ## Notes

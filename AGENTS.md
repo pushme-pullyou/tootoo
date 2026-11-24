@@ -1,6 +1,6 @@
-# TooToo Next: rules for AI agents
+# TooToo: rules for AI agents
 
-This repo is TooToo, the single-file GitHub repository viewer: its workshop (source, tests, build) and its release host (`releases/`). It is becoming `pushme-pullyou/tootoo` (SPEC.md decision 28, revised 2026-11-23); Dolittle stays the family's core. **[SPEC.md](SPEC.md) is the authority.** Read it before changing anything, then [0-tootoo-next-journal.md](0-tootoo-next-journal.md) for what was decided and learned since.
+This repo is TooToo, the single-file GitHub repository viewer: its workshop (source, tests, build) and its release host (`releases/`). It became `pushme-pullyou/tootoo` on 2026-11-23 (SPEC.md decision 28, revised; formerly `tootoo-next`); Dolittle stays the family's core. **[SPEC.md](SPEC.md) is the authority.** Read it before changing anything, then [0-tootoo-journal.md](0-tootoo-journal.md) for what was decided and learned since.
 
 ## Hard rules
 

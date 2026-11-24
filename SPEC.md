@@ -1,4 +1,4 @@
-# TooToo Next — Specification
+# TooToo — Specification
 
 **Status:** draft · **Created:** 2026-11-21 · **Owner:** Theo
 

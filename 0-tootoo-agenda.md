@@ -1,4 +1,4 @@
-# TooToo Next Agenda
+# TooToo Agenda
 
 ## 2026-11-23
 
@@ -17,7 +17,7 @@
 * Explanation about Tootoo.
 * links to pushme pullyou
 
-### Updates
+### Updates 1
 
 Regarding next bigger steps for TooToo, I need to consider how it fits within the broader ecosystem of Dolittle and its related projects.
 
@@ -28,3 +28,9 @@ I think we should just rename the current tootoo to tootoo-2026 and Rename tooto
 and update Dolittle as appropriate.
 
 Your thoughts on this?
+
+## Updates 2
+
+I'm thinking about what to do about other repositories that don't yet have a Tootoo. Should we build a utility that looks at a given folder or repository and creates a Tootoo based on a form that is filled in?
+
+Also, it would be nice to be able to update any Tootoo using a form. 

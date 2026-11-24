@@ -11,7 +11,7 @@ You are building TooToo v1 in this repo, one stage at a time. Theo starts each s
 ### Read first
 
 1. [SPEC.md](SPEC.md): all of it on the first stage, then the sections the stage names.
-2. [0-tootoo-next-journal.md](0-tootoo-next-journal.md): the decisions and what earlier stages did.
+2. [0-tootoo-journal.md](0-tootoo-journal.md): the decisions and what earlier stages did.
 3. The stage's **Reference** lines, if any. These point to today's TooToo, which is a feature inventory and a record of hard-won fixes. **Do not copy its code.** It is at `g:\My Drive\2026-theo-github\pushme-pullyou-dolittle\`:
    - `src/` and its component `README-*.md` files;
    - `src/ARCHITECTURE.md`;
@@ -31,7 +31,7 @@ You are building TooToo v1 in this repo, one stage at a time. Theo starts each s
 ### Every stage ends the same way
 
 1. Run `pwsh -File run-tests.ps1`. The stage is done only when it prints `FAIL 0` and the line counts are within budget.
-2. Append a journal entry under today's `## YYYY-MM-DD` heading in `0-tootoo-next-journal.md`. Use `*` bullets with bold labels, saying what was built and anything learned.
+2. Append a journal entry under today's `## YYYY-MM-DD` heading in `0-tootoo-journal.md`. Use `*` bullets with bold labels, saying what was built and anything learned.
 3. Report:
    - the files created or changed, with line counts;
    - the `PASS n / FAIL n` line;

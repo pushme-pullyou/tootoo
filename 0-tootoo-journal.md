@@ -557,3 +557,14 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
     TooToo" section points strangers to Releases.
   * Step 1 of 6 done (prepare). Next: rename old `tootoo` → `tootoo-2026`,
     then this repo → `tootoo`, then fix GitHub Releases, links and Dolittle.
+
+* **The swap is done.** `pushme-pullyou/tootoo` → `tootoo-2026` (README
+  banner `f0adf58`, left active), then `tootoo-next` → `tootoo`. Both local
+  remotes repointed. `/tootoo/releases/latest.json` answered r3 from the new
+  repo straight after the second rename, so no install's update check broke.
+  The rename cancelled one tootoo-2026 Pages run; another followed.
+  * Names: journal and agenda renamed to `0-tootoo-journal.md` and
+    `0-tootoo-agenda.md`; README, AGENTS and SPEC titled "TooToo"; Pages links
+    point to `/tootoo/`. The root page's block now says `repo: 'tootoo'`,
+    `appName: 'TooToo'` (hidden as a repeat). `storagePrefix` stays
+    `'tootoo-next'`, so saved settings and the token survive.

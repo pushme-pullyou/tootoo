@@ -1,4 +1,4 @@
-# TooToo Next
+# TooToo
 
 TooToo, the single-file GitHub repository viewer: drop one `index.html` into a repo, and the repo becomes a browsable site. This repo is its workshop and its release host. Each install keeps its own self-contained `index.html`, with its settings in a marked config block, and pulls numbered releases when it chooses; nothing is pushed out to installs. TooToo is one animal in the [pushme-pullyou Menagerie](https://pushme-pullyou.github.io/#README.md), born in the [Dolittle](https://github.com/pushme-pullyou/dolittle) workshop.
 
@@ -15,12 +15,12 @@ The page at this repo's Pages address runs the **latest build**, for trying thin
 * [BUILD-PROMPT.md](BUILD-PROMPT.md): the staged build prompt for an AI agent ("build stage N").
 * [AGENTS.md](AGENTS.md): the rules for agents, and the workshop commands.
 * [INSTALL-LIST.md](INSTALL-LIST.md): Theo's installs and the release each runs.
-* [0-tootoo-next-journal.md](0-tootoo-next-journal.md): the development journal.
+* [0-tootoo-journal.md](0-tootoo-journal.md): the development journal.
 
 ## Open it
 
-* **This repo, browsed by the latest build:** [index.html](index.html), live at [pushme-pullyou.github.io/tootoo-next](https://pushme-pullyou.github.io/tootoo-next/). Every `pwsh -File assemble.ps1` (and so every test run) refreshes it, keeping its own settings block.
-* **Live on Pages:** the current source as the app at [/src/](https://pushme-pullyou.github.io/tootoo-next/src/), and the test suite at [/tests/](https://pushme-pullyou.github.io/tootoo-next/tests/).
+* **This repo, browsed by the latest build:** [index.html](index.html), live at [pushme-pullyou.github.io/tootoo](https://pushme-pullyou.github.io/tootoo/). Every `pwsh -File assemble.ps1` (and so every test run) refreshes it, keeping its own settings block.
+* **Live on Pages:** the current source as the app at [/src/](https://pushme-pullyou.github.io/tootoo/src/), and the test suite at [/tests/](https://pushme-pullyou.github.io/tootoo/tests/).
 * **The app from source:** double-click [src/index.html](src/index.html). On `file://` it offers to open a folder, or to browse GitHub. Add `?source=mock` to browse the test mock instead.
 * **The release file:** `pwsh -File assemble.ps1` writes `build/index.html` (`-Release r2` stamps a release number).
 
