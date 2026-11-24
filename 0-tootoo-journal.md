@@ -640,3 +640,14 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
     note above on agenda and aa).
   * One new test covers all three. 83 and 87 pass; 2,106 of 2,500 lines.
   * Not yet seen in a browser: the footer with links in it.
+
+* **Two more settings: `darkMode`, `bodyFont`** (SPEC.md §6 Dark mode and
+  text font).
+  * `darkMode`: `'auto'` (default), `'light'` or `'dark'` decides how the
+    page starts for a reader who has never used 🌓 (`Shell.startsDark`).
+    Their own toggle is still remembered and wins.
+  * `bodyFont`: sets `--font-body`. Learned: `--font-heading: var(--font-body)`
+    on `:root` is worked out at `:root`, so overriding `--font-body` on
+    `<body>` doesn't reach the headings. `applyBranding` therefore sets
+    both, then `headingFont` on top when the install has one.
+  * One new test. 2,114 of 2,500 lines.

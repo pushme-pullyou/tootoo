@@ -110,6 +110,13 @@ test( 'settings: startFile, links and noindex (SPEC §6 Start file, links, noind
     [ '<meta name="robots" content="noindex">', '', false ], 'noindex:' );
 } );
 
+test( 'settings: darkMode and bodyFont (SPEC §6 Dark mode and text font)', () => {
+  const starts = ( mode ) => [ Shell.startsDark( mode, true ), Shell.startsDark( mode, false ) ];
+  assertEqual( [ starts( 'auto' ), starts( 'dark' ), starts( 'light' ), starts( 'oops' ) ],
+    [ [ true, false ], [ true, true ], [ false, false ], [ true, false ] ], 'on a dark device, on a light device:' );
+  assertEqual( [ CONFIG.darkMode, CONFIG.bodyFont ], [ 'auto', '' ], 'the defaults:' );
+} );
+
 test( 'content: the file on GitHub (SPEC §6 File header)', () => {
   assertEqual( Content.githubUrl( 'pushme-pullyou', 'tootoo-next', '', 'docs/my notes.md' ),
     'https://github.com/pushme-pullyou/tootoo-next/blob/HEAD/docs/my%20notes.md' );

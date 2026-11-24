@@ -78,6 +78,11 @@ const Shell = {
   applyBranding: () => {
     const body = document.body.style;
     if ( CONFIG.themeColor ) { body.setProperty( '--color-accent', CONFIG.themeColor ); }
+    if ( CONFIG.bodyFont ) {
+      // Headings follow the text font unless the install names a heading font of its own.
+      body.setProperty( '--font-body', CONFIG.bodyFont );
+      body.setProperty( '--font-heading', CONFIG.bodyFont );
+    }
     if ( CONFIG.headingFont ) { body.setProperty( '--font-heading', CONFIG.headingFont ); }
     const url = CONFIG.headingFontUrl;
     if ( url && /\.(woff2?|ttf|otf)([?#]|$)/i.test( url ) ) {
@@ -172,10 +177,13 @@ const Shell = {
 
   restorePrefs: () => {
     const dark = Shell.load( 'darkMode' );
-    Shell.setDark( dark === null ? window.matchMedia( '(prefers-color-scheme: dark)' ).matches : dark, false );
+    Shell.setDark( dark === null ? Shell.startsDark( CONFIG.darkMode, window.matchMedia( '(prefers-color-scheme: dark)' ).matches ) : dark, false );
     const size = Shell.load( 'fontSize' );
     if ( size ) { Shell.setFontSize( size, false ); }
   },
+
+  // Before the reader has used 🌓: darkMode 'dark' or 'light' decides; anything else follows the device.
+  startsDark: ( mode, deviceIsDark ) => mode === 'dark' || ( mode !== 'light' && deviceIsDark ),
 
   setDark: ( dark, save = true ) => {
     document.body.classList.toggle( 'dark-mode', dark );

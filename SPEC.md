@@ -250,6 +250,13 @@ Settled 2026-11-23; ship in the next release. Three settings.
 - **`links`:** a list of `{ label, url }`, shown at the right of the footer and in About, in the order given. An entry missing either part is skipped, and so is a `javascript:` address.
 - **`noindex`:** `true` adds `<meta name="robots" content="noindex">` at startup, asking search engines not to list the site. It is a request, not access control: the files stay readable by address, and a crawler that doesn't run scripts never sees the tag.
 
+### Dark mode and text font
+
+Settled 2026-11-23; ship in the next release. Two settings.
+
+- **`darkMode`:** how the page starts for a reader who has never used 🌓: `'auto'` (the default) follows the device, `'light'` and `'dark'` fix it. Once the reader toggles, their own choice is remembered and wins.
+- **`bodyFont`:** a CSS font-family for the text. Headings follow it unless `headingFont` is set. A web font is loaded the same way as a heading font: a stylesheet address in `headingFontUrl` can carry both families.
+
 ### Back to top
 
 Settled 2026-11-23; ships in the next release. The files panel and the open file each have a round ↑ button floating at their bottom right. It appears once that panel has scrolled about 200 px, and a click scrolls the panel back to its top. Carried from the 2026 build, which had the same two buttons.
