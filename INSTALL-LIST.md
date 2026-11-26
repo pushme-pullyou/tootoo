@@ -15,7 +15,7 @@ Copied 2026-11-22 from `pushme-pullyou-dolittle/INSTALL-LIST.md`, leaving out `J
 | `g:\My Drive\2026-theo-github\theo-armour-2026\index.html` | theo-armour/2026 | main | r4 |
 | `g:\My Drive\2026-theo-github\theo-armour-aa\index.html` | theo-armour/aa | main | r4 |
 | `g:\My Drive\2026-theo-github\theo-armour-agenda\index.html` | theo-armour/agenda | main | r4 |
-| `g:\My Drive\2026-theo-github\theo-armour-collection\index.html` | theo-armour/collection | main | r4 |
+| `g:\My Drive\2026-theo-github\theo-armour-collection\index.html` | theo-armour/collection | main | r5 |
 | `g:\My Drive\2026-theo-github\theo-armour-genealogy\index.html` | theo-armour/genealogy | main | r4 |
 | `g:\My Drive\2026-theo-github\theo-armour-github-io\index.html` | theo-armour/theo-armour.github.io | main | r4 |
 | `g:\My Drive\2026-theo-github\theo-armour-pages\index.html` | theo-armour/pages | main | r4 |
