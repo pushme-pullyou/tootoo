@@ -764,3 +764,26 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
   * The same note sits in each of Theo's three private repos (agenda, aa,
     qdata) as a comment-only `.gitignore`: it travels with the repo and is
     not content. **qdata is private but still has a public Pages site.**
+
+## 2026-11-25
+
+* **Video and audio in Markdown.** `markdown.js` now loads relative
+  `<video>`, `<audio>` and `<source>` `src` through the source, as it
+  already did for `<img>` (`fixImages` → `fixMedia`). Before, a
+  `<video><source src="images/clip.mp4">` in a Markdown file resolved
+  against the TooToo page, not the Markdown file's folder, so the video
+  never loaded. Found in `theo-armour/collection`. New test: a `<source>`
+  inside `<video>` and a bare `<audio src>` both get blob URLs. A missing
+  media file loses its `src`; only an `<img>` gets the "(not found)" note.
+* **Example: video in Markdown.** `examples/video/pano.mp4` (940 KB, from
+  `pushme-pullyou/assets/test-cases`, as in the old tootoo examples) and
+  `video-in-markdown.md`, which plays it with `<video><source>`. A new
+  by-hand line in `tests/CHECKLIST.md` points at it.
+
+* **r5 released** (tag `r5`, GitHub Release "r5 — 2026-11-25" with
+  `index.html` attached). In it: relative video and audio in Markdown load
+  through the source.
+  * Gate: suite 87 and 91 pass; `tests/live.html` 5 pass (run headless).
+    By hand, only the new line: the video in
+    `examples/video/video-in-markdown.md` plays (Theo, from `file://`).
+    The rest of the checklist was not worked through again.

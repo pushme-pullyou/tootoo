@@ -38,6 +38,7 @@ Open `build/index.html?owner=theo-armour&repo=pages`, choose Browse GitHub, and 
 - [x] Markdown: headings, tables, images, relative links, and a link to a heading.
 - [x] Code is highlighted; **Raw** ↔ **Rendered** on Markdown, HTML, CSV and SVG is remembered per type.
 - [x] An image, a video that plays, a PDF in the browser's viewer, and a CSV table.
+- [x] A video inside Markdown plays: [examples/video/video-in-markdown.md](../examples/video/video-in-markdown.md).
 - [x] An HTML page runs in its frame. A TooToo `index.html` shows the "not previewed" note instead.
 - [x] **Copy**, **New tab** and **Download** each work once.
 

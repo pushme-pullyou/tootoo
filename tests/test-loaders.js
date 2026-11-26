@@ -37,6 +37,14 @@ test( 'loaders: Markdown links, images and repeated headings', () => withMockFil
   assert( box.querySelector( 'pre code.hljs .hljs-keyword' ), 'the code block is highlighted' );
 } ) );
 
+test( 'loaders: Markdown video and audio load through the source', () => withMockFiles( {
+  'docs/clips.md': '<video controls>\n  <source src="../media/clip.mp4" type="video/mp4">\n</video>\n\n<audio controls src="../media/clip.mp4"></audio>\n',
+}, async () => {
+  const box = await renderMock( 'docs/clips.md' );
+  assert( box.querySelector( 'video source' ).src.startsWith( 'blob:' ), 'a <source> inside <video>: ' + box.innerHTML );
+  assert( box.querySelector( 'audio' ).src.startsWith( 'blob:' ), 'an <audio src>: ' + box.innerHTML );
+} ) );
+
 test( 'loaders: Markdown is sanitized', () => withMockFiles( {
   'docs/unsafe.md': '<img src=x onerror="window.unsafeRan = true">\n\n<script>window.unsafeRan = true</script>\n',
 }, async () => {

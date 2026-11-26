@@ -1,6 +1,6 @@
 // markdown.js: Markdown → safe HTML (marked, then DOMPurify; both load at startup).
 // Headings get GitHub-style ids, for '#file#heading' links. Relative links open the
-// file inside the app; relative images load through the source.
+// file inside the app; relative images, video and audio load through the source.
 
 const MarkdownLoader = {
 
@@ -48,15 +48,16 @@ const MarkdownLoader = {
     }
   },
 
-  fixImages: ( box, file ) => Promise.all( [ ...box.querySelectorAll( 'img[src]' ) ].map( async ( image ) => {
-    const src = image.getAttribute( 'src' );
+  // Relative images, video and audio (and a <video>'s <source>) load through the source.
+  fixMedia: ( box, file ) => Promise.all( [ ...box.querySelectorAll( 'img[src], video[src], audio[src], source[src]' ) ].map( async ( media ) => {
+    const src = media.getAttribute( 'src' );
     if ( Loaders.isExternal( src ) ) { return; }
     const path = Loaders.resolvePath( file.path, src.split( /[?#]/ )[ 0 ] );
     try {
-      image.src = await Loaders.urlFor( file.source, path );
+      media.src = await Loaders.urlFor( file.source, path );
     } catch ( error ) {
-      image.removeAttribute( 'src' );
-      image.alt = `${ image.alt } (not found: ${ path })`;
+      media.removeAttribute( 'src' );
+      if ( media.tagName === 'IMG' ) { media.alt = `${ media.alt } (not found: ${ path })`; }
     }
   } ) ),
 
@@ -67,7 +68,7 @@ const MarkdownLoader = {
     const box = template.content;
     MarkdownLoader.addHeadingIds( box );
     MarkdownLoader.fixLinks( box, file );
-    await MarkdownLoader.fixImages( box, file );
+    await MarkdownLoader.fixMedia( box, file );
     const blocks = box.querySelectorAll( 'pre code' );
     if ( blocks.length ) {
       await Loaders.loadLibraries( CodeLoader.library ).catch( () => {} );   // plain code blocks if it can't load
