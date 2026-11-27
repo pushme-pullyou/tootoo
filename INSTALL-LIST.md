@@ -9,7 +9,7 @@ Copied 2026-11-22 from `pushme-pullyou-dolittle/INSTALL-LIST.md`, leaving out `J
 | `G:\My Drive\2026-theo-github\heritage-happenings-documents\index.html` | heritage-happenings/documents | main | r4 |
 | `g:\My Drive\2026-theo-github\heritage-happenings.github.io\index.html` | heritage-happenings/heritage-happenings.github.io | master | r4 |
 | `g:\My Drive\2026-theo-github\pushme-pullyou-assets\index.html` | pushme-pullyou/assets | main | r4 |
-| `g:\My Drive\2026-theo-github\pushme-pullyou-github-io\index.html` | pushme-pullyou/pushme-pullyou.github.io | main | r4 |
+| `g:\My Drive\2026-theo-github\pushme-pullyou-github-io\index.html` | pushme-pullyou/pushme-pullyou.github.io | main | r6 |
 | `g:\My Drive\2026-theo-github\pushme-pullyou-tootoo\index.html` | pushme-pullyou/tootoo | main | dev (every build) |
 | `g:\My Drive\2026-theo-github\theo-armour-2025\index.html` | theo-armour/2025 | main | r4 |
 | `g:\My Drive\2026-theo-github\theo-armour-2026\index.html` | theo-armour/2026 | main | r4 |
