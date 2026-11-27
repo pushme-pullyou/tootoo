@@ -1,5 +1,8 @@
 /* styles.css: design tokens first, then one section per part. */
 
+/* The built-in heading face. It downloads only when used: CONFIG.headingFont or bodyFont replace it. */
+@font-face { font-family: "Windsor"; src: url("https://pushme-pullyou.github.io/assets/fonts/Windsor%20Regular.ttf"); font-display: swap; }
+
 :root {
   --color-text: #222;
   --color-muted: #666;
@@ -11,9 +14,10 @@
   --color-active: rgba(37, 99, 235, 0.12);
 
   --font-body: system-ui, sans-serif;
-  --font-heading: var(--font-body);   /* CONFIG.headingFont overrides this */
+  --font-heading: "Windsor", serif;   /* CONFIG.headingFont, else bodyFont, overrides this */
   --font-mono: ui-monospace, Consolas, monospace;
   --font-size: 16px;            /* A− / A+ change this */
+  --font-size-title: 1.4em;    /* app name and owner / repo in the header: one size, so the title doesn't jump */
 
   --space: 1rem;
   --radius: 4px;
@@ -92,7 +96,8 @@ button.primary, .button.primary { color: var(--color-on-accent); background: var
   align-items: center;
   gap: 0.4em;
   font-family: var(--font-heading);
-  font-size: 1.25em;
+  font-size: var(--font-size-title);
+  line-height: 1.2;   /* bigger text, but no taller than the header buttons */
   font-weight: bold;
   color: var(--color-accent);
   text-decoration: none;
@@ -100,7 +105,7 @@ button.primary, .button.primary { color: var(--color-on-accent); background: var
 }
 .icon-link { display: flex; flex: none; color: var(--color-text); }
 .brand-icon { width: 1.75em; height: 1.75em; }
-.repo-links { white-space: nowrap; font-weight: bold; }
+.repo-links { white-space: nowrap; font-weight: bold; font-family: var(--font-heading); font-size: var(--font-size-title); line-height: 1.2; }   /* the titles share the heading font */
 .subtitle { color: var(--color-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1 1 0; }
 .header-actions { display: flex; gap: 0.3em; margin-left: auto; flex: none; }
 .sidebar-toggle { flex: none; }

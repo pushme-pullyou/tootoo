@@ -13,7 +13,7 @@ The page at this repo's Pages address runs the **latest build**, for trying thin
 
 ## Settings
 
-Every setting is a line in the config block, commented out until you need it. Each has a note beside it; the full rules are in [SPEC.md](SPEC.md) §6.
+Settings go in the config block, one line each, as `key: value,`. A fresh release's block is empty apart from a pointer here; a key left out uses its default. The full rules are in [SPEC.md](SPEC.md) §6.
 
 | For | Settings |
 | --- | --- |

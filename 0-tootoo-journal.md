@@ -1,6 +1,14 @@
 # TooToo Next — Development Journal
 
-## 2026-11-22Header title
+## 2026-11-26
+
+* Theo's iframe gimmick is supported
+* added: added txt = txt.replace( /\<!--@@@/, "" ).replace( /\@@@--\>/, "" );
+* //Read me appears at top ~ already supported
+*   headingFont: '"Windsor", serif',     // heading + title face
+  headingFontUrl: 'https://pushme-pullyou.github.io/assets/fonts/Windsor%20Regular.ttf',
+* Titles header bar to use current font
+## 2026-11-22 Header title
 
 Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (Header). For the next release.
 
@@ -787,3 +795,96 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
     By hand, only the new line: the video in
     `examples/video/video-in-markdown.md` plays (Theo, from `file://`).
     The rest of the checklist was not worked through again.
+
+## 2026-11-26
+
+* **Markdown: shown only in TooToo.** HTML wrapped in `<!--@@@` …
+  `@@@-->` is a comment on GitHub, so it stays hidden there; `markdown.js`
+  (`unwrap`) drops the markers before marked runs, so TooToo shows it.
+  Every pair is unwrapped, not just the first; a plain comment stays
+  hidden. Added to SPEC.md §6 (Markdown: shown only in TooToo).
+* **Iframes in Markdown.** DOMPurify strips `<iframe>` by default, so
+  unwrapping alone showed nothing. It now keeps them (plus `allow` and
+  `allowfullscreen`), and `fixFrames` removes any whose `src` isn't
+  `http:` or `https:`: a relative one would load against the TooToo page.
+  New test: one web-page iframe kept, relative and `javascript:` ones
+  removed, a second `@@@` pair unwrapped, a plain comment hidden.
+  Suite 88 and 92 pass. Not released yet.
+* **Header titles use the heading font.** Only the app name did; the
+  owner / repo links were in the text font, so an install with a
+  `headingFont` such as Windsor showed its repo name in system-ui. Now
+  `.repo-links` uses `--font-heading` too (which falls back to `bodyFont`,
+  then the built-in face). The subtitle keeps the text font. One line in
+  SPEC.md §6 (Header). From the agenda's 2026-11-23 list.
+* **Windsor is the built-in heading font.** `styles.css` declares it with
+  `@font-face` (from `pushme-pullyou.github.io/assets/fonts/`, which sends
+  `Access-Control-Allow-Origin: *`, so it loads from `file://` too) and
+  sets `--font-heading: "Windsor", serif`. Text stays system-ui. The rules
+  are unchanged: `headingFont` wins, else headings follow `bodyFont`. The
+  font downloads only when a page uses it. Installs that leave
+  `headingFont` empty will switch to Windsor headings at their next
+  update. SPEC.md §6 (Dark mode and text font; Header) and the
+  config-block comment updated.
+* **Header titles a touch bigger.** App name 1.25em → 1.4em, owner / repo
+  1em → 1.15em, both with `line-height: 1.2`. The header buttons (30.8 px
+  at 16 px text) set its height, and the app name was already 30.0 px at
+  line-height 1.5, so a bigger size alone would have grown the header.
+  Measured in headless Chrome: app name 26.9 px, owner / repo 22.1 px,
+  header still 47.6 px.
+* **A fresh release's config block is empty.** The 30-odd commented keys
+  in `src/index.html` are gone; two comment lines remain, an example and
+  a pointer to the README's Settings list. SPEC.md decision 14 revised
+  (and its echo in decision 15 and the §4 example), README Settings
+  intro updated. Existing installs keep their own blocks: the swap
+  carries them forward unchanged, comments and all.
+* **One size for the header title.** At first load the app name showed
+  (1.4em); once the repo loaded it was dropped for repeating the repo
+  name, and owner / repo (1.15em) took its place, so the title seemed to
+  shrink. Both now use `--font-size-title: 1.4em` in `:root`. Measured:
+  both 26.9 px, header still 47.6 px.
+* **Code review, two fixes.**
+  * **HTML blob previews are sandboxed.** A blob URL runs as the page that
+    made it, so an `.html` file previewed from a blob copy (anything not
+    on the repo's own Pages site or beside a `file://` page) could read
+    `localStorage`, including the saved GitHub token. Browsing a
+    stranger's repo with `?owner=&repo=` made that a real risk. Blob
+    frames now get `sandbox="allow-scripts allow-forms allow-popups"`:
+    scripts still run, walled off. Real Pages and local files are
+    unchanged (same site anyway). New test: the attribute, and
+    `contentDocument` is null once loaded. With the sandbox line removed,
+    the test fails.
+  * **Filter is linear.** `runFilter` used `hits.includes()` per row, so
+    each keystroke grew with the square of the file count; now a `Set`.
+    Covered by the existing filter test; no timing test (too flaky).
+  * Also noted, not changed: Markdown keeps `<style>` (a README can
+    restyle the app); blob URLs from a token's "New tab" are never freed;
+    every 403 reads as a rate limit; tree.js (284), styles.css and
+    shell.js are near the 300-line file limit.
+* **No 📂 in the header.** It marked a local folder but did nothing, and
+  most readers are online. A clone now shows owner / repo exactly as
+  online; a folder with no GitHub repo shows just its name. The local
+  hint that remains: the file header's GitHub mark is titled "may differ
+  from your local copy", and About says "the folder 📂 <name>". SPEC.md
+  §6 (Header), the UI test and CHECKLIST.md updated.
+* **License link in the footer.** When the repo has `LICENSE`,
+  `LICENSE.md`, `LICENSE.txt` or `COPYING` at the top level, the footer
+  reads "© 2026 owner · No rights reserved · License", and the link opens
+  the file in the app. No setting. The footer is drawn again on
+  `tree-loaded`, since the repo is known before its files are. Most of
+  Theo's repos have a LICENSE; this repo, TooToo itself, does not. New
+  test; SPEC.md §6 (Start file, links, noindex). shell.js is now 287
+  lines, close to the ~300 limit.
+* **MIT license added** at the repo root (`LICENSE`), the same text as
+  the old `tootoo-2026-11` repo: "Copyright (c) 2026 TooToo Authors". The
+  footer's License link now shows here too.
+* **This repo's footer drops "No rights reserved".** `rightsText: ''` in
+  the root `index.html` config block, so the footer reads "© 2026
+  pushme-pullyou · License". The built-in default is unchanged for other
+  installs.
+* **No rights text by default.** `rightsText` now defaults to `''`
+  (was "No rights reserved"), so the footer reads "© 2026 owner", plus
+  "· License" when the repo has one. An install that wants a line sets
+  `rightsText`; existing blocks that set it keep it. Note for the next
+  release: installs that never set it lose "No rights reserved" when
+  they update. Test updated.
+  The root block's own `rightsText: ''` was then removed as redundant.

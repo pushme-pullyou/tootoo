@@ -3,8 +3,8 @@
 // Where it can, the frame loads the real page, so its own scripts, styles and images work:
 //   - on the repo's own Pages site, the published page;
 //   - on file:// with a picked folder, the file beside this page, when it's the same file.
-// Otherwise it gets a blob copy, where relative links and assets may not load.
-// The frame isn't sandboxed, so only open HTML you trust.
+// Otherwise it gets a blob copy, where relative links and assets may not load. The blob copy
+// is sandboxed, so it can't read this page's storage. The real page isn't: only open HTML you trust.
 // A TooToo page is never previewed inside TooToo, so the app can't show itself forever.
 
 const HtmlLoader = {
@@ -13,6 +13,8 @@ const HtmlLoader = {
   toggle: () => true,
 
   isTooToo: ( text ) => text.includes( 'TOOTOO_CONFIG' ),
+
+  sandbox: 'allow-scripts allow-forms allow-popups',   // for a blob copy: everything but this page's storage
 
   // The published page, when this app runs on the repo's own <owner>.github.io site.
   pagesUrl: ( path ) => {
@@ -39,12 +41,14 @@ const HtmlLoader = {
       element.innerHTML = '<p class="message">This is a TooToo page, so it isn\'t previewed inside TooToo. Use ↗ New tab, or Raw for its source.</p>';
       return;
     }
-    const url = HtmlLoader.pagesUrl( file.path ) || await HtmlLoader.localUrl( file )
-      || Loaders.track( URL.createObjectURL( new Blob( [ text ], { type: 'text/html' } ) ) );
+    const real = HtmlLoader.pagesUrl( file.path ) || await HtmlLoader.localUrl( file );
     const frame = document.createElement( 'iframe' );
     frame.className = 'html-view';
     frame.title = file.name;
-    frame.src = url;
+    // A blob copy would run as this page's own site, able to read the saved GitHub token.
+    // The sandbox (no allow-same-origin) keeps its scripts running but walled off.
+    if ( ! real ) { frame.setAttribute( 'sandbox', HtmlLoader.sandbox ); }
+    frame.src = real || Loaders.track( URL.createObjectURL( new Blob( [ text ], { type: 'text/html' } ) ) );
     element.replaceChildren( frame );
   },
 

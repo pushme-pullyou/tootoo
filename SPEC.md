@@ -55,8 +55,8 @@ What drives the rebuild:
 | 11 | **v1 features = the §6 table.** | It replaces today's build for all 16 installs with a smaller core. |
 | 12 | **The config block is a JS object.** It is `window.TOOTOO_CONFIG = { … }` in a `<script>` between marker comments, near the top of `index.html` (format in §4). | Same as today's `tootoo.config.js`, so each install migrates by pasting its file in. Comments are allowed and the syntax is forgiving. |
 | 13 | **Built-in swap download.** The "rN available" notice has a **Download updated index.html** button. The page fetches rN, inserts its own config block, and offers the merged file. It still never writes files. | Anyone can update from a browser, with no agent and no hand-copying. |
-| 14 | **A fresh release's block lists every key, commented.** Most keys are commented out, each with a short note, like today's `tootoo.config.js`. | The block documents itself for strangers. |
-| 15 | **No config editor in v1.** The block is edited by hand. Revisit after v1. | Smaller v1. Decision 14 makes hand-editing easy. |
+| 14 | **A fresh release's block is empty,** apart from a two-line comment pointing to the README's Settings list. Revised 2026-11-26; it used to list every key, commented, with a note. | Shorter and cleaner to edit; the keys are documented once, in the README. |
+| 15 | **No config editor in v1.** The block is edited by hand. Revisit after v1. | Smaller v1. The README's Settings list makes hand-editing easy. |
 | 16 | **Releases are hosted in `pushme-pullyou/tootoo`**, with `releases/latest.json` on GitHub Pages as the marker (layout in §5). | Pages files allow cross-origin fetches and don't use the GitHub API's 60/hour quota. The swap download needs both. |
 | 17 | **Check once a day.** The check runs on page load, at most once per 24 hours per browser. The last check is remembered in localStorage, and failures are silent. | Fresh enough, and quiet. |
 | 18 | **Two config keys:** `checkForUpdates` (default `true`) and `updateUrl` (default: the `latest.json` above). | An installer can turn the check off. Someone who forks and builds their own TooToo can point installs at their own releases. |
@@ -154,7 +154,6 @@ window.TOOTOO_CONFIG = {
   appName: 'Pages',
   // themeColor: '#3a8856',       // highlight color
   // hiddenFolders: [ 'Images' ], // folder names to hide, at any depth
-  // …every other key, commented, with a short note
 };
 </script>
 <!-- TOOTOO-CONFIG-END -->
@@ -230,8 +229,10 @@ Settled 2026-11-22, after r2; it ships in the next release. The title part of th
 
 Then the buttons, unchanged: ⌂ (when `homeUrl` is set), 🌓, A−, A+, ⚙️, ?.
 
+- **Font:** owner, repo and app name use the heading font (`headingFont`, else `bodyFont`, else Windsor), like the headings in a file. The subtitle uses the text font. Added 2026-11-26.
+
 - **The owner's own site repo** (`<owner>/<owner>.github.io`): the repo is left out; only the owner shows, linking to `https://<owner>.github.io`.
-- **A local folder** that is a GitHub clone: owner / repo links as usual, with 📂 in front to show the files come from disk. Without a GitHub repo: 📂 and the folder name in place of owner / repo, with no links.
+- **A local folder** that is a GitHub clone: owner / repo links as usual. Without a GitHub repo: the folder name in place of owner / repo, with no links. (Until 2026-11-26 a 📂 came first, to show the files come from disk; dropped, since most readers are online.)
 - **No repo known:** owner and repo are left out, and the icon links nowhere.
 
 ### Page head and About: build date and description
@@ -248,6 +249,7 @@ Settled 2026-11-23; ship in the next release. Three settings.
 
 - **`startFile`:** the file the start opens, in place of the root README: at first load with no file in the address, and from the app name's "back to the start" link. It may name a file (`0-agenda.md`) or a folder, which opens that folder's README. A name that matches nothing falls back to the root README. A file named in the address still wins.
 - **`links`:** a list of `{ label, url }`, shown at the right of the footer and in About, in the order given. An entry missing either part is skipped, and so is a `javascript:` address.
+- **License link** (added 2026-11-26): when the repo has a license file at the top level (`LICENSE`, `COPYING`, with or without an extension such as `.md` or `.txt`), the footer adds **License** after the rights line, opening that file in the app. No setting: a repo without one shows no link.
 - **`noindex`:** `true` adds `<meta name="robots" content="noindex">` at startup, asking search engines not to list the site. It is a request, not access control: the files stay readable by address, and a crawler that doesn't run scripts never sees the tag.
 
 ### Dark mode and text font
@@ -255,6 +257,7 @@ Settled 2026-11-23; ship in the next release. Three settings.
 Settled 2026-11-23; ship in the next release. Two settings.
 
 - **`darkMode`:** how the page starts for a reader who has never used 🌓: `'auto'` (the default) follows the device, `'light'` and `'dark'` fix it. Once the reader toggles, their own choice is remembered and wins.
+- **The built-in heading font is Windsor** (from `pushme-pullyou.github.io/assets/fonts/`), with serif as the fallback; the text stays system-ui. Added 2026-11-26.
 - **`bodyFont`:** a CSS font-family for the text. Headings follow it unless `headingFont` is set. A web font is loaded the same way as a heading font: a stylesheet address in `headingFontUrl` can carry both families.
 
 ### Retired settings: view, sourceRepoUrl
@@ -271,6 +274,12 @@ Settled 2026-11-23; ships in the next release. About (?) and the GitHub token (�
 - **Closing:** the ✕, the Escape key, a click outside the pop-up, or the same header button again. The other header button switches from one to the other.
 - **Focus:** opening the token pop-up puts the cursor in its box; opening About puts focus on ✕.
 - A tall pop-up scrolls inside itself, so it always fits the window.
+
+### Markdown: shown only in TooToo
+
+Settled 2026-11-26; ships in the next release. HTML in a Markdown file wrapped in `<!--@@@` … `@@@-->` is a comment to GitHub, which hides it. TooToo drops the two markers and renders what is inside, so a README can embed something, such as a live demo, that GitHub would strip or show badly. Every pair in the file is unwrapped; a plain `<!-- … -->` comment stays hidden. Raw view shows the file as written.
+
+- **Iframes** are allowed in Markdown, inside the markers or not, when their `src` is a web page (`http:` or `https:`). Any other iframe is removed: a relative one would resolve against the TooToo page, not the repo. DOMPurify still sanitizes everything else.
 
 ### Back to top
 

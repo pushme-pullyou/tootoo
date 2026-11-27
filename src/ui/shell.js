@@ -40,6 +40,7 @@ const Shell = {
     document.addEventListener( 'click', Shell.onOutsideClick );
     Events.on( 'repo-changed', Shell.showRepo );
     Events.on( 'file-selected', Shell.showTitle );
+    Events.on( 'tree-loaded', Shell.showFooter );   // the License link needs the tree
     Shell.restorePrefs();
     Shell.showRepo();
     return () => {
@@ -49,6 +50,7 @@ const Shell = {
       document.removeEventListener( 'click', Shell.onOutsideClick );
       Events.off( 'repo-changed', Shell.showRepo );
       Events.off( 'file-selected', Shell.showTitle );
+      Events.off( 'tree-loaded', Shell.showFooter );
     };
   },
 
@@ -140,7 +142,7 @@ const Shell = {
   // The header shows the app name only when the install names itself (not the default) and it isn't a repeat.
   showsAppName: ( ownName, shownName ) => Boolean( ownName ) && ! Shell.sameName( ownName, shownName ),
 
-  // The icon's link, owner / repo links (📂 first for a local folder), then the footer.
+  // The icon's link, owner / repo links (a local folder without a repo: its name), then the footer.
   // The app name is left out when it only repeats the name just before it.
   showRepo: () => {
     const esc = Shell.escape;
@@ -155,21 +157,32 @@ const Shell = {
       iconLink.removeAttribute( 'title' );
     }
     const local = ( state.source || {} ).name === 'local';
-    const folder = local ? `<span title="A folder on this computer">📂</span> ` : '';
     let html = '';
     if ( links.home ) {
-      html = `${ folder }<a href="${ esc( links.home ) }">${ esc( state.owner ) }</a>`;
+      html = `<a href="${ esc( links.home ) }">${ esc( state.owner ) }</a>`;
       if ( links.pages ) { html += ` / <a href="${ esc( links.pages ) }">${ esc( state.repo ) }</a>`; }
     } else if ( local ) {
-      html = `${ folder }${ esc( state.source.folderName ) }`;
+      html = esc( state.source.folderName );
     }
     header.querySelector( '.repo-links' ).innerHTML = html;
     const shownName = links.pages ? state.repo : links.home ? state.owner : '';
     header.querySelector( '.brand' ).hidden = ! Shell.showsAppName( ( window.TOOTOO_CONFIG || {} ).appName, shownName );
-    Shell.el.footer.innerHTML = `<span>${ esc( Shell.rightsLine( state.owner ) ) }</span><span class="footer-links">${ Shell.linksHtml() }</span>`;
+    Shell.showFooter();
   },
 
-  // '© 2026 owner · No rights reserved'. rightsOwners: null = every owner, a list = only those, [] = none.
+  // The repo's license file at the top level (LICENSE, LICENSE.md, COPYING …), or ''.
+  licensePath: ( items = state.tree || [] ) => ( items.find( ( item ) => item.type === 'file'
+    && /^(licen[cs]e|copying)(\.\w+)?$/i.test( item.path ) ) || {} ).path || '',
+
+  // '© 2026 owner · License' (plus rightsText when set), then CONFIG.links. Drawn again once the tree is known.
+  showFooter: () => {
+    const esc = Shell.escape;
+    const license = Shell.licensePath();
+    const rights = [ esc( Shell.rightsLine( state.owner ) ), license ? `<a href="#${ esc( Router.encodePath( license ) ) }">License</a>` : '' ];
+    Shell.el.footer.innerHTML = `<span>${ rights.filter( Boolean ).join( ' · ' ) }</span><span class="footer-links">${ Shell.linksHtml() }</span>`;
+  },
+
+  // '© 2026 owner', plus ' · <rightsText>' when set. rightsOwners: null = every owner, a list = only those, [] = none.
   rightsLine: ( owner, config = CONFIG, year = new Date().getFullYear() ) => {
     if ( ! owner ) { return ''; }
     const owns = ! config.rightsOwners || config.rightsOwners.some( ( name ) => name.toLowerCase() === owner.toLowerCase() );

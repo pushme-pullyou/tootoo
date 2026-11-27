@@ -1,6 +1,7 @@
 // markdown.js: Markdown → safe HTML (marked, then DOMPurify; both load at startup).
 // Headings get GitHub-style ids, for '#file#heading' links. Relative links open the
 // file inside the app; relative images, video and audio load through the source.
+// HTML wrapped in '<!--@@@ … @@@-->' shows only in TooToo; web-page iframes are allowed.
 
 const MarkdownLoader = {
 
@@ -61,11 +62,21 @@ const MarkdownLoader = {
     }
   } ) ),
 
+  // '<!--@@@ … @@@-->' is a comment, so GitHub hides it; TooToo drops the markers and shows what's inside.
+  unwrap: ( text ) => text.replace( /<!--@@@([\s\S]*?)@@@-->/g, '$1' ),
+
+  // An <iframe> stays only when it loads a web page (http: or https:).
+  fixFrames: ( box ) => box.querySelectorAll( 'iframe' ).forEach( ( frame ) => {
+    if ( ! /^https?:\/\//i.test( frame.getAttribute( 'src' ) || '' ) ) { frame.remove(); }
+  } ),
+
   render: async ( file, element ) => {
     // A <template> is inert: images don't start loading from the wrong place while links are fixed.
     const template = document.createElement( 'template' );
-    template.innerHTML = DOMPurify.sanitize( marked.parse( await file.source.readText( file.path ) ) );
+    const html = marked.parse( MarkdownLoader.unwrap( await file.source.readText( file.path ) ) );
+    template.innerHTML = DOMPurify.sanitize( html, { ADD_TAGS: [ 'iframe' ], ADD_ATTR: [ 'allow', 'allowfullscreen' ] } );
     const box = template.content;
+    MarkdownLoader.fixFrames( box );
     MarkdownLoader.addHeadingIds( box );
     MarkdownLoader.fixLinks( box, file );
     await MarkdownLoader.fixMedia( box, file );

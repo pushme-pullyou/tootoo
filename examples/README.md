@@ -2,6 +2,14 @@
 
 One or two small files of every type TooToo can show, plus folders that exercise the file tree. Use it as a tour, and as the by-eye check before a release.
 
+## Shown only in TooToo
+
+On GitHub, nothing appears below this paragraph. In TooToo, a live page from theo-armour.github.io does. The Markdown wraps an `<iframe>` in a comment that opens with <code>&lt;!--@@@</code> and closes with <code>@@@--&gt;</code>. GitHub hides the comment; TooToo removes those two markers and shows what's inside.
+
+<!--@@@
+<iframe src="https://theo-armour.github.io/2026-ta-gh-io-refactor/sphere.html" width="100%" height="600" style="border:none;"></iframe>
+@@@-->
+
 ## What to try
 
 | Folder | Try this |
@@ -15,7 +23,7 @@ One or two small files of every type TooToo can show, plus folders that exercise
 | [audio/](audio/) | The audio player |
 | [video/](video/) | The video player, and an MP4 playing inside a Markdown page |
 | [pdf/](pdf/) | A PDF in its frame |
-| [html/](html/) | Web pages shown in a sandbox: their scripts must not run |
+| [html/](html/) | Web pages running in a frame. Their scripts run, but a copied page is sandboxed away from TooToo's own storage |
 | [projects/](projects/) | Folders five levels deep, each with a README that opens when you click the folder |
 
 Also worth a look while you are here: the filter box (press `/`), the arrow keys in the tree, back to top (↑) on a long page such as [docs/markdown-help.md](docs/markdown-help.md), dark mode, and a narrow window.

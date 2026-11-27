@@ -63,12 +63,32 @@ test( 'tree: the root README is the shortest README name', () => {
 } );
 
 test( 'shell: the rights line follows rightsOwners', () => {
-  const line = ( owner, rightsOwners ) => Shell.rightsLine( owner, { ...CONFIG, rightsOwners }, 2026 );
+  const line = ( owner, rightsOwners ) => Shell.rightsLine( owner, { ...CONFIG, rightsText: 'No rights reserved', rightsOwners }, 2026 );
+  assertEqual( Config.defaults.rightsText, '', 'no rights text by default:' );
+  assertEqual( Shell.rightsLine( 'mock', CONFIG, 2026 ), '© 2026 mock' );
   assertEqual( line( 'mock', null ), '© 2026 mock · No rights reserved' );
   assertEqual( line( 'Mock', [ 'mock' ] ), '© 2026 Mock · No rights reserved' );
   assertEqual( line( 'mock', [ 'someone-else' ] ), '© 2026 mock' );
   assertEqual( line( 'mock', [] ), '© 2026 mock' );
   assertEqual( line( '', null ), '' );
+} );
+
+test( 'shell: the footer links the license file at the top level', async () => {
+  const file = ( path ) => ( { path, type: 'file' } );
+  assertEqual( Shell.licensePath( [ file( 'README.md' ), file( 'LICENSE' ) ] ), 'LICENSE' );
+  assertEqual( Shell.licensePath( [ file( 'license.md' ) ] ), 'license.md' );
+  assertEqual( Shell.licensePath( [ file( 'COPYING.txt' ) ] ), 'COPYING.txt' );
+  assertEqual( Shell.licensePath( [ file( 'docs/LICENSE' ), file( 'license-notes.md' ) ] ), '', 'only the top level, only the plain name:' );
+  MockSource.files.LICENSE = 'MIT License';
+  try {
+    const view = await mountMock();
+    const link = view.find( '.app-footer a[href="#LICENSE"]' );
+    assert( link && link.textContent === 'License', view.find( '.app-footer' ).innerHTML );
+    view.done();
+  } finally { delete MockSource.files.LICENSE; }
+  const view = await mountMock();
+  assert( ! view.find( '.app-footer a[href="#LICENSE"]' ), 'no license file, no link' );
+  view.done();
 } );
 
 test( 'shell: the title links (SPEC §6 Header)', () => {
@@ -271,7 +291,7 @@ test( 'view: on file://, a folder picked in the start panel replaces the panel w
     assertEqual( box.querySelector( '.file-body h1' ) && box.querySelector( '.file-body h1' ).textContent, 'Pages', 'README shown:' );
     assert( ! box.querySelector( '.start-panel' ), 'the start panel is gone' );
     assert( ! box.querySelector( '.file-header' ).hidden, 'the file header shows' );
-    assertEqual( box.querySelector( '.repo-links' ).textContent, '📂 theo-armour / pages', 'a clone: 📂, then owner / repo:' );
+    assertEqual( box.querySelector( '.repo-links' ).textContent, 'theo-armour / pages', 'a clone: owner / repo, as online:' );
     const github = box.querySelector( '.breadcrumbs .github-link' );
     assertEqual( [ github.getAttribute( 'href' ), github.title ],
       [ 'https://github.com/theo-armour/pages/blob/main/README.md', 'On GitHub (may differ from your local copy)' ], 'a clone links to the pushed file:' );

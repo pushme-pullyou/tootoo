@@ -52,6 +52,18 @@ test( 'loaders: Markdown is sanitized', () => withMockFiles( {
   assert( ! box.querySelector( 'script' ) && ! box.querySelector( '[onerror]' ), box.innerHTML );
 } ) );
 
+test( 'loaders: Markdown shows <!--@@@ … @@@--> and web-page iframes', () => withMockFiles( {
+  'docs/frames.md': 'One\n\n<!--@@@\n<iframe src="https://example.com/a.html" width="100%" height="60"></iframe>\n@@@-->\n\n'
+    + '<!-- a plain comment <b>stays hidden</b> -->\n\n<!--@@@\n<p class="second">two</p>\n@@@-->\n\n'
+    + '<iframe src="secret.html"></iframe>\n\n<iframe src="javascript:alert(1)"></iframe>\n',
+}, async () => {
+  const box = await renderMock( 'docs/frames.md' );
+  const frames = [ ...box.querySelectorAll( 'iframe' ) ].map( ( frame ) => frame.getAttribute( 'src' ) );
+  assertEqual( frames, [ 'https://example.com/a.html' ], 'only the web-page iframe stays:' );
+  assert( box.querySelector( 'p.second' ), 'every @@@ pair is unwrapped: ' + box.innerHTML );
+  assert( ! box.querySelector( 'b' ), 'a plain comment stays hidden: ' + box.innerHTML );
+} ) );
+
 test( 'loaders: code is highlighted', async () => {
   const box = await renderMock( 'code/app.js' );
   assert( box.querySelector( 'pre.code-view code.hljs .hljs-keyword' ), box.innerHTML.slice( 0, 200 ) );
@@ -74,6 +86,17 @@ test( 'loaders: PDF, CSV and HTML', async () => {
   const frame = ( await renderMock( 'pages/demo.html' ) ).querySelector( 'iframe.html-view' );
   assert( frame && frame.src.startsWith( 'blob:' ), 'html frame from a blob copy here' );
   assert( ( await renderMock( 'pages/demo.html', { raw: true } ) ).querySelector( 'pre.code-view' ), 'html raw' );
+} );
+
+test( 'loaders: an HTML blob copy is sandboxed, so it cannot reach this page', async () => {
+  const box = await renderMock( 'pages/demo.html' );
+  const frame = box.querySelector( 'iframe.html-view' );
+  assertEqual( frame.getAttribute( 'sandbox' ), 'allow-scripts allow-forms allow-popups', 'no allow-same-origin:' );
+  document.body.append( box );
+  try {
+    await new Promise( ( resolve ) => { frame.addEventListener( 'load', resolve, { once: true } ); setTimeout( resolve, 3000 ); } );
+    assertEqual( frame.contentDocument, null, 'the preview runs walled off:' );
+  } finally { box.remove(); }
 } );
 
 test( 'loaders: a TooToo page is never previewed inside TooToo', () => withMockFiles( {

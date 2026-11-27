@@ -14,7 +14,7 @@ Start from a fresh build: `pwsh -File assemble.ps1` writes `build/index.html`.
 Open [`build/index.html`](../build/index.html) by double-clicking it.
 
 - [x] **First visit:** the start panel shows **📂 Open folder** and **Browse GitHub instead**. Nothing loads from GitHub yet.
-- [x] **Open folder:** pick a cloned repo (e.g. `theo-armour-sandbox`). Its tree shows, `.git` doesn't, and the README opens. The header shows 📂 and the folder name.
+- [x] **Open folder:** pick a cloned repo (e.g. `theo-armour-sandbox`). Its tree shows, `.git` doesn't, and the README opens. The header shows owner / repo (or, with no GitHub repo, the folder name).
 - [x] An edited, not-yet-pushed file shows its new text.
 - [x] **Reopen:** reload the page. The panel offers **📂 Reopen \<folder\>** first. One click and a permission prompt reopen it.
 - [x] **Browse \<owner/repo\> on GitHub instead:** the panel names the folder's repo. It browses that repo on GitHub, and on the next visit that button comes first.
@@ -54,10 +54,10 @@ Open `build/index.html?owner=theo-armour&repo=pages`, choose Browse GitHub, and 
 
 Open the live workshop page, or the build pointed at this repo, and use [examples/](../examples/README.md) for the files.
 
-- [ ] **Back to top:** scroll a long file (`examples/docs/markdown-help.md`): a ↑ appears at the bottom right and returns to the top. The same in the file list, when it is long enough to scroll.
-- [ ] **Pop-ups:** scroll down, then press **?** and **⚙️**: each opens centred over a dimmed page. Escape, the ✕ and a click outside all close it.
-- [ ] **About** shows a description and "built YYYY-MM-DD" after the release number, and "source and updates" goes to the TooToo repo.
-- [ ] **The header** shows no "TooToo" on an install that sets no `appName`.
+- [x] **Back to top:** scroll a long file (`examples/docs/markdown-help.md`): a ↑ appears at the bottom right and returns to the top. The same in the file list, when it is long enough to scroll.
+- [x] **Pop-ups:** scroll down, then press **?** and **⚙️**: each opens centred over a dimmed page. Escape, the ✕ and a click outside all close it.
+- [x] **About** shows a description and "built YYYY-MM-DD" after the release number, and "source and updates" goes to the TooToo repo.
+- [x] **The header** shows no "TooToo" on an install that sets no `appName`.
 - [ ] **Settings:** in a copy of the build, set `startFile`, `links`, `darkMode: 'dark'` and `bodyFont`. It opens that file, starts dark, shows the links at the right of the footer and in About, and uses the font.
 - [ ] Dark mode and phone width again, with a pop-up open and the footer links showing.
 

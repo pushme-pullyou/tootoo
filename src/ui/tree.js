@@ -173,15 +173,15 @@ const Tree = {
     }
     Tree.openBefore = Tree.openBefore || new Set( folders.filter( ( folder ) => folder.open ).map( ( folder ) => folder.dataset.path ) );
     const items = [ ...tree.querySelectorAll( '.tree-item' ) ];
-    const hits = items.filter( ( item ) => Tree.matches( item.dataset.path.split( '/' ).pop(), query ) );
-    items.forEach( ( item ) => item.classList.toggle( 'is-hidden', ! hits.includes( item ) ) );
+    const hits = new Set( items.filter( ( item ) => Tree.matches( item.dataset.path.split( '/' ).pop(), query ) ) );   // a Set: fast on big trees
+    items.forEach( ( item ) => item.classList.toggle( 'is-hidden', ! hits.has( item ) ) );
     folders.reverse().forEach( ( folder ) => {
       const any = folder.querySelector( '.tree-item:not(.is-hidden)' );
       folder.classList.toggle( 'is-hidden', ! any );
       if ( any ) { folder.dataset.seen = 'yes'; folder.open = true; }
     } );
     tree.classList.add( 'filtering' );
-    count.textContent = `${ hits.length } match${ hits.length === 1 ? '' : 'es' }`;
+    count.textContent = `${ hits.size } match${ hits.size === 1 ? '' : 'es' }`;
   },
 
   // ── Keyboard: / filter, \ tree, arrows, Home / End, Enter / Space, Ctrl+B ──

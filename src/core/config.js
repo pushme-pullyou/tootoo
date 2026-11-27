@@ -15,7 +15,7 @@ const Config = {
     storagePrefix: 'tootoo',
     hiddenFolders: Object.freeze( [] ), hiddenFiles: Object.freeze( [] ),   // the tree always hides index.bak
     hideDatedBackups: true, autoOpenFolderReadme: true,
-    rightsText: 'No rights reserved', rightsOwners: null, links: Object.freeze( [] ),
+    rightsText: '', rightsOwners: null, links: Object.freeze( [] ),
     noindex: false,
     checkForUpdates: true, updateUrl: 'https://pushme-pullyou.github.io/tootoo/releases/latest.json',
   } ),

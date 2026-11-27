@@ -1,13 +1,18 @@
 # TooToo Agenda
 
+
+## 2026-11-26
+
+<!--@@@
+<iframe src="https://theo-armour.github.io/2026-ta-gh-io-refactor/sphere.html" width="100%" height="600" style="border:none;"></iframe>
+@@@-->
+
+
 ## 2026-11-23
 
-* Read me appear at top
-* Theo's iframe gimmick is supported
-* Titles to use current font
+
 * Build for new repo utility
 * Private repo support notes
-* Show iframes
 * Select fonts
 * Select colors
 
