@@ -903,3 +903,24 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
   * Installs that update will see two visible changes: Windsor headings
     (unless they set `headingFont` or `bodyFont`), and no "No rights
     reserved" (unless they set `rightsText`).
+
+## 2026-11-27
+
+* **All 16 installs on r6.** pushme-pullyou.github.io first, then the
+  other 15 in one pass: each block swapped into r6, the old page kept as
+  `index.bak`, each checked (block byte-for-byte, the rest identical to
+  r6, then opened from `file://` headless), and committed and pushed
+  with only `index.html` and `index.bak`. Uncommitted work left alone in
+  heritage-happenings.github.io (a PDF) and collection (agenda, journal).
+  pushme-pullyou-assets had an uncommitted r5 page; it became its
+  `index.bak`. Five installs set no heading font and now show Windsor
+  headings: heritage-happenings documents and .github.io, assets,
+  genealogy, wikitheo.
+* **Learned: do the swap with a regex, not `.IndexOf`, in PowerShell.**
+  The first swap (pushme-pullyou.github.io) found no markers through
+  `String.IndexOf( string )`, which is culture-sensitive there, and
+  wrote r6 with an empty block; checks that compared two failed results
+  said "True". `LastIndexOf( string, StringComparison )` also bound to
+  the `( string, int )` overload. `[regex]::Matches` with
+  `[regex]::Escape` gives exact positions and counts. Check that the old
+  block is non-empty before writing.
