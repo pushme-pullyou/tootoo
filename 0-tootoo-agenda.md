@@ -2,6 +2,8 @@
 
 ## 2026-11-23
 
+* Read me appear at top
+* Theo's iframe gimmick is supported
 * Titles to use current font
 * Build for new repo utility
 * Private repo support notes
