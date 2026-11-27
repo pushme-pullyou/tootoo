@@ -888,3 +888,18 @@ Settled 2026-11-22, and added to [SPEC.md](SPEC.md) §6 (File header). For the n
   release: installs that never set it lose "No rights reserved" when
   they update. Test updated.
   The root block's own `rightsText: ''` was then removed as redundant.
+
+* **r6 released** (tag `r6`, GitHub Release "r6 — 2026-11-26" with
+  `index.html` attached). In it: `<!--@@@ … @@@-->` blocks and web-page
+  iframes in Markdown; Windsor as the built-in heading font, header titles
+  one size; an empty config block in fresh releases; the footer's License
+  link and no default rights text; sandboxed HTML blob previews; a faster
+  filter; no 📂 in the header.
+  * Gate: suite 90 and 94 pass; `tests/live.html` 5 pass (run headless).
+    By hand: Theo ticked Back to top, Pop-ups, About and the header's
+    app name. Not re-checked: Settings in a copy of the build, dark mode
+    and phone width with a pop-up, one real install via `file://`.
+    Theo chose to release without them.
+  * Installs that update will see two visible changes: Windsor headings
+    (unless they set `headingFont` or `bodyFont`), and no "No rights
+    reserved" (unless they set `rightsText`).
